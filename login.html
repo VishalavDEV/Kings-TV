@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ta" data-theme="light">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>உள்நுழைவுப் பக்கம் - KING 24x7 | Multi-Role Login Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css?v=9">
+
+  <style>
+    .login-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      position: relative;
+      background: #000000;
+      overflow: hidden;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 960px;
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      z-index: 2;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1.2fr 1.8fr;
+      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Left panel: Info and Role Selection Helper */
+    .login-left {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 40px 30px;
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .login-left-header img {
+      height: 48px;
+      margin-bottom: 12px;
+    }
+
+    .login-left-header h2 {
+      font-size: 20px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .login-left-header p {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.6);
+      line-height: 1.4;
+    }
+
+    .role-helper-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #0057FF;
+      margin: 24px 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .role-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .role-pill {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: var(--transition);
+    }
+
+    .role-pill:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateX(4px);
+    }
+
+    .role-pill.active {
+      background: rgba(0, 87, 255, 0.2);
+      border-color: #0057FF;
+      color: #3B82F6;
+    }
+
+    .role-pill span.role-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .role-pill .role-badge {
+      font-size: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .role-pill.active .role-badge {
+      background: #0057FF;
+      color: #fff;
+    }
+
+    /* Right panel: Login form */
+    .login-right {
+      padding: 50px 45px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .login-right h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .login-right p.subtitle {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 32px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 8px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper i.prefix-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 14px;
+    }
+
+    .input-wrapper input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px 14px 44px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .input-wrapper input:focus {
+      border-color: #0057FF;
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 3px rgba(0, 87, 255, 0.2);
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255, 255, 255, 0.4);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .password-toggle:hover {
+      color: #fff;
+    }
+
+    .login-options {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      font-size: 13px;
+    }
+
+    .remember-me {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+    }
+
+    .remember-me input {
+      cursor: pointer;
+      accent-color: #0057FF;
+    }
+
+    .forgot-pwd {
+      color: #0057FF;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+
+    .forgot-pwd:hover {
+      text-decoration: underline;
+    }
+
+    .login-submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #0057FF 0%, #0044CC 100%);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 12px rgba(0, 87, 255, 0.3);
+    }
+
+    .login-submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 87, 255, 0.4);
+    }
+
+    .login-submit-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Toast Notification */
+    .toast-msg {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      background: rgba(16, 185, 129, 0.95);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      padding: 16px 24px;
+      border-radius: var(--radius-md);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transform: translateY(-20px);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 9999;
+    }
+
+    .toast-msg.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast-msg i {
+      font-size: 18px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .login-container {
+        grid-template-columns: 1fr;
+      }
+      .login-left {
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="login-wrapper">
+    <div class="login-container">
+      
+      <!-- Left Panel: Brand info & Quick selection role tabs -->
+      <div class="login-left">
+        <div class="login-left-header">
+          <img src="assets/images/logo-banner-light.png" alt="KING 24x7">
+          <h2 id="leftTitle">உள்நுழைவு மையம்</h2>
+          <p id="leftDesc">உண்மை. பொறுப்புடன். தமிழ். உங்கள் கணக்கை அணுக தகுந்த பிரிவைத் தேர்ந்தெடுக்கவும்.</p>
+        </div>
+
+        <div>
+          <div class="role-helper-title">
+            <i class="fas fa-key"></i> <span id="helperTitle">சோதனை உள்நுழைவுகள் (Quick Fill)</span>
+          </div>
+          <div class="role-grid" id="roleGrid">
+            <div class="role-pill" data-role="admin" data-email="admin@king24x7.com" data-pwd="admin123" data-name="அட்மின் (Admin)">
+              <span class="role-name"><i class="fas fa-user-shield"></i> <span id="rAdmin">நிர்வாகி (Admin)</span></span>
+              <span class="role-badge">1</span>
+            </div>
+            <div class="role-pill" data-role="vendor" data-email="vendor@king24x7.com" data-pwd="vendor123" data-name="வணிகர் (Vendor)">
+              <span class="role-name"><i class="fas fa-store"></i> <span id="rVendor">வணிகர் (Vendor)</span></span>
+              <span class="role-badge">2</span>
+            </div>
+            <div class="role-pill" data-role="editor" data-email="editor@king24x7.com" data-pwd="editor123" data-name="ஆசிரியர் (Editor)">
+              <span class="role-name"><i class="fas fa-user-edit"></i> <span id="rEditor">ஆசிரியர் (Editor)</span></span>
+              <span class="role-badge">3</span>
+            </div>
+            <div class="role-pill" data-role="reporter" data-email="reporter@king24x7.com" data-pwd="reporter123" data-name="செய்தியாளர் (Reporter)">
+              <span class="role-name"><i class="fas fa-bullhorn"></i> <span id="rReporter">செய்தியாளர் (Reporter)</span></span>
+              <span class="role-badge">4</span>
+            </div>
+            <div class="role-pill" data-role="user" data-email="user@king24x7.com" data-pwd="user123" data-name="வாசகர் (User)">
+              <span class="role-name"><i class="fas fa-user"></i> <span id="rUser">வாசகர் (User)</span></span>
+              <span class="role-badge">5</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Login form -->
+      <div class="login-right">
+        <h1 id="rightTitle">வரவேற்கிறோம்!</h1>
+        <p class="subtitle" id="rightSubtitle">கணக்கில் உள்நுழைய உங்கள் மின்னஞ்சல் மற்றும் கடவுச்சொல்லை உள்ளிடவும்.</p>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="emailInput" id="labelEmail">மின்னஞ்சல் முகவரி (Email Address) *</label>
+            <div class="input-wrapper">
+              <i class="prefix-icon fas fa-envelope"></i>
+              <input type="email" id="emailInput" required placeholder="name@example.com">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="passwordInput" id="labelPwd">கடவுச்சொல் (Password) *</label>
+            <div class="input-wrapper">
+              <i class="prefix-icon fas fa-lock"></i>
+              <input type="password" id="passwordInput" required placeholder="••••••••">
+              <i class="password-toggle far fa-eye-slash" id="passwordToggle"></i>
+            </div>
+          </div>
+
+          <div class="login-options">
+            <label class="remember-me">
+              <input type="checkbox" id="rememberMe">
+              <span id="rememberText">என்னை நினைவில் கொள்</span>
+            </label>
+            <a href="#" class="forgot-pwd" id="forgotText">கடவுச்சொல் மறந்ததா?</a>
+          </div>
+
+          <button type="submit" class="login-submit-btn">
+            <span id="submitBtnText">உள்நுழைய</span> <i class="fas fa-arrow-right"></i>
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Dynamic Success Toast -->
+  <div class="toast-msg" id="successToast">
+    <i class="fas fa-check-circle"></i>
+    <span id="toastText">வெற்றிகரமாக உள்நுழைந்துவிட்டது!</span>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // 1. Password Visibility Toggle
+      const pwdInput = document.getElementById('passwordInput');
+      const pwdToggle = document.getElementById('passwordToggle');
+      if (pwdToggle && pwdInput) {
+        pwdToggle.addEventListener('click', function() {
+          const type = pwdInput.getAttribute('type') === 'password' ? 'text' : 'password';
+          pwdInput.setAttribute('type', type);
+          this.classList.toggle('fa-eye');
+          this.classList.toggle('fa-eye-slash');
+        });
+      }
+
+      // 2. Role Selector (Quick Fill)
+      const rolePills = document.querySelectorAll('.role-pill');
+      const emailInput = document.getElementById('emailInput');
+      let selectedRole = 'user';
+      let selectedDisplayName = 'User';
+
+      rolePills.forEach(pill => {
+        pill.addEventListener('click', function() {
+          // Remove active from all
+          rolePills.forEach(p => p.classList.remove('active'));
+          // Set active to clicked
+          this.classList.add('active');
+
+          // Autofill inputs
+          emailInput.value = this.dataset.email;
+          pwdInput.value = this.dataset.pwd;
+          selectedRole = this.dataset.role;
+          selectedDisplayName = this.dataset.name;
+        });
+      });
+
+      // Listen to manual typing in inputs and clear active helper pills
+      emailInput.addEventListener('input', function() {
+        rolePills.forEach(p => p.classList.remove('active'));
+        selectedRole = '';
+        selectedDisplayName = '';
+      });
+      pwdInput.addEventListener('input', function() {
+        rolePills.forEach(p => p.classList.remove('active'));
+        selectedRole = '';
+        selectedDisplayName = '';
+      });
+
+      // 3. Form Submit & Authentication
+      const loginForm = document.getElementById('loginForm');
+      const successToast = document.getElementById('successToast');
+      const toastText = document.getElementById('toastText');
+
+      loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const emailVal = emailInput.value.toLowerCase();
+        let role = selectedRole;
+        let displayName = selectedDisplayName;
+
+        // If no role was selected via helper pills, parse dynamically from typed email
+        if (!role) {
+          const appLang = localStorage.getItem('king24x7_lang') || 'ta';
+          if (emailVal.includes('admin')) {
+            role = 'admin';
+            displayName = appLang === 'en' ? 'Admin' : 'நிர்வாகி (Admin)';
+          } else if (emailVal.includes('vendor')) {
+            role = 'vendor';
+            displayName = appLang === 'en' ? 'Vendor' : 'வணிகர் (Vendor)';
+          } else if (emailVal.includes('editor')) {
+            role = 'editor';
+            displayName = appLang === 'en' ? 'Editor' : 'ஆசிரியர் (Editor)';
+          } else if (emailVal.includes('reporter')) {
+            role = 'reporter';
+            displayName = appLang === 'en' ? 'Reporter' : 'செய்தியாளர் (Reporter)';
+          } else {
+            role = 'user';
+            displayName = appLang === 'en' ? 'User' : 'வாசகர் (User)';
+          }
+        }
+
+        // Save session locally
+        const session = {
+          email: emailInput.value,
+          username: emailInput.value.split('@')[0],
+          role: role,
+          displayName: displayName,
+          isLoggedIn: true,
+          loggedInAt: new Date().toISOString()
+        };
+
+        localStorage.setItem('king24x7_session', JSON.stringify(session));
+
+        // Toast feedback localization
+        const appLang = localStorage.getItem('king24x7_lang') || 'ta';
+        if (appLang === 'en') {
+          toastText.textContent = `Successfully logged in as ${role.toUpperCase()}!`;
+        } else {
+          toastText.textContent = `${displayName} வெற்றிகரமாக உள்நுழைந்தார்!`;
+        }
+
+        // Show Toast
+        successToast.classList.add('show');
+
+        // Redirect after a short delay
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 1200);
+      });
+
+      // 4. Localization strings
+      const lang = localStorage.getItem('king24x7_lang') || 'ta';
+      if (lang === 'en') {
+        document.getElementById('leftTitle').textContent = "Authentication Hub";
+        document.getElementById('leftDesc').textContent = "Truth. Responsibility. In Tamil. Access portal components tailored to your role.";
+        document.getElementById('helperTitle').textContent = "Quick Fill Credentials";
+        document.getElementById('rightTitle').textContent = "Welcome Back!";
+        document.getElementById('rightSubtitle').textContent = "Enter your email and password to access your role workspace.";
+        document.getElementById('labelEmail').textContent = "Email Address *";
+        document.getElementById('labelPwd').textContent = "Password *";
+        document.getElementById('rememberText').textContent = "Remember Me";
+        document.getElementById('forgotText').textContent = "Forgot Password?";
+        document.getElementById('submitBtnText').textContent = "Sign In";
+
+        // Translate role names
+        document.getElementById('rAdmin').textContent = "Administrator (Admin)";
+        document.getElementById('rVendor').textContent = "Merchant (Vendor)";
+        document.getElementById('rEditor').textContent = "Chief Editor (Editor)";
+        document.getElementById('rReporter').textContent = "Journalist (Reporter)";
+        document.getElementById('rUser').textContent = "Subscriber (User)";
+      }
+    });
+  </script>
+</body>
+
+</html>

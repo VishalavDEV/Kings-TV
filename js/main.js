@@ -1283,9 +1283,87 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
+  // ===== RENDER USER LOGIN STATUS IN TOP BAR =====
+  function renderUserSession() {
+    const tbr = document.querySelector('.top-bar-right');
+    if (!tbr) return;
+
+    // Check if dynamic user block already exists
+    let userBlock = document.getElementById('topBarUserBlock');
+    if (userBlock) userBlock.remove();
+
+    const session = Storage.get('session', null);
+    const lang = Storage.get('lang', 'ta');
+
+    userBlock = document.createElement('div');
+    userBlock.id = 'topBarUserBlock';
+    userBlock.style.display = 'inline-flex';
+    userBlock.style.alignItems = 'center';
+    userBlock.style.gap = '8px';
+    userBlock.style.marginLeft = '12px';
+    userBlock.style.paddingLeft = '12px';
+    userBlock.style.borderLeft = '1px solid var(--top-bar-border)';
+
+    if (session && session.isLoggedIn) {
+      // User is logged in
+      const roleColors = {
+        admin: '#EF4444',
+        vendor: '#10B981',
+        editor: '#8B5CF6',
+        reporter: '#F59E0B',
+        user: '#3B82F6'
+      };
+      const badgeColor = roleColors[session.role] || '#64748B';
+      const roleText = lang === 'en' ? session.role.toUpperCase() : getTamilRole(session.role);
+
+      userBlock.innerHTML = `
+        <span style="font-size:12px; font-weight:600; color:var(--top-bar-text); display:flex; align-items:center; gap:6px;">
+          <i class="fas fa-user-circle" style="color:${badgeColor}"></i> 
+          ${session.username} 
+          <span style="font-size:10px; background:${badgeColor}; color:white; padding:1px 5px; border-radius:4px; font-weight:700;">${roleText}</span>
+        </span>
+        <button id="logoutBtn" style="background:transparent; border:none; color:#EF4444; font-size:12px; font-weight:700; cursor:pointer; padding:4px 8px; display:flex; align-items:center; gap:4px; outline:none;">
+          <i class="fas fa-sign-out-alt"></i> ${lang === 'en' ? 'Logout' : 'வெளியேறு'}
+        </button>
+      `;
+
+      tbr.appendChild(userBlock);
+
+      // Add logout listener
+      const logoutBtn = document.getElementById('logoutBtn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+          Storage.remove('session');
+          renderUserSession();
+          window.location.reload();
+        });
+      }
+    } else {
+      // User is NOT logged in
+      userBlock.innerHTML = `
+        <a href="login.html" style="font-size:12px; font-weight:700; color:var(--primary); display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:4px; transition:var(--transition);" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background='transparent'">
+          <i class="fas fa-sign-in-alt"></i> ${lang === 'en' ? 'Login' : 'உள்நுழை'}
+        </a>
+      `;
+      tbr.appendChild(userBlock);
+    }
+  }
+
+  function getTamilRole(role) {
+    const roles = {
+      admin: 'நிர்வாகி',
+      vendor: 'வணிகர்',
+      editor: 'ஆசிரியர்',
+      reporter: 'செய்தியாளர்',
+      user: 'வாசகர்'
+    };
+    return roles[role] || 'வாசகர்';
+  }
+
   // ===== INIT =====
   initWidgetSlider();
   loadCustomization();
+  renderUserSession();
   
   // Apply default language on load
   var defaultLang = Storage.get('lang', 'ta');
@@ -1298,5 +1376,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // Re-run setLanguage on a 0ms timeout to catch and translate dynamically generated DOM items
   setTimeout(function() {
     setLanguage(Storage.get('lang', 'ta'));
+    renderUserSession();
   }, 0);
 });
