@@ -1,4 +1,4 @@
-const CACHE_NAME = 'king24x7-v3';
+const CACHE_NAME = 'king24x7-v6';
 const urlsToCache = [
   '/',
   '/index.html',
