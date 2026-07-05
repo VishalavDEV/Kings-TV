@@ -18,6 +18,9 @@ const videosRouter = require('./routes/videos');
 const directoryRouter = require('./routes/directory');
 const wishesRouter = require('./routes/wishes');
 const obituariesRouter = require('./routes/obituaries');
+const classifiedsRouter = require('./routes/classifieds');
+const jobsRouter = require('./routes/jobs');
+const storiesRouter = require('./routes/stories');
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users/preferences', preferencesRouter);
@@ -26,6 +29,9 @@ app.use('/api/v1/videos', videosRouter);
 app.use('/api/v1/directory', directoryRouter);
 app.use('/api/v1/wishes', wishesRouter);
 app.use('/api/v1/obituaries', obituariesRouter);
+app.use('/api/v1/classifieds', classifiedsRouter);
+app.use('/api/v1/jobs', jobsRouter);
+app.use('/api/v1/stories', storiesRouter);
 
 app.get('/api/v1/health', (req, res) => {
   res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
