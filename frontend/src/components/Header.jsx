@@ -10,9 +10,13 @@ const Header = () => {
   const { session, logout } = useContext(AuthContext);
   const location = useLocation();
 
+  const regionalPaths = ['/directory', '/wishes', '/obituaries', '/jobs', '/classifieds', '/business-studies'];
+  const isRegionalPage = regionalPaths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
+
   const [timeStr, setTimeStr] = useState('');
-  const [districtText, setDistrictText] = useState('சென்னை');
+  const [district, setDistrict] = useState('சென்னை');
   const [weatherTemp, setWeatherTemp] = useState('32°C');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -46,6 +50,29 @@ const Header = () => {
     return () => clearInterval(interval);
   }, [lang]);
 
+  const activeClass = (path) => {
+    const isActive = location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
+    return isActive ? 'active' : '';
+  };
+
+  const handleDistrictChange = (e) => {
+    const selected = e.target.value;
+    setDistrict(selected);
+    const temps = {
+      'சென்னை': '32°C',
+      'கோயம்புத்தூர்': '28°C',
+      'மதுரை': '34°C',
+      'சேலம்': '31°C',
+      'திருச்சி': '33°C',
+      'திருநெல்வேலி': '35°C',
+      'வேலூர்': '33°C',
+      'ஈரோடு': '30°C',
+      'தஞ்சாவூர்': '32°C',
+      'கன்னியாகுமரி': '29°C'
+    };
+    setWeatherTemp(temps[selected] || '32°C');
+  };
+
   const getTamilRole = (role) => {
     const roles = {
       admin: 'நிர்வாகி',
@@ -65,131 +92,237 @@ const Header = () => {
     user: '#3B82F6'
   };
 
-  const activeClass = (path) => (location.pathname === path ? 'active' : '');
-
   return (
-    <header className="site-header">
+    <header style={{ width: '100%' }}>
+      {/* TOP BAR */}
       <div className="top-bar">
-        <div className="top-bar-left">
-          <span className="live-badge">{t('நேரலை')}</span>
-          <span id="tamilDateTime" className="top-bar-date">{timeStr}</span>
-          <span className="weather-widget">
-            <i className="fas fa-cloud-sun"></i> 
-            <span id="topWeatherDistrict" style={{marginLeft: '4px'}}>{districtText}</span>: 
-            <span id="topWeatherTemp" style={{fontWeight: '700'}}>{weatherTemp}</span>
-          </span>
-        </div>
-        <div className="top-bar-right">
-          <a href="#" className="social-icon" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
-          <a href="#" className="social-icon" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
-          <a href="#" className="social-icon" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
-          <a href="#" className="social-icon" aria-label="Telegram"><i className="fab fa-telegram-plane"></i></a>
-          
-          <button className="dark-toggle" id="darkToggle" onClick={toggleTheme} aria-label="Toggle dark mode">
-            <i className={theme === 'light' ? 'fas fa-moon' : 'fas fa-sun'}></i> 
-            {theme === 'light' ? t('இருள்') : t('ஒளி')}
-          </button>
-          
-          <select 
-            className="lang-switcher" 
-            value={lang} 
-            onChange={(e) => setLang(e.target.value)} 
-            aria-label="Language"
-          >
-            <option value="ta">தமிழ்</option>
-            <option value="en">English</option>
-          </select>
+        <div className="container">
+          <div className="top-bar-left">
+            <span>
+              <i className="far fa-calendar-alt"></i>{' '}
+              <span id="tamilDateTime">{timeStr}</span>
+            </span>
+            <span>
+              <i className="fas fa-map-marker-alt"></i>{' '}
+              <select 
+                id="districtSelector" 
+                className="district-select-top"
+                value={district}
+                onChange={handleDistrictChange}
+                aria-label="District"
+                style={{ background: 'transparent', border: 'none', color: 'inherit', outline: 'none', cursor: 'pointer' }}
+              >
+                <option value="சென்னை">சென்னை</option>
+                <option value="கோயம்புத்தூர்">கோயம்புத்தூர்</option>
+                <option value="மதுரை">மதுரை</option>
+                <option value="சேலம்">சேலம்</option>
+                <option value="திருச்சி">திருச்சி</option>
+                <option value="திருநெல்வேலி">திருநெல்வேலி</option>
+                <option value="வேலூர்">வேலூர்</option>
+                <option value="ஈரோடு">ஈரோடு</option>
+                <option value="தஞ்சாவூர்">தஞ்சாவூர்</option>
+                <option value="கன்னியாகுமரி">கன்னியாகுமரி</option>
+              </select>
+            </span>
+            <span>
+              <i className="fas fa-thermometer-half"></i>{' '}
+              <span id="topTemp">{weatherTemp}</span>
+            </span>
+          </div>
+          <div className="top-bar-right">
+            <a href="#" className="social-icon" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
+            <a href="#" className="social-icon" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
+            <a href="#" className="social-icon" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
+            <a href="#" className="social-icon" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
+            <a href="#" className="social-icon" aria-label="WhatsApp"><i className="fab fa-whatsapp"></i></a>
+            <a href="#" className="social-icon" aria-label="Telegram"><i className="fab fa-telegram-plane"></i></a>
+            
+            <button className="dark-toggle" id="darkToggle" onClick={toggleTheme} aria-label="Toggle dark mode">
+              <i className={theme === 'light' ? 'fas fa-moon' : 'fas fa-sun'}></i>{' '}
+              {theme === 'light' ? (lang === 'en' ? 'Dark' : 'இருள்') : (lang === 'en' ? 'Light' : 'ஒளி')}
+            </button>
+            
+            <select 
+              className="lang-switcher" 
+              value={lang} 
+              onChange={(e) => setLang(e.target.value)} 
+              aria-label="Language"
+            >
+              <option value="ta">தமிழ்</option>
+              <option value="en">English</option>
+            </select>
 
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginLeft: '12px',
-            paddingLeft: '12px',
-            borderLeft: '1px solid var(--top-bar-border)'
-          }}>
-            {session && session.isLoggedIn ? (
-              <>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--top-bar-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <i className="fas fa-user-circle" style={{ color: roleColors[session.role] || '#64748B' }}></i>
-                  {session.username}
-                  <span style={{
-                    fontSize: '10px',
-                    background: roleColors[session.role] || '#64748B',
-                    color: 'white',
-                    padding: '1px 5px',
-                    borderRadius: '4px',
-                    fontWeight: 700
-                  }}>
-                    {lang === 'en' ? session.role.toUpperCase() : getTamilRole(session.role)}
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginLeft: '12px',
+              paddingLeft: '12px',
+              borderLeft: '1px solid var(--top-bar-border)'
+            }}>
+              {session && session.isLoggedIn ? (
+                <>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--top-bar-text)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <i className="fas fa-user-circle" style={{ color: roleColors[session.role] || '#64748B' }}></i>
+                    {session.username}
+                    <span style={{
+                      fontSize: '10px',
+                      background: roleColors[session.role] || '#64748B',
+                      color: 'white',
+                      padding: '1px 5px',
+                      borderRadius: '4px',
+                      fontWeight: 700
+                    }}>
+                      {lang === 'en' ? session.role.toUpperCase() : getTamilRole(session.role)}
+                    </span>
                   </span>
-                </span>
-                <button 
-                  onClick={logout} 
+                  <button 
+                    onClick={logout} 
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#EF4444',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      padding: '4px 8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      outline: 'none'
+                    }}
+                  >
+                    <i className="fas fa-sign-out-alt"></i> {lang === 'en' ? 'Logout' : 'வெளியேறு'}
+                  </button>
+                </>
+              ) : (
+                <Link 
+                  to="/login" 
                   style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#EF4444',
                     fontSize: '12px',
                     fontWeight: 700,
-                    cursor: 'pointer',
-                    padding: '4px 8px',
-                    display: 'flex',
+                    color: 'var(--primary)',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '4px',
-                    outline: 'none'
+                    gap: '6px',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    textDecoration: 'none'
                   }}
                 >
-                  <i className="fas fa-sign-out-alt"></i> {t('வெளியேறு')}
-                </button>
-              </>
-            ) : (
-              <Link 
-                to="/login" 
-                style={{
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  color: 'var(--primary)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  textDecoration: 'none'
-                }}
-              >
-                <i className="fas fa-sign-in-alt"></i> {t('உள்நுழை')}
-              </Link>
-            )}
+                  <i className="fas fa-sign-in-alt"></i> {lang === 'en' ? 'Login' : 'உள்நுழை'}
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="brand-header">
-        <div className="brand-logo-container">
-          <Link to="/" className="brand-logo-link" style={{textDecoration: 'none'}}>
-            <div className="brand-logo">KINGS 24x7</div>
-            <div className="brand-tagline">உண்மை. பொறுப்பு. தமிழில்.</div>
-          </Link>
+      {/* HEADER MAIN */}
+      <header className="header-main">
+        <div className="container">
+          <div className="header-left">
+            <Link to="/" className="logo-link">
+              <img src="/assets/images/logo-banner-light.png" alt="KING 24x7" className="main-logo-img logo-light-only" />
+              <img src="/assets/images/logo-banner-dark.png" alt="KING 24x7" className="main-logo-img logo-dark-only" />
+              <span className="logo-sub-text">LIVE • TRUE • TAMIL</span>
+            </Link>
+          </div>
+          <div className="header-center"></div>
+          <div className="header-right">
+            <Link to="/" className="livetv-btn">
+              <i className="fas fa-play-circle"></i> LIVE TV WATCH NOW
+            </Link>
+          </div>
         </div>
-        <div className="header-ad">
-          <div className="ad-placeholder-text">ADVERTISEMENT / விளம்பரம்</div>
-        </div>
-      </div>
+      </header>
 
-      <nav className="main-nav">
-        <div className="nav-container">
-          <ul className="nav-links">
-            <li><Link to="/" className={activeClass('/')}><i className="fas fa-home"></i> {t('முகப்பு')}</Link></li>
-            <li><Link to="/directory" className={activeClass('/directory')}><i className="fas fa-folder-open"></i> {t('வழிகாட்டி')}</Link></li>
-            <li><Link to="/classifieds" className={activeClass('/classifieds')}><i className="fas fa-tags"></i> {t('விளம்பரங்கள்')}</Link></li>
-            <li><Link to="/wishes" className={activeClass('/wishes')}><i className="fas fa-gift"></i> {t('வாழ்த்துகள்')}</Link></li>
-            <li><Link to="/obituaries" className={activeClass('/obituaries')}><i className="fas fa-monument"></i> {t('மரண அறிவிப்புகள்')}</Link></li>
-            <li><Link to="/jobs" className={activeClass('/jobs')}><i className="fas fa-briefcase"></i> {t('வேலைவாய்ப்பு')}</Link></li>
-            <li><Link to="/business-studies" className={activeClass('/business-studies')}><i className="fas fa-chart-line"></i> {t('வணிகக் கதைகள்')}</Link></li>
+      {/* NAVIGATION */}
+      <nav className="main-nav" id="mainNav">
+        <div className="container">
+          <div 
+            className="mobile-menu-btn" 
+            id="mobileMenuBtn" 
+            aria-label="Menu"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <i className="fas fa-bars"></i>
+          </div>
+          <ul className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`} id="navMenu">
+            <li className={`nav-item ${activeClass('/')}`} id="nav-home">
+              <Link to="/" className="nav-link">{lang === 'en' ? 'Home' : 'முகப்பு'}</Link>
+            </li>
+            <li className={`nav-item ${activeClass('/category/politics')}`} id="nav-politics">
+              <Link to="/category/politics" className="nav-link">{lang === 'en' ? 'Politics' : 'அரசியல்'}</Link>
+            </li>
+            <li className={`nav-item ${activeClass('/category/business')}`} id="nav-business">
+              <Link to="/category/business" className="nav-link">{lang === 'en' ? 'Business' : 'வணிகம்'}</Link>
+            </li>
+            <li className={`nav-item ${activeClass('/category/sports')}`} id="nav-sports">
+              <Link to="/category/sports" className="nav-link">{lang === 'en' ? 'Sports' : 'விளையாட்டு'}</Link>
+            </li>
+            <li className={`nav-item ${activeClass('/category/cinema')}`} id="nav-cinema">
+              <Link to="/category/cinema" className="nav-link">{lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு'}</Link>
+            </li>
+            <li className={`nav-item ${activeClass('/category/tech')}`} id="nav-tech">
+              <Link to="/category/tech" className="nav-link">{lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்'}</Link>
+            </li>
+            <li className={`nav-item ${activeClass('/directory')}`} id="nav-directory">
+              <Link to="/directory" className="nav-link">{lang === 'en' ? 'Regional' : 'மாநிலம்'}</Link>
+            </li>
+            <li className={`nav-item ${activeClass('/category/world')}`} id="nav-world">
+              <Link to="/category/world" className="nav-link">{lang === 'en' ? 'International' : 'சர்வதேசம்'}</Link>
+            </li>
+            <li className="nav-item">
+              <a href="#section-video" className="nav-link">{lang === 'en' ? 'Video' : 'வீடியோ'}</a>
+            </li>
+            <li className="nav-item">
+              <a href="#section-stories" className="nav-link">{lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்'}</a>
+            </li>
           </ul>
+          <div className="nav-search" id="searchToggle" aria-label="Search"><i class="fas fa-search"></i></div>
         </div>
       </nav>
+      {isRegionalPage && (
+        <div className="regional-sub-nav">
+          <div className="container">
+            <ul className="regional-sub-menu">
+              <li className={`sub-nav-item ${location.pathname === '/' ? 'active' : ''}`}>
+                <Link to="/" className="sub-nav-link">{t('முகப்பு')}</Link>
+              </li>
+              <li className={`sub-nav-item ${location.pathname === '/directory' ? 'active' : ''}`}>
+                <Link to="/directory" className="sub-nav-link">{t('நம்ம ஊர்')}</Link>
+              </li>
+              <li className="sub-nav-item">
+                <Link to="/" className="sub-nav-link">{t('செய்திகள்')}</Link>
+              </li>
+              <li className={`sub-nav-item ${location.pathname === '/wishes' ? 'active' : ''}`}>
+                <Link to="/wishes" className="sub-nav-link">{t('வாழ்த்து')}</Link>
+              </li>
+              <li className={`sub-nav-item ${location.pathname === '/obituaries' ? 'active' : ''}`}>
+                <Link to="/obituaries" className="sub-nav-link">{t('இரங்கல்')}</Link>
+              </li>
+              <li className={`sub-nav-item ${location.pathname === '/business-studies' ? 'active' : ''}`}>
+                <Link to="/business-studies" className="sub-nav-link">{t('வணிகம்')}</Link>
+              </li>
+              <li className={`sub-nav-item ${location.pathname === '/jobs' ? 'active' : ''}`}>
+                <Link to="/jobs" className="sub-nav-link">{t('வேலை')}</Link>
+              </li>
+              <li className={`sub-nav-item ${location.pathname === '/classifieds' ? 'active' : ''}`}>
+                <Link to="/classifieds" className="sub-nav-link">{t('தள்ளுபடி')}</Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+      )}
+      {mobileMenuOpen && (
+        <div 
+          className="mobile-overlay" 
+          id="mobileOverlay" 
+          style={{ display: 'block' }}
+          onClick={() => setMobileMenuOpen(false)}
+        ></div>
+      )}
     </header>
   );
 };

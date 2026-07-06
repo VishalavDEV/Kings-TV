@@ -4,7 +4,7 @@ export const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => localStorage.getItem('king24x7_theme') || 'light');
-  const [primaryColor, setPrimaryColor] = useState(() => localStorage.getItem('king24x7_primaryColor') || '#0057FF');
+  const [primaryColor, setPrimaryColor] = useState(() => localStorage.getItem('king24x7_primaryColor') || '#B3732A');
   const [fontSize, setFontSize] = useState(() => localStorage.getItem('king24x7_fontSize') || 'medium');
   const [widgetWidth, setWidgetWidth] = useState(() => parseInt(localStorage.getItem('king24x7_widgetWidth')) || 640);
   const [slideSpeed, setSlideSpeed] = useState(() => parseInt(localStorage.getItem('king24x7_slideSpeed')) || 8);
@@ -28,6 +28,17 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('king24x7_theme', theme);
+    
+    const favicon = document.getElementById('favicon') || document.querySelector("link[rel*='icon']");
+    if (favicon) {
+      if (theme === 'dark') {
+        favicon.setAttribute('href', '/assets/icons/favicon-dark.png');
+        favicon.setAttribute('type', 'image/png');
+      } else {
+        favicon.setAttribute('href', '/assets/icons/favicon-light.png');
+        favicon.setAttribute('type', 'image/png');
+      }
+    }
   }, [theme]);
 
   useEffect(() => {
@@ -66,7 +77,7 @@ export const ThemeProvider = ({ children }) => {
 
   const resetAll = () => {
     setTheme('light');
-    setPrimaryColor('#0057FF');
+    setPrimaryColor('#000000');
     setFontSize('medium');
     setWidgetWidth(640);
     setSlideSpeed(8);

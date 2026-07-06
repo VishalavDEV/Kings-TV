@@ -221,15 +221,6 @@ ul {
   box-shadow: var(--shadow-sm);
   transition: var(--transition);
 }
-.header-main .logo-light-only,
-[data-theme="dark"] .header-main .logo-light-only {
-  display: block !important;
-}
-
-.header-main .logo-dark-only,
-[data-theme="dark"] .header-main .logo-dark-only {
-  display: none !important;
-}
 
 .header-main .container {
   display: flex;
@@ -536,10 +527,11 @@ ul {
 
 .mobile-menu-btn {
   display: none;
-  padding: 12px 16px;
+  padding: 12px 20px;
   cursor: pointer;
-  font-size: 20px;
-  color: var(--text-dark);
+  font-size: 18px;
+  color: white !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 /* Breaking News */
@@ -1674,7 +1666,7 @@ ul {
 
 /* Footer */
 .site-footer {
-  background: #231F20;
+  background: #000000;
   color: rgba(255, 255, 255, 0.85);
   padding: 48px 0 0;
 }
@@ -2489,9 +2481,9 @@ ul {
 
 .header-left {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-  text-align: center;
+  text-align: left;
   width: 100%;
 }
 
@@ -2533,8 +2525,14 @@ ul {
 .header-left .logo-link {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   text-decoration: none;
+}
+
+@media (min-width: 769px) {
+  .header-left .logo-link {
+    margin-left: -40px;
+  }
 }
 
 .header-left .logo-sub-text {
@@ -2557,31 +2555,37 @@ ul {
   align-items: center;
   gap: 8px;
   text-decoration: none;
-  box-shadow: 0 2px 4px rgba(179, 115, 42, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   transition: var(--transition);
 }
 
 .livetv-btn:hover {
-  background: #996020;
+  background: #9b6221;
   transform: translateY(-2px);
 }
 
 /* Nav bar background */
 .main-nav {
-  background: #B3732A !important;
+  background: var(--primary) !important;
   border: none !important;
 }
 
 .nav-link {
   color: white !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
+  transition: var(--transition);
 }
 
-.nav-link:hover,
-.nav-item.active .nav-link {
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
   color: white !important;
-  background: rgba(255, 255, 255, 0.15);
-  border-bottom-color: white !important;
+}
+
+.nav-menu .nav-item.active a.nav-link,
+.nav-menu .nav-item.active .nav-link,
+.nav-item.active .nav-link {
+  background: #FAF4EB !important;
+  color: var(--primary) !important;
 }
 
 .nav-search {
@@ -3757,6 +3761,4 @@ ul {
     font-size: 15px;
   }
 }
-.header-main .logo-link {
-  display: none !important;
-}
+

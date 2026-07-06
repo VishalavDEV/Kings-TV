@@ -105,36 +105,12 @@ const Login = () => {
             </p>
           </div>
 
-          <div className="role-helper-section" style={{ marginTop: '30px' }}>
-            <h4 id="helperTitle" style={{ fontSize: '12px', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <i className="fas fa-magic"></i> {lang === 'en' ? 'Quick Fill Credentials' : 'விரைவு தேர்வு லாகின்'}
-            </h4>
-            <div className="role-pills" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {rolesList.map(item => (
-                <button
-                  key={item.role}
-                  className={`role-pill ${selectedRole === item.role ? 'active' : ''}`}
-                  onClick={() => handlePillClick(item)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '12px 16px',
-                    background: selectedRole === item.role ? 'var(--primary)' : 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid ' + (selectedRole === item.role ? 'var(--primary)' : 'rgba(255, 255, 255, 0.08)'),
-                    borderRadius: '8px',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    textAlign: 'left',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  <span style={{ fontWeight: 600 }}>{lang === 'en' ? item.labelEn : item.labelTa}</span>
-                  <i className="fas fa-chevron-right" style={{ fontSize: '10px', opacity: 0.5 }}></i>
-                </button>
-              ))}
-            </div>
+          <div className="logo-display-section" style={{ marginTop: '40px', flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img 
+              src="/assets/icons/logo-icon-dark.png" 
+              alt="Kings TV Logo" 
+              style={{ maxWidth: '140px', height: 'auto', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', filter: 'drop-shadow(0 4px 10px rgba(179,115,42,0.2))' }}
+            />
           </div>
         </div>
 

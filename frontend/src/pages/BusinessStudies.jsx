@@ -12,12 +12,26 @@ const BusinessStudies = () => {
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
 
+  const fallbackStories = [
+    { id: 'demo-1', author_name: 'Murugan', business_name: 'Murugan Coffee Works', title: 'How We Built a Traditional Brand Online', details: 'Using simple social media marketing...' }
+  ];
+
   const loadData = () => {
     fetchApi('/stories')
-      .then(data => setStories(data))
-      .catch(() => setStories([
-        { id: 1, author_name: 'Murugan', business_name: 'Murugan Coffee Works', title: 'How We Built a Traditional Brand Online', details: 'Using simple social media marketing...' }
-      ]));
+      .then(data => {
+        const formatted = Array.isArray(data) ? data.map(item => ({
+          id: item.id || item.story_id,
+          author_name: item.authorName || item.author_name,
+          business_name: item.businessName || item.business_name,
+          title: item.title,
+          details: item.details
+        })) : [];
+        setStories([...formatted, ...fallbackStories]);
+      })
+      .catch((err) => {
+        console.warn("Could not fetch stories from API, using fallback", err);
+        setStories(fallbackStories);
+      });
   };
 
   useEffect(() => {

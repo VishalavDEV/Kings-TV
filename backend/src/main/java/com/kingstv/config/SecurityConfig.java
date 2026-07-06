@@ -10,12 +10,18 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import com.kingstv.security.JwtAuthenticationFilter;
 import java.util.Arrays;
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -28,9 +34,26 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/**", "/api/v1/health", "/api/v1/articles/**", "/api/v1/directory/**", "/api/v1/classifieds/**", "/api/v1/wishes/**", "/api/v1/obituaries/**", "/api/v1/jobs/**", "/api/v1/stories/**").permitAll()
+                .requestMatchers(
+                    "/api/v1/auth/**", 
+                    "/api/v1/health", 
+                    "/api/v1/articles", "/api/v1/articles/**",
+                    "/api/v1/categories", "/api/v1/categories/**",
+                    "/api/v1/videos", "/api/v1/videos/**",
+                    "/api/v1/pdfs", "/api/v1/pdfs/**",
+                    "/api/v1/jobs", "/api/v1/jobs/**",
+                    "/api/v1/classifieds", "/api/v1/classifieds/**",
+                    "/api/v1/wishes", "/api/v1/wishes/**",
+                    "/api/v1/obituaries", "/api/v1/obituaries/**",
+                    "/api/v1/directory", "/api/v1/directory/**",
+                    "/api/v1/home", "/api/v1/home/**",
+                    "/api/v1/stories", "/api/v1/stories/**",
+                    "/api/v1/comments", "/api/v1/comments/**",
+                    "/error"
+                ).permitAll()
                 .anyRequest().authenticated()
-            );
+            )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

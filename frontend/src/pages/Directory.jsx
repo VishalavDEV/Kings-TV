@@ -3,117 +3,320 @@ import { LanguageContext } from '../context/LanguageContext';
 import { fetchApi } from '../utils/api';
 
 const Directory = () => {
-  const { t } = useContext(LanguageContext);
+  const { lang, t } = useContext(LanguageContext);
   const [listings, setListings] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  
+  const [filteredListings, setFilteredListings] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCat, setSelectedCat] = useState('all');
+  const [showModal, setShowModal] = useState(false);
+
+  // Form states
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('Hospital');
-  const [locality, setLocality] = useState('Chennai');
-  const [street, setStreet] = useState('');
+  const [category, setCategory] = useState('hospital');
+  const [locality, setLocality] = useState('');
+  const [hours, setHours] = useState('');
   const [phone, setPhone] = useState('');
+
+  const fallbackListings = [
+    { id: 'demo-1', businessName: 'அப்பல்லோ கிளினிக்', category: 'hospital', addressLocality: 'அண்ணா நகர், சென்னை', workingHours: '24 மணி நேர சேவை', phoneNumber: '+91 44 2829 0200', rating: 4.5 },
+    { id: 'demo-2', businessName: 'ராஜா எலக்ட்ரிக்கல்ஸ் & பிளம்பிங்', category: 'plumber', addressLocality: 'காந்தி வீதி, கோயம்புத்தூர்', workingHours: 'காலை 9:00 - மாலை 7:00', phoneNumber: '+91 98456 12345', rating: 4.8 },
+    { id: 'demo-3', businessName: 'செல்வம் வயரிங் சர்வீஸ்', category: 'electrician', addressLocality: 'பஸ் ஸ்டாண்ட் ரோடு, மதுரை', workingHours: 'காலை 8:00 - இரவு 8:00', phoneNumber: '+91 98765 43210', rating: 4.2 },
+    { id: 'demo-4', businessName: 'ஸ்ரீ கார்டன் உணவகம்', category: 'restaurant', addressLocality: 'சின்ன கடை வீதி, திருச்சி', workingHours: 'காலை 7:00 - இரவு 11:00', phoneNumber: '+91 431 270 1234', rating: 4.6 },
+    { id: 'demo-5', businessName: 'கண்ணன் டிபார்ட்மெண்டல் ஸ்டோர்ஸ்', category: 'store', addressLocality: 'ஜங்ஷன் ரோடு, சேலம்', workingHours: 'காலை 9:00 - இரவு 10:00', phoneNumber: '+91 427 244 5678', rating: 4.4 }
+  ];
 
   const loadData = () => {
     fetchApi('/directory')
-      .then(data => setListings(data))
-      .catch(() => setListings([
-        { id: 1, business_name: 'Kauvery Hospital', category: 'Hospital', address_locality: 'Chennai', address_street: 'Alwarpet', phone_number: '044-4000 6000' }
-      ]));
+      .then(data => {
+        const formatted = Array.isArray(data) ? data.map(item => ({
+          id: item.listing_id || item.id,
+          businessName: item.businessName || item.business_name,
+          category: (item.category || '').toLowerCase(),
+          addressLocality: (item.addressStreet ? `${item.addressStreet}, ` : '') + (item.addressLocality || ''),
+          workingHours: item.workingHours || item.working_hours || 'காலை 9:00 - இரவு 9:00',
+          phoneNumber: item.phoneNumber || item.phone_number,
+          rating: item.rating || 5.0
+        })) : [];
+        const merged = [...formatted, ...fallbackListings];
+        setListings(merged);
+        setFilteredListings(merged);
+      })
+      .catch((err) => {
+        console.warn("Could not fetch directory from API, using fallback", err);
+        setListings(fallbackListings);
+        setFilteredListings(fallbackListings);
+      });
   };
 
   useEffect(() => {
     loadData();
   }, []);
 
+  useEffect(() => {
+    let result = listings;
+
+    // Category filter
+    if (selectedCat !== 'all') {
+      result = result.filter(item => item.category === selectedCat);
+    }
+
+    // Search query filter
+    if (searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(item => 
+        item.businessName.toLowerCase().includes(query) || 
+        item.category.toLowerCase().includes(query) ||
+        item.addressLocality.toLowerCase().includes(query)
+      );
+    }
+
+    setFilteredListings(result);
+  }, [selectedCat, searchQuery, listings]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     fetchApi('/directory', {
       method: 'POST',
       body: JSON.stringify({
-        businessName: name, category, addressLocality: locality, addressStreet: street, phoneNumber: phone
+        businessName: name,
+        category: category.toLowerCase(),
+        addressLocality: locality,
+        addressStreet: '',
+        workingHours: hours,
+        phoneNumber: phone
       })
     })
     .then(() => {
       setName('');
-      setStreet('');
+      setLocality('');
+      setHours('');
       setPhone('');
-      setShowForm(false);
+      setShowModal(false);
       loadData();
     })
     .catch(err => {
-      console.warn("API write failed, updating UI locally", err);
-      setListings(prev => [
-        ...prev,
-        { id: Date.now(), business_name: name, category: category, address_locality: locality, address_street: street, phone_number: phone }
-      ]);
+      console.warn("API directory save failed, updating locally", err);
+      const newListing = {
+        id: Date.now(),
+        businessName: name,
+        category: category,
+        addressLocality: locality,
+        workingHours: hours || 'காலை 9:00 - இரவு 9:00',
+        phoneNumber: phone,
+        rating: 5.0
+      };
+      setListings(prev => [newListing, ...prev]);
       setName('');
-      setStreet('');
+      setLocality('');
+      setHours('');
       setPhone('');
-      setShowForm(false);
+      setShowModal(false);
     });
   };
 
+  const getCategoryLabel = (cat) => {
+    const labels = {
+      hospital: lang === 'en' ? 'Hospital' : 'மருத்துவமனை',
+      plumber: lang === 'en' ? 'Plumber' : 'பிளம்பர்',
+      electrician: lang === 'en' ? 'Electrician' : 'மின் பணியாளர்',
+      restaurant: lang === 'en' ? 'Restaurant' : 'உணவகம்',
+      store: lang === 'en' ? 'Store' : 'கடைகள்'
+    };
+    return labels[cat] || cat;
+  };
+
+  const getCategoryClass = (cat) => {
+    const classes = {
+      hospital: 'cat-politics',
+      plumber: 'cat-business',
+      electrician: 'cat-technology',
+      restaurant: 'cat-cinema',
+      store: 'cat-agriculture'
+    };
+    return classes[cat] || 'cat-politics';
+  };
+
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-dark)' }}>📍 {t('வணிக அடைவு')}</h2>
-        <button onClick={() => setShowForm(prev => !prev)} className="btn" style={{ padding: '10px 20px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}>
-          {t('புதிய பதிவு')}
+    <main className="container">
+      {/* HERO / SEARCH */}
+      <section className="directory-hero">
+        <h1>{lang === 'en' ? 'Local Business Directory' : 'நம்ம ஊர் வணிகக் கோப்பகம்'}</h1>
+        <p>{lang === 'en' ? 'Find local shops, emergency services, and professionals instantly' : 'உள்ளூர் கடைகள், அவசர சேவைகள் மற்றும் தொழில் வல்லுநர்களை உடனடியாகக் கண்டறியுங்கள்'}</p>
+        <div className="search-wrapper">
+          <input 
+            type="text" 
+            placeholder={lang === 'en' ? 'Hospital, Plumber, Store...' : 'மருத்துவமனை, பிளம்பர், கடை...'} 
+            aria-label="Search Directory"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <button>{lang === 'en' ? 'Search' : 'தேடுக'}</button>
+        </div>
+      </section>
+
+      {/* FILTERS */}
+      <div className="category-filter-row">
+        <button 
+          className={`filter-pill ${selectedCat === 'all' ? 'active' : ''}`}
+          onClick={() => setSelectedCat('all')}
+        >
+          {lang === 'en' ? 'All Services' : 'அனைத்து சேவைகள்'}
+        </button>
+        <button 
+          className={`filter-pill ${selectedCat === 'hospital' ? 'active' : ''}`}
+          onClick={() => setSelectedCat('hospital')}
+        >
+          {lang === 'en' ? 'Hospitals' : 'மருத்துவமனை'}
+        </button>
+        <button 
+          className={`filter-pill ${selectedCat === 'plumber' ? 'active' : ''}`}
+          onClick={() => setSelectedCat('plumber')}
+        >
+          {lang === 'en' ? 'Plumbers' : 'பிளம்பர்'}
+        </button>
+        <button 
+          className={`filter-pill ${selectedCat === 'electrician' ? 'active' : ''}`}
+          onClick={() => setSelectedCat('electrician')}
+        >
+          {lang === 'en' ? 'Electrician' : 'மின் பணியாளர்'}
+        </button>
+        <button 
+          className={`filter-pill ${selectedCat === 'restaurant' ? 'active' : ''}`}
+          onClick={() => setSelectedCat('restaurant')}
+        >
+          {lang === 'en' ? 'Restaurants' : 'உணவகம்'}
+        </button>
+        <button 
+          className={`filter-pill ${selectedCat === 'store' ? 'active' : ''}`}
+          onClick={() => setSelectedCat('store')}
+        >
+          {lang === 'en' ? 'Shops' : 'கடைகள்'}
         </button>
       </div>
 
-      {showForm && (
-        <form onSubmit={handleSubmit} style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '24px', marginBottom: '30px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+      {/* DIRECTORY GRID */}
+      <section className="directory-grid">
+        {filteredListings.map(lst => (
+          <div className="directory-card" key={lst.id}>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-dark)', marginBottom: '8px' }}>Business Name *</label>
-              <input type="text" value={name} onChange={e => setName(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', color: 'black' }} />
+              <div className="biz-header">
+                <span className={`biz-type ${getCategoryClass(lst.category)}`}>
+                  {getCategoryLabel(lst.category)}
+                </span>
+                <div className="biz-rating">
+                  <i className="fas fa-star"></i> {lst.rating || 5.0}
+                </div>
+              </div>
+              <h2 className="biz-title">{lst.businessName}</h2>
+              <div className="biz-details">
+                <p><i className="fas fa-map-marker-alt"></i> {lst.addressLocality}</p>
+                <p><i className="fas fa-clock"></i> {lst.workingHours}</p>
+                <p><i className="fas fa-phone-alt"></i> {lst.phoneNumber}</p>
+              </div>
             </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-dark)', marginBottom: '8px' }}>Phone Number *</label>
-              <input type="text" value={phone} onChange={e => setPhone(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', color: 'black' }} />
+            <div className="biz-actions">
+              <a href={`tel:${lst.phoneNumber}`} className="biz-btn call-btn">
+                {lang === 'en' ? 'Call' : 'அழைக்க'}
+              </a>
+              <button className="biz-btn map-btn" onClick={() => alert(lang === 'en' ? 'Opening Map View...' : 'வரைபடம் ஏற்றப்படுகிறது...')}>
+                {lang === 'en' ? 'Map' : 'வரைபடம்'}
+              </button>
             </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-dark)', marginBottom: '8px' }}>Category</label>
-              <select value={category} onChange={e => setCategory(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', color: 'black' }}>
-                <option value="Hospital">Hospital</option>
-                <option value="Restaurant">Restaurant</option>
-                <option value="Education">Education</option>
-                <option value="Hotel">Hotel</option>
-              </select>
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-dark)', marginBottom: '8px' }}>City/Locality</label>
-              <select value={locality} onChange={e => setLocality(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', color: 'black' }}>
-                <option value="Chennai">Chennai</option>
-                <option value="Coimbatore">Coimbatore</option>
-                <option value="Madurai">Madurai</option>
-              </select>
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-dark)', marginBottom: '8px' }}>Street *</label>
-              <input type="text" value={street} onChange={e => setStreet(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', color: 'black' }} />
-            </div>
-          </div>
-          <button type="submit" style={{ padding: '12px 20px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}>
-            {t('சமர்ப்பி')}
-          </button>
-        </form>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-        {listings.map(lst => (
-          <div key={lst.id} className="card" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px' }}>
-            <span style={{ fontSize: '10px', background: 'var(--primary-light)', color: 'var(--primary)', padding: '4px 8px', borderRadius: '4px', fontWeight: 700 }}>{lst.category}</span>
-            <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-dark)', marginTop: '12px', marginBottom: '8px' }}>{lst.business_name}</h3>
-            <p style={{ fontSize: '13px', color: 'var(--text-light)', marginBottom: '12px' }}><i className="fas fa-map-marker-alt"></i> {lst.address_street}, {lst.address_locality}</p>
-            <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--primary)' }}><i className="fas fa-phone"></i> {lst.phone_number}</p>
           </div>
         ))}
-      </div>
-    </div>
+      </section>
+
+      {/* PROMO REGISTRATION BAR */}
+      <section className="directory-hero" style={{ background: 'var(--white)', border: '1px solid rgba(0,0,0,0.08)', color: 'var(--text-dark)', marginTop: '40px' }}>
+        <h3 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>
+          {lang === 'en' ? 'Want to advertise your local business or service here?' : 'உங்கள் உள்ளூர் வணிகம் அல்லது சேவையை இங்கே விளம்பரப்படுத்த விருப்பமா?'}
+        </h3>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
+          {lang === 'en' ? 'Reach thousands of local people at the lowest rates.' : 'மிகக் குறைந்த விலையில் ஆயிரக்கணக்கான உள்ளூர் மக்களைச் சென்றடையுங்கள்.'}</p>
+        <button 
+          onClick={() => setShowModal(true)}
+          style={{ padding: '12px 24px', borderRadius: '30px', background: 'var(--primary)', color: 'white', border: 'none', fontWeight: 700, cursor: 'pointer' }}
+        >
+          {lang === 'en' ? 'Add Your Business' : 'உங்கள் வணிகத்தை சேர்க்கவும்'}
+        </button>
+      </section>
+
+      {/* REGISTRATION MODAL */}
+      {showModal && (
+        <div className="modal open" id="addListingModal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>{lang === 'en' ? 'Add New Business' : 'புதிய வணிகத்தை சேர்க்கவும்'}</h3>
+              <button className="modal-close" onClick={() => setShowModal(false)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <form id="addListingForm" onSubmit={handleSubmit}>
+                <div className="form-group">
+                  <label htmlFor="bizName">{lang === 'en' ? 'Business Name *' : 'வணிகப் பெயர் *'}</label>
+                  <input 
+                    type="text" 
+                    id="bizName" 
+                    required 
+                    placeholder={lang === 'en' ? 'e.g. Kannan Stores' : 'எ.கா: கண்ணன் ஸ்டோர்ஸ்'}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="bizCat">{lang === 'en' ? 'Category *' : 'வகை *'}</label>
+                  <select 
+                    id="bizCat" 
+                    required
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', color: 'black' }}
+                  >
+                    <option value="hospital">{lang === 'en' ? 'Hospital' : 'மருத்துவமனை'}</option>
+                    <option value="plumber">{lang === 'en' ? 'Plumber' : 'பிளம்பர்'}</option>
+                    <option value="electrician">{lang === 'en' ? 'Electrician' : 'மின் பணியாளர்'}</option>
+                    <option value="restaurant">{lang === 'en' ? 'Restaurant' : 'உணவகம்'}</option>
+                    <option value="store">{lang === 'en' ? 'Shops / Store' : 'கடைகள்'}</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="bizLoc">{lang === 'en' ? 'Address / Location *' : 'முகவரி / இடம் *'}</label>
+                  <input 
+                    type="text" 
+                    id="bizLoc" 
+                    required 
+                    placeholder={lang === 'en' ? 'e.g. Rajaji Street, Madurai' : 'எ.கா: ராஜாஜி வீதி, மதுரை'}
+                    value={locality}
+                    onChange={(e) => setLocality(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="bizHours">{lang === 'en' ? 'Working Hours' : 'வேலை நேரம்'}</label>
+                  <input 
+                    type="text" 
+                    id="bizHours" 
+                    placeholder={lang === 'en' ? 'e.g. 9 AM - 9 PM' : 'எ.கா: காலை 9 - இரவு 9'}
+                    value={hours}
+                    onChange={(e) => setHours(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="bizPhone">{lang === 'en' ? 'Phone Number *' : 'தொலைபேசி எண் *'}</label>
+                  <input 
+                    type="tel" 
+                    id="bizPhone" 
+                    required 
+                    placeholder={lang === 'en' ? 'e.g. +91 9876543210' : 'எ.கா: +91 9876543210'}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                </div>
+                <button type="submit" className="submit-btn">{lang === 'en' ? 'Submit' : 'சமர்ப்பிக்க'}</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
   );
 };
 

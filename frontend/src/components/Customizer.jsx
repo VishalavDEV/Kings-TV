@@ -3,8 +3,9 @@ import { ThemeContext } from '../context/ThemeContext';
 import { LanguageContext } from '../context/LanguageContext';
 
 const Customizer = () => {
-  const { t } = useContext(LanguageContext);
+  const { lang, t } = useContext(LanguageContext);
   const {
+    theme, setTheme,
     primaryColor, setPrimaryColor,
     fontSize, setFontSize,
     widgetWidth, setWidgetWidth,
@@ -15,181 +16,211 @@ const Customizer = () => {
 
   const [isOpen, setIsOpen] = useState(false);
 
+  const handleToggle = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const handleColorChange = (color) => {
+    setPrimaryColor(color);
+  };
+
+  const sectionsList = [
+    { id: 'hero', ta: 'சிறப்புச் செய்திகள்', en: 'Featured News' },
+    { id: 'video', ta: 'வீடியோ செய்திகள்', en: 'Video News' },
+    { id: 'stories', ta: 'வெப் ஸ்டோரிஸ்', en: 'Web Stories' },
+    { id: 'agri', ta: 'விவசாயம் & சந்தை', en: 'Agriculture & Market' },
+    { id: 'election', ta: 'தேர்தல் மையம்', en: 'Election Hub' },
+    { id: 'livetv', ta: 'லைவ் டிவி', en: 'Live TV' },
+    { id: 'poll', ta: 'கருத்துக் கணிப்பு', en: 'Opinion Poll' },
+    { id: 'digest', ta: 'செய்தி சுருக்கம்', en: 'News Digest' },
+    { id: 'newsletter', ta: 'செய்தி மடல்', en: 'Newsletter' },
+    { id: 'district', ta: 'மாவட்ட செய்திகள்', en: 'District News' },
+    { id: 'business', ta: 'வணிக டாஷ்போர்டு', en: 'Business Dashboard' }
+  ];
+
   return (
     <>
+      {isOpen && (
+        <div 
+          className="panel-backdrop" 
+          id="panelBackdrop" 
+          style={{ display: 'block' }}
+          onClick={handleToggle}
+        ></div>
+      )}
+      
       <button 
-        className="customizer-toggle" 
-        onClick={() => setIsOpen(true)}
-        aria-label="Open design customizer"
-        style={{
-          position: 'fixed',
-          bottom: '24px',
-          right: '24px',
-          width: '56px',
-          height: '56px',
-          borderRadius: '50%',
-          background: 'var(--primary)',
-          color: 'white',
-          border: 'none',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-          cursor: 'pointer',
-          zIndex: 999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '20px',
-          transition: 'all 0.3s'
-        }}
+        className="customize-toggle" 
+        id="customizeToggle" 
+        aria-label="Customize"
+        onClick={handleToggle}
       >
-        <i className="fas fa-cog fa-spin"></i>
+        <i className="fas fa-sliders-h"></i>
       </button>
 
-      <div 
-        className={`customizer-panel ${isOpen ? 'open' : ''}`}
-        style={{
-          position: 'fixed',
-          top: 0,
-          right: isOpen ? 0 : '-350px',
-          width: '320px',
-          height: '100vh',
-          background: 'var(--card-bg)',
-          boxShadow: '-10px 0 30px rgba(0, 0, 0, 0.2)',
-          zIndex: 1000,
-          transition: 'right 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-          padding: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          overflowY: 'auto'
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-dark)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <i className="fas fa-sliders-h" style={{ color: 'var(--primary)' }}></i>
-            {t('வடிவமைப்பு மாற்றி')}
+      <div className={`customize-panel ${isOpen ? 'open' : ''}`} id="customizePanel">
+        <div className="panel-header">
+          <h3>
+            <i className="fas fa-palette"></i>{' '}
+            {lang === 'en' ? 'Customize Design' : 'தனிப்பயனாக்கு'}
           </h3>
           <button 
-            onClick={() => setIsOpen(false)} 
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-light)', fontSize: '18px', cursor: 'pointer' }}
+            className="close-panel" 
+            id="closePanel" 
+            aria-label="Close"
+            onClick={handleToggle}
           >
             <i className="fas fa-times"></i>
           </button>
         </div>
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div>
-            <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
-              {t('வண்ணம்')}
-            </label>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              {['#0057FF', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'].map(c => (
-                <button 
-                  key={c}
-                  onClick={() => setPrimaryColor(c)}
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: c,
-                    border: primaryColor === c ? '3px solid white' : 'none',
-                    boxShadow: '0 0 0 2px ' + (primaryColor === c ? 'var(--primary)' : 'transparent'),
-                    cursor: 'pointer'
-                  }}
+        <div className="panel-body">
+          {/* THEME */}
+          <div className="customize-group">
+            <h4>⭐ {lang === 'en' ? 'Theme' : 'தீம்'}</h4>
+            <div className="customize-row">
+              <div>
+                <label>{lang === 'en' ? 'Dark Mode' : 'இருண்ட பயன்முறை'}</label>
+                <div className="custom-desc">
+                  {lang === 'en' ? 'Switch to dark theme' : 'இருண்ட தீமுக்கு மாற்றவும்'}
+                </div>
+              </div>
+              <label className="custom-switch">
+                <input 
+                  type="checkbox" 
+                  id="ctrlDarkMode"
+                  checked={theme === 'dark'}
+                  onChange={() => setTheme(theme === 'light' ? 'dark' : 'light')}
                 />
-              ))}
+                <span className="slider"></span>
+              </label>
             </div>
           </div>
 
-          <div>
-            <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
-              {t('எழுத்து அளவு')}
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-              {['small', 'medium', 'large'].map(sz => (
-                <button
-                  key={sz}
-                  onClick={() => setFontSize(sz)}
-                  style={{
-                    padding: '8px',
-                    borderRadius: '6px',
-                    border: '1px solid var(--border-color)',
-                    background: fontSize === sz ? 'var(--primary)' : 'var(--card-bg)',
-                    color: fontSize === sz ? 'white' : 'var(--text-dark)',
-                    fontWeight: 600,
-                    fontSize: '12px',
-                    cursor: 'pointer'
-                  }}
+          {/* PRIMARY COLOR */}
+          <div className="customize-group">
+            <h4>🎨 {lang === 'en' ? 'Primary Color' : 'முதன்மை நிறம்'}</h4>
+            <div className="color-picker-row">
+              {['#B3732A', '#D97706', '#2563EB', '#16A34A', '#DC2626', '#7C3AED', '#DB2777'].map(c => (
+                <span 
+                  key={c}
+                  className={`color-swatch ${primaryColor === c ? 'active' : ''}`} 
+                  style={{ background: c }}
+                  onClick={() => handleColorChange(c)}
                 >
-                  {sz === 'small' ? t('சிறிய') : sz === 'medium' ? t('நடுத்தர') : t('பெரிய')}
-                </button>
+                  <input type="color" value={c} readOnly style={{ display: 'none' }} />
+                </span>
               ))}
             </div>
           </div>
 
-          <div>
-            <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
-              {t('இடது பக்கப்பட்டி அகலம் (பிக்சல்)')}: {widgetWidth}px
-            </label>
-            <input 
-              type="range" 
-              min="200" 
-              max="400" 
-              value={widgetWidth}
-              onChange={(e) => setWidgetWidth(parseInt(e.target.value))}
-              style={{ width: '100%', accentColor: 'var(--primary)' }}
-            />
+          {/* FONT SIZE */}
+          <div className="customize-group">
+            <h4>🔤 {lang === 'en' ? 'Font Size' : 'எழுத்து அளவு'}</h4>
+            <div className="customize-row">
+              <button 
+                className={`font-size-btn ${fontSize === 'small' ? 'active' : ''}`}
+                onClick={() => setFontSize('small')}
+              >
+                {lang === 'en' ? 'Small' : 'சிறியது'}
+              </button>
+              <button 
+                className={`font-size-btn ${fontSize === 'medium' ? 'active' : ''}`}
+                onClick={() => setFontSize('medium')}
+              >
+                {lang === 'en' ? 'Medium' : 'நடுத்தரம்'}
+              </button>
+              <button 
+                className={`font-size-btn ${fontSize === 'large' ? 'active' : ''}`}
+                onClick={() => setFontSize('large')}
+              >
+                {lang === 'en' ? 'Large' : 'பெரியது'}
+              </button>
+            </div>
           </div>
 
-          <div>
-            <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
-              {t('நகரும் வேகம் (வினாடி)')}: {slideSpeed}s
-            </label>
-            <input 
-              type="range" 
-              min="3" 
-              max="15" 
-              value={slideSpeed}
-              onChange={(e) => setSlideSpeed(parseInt(e.target.value))}
-              style={{ width: '100%', accentColor: 'var(--primary)' }}
-            />
-          </div>
-
-          <div>
-            <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
-              {t('பகுதி தெரிவுநிலை')}
-            </label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto', paddingRight: '4px' }}>
-              {Object.keys(sections).map(sec => (
-                <label key={sec} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-dark)', cursor: 'pointer' }}>
-                  <span style={{ textTransform: 'capitalize' }}>{sec} Section</span>
-                  <input 
-                    type="checkbox" 
-                    checked={sections[sec]} 
-                    onChange={() => toggleSection(sec)}
-                    style={{ accentColor: 'var(--primary)' }}
-                  />
-                </label>
+          {/* SECTION VISIBILITY */}
+          <div className="customize-group">
+            <h4>👁️ {lang === 'en' ? 'Show/Hide Sections' : 'பகுதிகளை மறை/காட்டு'}</h4>
+            <div className="section-visibility">
+              {sectionsList.map(sec => (
+                <div className="customize-row" key={sec.id}>
+                  <label>{lang === 'en' ? sec.en : sec.ta}</label>
+                  <label className="custom-switch">
+                    <input 
+                      type="checkbox" 
+                      checked={sections[sec.id] !== false}
+                      onChange={() => toggleSection(sec.id)}
+                    />
+                    <span className="slider"></span>
+                  </label>
+                </div>
               ))}
+            </div>
+          </div>
+
+          {/* WIDGET WIDTH & SLIDE SPEED */}
+          <div className="customize-group">
+            <h4>📊 {lang === 'en' ? 'Widget Settings' : 'விட்ஜெட் அமைப்புகள்'}</h4>
+            <div className="customize-row">
+              <div>
+                <label>{lang === 'en' ? 'Widget Width' : 'விலைப் பெட்டி அகலம்'}</label>
+                <div className="custom-desc">
+                  {lang === 'en' ? 'Width of the right sidebar widgets' : 'மேலே உள்ள விலைப் பெட்டியின் அகலம்'}
+                </div>
+              </div>
+              <select 
+                id="ctrlWidgetWidth"
+                value={widgetWidth}
+                onChange={(e) => setWidgetWidth(parseInt(e.target.value))}
+                style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #E2E8F0', fontSize: '13px', background: 'var(--bg-light)', color: 'var(--text-dark)' }}
+              >
+                <option value="520">{lang === 'en' ? 'Normal' : 'சாதாரணம்'}</option>
+                <option value="640">{lang === 'en' ? 'Wide' : 'நீளம்'}</option>
+                <option value="780">{lang === 'en' ? 'Very Wide' : 'மிக நீளம்'}</option>
+              </select>
+            </div>
+
+            <div className="customize-row" style={{ marginTop: '12px' }}>
+              <div>
+                <label>{lang === 'en' ? 'Slide Interval' : 'விழும் ஸ்லைடு வேகம்'}</label>
+                <div className="custom-desc">
+                  {lang === 'en' ? 'Duration in seconds for widget changes' : 'விலைப் பெட்டி மாறும் நேரம் (வினாடிகள்)'}
+                </div>
+              </div>
+              <select 
+                id="ctrlSlideSpeed"
+                value={slideSpeed}
+                onChange={(e) => setSlideSpeed(parseInt(e.target.value))}
+                style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #E2E8F0', fontSize: '13px', background: 'var(--bg-light)', color: 'var(--text-dark)' }}
+              >
+                <option value="4">4 {lang === 'en' ? 'seconds' : 'வினாடிகள்'}</option>
+                <option value="6">6 {lang === 'en' ? 'seconds' : 'வினாடிகள்'}</option>
+                <option value="8">8 {lang === 'en' ? 'seconds' : 'வினாடிகள்'}</option>
+                <option value="12">12 {lang === 'en' ? 'seconds' : 'வினாடிகள்'}</option>
+              </select>
             </div>
           </div>
         </div>
 
-        <button 
-          onClick={resetAll}
-          style={{
-            marginTop: '20px',
-            width: '100%',
-            padding: '12px',
-            borderRadius: '8px',
-            background: '#EF4444',
-            color: 'white',
-            fontWeight: 700,
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '13px'
-          }}
-        >
-          {t('அனைத்தையும் மீட்டமை')}
-        </button>
+        <div className="panel-footer" style={{ padding: '16px 20px', borderTop: '1px solid #E2E8F0', display: 'flex', gap: '10px' }}>
+          <button 
+            className="reset-btn" 
+            id="resetCustomize"
+            onClick={resetAll}
+            style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#F8FAFC', cursor: 'pointer', fontWeight: 600 }}
+          >
+            {lang === 'en' ? 'Reset' : 'மீட்டமை'}
+          </button>
+          <button 
+            className="apply-btn" 
+            id="applyCustomize"
+            onClick={handleToggle}
+            style={{ flex: 1, padding: '10px', borderRadius: '6px', border: 'none', background: 'var(--primary)', color: 'white', cursor: 'pointer', fontWeight: 700 }}
+          >
+            {lang === 'en' ? 'Apply' : 'பயன்படுத்து'}
+          </button>
+        </div>
       </div>
     </>
   );

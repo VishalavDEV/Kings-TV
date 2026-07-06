@@ -13,6 +13,7 @@ import Obituaries from './pages/Obituaries';
 import Jobs from './pages/Jobs';
 import BusinessStudies from './pages/BusinessStudies';
 import ArticleDetail from './pages/ArticleDetail';
+import Category from './pages/Category';
 
 function App() {
   return (
@@ -38,6 +39,8 @@ function App() {
             <Route path="/jobs.html" element={<Navigate to="/jobs" replace />} />
             <Route path="/business-studies" element={<BusinessStudies />} />
             <Route path="/business-studies.html" element={<Navigate to="/business-studies" replace />} />
+            <Route path="/category/:slug" element={<Category />} />
+            <Route path="/category.html" element={<Category />} />
             <Route path="/article/:id" element={<ArticleDetail />} />
             <Route path="/article" element={<Navigate to="/" replace />} />
           </Routes>
