@@ -125,12 +125,12 @@ const Wishes = () => {
     <main className="container">
       {/* HERO / SEARCH */}
       <section className="wishes-hero">
-        <h1>{lang === 'en' ? 'Wishes & Celebrations' : 'வாழ்த்துகள் & கொண்டாட்டங்கள்'}</h1>
-        <p>{lang === 'en' ? 'Birthdays, wedding anniversaries, and achievements of local citizens' : 'உள்ளூர் மக்களின் பிறந்தநாள், திருமண நாள், கல்விச் சாதனை மற்றும் விளையாட்டு வெற்றிகளுக்கான வாழ்த்துகள்'}</p>
+        <h1>{lang === 'en' ? 'Local Wishes & Celebrations' : 'நமது ஊர் வாழ்த்துகளும் கொண்டாட்டங்களும்'}</h1>
+        <p>{lang === 'en' ? 'Share birthdays, weddings and achievements of our local citizens.' : 'உள்ளூர் மக்களின் பிறந்தநாள், திருமண நாள் மற்றும் சாதனையாளர்களை வாழ்த்தி மகிழுங்கள்'}</p>
         <div className="search-wrapper">
           <input 
             type="text" 
-            placeholder={lang === 'en' ? 'Search by name or message...' : 'பெயர் அல்லது செய்தியைத் தேடுக...'} 
+            placeholder={lang === 'en' ? 'Search by name...' : 'பெயர் கொண்டு தேடுக...'} 
             aria-label="Search Wishes"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

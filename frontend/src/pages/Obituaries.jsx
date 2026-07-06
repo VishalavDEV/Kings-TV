@@ -142,12 +142,12 @@ const Obituaries = () => {
     <main className="container">
       {/* HERO / SEARCH */}
       <section className="obituaries-hero">
-        <h1>{lang === 'en' ? 'Condolences & Obituary Notices' : 'இரங்கல் செய்திகள்'}</h1>
-        <p>{lang === 'en' ? 'Obituary announcements, funeral details, and tribute cards of local citizens' : 'உள்ளூர் இறப்புச் செய்திகள், இறுதிச் சடங்கு விபரங்கள் மற்றும் இரங்கல் குறிப்புகள்'}</p>
+        <h1>{lang === 'en' ? 'Condolences & Obituaries' : 'கண்ணீர் அஞ்சலி & இரங்கல் செய்திகள்'}</h1>
+        <p>{lang === 'en' ? 'Obituary announcements and funeral details of local citizens.' : 'நமது ஊர் காலமானவர்களின் விபரங்கள் மற்றும் இறுதி அஞ்சலி முன்னறிவிப்புகள்'}</p>
         <div className="search-wrapper">
           <input 
             type="text" 
-            placeholder={lang === 'en' ? 'Search by name or location...' : 'பெயர் அல்லது ஊர் கொண்டு தேடுக...'} 
+            placeholder={lang === 'en' ? 'Search by name or town...' : 'பெயர் அல்லது ஊர் உள்ளிடவும்...'} 
             aria-label="Search Obituaries"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
