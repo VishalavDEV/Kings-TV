@@ -15,11 +15,12 @@ const Home = () => {
   const getCategoryDetails = (categoryId) => {
     const categories = {
       1: { slug: 'politics', en: 'Politics', ta: 'அரசியல்' },
-      2: { slug: 'sports', en: 'Sports', ta: 'விளையாட்டு' },
-      3: { slug: 'business', en: 'Business', ta: 'வணிகம்' },
-      4: { slug: 'tech', en: 'Tech', ta: 'தொழில்நுட்பம்' },
-      5: { slug: 'cinema', en: 'Cinema', ta: 'பொழுதுபோக்கு' },
-      6: { slug: 'agri', en: 'Agriculture', ta: 'விவசாயம்' }
+      2: { slug: 'business', en: 'Business', ta: 'வணிகம்' },
+      3: { slug: 'sports', en: 'Sports', ta: 'விளையாட்டு' },
+      4: { slug: 'cinema', en: 'Cinema', ta: 'பொழுதுபோக்கு' },
+      5: { slug: 'tech', en: 'Tech', ta: 'தொழில்நுட்பம்' },
+      6: { slug: 'regional', en: 'Regional', ta: 'மாநில செய்திகள்' },
+      7: { slug: 'international', en: 'International', ta: 'சர்வதேச செய்திகள்' }
     };
     return categories[categoryId] || { slug: 'politics', en: 'Politics', ta: 'அரசியல்' };
   };
@@ -260,31 +261,31 @@ const Home = () => {
       <section className="quick-access">
         <div className="container">
           <div className="quick-grid">
-            <Link to="/directory" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link to="/category/politics" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="icon cat-politics"><i className="fas fa-landmark"></i></div>
               <span>{lang === 'en' ? 'Politics' : 'அரசியல்'}</span>
             </Link>
-            <Link to="/classifieds" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link to="/category/business" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="icon cat-business"><i className="fas fa-chart-line"></i></div>
               <span>{lang === 'en' ? 'Business' : 'வணிகம்'}</span>
             </Link>
-            <Link to="/wishes" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link to="/category/sports" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="icon cat-sports"><i className="fas fa-trophy"></i></div>
               <span>{lang === 'en' ? 'Sports' : 'விளையாட்டு'}</span>
             </Link>
-            <Link to="/obituaries" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link to="/category/cinema" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="icon cat-cinema"><i className="fas fa-film"></i></div>
               <span>{lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு'}</span>
             </Link>
-            <Link to="/jobs" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link to="/category/tech" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="icon cat-technology"><i className="fas fa-microchip"></i></div>
               <span>{lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்'}</span>
             </Link>
-            <Link to="/directory" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link to="/category/regional" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="icon cat-education"><i className="fas fa-map-marker-alt"></i></div>
               <span>{lang === 'en' ? 'State' : 'மாநிலம்'}</span>
             </Link>
-            <Link to="/" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link to="/category/international" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="icon cat-weather"><i className="fas fa-globe"></i></div>
               <span>{lang === 'en' ? 'International' : 'சர்வதேசம்'}</span>
             </Link>

@@ -294,7 +294,7 @@ const Category = () => {
     fetchApi('/articles')
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
-          const catIdMap = { politics: 1, sports: 2, business: 3, tech: 4, cinema: 5 };
+          const catIdMap = { politics: 1, business: 2, sports: 3, cinema: 4, tech: 5 };
           const targetId = catIdMap[catKey] || 1;
 
           const filtered = data.filter(item => item.categoryId === targetId);

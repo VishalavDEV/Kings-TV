@@ -485,21 +485,21 @@ ul {
 }
 
 .main-nav.regional-theme .nav-link {
-  color: var(--white) !important;
-  font-weight: 700;
+  color: white !important;
+  font-weight: 700 !important;
   padding: 14px 20px;
   font-size: 15px;
+  transition: var(--transition);
 }
 
 .main-nav.regional-theme .nav-link:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-  color: var(--white) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: white !important;
 }
 
 .main-nav.regional-theme .nav-item.active .nav-link {
-  background-color: var(--primary-dark);
-  border-bottom-color: #FFF6E0;
-  color: var(--white) !important;
+  background: #FAF4EB !important;
+  color: var(--primary) !important;
 }
 
 /* Pipe divider for regional items on desktop */

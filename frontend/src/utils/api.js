@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api/v1';
+const API_BASE = 'http://localhost:5000/api/v1';
 
 export const fetchApi = async (endpoint, options = {}) => {
   const session = JSON.parse(localStorage.getItem('king24x7_session') || 'null');
