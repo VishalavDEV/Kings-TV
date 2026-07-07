@@ -238,7 +238,7 @@ const Header = () => {
       </header>
 
       {/* NAVIGATION */}
-      <nav className="main-nav" id="mainNav">
+      <nav className={`main-nav ${isRegionalPage ? 'regional-theme' : ''}`} id="mainNav">
         <div className="container">
           <div 
             className="mobile-menu-btn" 
@@ -248,73 +248,70 @@ const Header = () => {
           >
             <i className="fas fa-bars"></i>
           </div>
-          <ul className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`} id="navMenu">
-            <li className={`nav-item ${activeClass('/')}`} id="nav-home">
-              <Link to="/" className="nav-link">{lang === 'en' ? 'Home' : 'முகப்பு'}</Link>
-            </li>
-            <li className={`nav-item ${activeClass('/category/politics')}`} id="nav-politics">
-              <Link to="/category/politics" className="nav-link">{lang === 'en' ? 'Politics' : 'அரசியல்'}</Link>
-            </li>
-            <li className={`nav-item ${activeClass('/category/business')}`} id="nav-business">
-              <Link to="/category/business" className="nav-link">{lang === 'en' ? 'Business' : 'வணிகம்'}</Link>
-            </li>
-            <li className={`nav-item ${activeClass('/category/sports')}`} id="nav-sports">
-              <Link to="/category/sports" className="nav-link">{lang === 'en' ? 'Sports' : 'விளையாட்டு'}</Link>
-            </li>
-            <li className={`nav-item ${activeClass('/category/cinema')}`} id="nav-cinema">
-              <Link to="/category/cinema" className="nav-link">{lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு'}</Link>
-            </li>
-            <li className={`nav-item ${activeClass('/category/tech')}`} id="nav-tech">
-              <Link to="/category/tech" className="nav-link">{lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்'}</Link>
-            </li>
-            <li className={`nav-item ${activeClass('/directory')}`} id="nav-directory">
-              <Link to="/directory" className="nav-link">{lang === 'en' ? 'Regional' : 'மாநிலம்'}</Link>
-            </li>
-            <li className={`nav-item ${activeClass('/category/world')}`} id="nav-world">
-              <Link to="/category/world" className="nav-link">{lang === 'en' ? 'International' : 'சர்வதேசம்'}</Link>
-            </li>
-            <li className="nav-item">
-              <a href="#section-video" className="nav-link">{lang === 'en' ? 'Video' : 'வீடியோ'}</a>
-            </li>
-            <li className="nav-item">
-              <a href="#section-stories" className="nav-link">{lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்'}</a>
-            </li>
-          </ul>
-          <div className="nav-search" id="searchToggle" aria-label="Search"><i class="fas fa-search"></i></div>
-        </div>
-      </nav>
-      {isRegionalPage && (
-        <div className="regional-sub-nav">
-          <div className="container">
-            <ul className="regional-sub-menu">
-              <li className={`sub-nav-item ${location.pathname === '/' ? 'active' : ''}`}>
-                <Link to="/" className="sub-nav-link">{t('முகப்பு')}</Link>
+          {isRegionalPage ? (
+            <ul className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`} id="navMenu">
+              <li className={`nav-item ${location.pathname === '/' ? 'active' : ''}`} id="sub-nav-home">
+                <Link to="/" className="nav-link">{t('முகப்பு')}</Link>
               </li>
-              <li className={`sub-nav-item ${location.pathname === '/directory' ? 'active' : ''}`}>
-                <Link to="/directory" className="sub-nav-link">{t('நம்ம ஊர்')}</Link>
+              <li className={`nav-item ${location.pathname === '/directory' ? 'active' : ''}`} id="sub-nav-directory">
+                <Link to="/directory" className="nav-link">{t('நம்ம ஊர்')}</Link>
               </li>
-              <li className="sub-nav-item">
-                <Link to="/" className="sub-nav-link">{t('செய்திகள்')}</Link>
+              <li className="nav-item" id="sub-nav-news">
+                <Link to="/" className="nav-link">{t('செய்திகள்')}</Link>
               </li>
-              <li className={`sub-nav-item ${location.pathname === '/wishes' ? 'active' : ''}`}>
-                <Link to="/wishes" className="sub-nav-link">{t('வாழ்த்து')}</Link>
+              <li className={`nav-item ${location.pathname === '/wishes' ? 'active' : ''}`} id="sub-nav-wishes">
+                <Link to="/wishes" className="nav-link">{t('வாழ்த்து')}</Link>
               </li>
-              <li className={`sub-nav-item ${location.pathname === '/obituaries' ? 'active' : ''}`}>
-                <Link to="/obituaries" className="sub-nav-link">{t('இரங்கல்')}</Link>
+              <li className={`nav-item ${location.pathname === '/obituaries' ? 'active' : ''}`} id="sub-nav-obituaries">
+                <Link to="/obituaries" className="nav-link">{t('இரங்கல்')}</Link>
               </li>
-              <li className={`sub-nav-item ${location.pathname === '/business-studies' ? 'active' : ''}`}>
-                <Link to="/business-studies" className="sub-nav-link">{t('வணிகம்')}</Link>
+              <li className={`nav-item ${location.pathname === '/business-studies' ? 'active' : ''}`} id="sub-nav-business">
+                <Link to="/business-studies" className="nav-link">{t('வணிகம்')}</Link>
               </li>
-              <li className={`sub-nav-item ${location.pathname === '/jobs' ? 'active' : ''}`}>
-                <Link to="/jobs" className="sub-nav-link">{t('வேலை')}</Link>
+              <li className={`nav-item ${location.pathname === '/jobs' ? 'active' : ''}`} id="sub-nav-jobs">
+                <Link to="/jobs" className="nav-link">{t('வேலை')}</Link>
               </li>
-              <li className={`sub-nav-item ${location.pathname === '/classifieds' ? 'active' : ''}`}>
-                <Link to="/classifieds" className="sub-nav-link">{t('தள்ளுபடி')}</Link>
+              <li className={`nav-item ${location.pathname === '/classifieds' ? 'active' : ''}`} id="sub-nav-classifieds">
+                <Link to="/classifieds" className="nav-link">{t('தள்ளுபடி')}</Link>
               </li>
             </ul>
-          </div>
+          ) : (
+            <ul className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`} id="navMenu">
+              <li className={`nav-item ${activeClass('/')}`} id="nav-home">
+                <Link to="/" className="nav-link">{lang === 'en' ? 'Home' : 'முகப்பு'}</Link>
+              </li>
+              <li className={`nav-item ${activeClass('/category/politics')}`} id="nav-politics">
+                <Link to="/category/politics" className="nav-link">{lang === 'en' ? 'Politics' : 'அரசியல்'}</Link>
+              </li>
+              <li className={`nav-item ${activeClass('/category/business')}`} id="nav-business">
+                <Link to="/category/business" className="nav-link">{lang === 'en' ? 'Business' : 'வணிகம்'}</Link>
+              </li>
+              <li className={`nav-item ${activeClass('/category/sports')}`} id="nav-sports">
+                <Link to="/category/sports" className="nav-link">{lang === 'en' ? 'Sports' : 'விளையாட்டு'}</Link>
+              </li>
+              <li className={`nav-item ${activeClass('/category/cinema')}`} id="nav-cinema">
+                <Link to="/category/cinema" className="nav-link">{lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு'}</Link>
+              </li>
+              <li className={`nav-item ${activeClass('/category/tech')}`} id="nav-tech">
+                <Link to="/category/tech" className="nav-link">{lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்'}</Link>
+              </li>
+              <li className={`nav-item ${activeClass('/directory')}`} id="nav-directory">
+                <Link to="/directory" className="nav-link">{lang === 'en' ? 'Regional' : 'மாநிலம்'}</Link>
+              </li>
+              <li className={`nav-item ${activeClass('/category/world')}`} id="nav-world">
+                <Link to="/category/world" className="nav-link">{lang === 'en' ? 'International' : 'சர்வதேசம்'}</Link>
+              </li>
+              <li className="nav-item">
+                <a href="#section-video" className="nav-link">{lang === 'en' ? 'Video' : 'வீடியோ'}</a>
+              </li>
+              <li className="nav-item">
+                <a href="#section-stories" className="nav-link">{lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்'}</a>
+              </li>
+            </ul>
+          )}
+          <div className="nav-search" id="searchToggle" aria-label="Search"><i className="fas fa-search"></i></div>
         </div>
-      )}
+      </nav>
       {mobileMenuOpen && (
         <div 
           className="mobile-overlay" 

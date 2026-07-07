@@ -313,38 +313,16 @@ const ArticleDetail = () => {
   const loadData = () => {
     const idKey = String(id).startsWith('demo-') ? id : `demo-${id}`;
     const fallbackArticle = allFallbackArticles.find(art => art.id === idKey) || allFallbackArticles[0];
-    // 1. Fetch single article
-    fetchApi(`/articles/${id}`)
-      .then(data => {
-        if (data && data.titleTa) {
-          setArticle({
-            id: data.id || data.article_id,
-            titleTa: data.titleTa,
-            titleEn: data.titleEn,
-            descTa: data.shortDescTa,
-            descEn: data.shortDescEn,
-            contentTa: data.contentTa,
-            contentEn: data.contentEn,
-            authorName: data.authorName || 'கே. செல்வக்குமார்',
-            authorRole: 'தலைமைச் செய்தி நிருபர்',
-            pubDate: data.publishedAt ? new Date(data.publishedAt).toLocaleDateString() : '20 மே 2025',
-            updDate: data.updatedAt ? new Date(data.updatedAt).toLocaleDateString() : '21 மே 2025',
-            readTime: '3 நிமிட வாசிப்பு',
-            readTimeEn: '3 Min Read',
-            categoryName: 'செய்திகள்',
-            categoryNameEn: 'News',
-            categorySlug: 'politics',
-            tags: ['செய்திகள்', 'தமிழகம்'],
-            gradient: 'linear-gradient(135deg, #1E3A8A, #3B82F6)'
-          });
-        } else {
-          setArticle(fallbackArticle);
-        }
-      })
-      .catch(err => {
-        console.warn("Could not load article from API, using fallback", err);
-        setArticle(fallbackArticle);
-      });
+
+    const catLookup = {
+      1: { slug: 'politics', name: 'Politics', nameTa: 'அரசியல்' },
+      2: { slug: 'business', name: 'Business', nameTa: 'வணிகம்' },
+      3: { slug: 'sports', name: 'Sports', nameTa: 'விளையாட்டு' },
+      4: { slug: 'cinema', name: 'Cinema', nameTa: 'பொழுதுபோக்கு' },
+      5: { slug: 'tech', name: 'Tech', nameTa: 'தொழில்நுட்பம்' },
+      6: { slug: 'regional', name: 'Regional', nameTa: 'மாநில செய்திகள்' },
+      7: { slug: 'international', name: 'International', nameTa: 'சர்வதேச செய்திகள்' }
+    };
 
     const fallbackComments = [
       { id: 'demo-1', commentorName: 'குமரன்', commentText: 'அருமையான பட்ஜெட் அறிவிப்புகள். குறிப்பாக கல்விக்கான நிதி ஒதுக்கீடு உயர்த்தப்பட்டுள்ளது பாராட்டத்தக்கது.', createdAt: '10 மணி நேரத்திற்கு முன்' },
@@ -361,6 +339,69 @@ const ArticleDetail = () => {
       { id: 'demo-2', rank: 2, title: 'தங்கம் விலை அதிரடி வீழ்ச்சி' }
     ];
 
+    // 1. Fetch single article
+    fetchApi(`/articles/${id}`)
+      .then(data => {
+        if (data && data.titleTa) {
+          const currentCategoryId = data.categoryId || 1;
+          const cat = catLookup[currentCategoryId] || { slug: 'politics', name: 'Politics', nameTa: 'அரசியல்' };
+
+          setArticle({
+            id: data.id || data.article_id,
+            categoryId: currentCategoryId,
+            titleTa: data.titleTa,
+            titleEn: data.titleEn,
+            descTa: data.shortDescTa,
+            descEn: data.shortDescEn,
+            contentTa: data.contentTa,
+            contentEn: data.contentEn,
+            authorName: data.authorName || 'கே. செல்வக்குமார்',
+            authorRole: 'தலைமைச் செய்தி நிருபர்',
+            pubDate: data.publishedAt ? new Date(data.publishedAt).toLocaleDateString() : '20 மே 2025',
+            updDate: data.updatedAt ? new Date(data.updatedAt).toLocaleDateString() : '21 மே 2025',
+            readTime: '3 நிமிட வாசிப்பு',
+            readTimeEn: '3 Min Read',
+            categoryName: cat.nameTa,
+            categoryNameEn: cat.name,
+            categorySlug: cat.slug,
+            tags: ['செய்திகள்', 'தமிழகம்'],
+            gradient: 'linear-gradient(135deg, #1E3A8A, #3B82F6)'
+          });
+
+          // Fetch related articles for the same category
+          fetchApi('/articles')
+            .then(allArts => {
+              const list = Array.isArray(allArts)
+                ? allArts
+                    .filter(item => item.categoryId === currentCategoryId && (item.id || item.article_id) !== (data.id || data.article_id))
+                    .slice(0, 3)
+                    .map(item => ({
+                      id: item.id || item.article_id,
+                      titleTa: item.titleTa,
+                      titleEn: item.titleEn,
+                      descTa: item.shortDescTa,
+                      descEn: item.shortDescEn,
+                      subcatTa: item.districtId ? 'மாநிலம்' : 'தேசியம்',
+                      subcatEn: item.districtId ? 'State' : 'National',
+                      gradient: 'linear-gradient(135deg, #3B82F6, #1D4ED8)'
+                    }))
+                : [];
+              setRelated(list.length > 0 ? list : fallbackRelated);
+            })
+            .catch(() => {
+              setRelated(fallbackRelated);
+            });
+        } else {
+          setArticle(fallbackArticle);
+          setRelated(fallbackRelated);
+        }
+      })
+      .catch(err => {
+        console.warn("Could not load article from API, using fallback", err);
+        setArticle(fallbackArticle);
+        setRelated(fallbackRelated);
+      });
+
     // 2. Fetch comments
     fetchApi(`/articles/${id}/comments`)
       .then(data => {
@@ -374,25 +415,6 @@ const ArticleDetail = () => {
       })
       .catch(() => {
         setComments(fallbackComments);
-      });
-
-    // 3. Related articles
-    fetchApi('/articles')
-      .then(data => {
-        const list = Array.isArray(data) ? data.slice(0, 3).map(item => ({
-          id: item.id || item.article_id,
-          titleTa: item.titleTa,
-          titleEn: item.titleEn,
-          descTa: item.shortDescTa,
-          descEn: item.shortDescEn,
-          subcatTa: 'செய்திகள்',
-          subcatEn: 'News',
-          gradient: 'linear-gradient(135deg, #3B82F6, #1D4ED8)'
-        })) : [];
-        setRelated([...list, ...fallbackRelated]);
-      })
-      .catch(() => {
-        setRelated(fallbackRelated);
       });
 
     // 4. Trending

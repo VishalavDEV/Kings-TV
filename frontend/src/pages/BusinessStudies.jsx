@@ -3,29 +3,71 @@ import { LanguageContext } from '../context/LanguageContext';
 import { fetchApi } from '../utils/api';
 
 const BusinessStudies = () => {
-  const { t } = useContext(LanguageContext);
+  const { lang, t } = useContext(LanguageContext);
   const [stories, setStories] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [selectedStory, setSelectedStory] = useState(null);
+  const [showViewer, setShowViewer] = useState(false);
 
+  // Form states
   const [authorName, setAuthorName] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
 
   const fallbackStories = [
-    { id: 'demo-1', author_name: 'Murugan', business_name: 'Murugan Coffee Works', title: 'How We Built a Traditional Brand Online', details: 'Using simple social media marketing...' }
+    {
+      id: 'demo-1',
+      author_name: 'கே. செல்வக்குமார்',
+      business_name: 'திருப்பூர் டீ ஸ்டால்',
+      title: 'ஒரு தேநீர் கடையின் டிஜிட்டல் புரட்சி: திருப்பூர் கேஸ் ஸ்டடி',
+      details: 'திருப்பூரைச் சேர்ந்த மாரியப்பன் தனது பாரம்பரிய தேநீர் கடையை எவ்வாறு UPI பேமெண்ட், வாட்ஸ்அப் ஆர்டர் மற்றும் கூகுள் மேப் மூலம் புதிய உச்சத்திற்குக் கொண்டு சென்றார் என்ற விரிவான ஆய்வு.',
+      category: 'கேஸ் ஸ்டடி',
+      icon: '☕',
+      readTime: '5 நிமிட வாசிப்பு',
+      gradient: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
+    },
+    {
+      id: 'demo-2',
+      author_name: 'ஆர். கலைவாணி',
+      business_name: 'சுயஉதவிக் குழு சுற்றுச்சூழல் நிறுவனம்',
+      title: 'சுயஉதவிக் குழுவின் சுற்றுச்சூழல் தட்டு தயாரிப்பு நிறுவனம்',
+      details: 'மதுரையைச் சேர்ந்த 10 பெண்கள் இணைந்து பாக்கு மட்டை தட்டுகளை உற்பத்தி செய்து சர்வதேச சந்தைக்கு எவ்வாறு ஏற்றுமதி செய்தனர் என்ற வெற்றிகரமான வணிக உத்தி.',
+      category: 'வெற்றிக் கதை',
+      icon: '🌿',
+      readTime: '6 நிமிட வாசிப்பு',
+      gradient: 'linear-gradient(135deg, #10b981 0%, #047857 100%)'
+    },
+    {
+      id: 'demo-3',
+      author_name: 'ஏ. ராஜேஷ்',
+      business_name: 'அம்மன் பால் பண்ணை',
+      title: 'கிராமப்புற பால் பண்ணையின் ஒருங்கிணைந்த ஆட்டோமேஷன்',
+      details: 'ஈரோடு பால் பண்ணையாளர் ரமேஷ், நவீன தொழில்நுட்பத்தைப் பயன்படுத்தி கறவை முதல் விற்பனை வரை எவ்வாறு டிஜிட்டல் கண்காணிப்பு முறையைக் கொண்டுவந்து வருவாயைப் பெருக்கினார்.',
+      category: 'வணிக மாதிரி',
+      icon: '🥛',
+      readTime: '4 நிமிட வாசிப்பு',
+      gradient: 'linear-gradient(135deg, #f97316 0%, #c2410c 100%)'
+    }
   ];
 
   const loadData = () => {
     fetchApi('/stories')
       .then(data => {
-        const formatted = Array.isArray(data) ? data.map(item => ({
-          id: item.id || item.story_id,
-          author_name: item.authorName || item.author_name,
-          business_name: item.businessName || item.business_name,
-          title: item.title,
-          details: item.details
-        })) : [];
+        const formatted = Array.isArray(data) ? data.map((item, index) => {
+          const fallback = fallbackStories[index % fallbackStories.length];
+          return {
+            id: item.id || item.story_id,
+            author_name: item.authorName || item.author_name || 'பயனர்',
+            business_name: item.businessName || item.business_name || 'வணிகம்',
+            title: item.title,
+            details: item.details,
+            category: item.isCaseStudy ? 'கேஸ் ஸ்டடி' : 'வெற்றிக் கதை',
+            icon: item.isCaseStudy ? '📈' : '🌿',
+            readTime: '5 நிமிட வாசிப்பு',
+            gradient: fallback.gradient
+          };
+        }) : [];
         setStories([...formatted, ...fallbackStories]);
       })
       .catch((err) => {
@@ -56,10 +98,18 @@ const BusinessStudies = () => {
     })
     .catch(err => {
       console.warn("API write failed, updating UI locally", err);
-      setStories(prev => [
-        ...prev,
-        { id: Date.now(), author_name: authorName, business_name: businessName, title, details }
-      ]);
+      const newStory = {
+        id: Date.now(),
+        author_name: authorName,
+        business_name: businessName,
+        title,
+        details,
+        category: 'வெற்றிக் கதை',
+        icon: '🌿',
+        readTime: '3 நிமிட வாசிப்பு',
+        gradient: 'linear-gradient(135deg, #10b981 0%, #047857 100%)'
+      };
+      setStories(prev => [newStory, ...prev]);
       setAuthorName('');
       setBusinessName('');
       setTitle('');
@@ -68,51 +118,145 @@ const BusinessStudies = () => {
     });
   };
 
+  const handleOpenViewer = (story) => {
+    setSelectedStory(story);
+    setShowViewer(true);
+  };
+
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-dark)' }}>📈 {t('வணிக வெற்றி கதைகள்')}</h2>
-        <button onClick={() => setShowForm(prev => !prev)} className="btn" style={{ padding: '10px 20px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}>
-          {t('புதிய பதிவு')}
-        </button>
-      </div>
+    <main className="container">
+      {/* HERO / SEARCH */}
+      <section className="studies-hero">
+        <h1>{lang === 'en' ? 'Business Case Studies & Success Stories' : 'வணிக வழக்கு ஆய்வுகள் & வெற்றிக் கதைகள்'}</h1>
+        <p>{lang === 'en' ? 'Strategies of local entrepreneurs who succeeded in small towns' : 'சிறு நகரங்களில் தொழில் தொடங்கி வெற்றி கண்ட உள்ளூர் தொழில்முனைவோரின் உத்திகள்'}</p>
+      </section>
 
-      {showForm && (
-        <form onSubmit={handleSubmit} style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '24px', marginBottom: '30px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-dark)', marginBottom: '8px' }}>Author Name *</label>
-              <input type="text" value={authorName} onChange={e => setAuthorName(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', color: 'black' }} />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-dark)', marginBottom: '8px' }}>Business Name *</label>
-              <input type="text" value={businessName} onChange={e => setBusinessName(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', color: 'black' }} />
-            </div>
-          </div>
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-dark)', marginBottom: '8px' }}>Story Title *</label>
-            <input type="text" value={title} onChange={e => setTitle(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', color: 'black' }} />
-          </div>
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-dark)', marginBottom: '8px' }}>Story Details (விவரம்) *</label>
-            <textarea value={details} onChange={e => setDetails(e.target.value)} required rows="4" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', color: 'black' }}></textarea>
-          </div>
-          <button type="submit" style={{ padding: '12px 20px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}>
-            {t('சமர்ப்பி')}
-          </button>
-        </form>
-      )}
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* GRID */}
+      <section className="studies-grid">
         {stories.map(st => (
-          <div key={st.id} className="card" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '24px' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-dark)', marginBottom: '6px' }}>{st.title}</h3>
-            <h4 style={{ fontSize: '13px', color: 'var(--text-light)', marginBottom: '16px' }}>{st.business_name} - <span style={{ fontStyle: 'italic' }}>By {st.author_name}</span></h4>
-            <p style={{ fontSize: '14px', color: 'var(--text-dark)', lineHeight: 1.6 }}>{st.details}</p>
+          <div className="study-card" key={st.id} onClick={() => handleOpenViewer(st)}>
+            <div className="study-banner-img" style={{ background: st.gradient || 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' }}>
+              <span className="badge">{st.category}</span>
+              <span>{st.icon}</span>
+            </div>
+            <div className="study-body">
+              <h2 className="study-title">{st.title}</h2>
+              <p className="study-excerpt">{st.details}</p>
+              <div className="study-meta">
+                <span><i className="far fa-user"></i> {st.author_name} ({st.business_name})</span>
+                <span><i className="far fa-clock"></i> {st.readTime}</span>
+              </div>
+            </div>
+            <button className="read-more-btn" onClick={(e) => { e.stopPropagation(); handleOpenViewer(st); }}>
+              {lang === 'en' ? 'Read Full Story' : 'முழுமையாகப் படிக்க'}
+            </button>
           </div>
         ))}
-      </div>
-    </div>
+      </section>
+
+      {/* BANNER TO SUBMIT STORY */}
+      <section className="submit-story-banner" style={{ textAlign: 'center', margin: '40px 0', padding: '24px', border: '2px dashed var(--primary)', borderRadius: 'var(--radius-md)' }}>
+        <h3>
+          {lang === 'en' ? 'Are you a local entrepreneur? Tell your story!' : 'நீங்கள் ஒரு சிறு நகரத் தொழில்முனைவோரா? உங்கள் கதையை உலகுக்குச் சொல்லுங்கள்!'}
+        </h3>
+        <p>
+          {lang === 'en' ? 'Share your business strategies to help others grow.' : 'உங்களது வணிக உத்திகள் மற்றவர்களுக்கும் பயன்பட உங்கள் வெற்றிக் கதையைப் பதியுங்கள்.'}
+        </p>
+        <button 
+          onClick={() => setShowForm(true)} 
+          style={{ padding: '10px 24px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '20px', fontWeight: 700, cursor: 'pointer', marginTop: '14px' }}
+        >
+          {lang === 'en' ? 'Submit Success Story' : 'வெற்றிக் கதையை சமர்ப்பிக்க'}
+        </button>
+      </section>
+
+      {/* STORY VIEWER MODAL */}
+      {showViewer && selectedStory && (
+        <div className="modal open" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="modal-content" style={{ maxWidth: '700px' }}>
+            <div className="modal-header">
+              <h3>{lang === 'en' ? 'Business Story' : 'வணிகக் கதை'}</h3>
+              <button className="modal-close" onClick={() => setShowViewer(false)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <h2 className="story-viewer-title" style={{ fontSize: '22px', fontWeight: 800, marginBottom: '12px' }}>{selectedStory.title}</h2>
+              <div className="story-viewer-meta" style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px', display: 'flex', gap: '16px' }}>
+                <span><i className="far fa-user"></i> {selectedStory.author_name} ({selectedStory.business_name})</span>
+                <span><i className="far fa-clock"></i> {selectedStory.readTime}</span>
+              </div>
+              <div className="story-viewer-content" style={{ fontSize: '15px', lineHeight: 1.7, color: 'var(--text-dark)' }}>
+                {selectedStory.details.split('\n').map((para, i) => (
+                  <p key={i} style={{ marginBottom: '16px' }}>{para}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUBMIT STORY MODAL */}
+      {showForm && (
+        <div className="modal open" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>{lang === 'en' ? 'Share Your Success Story' : 'உங்கள் வெற்றிக் கதையைப் பகிரவும்'}</h3>
+              <button className="modal-close" onClick={() => setShowForm(false)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="form-group">
+                  <label htmlFor="storyName">{lang === 'en' ? 'Your Name *' : 'உங்கள் பெயர் *'}</label>
+                  <input 
+                    type="text" 
+                    id="storyName" 
+                    required 
+                    placeholder={lang === 'en' ? 'e.g., Mariyappan' : 'எ.கா: மாரியப்பன்'}
+                    value={authorName} 
+                    onChange={e => setAuthorName(e.target.value)} 
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="storyBizName">{lang === 'en' ? 'Business Name *' : 'வணிகப் பெயர் *'}</label>
+                  <input 
+                    type="text" 
+                    id="storyBizName" 
+                    required 
+                    placeholder={lang === 'en' ? 'e.g., Mariyappan Tea Stall' : 'எ.கா: மாரியப்பன் டீ ஸ்டால்'}
+                    value={businessName} 
+                    onChange={e => setBusinessName(e.target.value)} 
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="storyTitleInput">{lang === 'en' ? 'Story Title *' : 'கதையின் தலைப்பு *'}</label>
+                  <input 
+                    type="text" 
+                    id="storyTitleInput" 
+                    required 
+                    placeholder={lang === 'en' ? 'e.g., Digital Growth of Tea Shop' : 'எ.கா: தேநீர் கடையின் டிஜிட்டல் வளர்ச்சி'}
+                    value={title} 
+                    onChange={e => setTitle(e.target.value)} 
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="storyDetails">{lang === 'en' ? 'Your Business Success & Strategies (Detailed) *' : 'உங்கள் வணிக வெற்றி மற்றும் உத்திகள் (விரிவாக) *'}</label>
+                  <textarea 
+                    id="storyDetails" 
+                    rows="6" 
+                    required 
+                    placeholder={lang === 'en' ? 'Your start, challenges faced and solutions...' : 'உங்கள் தொடக்கம், எதிர்கொண்ட சவால்கள் மற்றும் தீர்வுகள்...'}
+                    value={details} 
+                    onChange={e => setDetails(e.target.value)}
+                  ></textarea>
+                </div>
+                <button type="submit" className="submit-btn" style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '4px', fontWeight: 700, cursor: 'pointer' }}>
+                  {lang === 'en' ? 'Submit' : 'சமர்ப்பி'}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
   );
 };
 
