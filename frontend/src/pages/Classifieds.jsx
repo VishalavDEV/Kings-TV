@@ -18,7 +18,12 @@ const Classifieds = () => {
   const [contact, setContact] = useState('');
   const [desc, setDesc] = useState('');
 
-  const fallbackAds = [
+  const fallbackAds = lang === 'en' ? [
+    { id: 'demo-1', title: '2 BHK Luxury House for Rent', category: 'property', priceDetail: '₹12,000 / month', location: 'Chennai', contactInfo: 'Ramachandran: 98765 12345', description: 'Anna Nagar Main Road. Brand new construction, car parking, 24/7 water supply.', daysAgo: '1 day ago', icon: '🏢' },
+    { id: 'demo-2', title: 'Vijay Electronics Aadi Mega Offer', category: 'discount', priceDetail: 'Aadi Discount', location: 'Salem', contactInfo: 'Vijay Electronics: 0427 244 1122', description: 'Mega discount deals on LED TVs, Air Conditioners, and Refrigerators. Easy EMI schemes available.', daysAgo: '2 days ago', icon: '🏷️' },
+    { id: 'demo-3', title: 'Swift Dzire (2018 Model) for Sale', category: 'vehicle', priceDetail: '₹4,20,000', location: 'Coimbatore', contactInfo: 'Sivakumar: 99442 88776', description: 'Single owner, excellent running condition. 65,000 km driven. Insurance current.', daysAgo: '3 days ago', icon: '🚗' },
+    { id: 'demo-4', title: 'Samsung Smart TV (43 inch) for Sale', category: 'appliance', priceDetail: '₹18,500', location: 'Trichy', contactInfo: 'Ahmed: 96321 07412', description: 'Used for only 1 year. Excellent condition. Original bill, box and remote available.', daysAgo: '5 days ago', icon: '📺' }
+  ] : [
     { id: 'demo-1', title: '2 BHK சொகுசு வீடு வாடகைக்கு', category: 'property', priceDetail: '₹12,000 / மாதம்', location: 'சென்னை', contactInfo: 'ராமச்சந்திரன்: 98765 12345', description: 'அண்ணா நகர் மெயின் ரோடு. புதிய கட்டுமானம். கார் பார்க்கிங், குடிநீர் வசதியுடன்.', daysAgo: '1 நாளுக்கு முன்', icon: '🏢' },
     { id: 'demo-2', title: 'விஜய் எலக்ட்ரானிக்ஸ் ஆடி அதிரடி சலுகை', category: 'discount', priceDetail: 'ஆடி தள்ளுபடி', location: 'சேலம்', contactInfo: 'விஜய் எலக்ட்ரானிக்ஸ்: 0427 244 1122', description: 'LED டிவிகள், ஏசி மற்றும் பிரிட்ஜ்களுக்கான நேரடி தள்ளுபடி சலுகைகள். வாராந்திர சிறப்பு தவணை முறை வசதி.', daysAgo: '2 நாட்களுக்கு முன்', icon: '🏷️' },
     { id: 'demo-3', title: 'Swift Dzire (2018 Model) விற்பனைக்கு', category: 'vehicle', priceDetail: '₹4,20,000', location: 'கோவை', contactInfo: 'சிவகுமார்: 99442 88776', description: 'சிங்கிள் ஓனர், நல்ல நிலையில் உள்ளது. 65,000 கிமீ ஓடியது. இன்சூரன்ஸ் நடப்பில் உள்ளது.', daysAgo: '3 நாட்களுக்கு முன்', icon: '🚗' },
@@ -28,17 +33,49 @@ const Classifieds = () => {
   const loadData = () => {
     fetchApi('/classifieds')
       .then(data => {
-        const formatted = Array.isArray(data) ? data.map(item => ({
-          id: item.ad_id || item.id,
-          title: item.title,
-          category: (item.category || '').toLowerCase(),
-          priceDetail: item.priceDetail || item.price_detail,
-          location: item.location,
-          contactInfo: item.contactInfo || item.contact_info,
-          description: item.description,
-          daysAgo: '1 நாளுக்கு முன்',
-          icon: item.category === 'property' ? '🏢' : item.category === 'discount' ? '🏷️' : item.category === 'vehicle' ? '🚗' : '📺'
-        })) : [];
+        const formatted = Array.isArray(data) ? data.map(item => {
+          const rawTitle = item.title || '';
+          const rawLoc = item.location || '';
+          const rawDesc = item.description || '';
+          const rawPrice = item.priceDetail || item.price_detail || '';
+          
+          let titleVal = rawTitle;
+          let locVal = rawLoc;
+          let descVal = rawDesc;
+          let priceVal = rawPrice;
+          
+          if (lang === 'en') {
+            if (rawTitle.includes('வீடு') || rawTitle.includes('House')) titleVal = '2 BHK Luxury House for Rent';
+            else if (rawTitle.includes('எலக்ட்ரானிக்ஸ்') || rawTitle.includes('Electronics')) titleVal = 'Vijay Electronics Aadi Mega Offer';
+            else if ((rawTitle.includes('விற்பனைக்கு') || rawTitle.includes('Sale')) && rawTitle.includes('Swift')) titleVal = 'Swift Dzire (2018 Model) for Sale';
+            else if ((rawTitle.includes('விற்பனைக்கு') || rawTitle.includes('Sale')) && rawTitle.includes('Samsung')) titleVal = 'Samsung Smart TV (43 inch) for Sale';
+            
+            if (rawLoc.includes('சென்னை') || rawLoc.includes('Chennai')) locVal = 'Chennai';
+            else if (rawLoc.includes('சேலம்') || rawLoc.includes('Salem')) locVal = 'Salem';
+            else if (rawLoc.includes('கோவை') || rawLoc.includes('கோயம்புத்தூர்') || rawLoc.includes('Coimbatore')) locVal = 'Coimbatore';
+            else if (rawLoc.includes('திருச்சி') || rawLoc.includes('Trichy')) locVal = 'Trichy';
+            
+            if (rawDesc.includes('அண்ணா நகர்') || rawDesc.includes('Anna Nagar')) descVal = 'Anna Nagar Main Road. Brand new construction, car parking, 24/7 water supply.';
+            else if (rawDesc.includes('எல்இடி') || rawDesc.includes('LED') || rawDesc.includes('ஏசி')) descVal = 'Mega discount deals on LED TVs, Air Conditioners, and Refrigerators. Easy EMI schemes available.';
+            else if (rawDesc.includes('சிங்கிள் ஓனர்') || rawDesc.includes('Single owner')) descVal = 'Single owner, excellent running condition. 65,000 km driven. Insurance current.';
+            else if (rawDesc.includes('1 வருடமே') || rawDesc.includes('1 year')) descVal = 'Used for only 1 year. Excellent condition. Original bill, box and remote available.';
+            
+            if (rawPrice.includes('மாதம்')) priceVal = rawPrice.replace('மாதம்', 'month');
+            else if (rawPrice.includes('தள்ளுபடி') || rawPrice.includes('Discount')) priceVal = 'Discount';
+          }
+          
+          return {
+            id: item.ad_id || item.id,
+            title: titleVal,
+            category: (item.category || '').toLowerCase(),
+            priceDetail: priceVal,
+            location: locVal,
+            contactInfo: item.contactInfo || item.contact_info,
+            description: descVal,
+            daysAgo: lang === 'en' ? '1 day ago' : '1 நாளுக்கு முன்',
+            icon: item.category === 'property' ? '🏢' : item.category === 'discount' ? '🏷️' : item.category === 'vehicle' ? '🚗' : '📺'
+          };
+        }) : [];
         const merged = [...formatted, ...fallbackAds];
         setAds(merged);
         setFilteredAds(merged);
@@ -52,7 +89,7 @@ const Classifieds = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [lang]);
 
   useEffect(() => {
     let result = ads;

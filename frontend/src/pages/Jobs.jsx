@@ -27,7 +27,12 @@ const Jobs = () => {
   const [newType, setNewType] = useState('Full Time');
   const [newDesc, setNewDesc] = useState('');
 
-  const fallbackJobs = [
+  const fallbackJobs = lang === 'en' ? [
+    { id: 'demo-1', title: 'Sales Representative', companyName: 'Kannan Silks', category: 'sales', description: 'Experienced female and male candidates required to work in local textile showroom. Good communication skills required.', location: 'Erode', salaryRange: '₹12,000 - ₹15,000', employmentType: 'Full Time', daysAgo: '2 days ago' },
+    { id: 'demo-2', title: 'Heavy Vehicle Driver', companyName: 'Anand Logistics', category: 'driver', description: 'Heavy truck drivers with at least 3 years experience and badge license required.', location: 'Salem', salaryRange: '₹20,000 - ₹25,000', employmentType: 'Full Time', daysAgo: '3 days ago' },
+    { id: 'demo-3', title: 'Assistant Accountant', companyName: 'Sri Nivas Agencies', category: 'office', description: 'Female accountant with Tally software knowledge and typing certificate required.', location: 'Madurai', salaryRange: '₹10,000 - ₹12,000', employmentType: 'Part Time', daysAgo: '4 days ago' },
+    { id: 'demo-4', title: 'Data Entry Operator', companyName: 'Smart Systems', category: 'computer', description: 'Candidates with Tamil and English typing experience and basic MS Office knowledge required.', location: 'Trichy', salaryRange: '₹9,000 - ₹11,000', employmentType: 'Full Time', daysAgo: '5 days ago' }
+  ] : [
     { id: 'demo-1', title: 'விற்பனை பிரதிநிதி (Sales Representative)', companyName: 'கண்ணன் சில்க்ஸ்', category: 'sales', description: 'உள்ளூர் ஜவுளிக்கடையில் வேலை செய்ய தகுதியான பெண்கள் மற்றும் ஆண்கள் தேவை. நல்ல பேச்சாற்றல் அவசியம்.', location: 'ஈரோடு', salaryRange: '₹12,000 - ₹15,000', employmentType: 'Full Time', daysAgo: '2 நாட்களுக்கு முன்' },
     { id: 'demo-2', title: 'கனரக வாகன ஓட்டுநர் (Heavy Driver)', companyName: 'ஆனந்த் லாஜிஸ்டிக்ஸ்', category: 'driver', description: 'சரக்கு லாரி ஓட்ட குறைந்தபட்சம் 3 வருட அனுபவமுள்ள ஓட்டுநர்கள் தேவை. பேட்ஜ் உரிமம் கட்டாயம்.', location: 'சேலம்', salaryRange: '₹20,000 - ₹25,000', employmentType: 'Full Time', daysAgo: '3 நாட்களுக்கு முன்' },
     { id: 'demo-3', title: 'உதவி கணக்காளர் (Assistant Accountant)', companyName: 'ஸ்ரீ நிவாஸ் ஏஜென்ஸிஸ்', category: 'office', description: 'Tally மென்பொருள் தெரிந்த மற்றும் தட்டச்சு தகுதியுடைய பெண் கணக்காளர்கள் தேவை.', location: 'மதுரை', salaryRange: '₹10,000 - ₹12,000', employmentType: 'Part Time', daysAgo: '4 நாட்களுக்கு முன்' },
@@ -37,17 +42,51 @@ const Jobs = () => {
   const loadData = () => {
     fetchApi('/jobs')
       .then(data => {
-        const formatted = Array.isArray(data) ? data.map(item => ({
-          id: item.job_id || item.id,
-          title: item.title,
-          companyName: item.companyName || item.company_name,
-          category: (item.category || '').toLowerCase(),
-          description: item.description,
-          location: item.location,
-          salaryRange: item.salaryRange || item.salary_range,
-          employmentType: item.employmentType || item.employment_type || 'Full Time',
-          daysAgo: '1 நாளுக்கு முன்'
-        })) : [];
+        const formatted = Array.isArray(data) ? data.map(item => {
+          const rawTitle = item.title || '';
+          const rawCompany = item.companyName || item.company_name || '';
+          const rawLoc = item.location || '';
+          const rawDesc = item.description || '';
+          
+          let titleVal = rawTitle;
+          let companyVal = rawCompany;
+          let locVal = rawLoc;
+          let descVal = rawDesc;
+          
+          if (lang === 'en') {
+            if (rawTitle.includes('விற்பனை')) titleVal = 'Sales Representative';
+            else if (rawTitle.includes('ஓட்டுநர்')) titleVal = 'Heavy Vehicle Driver';
+            else if (rawTitle.includes('கணக்காளர்')) titleVal = 'Assistant Accountant';
+            else if (rawTitle.includes('ஆபரேட்டர்')) titleVal = 'Data Entry Operator';
+            
+            if (rawCompany.includes('கண்ணன்')) companyVal = 'Kannan Silks';
+            else if (rawCompany.includes('ஆனந்த்')) companyVal = 'Anand Logistics';
+            else if (rawCompany.includes('ஸ்ரீ நிவாஸ்')) companyVal = 'Sri Nivas Agencies';
+            else if (rawCompany.includes('ஸ்மார்ட்')) companyVal = 'Smart Systems';
+            
+            if (rawLoc.includes('ஈரோடு')) locVal = 'Erode';
+            else if (rawLoc.includes('சேலம்')) locVal = 'Salem';
+            else if (rawLoc.includes('மதுரை')) locVal = 'Madurai';
+            else if (rawLoc.includes('திருச்சி')) locVal = 'Trichy';
+            
+            if (rawDesc.includes('ஜவுளிக்கடையில்')) descVal = 'Experienced female and male candidates required to work in local textile showroom.';
+            else if (rawDesc.includes('சரக்கு லாரி')) descVal = 'Heavy truck drivers with at least 3 years experience and badge license required.';
+            else if (rawDesc.includes('Tally மென்பொருள்')) descVal = 'Female accountant with Tally software knowledge and typing certificate required.';
+            else if (rawDesc.includes('தட்டச்சு பயிற்சி')) descVal = 'Candidates with Tamil and English typing experience and basic MS Office knowledge required.';
+          }
+          
+          return {
+            id: item.job_id || item.id,
+            title: titleVal,
+            companyName: companyVal,
+            category: (item.category || '').toLowerCase(),
+            description: descVal,
+            location: locVal,
+            salaryRange: item.salaryRange || item.salary_range,
+            employmentType: item.employmentType || item.employment_type || 'Full Time',
+            daysAgo: lang === 'en' ? '1 day ago' : '1 நாளுக்கு முன்'
+          };
+        }) : [];
         const merged = [...formatted, ...fallbackJobs];
         setJobs(merged);
         setFilteredJobs(merged);
@@ -61,7 +100,7 @@ const Jobs = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [lang]);
 
   useEffect(() => {
     let result = jobs;

@@ -112,16 +112,22 @@ const Header = () => {
                 aria-label="District"
                 style={{ background: 'transparent', border: 'none', color: 'inherit', outline: 'none', cursor: 'pointer' }}
               >
-                <option value="சென்னை">சென்னை</option>
-                <option value="கோயம்புத்தூர்">கோயம்புத்தூர்</option>
-                <option value="மதுரை">மதுரை</option>
-                <option value="சேலம்">சேலம்</option>
-                <option value="திருச்சி">திருச்சி</option>
-                <option value="திருநெல்வேலி">திருநெல்வேலி</option>
-                <option value="வேலூர்">வேலூர்</option>
-                <option value="ஈரோடு">ஈரோடு</option>
-                <option value="தஞ்சாவூர்">தஞ்சாவூர்</option>
-                <option value="கன்னியாகுமரி">கன்னியாகுமரி</option>
+                {[
+                  { key: 'சென்னை', en: 'Chennai', ta: 'சென்னை' },
+                  { key: 'கோயம்புத்தூர்', en: 'Coimbatore', ta: 'கோயம்புத்தூர்' },
+                  { key: 'மதுரை', en: 'Madurai', ta: 'மதுரை' },
+                  { key: 'சேலம்', en: 'Salem', ta: 'சேலம்' },
+                  { key: 'திருச்சி', en: 'Trichy', ta: 'திருச்சி' },
+                  { key: 'திருநெல்வேலி', en: 'Tirunelveli', ta: 'திருநெல்வேலி' },
+                  { key: 'வேலூர்', en: 'Vellore', ta: 'வேலூர்' },
+                  { key: 'ஈரோடு', en: 'Erode', ta: 'ஈரோடு' },
+                  { key: 'தஞ்சாவூர்', en: 'Tanjore', ta: 'தஞ்சாவூர்' },
+                  { key: 'கன்னியாகுமரி', en: 'Kanyakumari', ta: 'கன்னியாகுமரி' }
+                ].map(item => (
+                  <option key={item.key} value={item.key} style={{ color: 'var(--text-dark)' }}>
+                    {lang === 'en' ? item.en : item.ta}
+                  </option>
+                ))}
               </select>
             </span>
             <span>
@@ -256,9 +262,6 @@ const Header = () => {
               <li className={`nav-item ${location.pathname === '/directory' ? 'active' : ''}`} id="sub-nav-directory">
                 <Link to="/directory" className="nav-link">{t('நம்ம ஊர்')}</Link>
               </li>
-              <li className="nav-item" id="sub-nav-news">
-                <Link to="/" className="nav-link">{t('செய்திகள்')}</Link>
-              </li>
               <li className={`nav-item ${location.pathname === '/wishes' ? 'active' : ''}`} id="sub-nav-wishes">
                 <Link to="/wishes" className="nav-link">{t('வாழ்த்து')}</Link>
               </li>
@@ -301,11 +304,11 @@ const Header = () => {
               <li className={`nav-item ${activeClass('/category/world')}`} id="nav-world">
                 <Link to="/category/world" className="nav-link">{lang === 'en' ? 'International' : 'சர்வதேசம்'}</Link>
               </li>
-              <li className="nav-item">
-                <a href="#section-video" className="nav-link">{lang === 'en' ? 'Video' : 'வீடியோ'}</a>
+              <li className={`nav-item ${activeClass('/videos')}`} id="nav-videos">
+                <Link to="/videos" className="nav-link">{lang === 'en' ? 'Video' : 'வீடியோ'}</Link>
               </li>
-              <li className="nav-item">
-                <a href="#section-stories" className="nav-link">{lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்'}</a>
+              <li className={`nav-item ${activeClass('/web-stories')}`} id="nav-web-stories">
+                <Link to="/web-stories" className="nav-link">{lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்'}</Link>
               </li>
             </ul>
           )}

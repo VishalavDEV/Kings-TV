@@ -120,7 +120,16 @@ const Home = () => {
   ];
 
   const prefixedFallbackArticles = fallbackArticles.map(art => ({ ...art, id: `demo-${art.id}` }));
-  const prefixedFallbackVideos = fallbackVideos.map(vid => ({ ...vid, id: `demo-${vid.id}` }));
+  const prefixedFallbackVideos = fallbackVideos.map(vid => {
+    let titleVal = vid.title;
+    if (lang === 'en') {
+      if (vid.title.includes('பட்ஜெட்')) titleVal = 'Tamil Nadu Budget 2026 - Key Highlights Explained';
+      else if (vid.title.includes('கிரிக்கெட்')) titleVal = 'Cricket Match Highlights - India vs Australia';
+      else if (vid.title.includes('விவசாயிகளுக்கான')) titleVal = 'New Schemes for Farmers - Ground Report';
+      else if (vid.title.includes('தொழில்நுட்ப')) titleVal = 'New Tech Innovations - Artificial Intelligence';
+    }
+    return { ...vid, title: titleVal, id: `demo-${vid.id}` };
+  });
 
   useEffect(() => {
     fetchApi('/articles')
@@ -136,7 +145,27 @@ const Home = () => {
     fetchApi('/videos')
       .then(data => {
         const list = Array.isArray(data) ? data : [];
-        setVideos([...list, ...prefixedFallbackVideos]);
+        const translated = list.map(vid => {
+          const rawTitle = vid.title || '';
+          let titleVal = rawTitle;
+          if (lang === 'en') {
+            if (rawTitle.includes('Rain Update') || rawTitle.includes('கனமழை')) {
+              titleVal = 'Rain Update in Tamil Nadu | Heavy Rain Alert in Chennai and Districts';
+            } else if (rawTitle.includes('Gold Rate') || rawTitle.includes('தங்க விலை')) {
+              titleVal = 'Gold Rate Drops Sharply | Today\'s Gold Price details in Chennai';
+            } else if (rawTitle.includes('Vijay TVK') || rawTitle.includes('விஜய் மாநாடு')) {
+              titleVal = 'Vijay TVK First State Conference | Massive crowd gathers in Vikravandi';
+            } else if (rawTitle.includes('IPL') || rawTitle.includes('ஐபிஎல்')) {
+              titleVal = 'IPL Final Highlights: Thrilling last over finish';
+            } else if (rawTitle.includes('Gaganyaan') || rawTitle.includes('ககன்யான்')) {
+              titleVal = 'ISRO Gaganyaan Test Success | Indian Astronaut Space Mission Updates';
+            } else if (rawTitle.includes('Metro') || rawTitle.includes('சென்னை மெட்ரோ')) {
+              titleVal = 'Chennai Metro Phase 2 updates | Driverless train tests began';
+            }
+          }
+          return { ...vid, title: titleVal };
+        });
+        setVideos([...translated, ...prefixedFallbackVideos]);
       })
       .catch(err => {
         console.warn("Could not load videos from API, using fallback", err);
@@ -144,9 +173,19 @@ const Home = () => {
       });
 
     fetchApi('/videos/live')
-      .then(data => setLiveVideo(data))
+      .then(data => {
+        if (data && data.youtubeUrl) {
+          let titleVal = data.title;
+          let descVal = data.description;
+          if (lang === 'en') {
+            titleVal = 'KINGS 24x7 Live TV News Stream';
+            descVal = 'Watch continuous Tamil and English live news coverage, debates and special updates.';
+          }
+          setLiveVideo({ ...data, title: titleVal, description: descVal });
+        }
+      })
       .catch(err => console.warn("Could not load live video from API", err));
-  }, []);
+  }, [lang]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -343,7 +382,7 @@ const Home = () => {
             <section className="video-section" id="section-video">
               <div className="section-title">
                 <h2><i className="fas fa-video" style={{ color: '#EF4444' }}></i> {lang === 'en' ? 'Video News' : 'வீடியோ செய்திகள்'}</h2>
-                <a href="#" className="view-all">{lang === 'en' ? 'More Videos' : 'மேலும் வீடியோக்கள்'} <i className="fas fa-arrow-right"></i></a>
+                <Link to="/videos" className="view-all">{lang === 'en' ? 'More Videos' : 'மேலும் வீடியோக்கள்'} <i className="fas fa-arrow-right"></i></Link>
               </div>
               <div className="video-categories">
                 <button className="video-cat-btn active">{lang === 'en' ? 'All' : 'அனைத்தும்'}</button>
@@ -380,7 +419,7 @@ const Home = () => {
             <section className="stories-section" id="section-stories">
               <div className="section-title">
                 <h2><i className="fas fa-sticky-note"></i> {lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்'}</h2>
-                <a href="#" class="view-all">{lang === 'en' ? 'View All' : 'அனைத்தும் காண'} <i className="fas fa-arrow-right"></i></a>
+                <Link to="/web-stories" className="view-all">{lang === 'en' ? 'View All' : 'அனைத்தும் காண'} <i className="fas fa-arrow-right"></i></Link>
               </div>
               <div className="stories-track">
                 {storiesList.map(story => {
@@ -395,7 +434,7 @@ const Home = () => {
                   }[story.cat] || { en: story.cat, ta: story.cat };
 
                   return (
-                    <div className="story-card" style={{ background: story.gradient }} key={story.id}>
+                    <Link to="/web-stories" className="story-card" style={{ background: story.gradient, textDecoration: 'none' }} key={story.id}>
                       <span className="badge-tag" style={{ background: story.badge === 'NEW' ? '#EF4444' : '#F97316' }}>{story.badge}</span>
                       <div className="story-overlay">
                         <span className={`story-cat cat-${catSlug}`}>
@@ -404,7 +443,7 @@ const Home = () => {
                         <h5>{lang === 'en' ? story.titleEn : story.titleTa}</h5>
                         <span className="views"><i className="far fa-eye"></i> {story.views}</span>
                       </div>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>
@@ -526,13 +565,13 @@ const Home = () => {
                 <div className="case-study-col">
                   <div className="company-logo"><i className="fas fa-building" style={{ color: '#0057FF' }}></i> Infosys</div>
                   <span className="tag">{lang === 'en' ? 'Tech' : 'தொழில்நுட்பம்'}</span>
-                  <h5>Infosys: டிஜிட்டல் மாற்றுப் பயணம்</h5>
+                  <h5>{lang === 'en' ? 'Infosys: Digital Transformation Journey' : 'Infosys: டிஜிட்டல் மாற்றுப் பயணம்'}</h5>
                   <a href="#" className="pdf-btn"><i className="fas fa-file-pdf"></i> PDF</a>
                 </div>
                 <div className="case-study-col">
                   <div className="company-logo"><i className="fas fa-car" style={{ color: '#EF4444' }}></i> TVS</div>
-                  <span className="tag">ஆட்டோமொபைல்</span>
-                  <h5>TVS Motor: நிலையான வளர்ச்சி</h5>
+                  <span className="tag">{lang === 'en' ? 'Automobile' : 'ஆட்டோமொபைல்'}</span>
+                  <h5>{lang === 'en' ? 'TVS Motor: Sustainable Growth Journey' : 'TVS Motor: நிலையான வளர்ச்சி'}</h5>
                   <a href="#" className="pdf-btn"><i className="fas fa-file-pdf"></i> PDF</a>
                 </div>
               </div>

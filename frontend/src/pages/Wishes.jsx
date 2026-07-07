@@ -16,7 +16,11 @@ const Wishes = () => {
   const [message, setMessage] = useState('');
   const [senderName, setSenderName] = useState('');
 
-  const fallbackWishes = [
+  const fallbackWishes = lang === 'en' ? [
+    { id: 'demo-1', recipientName: 'Master Tarun Kumar', category: 'birthday', message: 'Master Tarun Kumar from Anna Nagar celebrates his 10th birthday today. Wishing him long life, success and all blessings!', senderName: 'Parents and Relatives', emoji: '🎂' },
+    { id: 'demo-2', recipientName: 'Mr. & Mrs. Vivekanandhan', category: 'wedding', message: 'Wishing the silver jubilee wedding couple Vivekanandhan & Kala a very happy married life filled with joy and prosperity!', senderName: 'Beloved Sons and Family', emoji: '💑' },
+    { id: 'demo-3', recipientName: 'Ms. Karthika Devi', category: 'achievement', message: 'Hearty congratulations to Ms. Karthika Devi for securing 492 marks and topping her school in the 10th grade public exams!', senderName: 'Locals and Teachers', emoji: '🏆' }
+  ] : [
     { id: 'demo-1', recipientName: 'செல்வன். தருண் குமார்', category: 'birthday', message: 'நமது அண்ணா நகரைச் சேர்ந்த செல்வன். தருண் குமார் தனது 10-வது பிறந்தநாளை இன்று கொண்டாடுகிறார். அவர் எல்லா வளமும் பெற்று நீண்ட ஆயுளுடன் வாழ வாழ்த்துகிறோம்!', senderName: 'பெற்றோர் மற்றும் உறவினர்கள்', emoji: '🎂' },
     { id: 'demo-2', recipientName: 'திரு & திருமதி. விவேகானந்தன்', category: 'wedding', message: 'தங்களது 25-வது வெள்ளி விழா திருமண நாளை இன்று கொண்டாடும் தாரமங்கலம் விவேகானந்தன்-கலா தம்பதியினர் மென்மேலும் இன்புற்று வாழ வாழ்த்துகிறோம்!', senderName: 'அன்பு மகன்கள் மற்றும் குடும்பத்தினர்', emoji: '💑' },
     { id: 'demo-3', recipientName: 'செல்வி. கார்த்திகா தேவி', category: 'achievement', message: 'பத்தாம் வகுப்பு பொதுத்தேர்வில் 492 மதிப்பெண்கள் பெற்று பள்ளியில் முதலிடம் பெற்ற நமது ஊரைச் சேர்ந்த மாணவி கார்த்திகா தேவிக்கு மனமார்ந்த வாழ்த்துகள்!', senderName: 'நமது ஊர் மக்கள் மற்றும் ஆசிரியர்கள்', emoji: '🏆' }
@@ -25,14 +29,38 @@ const Wishes = () => {
   const loadData = () => {
     fetchApi('/wishes')
       .then(data => {
-        const formatted = Array.isArray(data) ? data.map(item => ({
-          id: item.wish_id || item.id,
-          recipientName: item.recipientName || item.recipient_name,
-          category: (item.category || '').toLowerCase(),
-          message: item.message,
-          senderName: item.senderName || item.sender_name,
-          emoji: item.category === 'birthday' ? '🎂' : item.category === 'wedding' ? '💑' : '🏆'
-        })) : [];
+        const formatted = Array.isArray(data) ? data.map(item => {
+          const rawName = item.recipientName || item.recipient_name || '';
+          const rawSender = item.senderName || item.sender_name || '';
+          const rawMessage = item.message || '';
+          
+          let nameVal = rawName;
+          let senderVal = rawSender;
+          let messageVal = rawMessage;
+          
+          if (lang === 'en') {
+            if (rawName.includes('தருண்')) nameVal = 'Master Tarun Kumar';
+            else if (rawName.includes('விவேகானந்தன்')) nameVal = 'Mr. & Mrs. Vivekanandhan';
+            else if (rawName.includes('கார்த்திகா')) nameVal = 'Ms. Karthika Devi';
+            
+            if (rawSender.includes('பெற்றோர்')) senderVal = 'Parents and Relatives';
+            else if (rawSender.includes('மகன்கள்')) senderVal = 'Beloved Sons and Family';
+            else if (rawSender.includes('ஊர் மக்கள்')) senderVal = 'Locals and Teachers';
+            
+            if (rawMessage.includes('பிறந்தநாளை')) messageVal = 'Master Tarun Kumar from Anna Nagar celebrates his 10th birthday today. Wishing him long life and success!';
+            else if (rawMessage.includes('திருமண நாளை')) messageVal = 'Wishing the silver jubilee wedding couple Vivekanandhan & Kala a very happy married life!';
+            else if (rawMessage.includes('மதிப்பெண்கள்')) messageVal = 'Hearty congratulations to Ms. Karthika Devi for securing 492 marks and topping her school!';
+          }
+          
+          return {
+            id: item.wish_id || item.id,
+            recipientName: nameVal,
+            category: (item.category || '').toLowerCase(),
+            message: messageVal,
+            senderName: senderVal,
+            emoji: item.category === 'birthday' ? '🎂' : item.category === 'wedding' ? '💑' : '🏆'
+          };
+        }) : [];
         const merged = [...formatted, ...fallbackWishes];
         setWishes(merged);
         setFilteredWishes(merged);
@@ -46,7 +74,7 @@ const Wishes = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [lang]);
 
   useEffect(() => {
     let result = wishes;

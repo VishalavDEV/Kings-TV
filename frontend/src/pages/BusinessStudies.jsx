@@ -15,7 +15,41 @@ const BusinessStudies = () => {
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
 
-  const fallbackStories = [
+  const fallbackStories = lang === 'en' ? [
+    {
+      id: 'demo-1',
+      author_name: 'K. Selvakumar',
+      business_name: 'Tiruppur Tea Stall',
+      title: 'Digital Revolution of a Local Tea Stall: Tiruppur Case Study',
+      details: 'A detailed case study on how Mariyappan from Tiruppur revolutionized his traditional tea stall business using UPI payments, WhatsApp orders, and Google Maps listing.',
+      category: 'Case Study',
+      icon: '☕',
+      readTime: '5 Min Read',
+      gradient: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
+    },
+    {
+      id: 'demo-2',
+      author_name: 'R. Kalaivani',
+      business_name: 'SHG Eco Friendly Venture',
+      title: 'Eco-Friendly Areca Plate Manufacturing Unit by Self-Help Group',
+      details: 'A business success model detailing how 10 women from Madurai joined hands to manufacture areca leaf plates and scaled up to export to the international market.',
+      category: 'Success Story',
+      icon: '🌿',
+      readTime: '6 Min Read',
+      gradient: 'linear-gradient(135deg, #10b981 0%, #047857 100%)'
+    },
+    {
+      id: 'demo-3',
+      author_name: 'A. Rajesh',
+      business_name: 'Amman Dairy Farm',
+      title: 'Integrated Dairy Automation in Rural Erode',
+      details: 'How Rajesh, a dairy farmer from Erode, implemented digital monitoring technology from milking to final delivery, significantly increasing overall yield and revenue.',
+      category: 'Business Model',
+      icon: '🥛',
+      readTime: '4 Min Read',
+      gradient: 'linear-gradient(135deg, #f97316 0%, #c2410c 100%)'
+    }
+  ] : [
     {
       id: 'demo-1',
       author_name: 'கே. செல்வக்குமார்',
@@ -56,15 +90,52 @@ const BusinessStudies = () => {
       .then(data => {
         const formatted = Array.isArray(data) ? data.map((item, index) => {
           const fallback = fallbackStories[index % fallbackStories.length];
+          const rawAuthor = item.authorName || item.author_name || '';
+          const rawBiz = item.businessName || item.business_name || '';
+          const rawTitle = item.title || '';
+          const rawDetails = item.details || '';
+          
+          let authorVal = rawAuthor;
+          let bizVal = rawBiz;
+          let titleVal = rawTitle;
+          let detailsVal = rawDetails;
+          
+          if (lang === 'en') {
+            if (rawAuthor.includes('செல்வக்குமார்')) authorVal = 'K. Selvakumar';
+            else if (rawAuthor.includes('கலைவாணி')) authorVal = 'R. Kalaivani';
+            else if (rawAuthor.includes('ராஜேஷ்')) authorVal = 'A. Rajesh';
+            else if (rawAuthor.includes('கிருஷ்ணன்') || rawAuthor.includes('राधा')) authorVal = 'Radha Krishnan';
+            else if (rawAuthor.includes('முருகன்') || rawTitle.includes('Traditional Brand')) authorVal = 'Murugan';
+            
+            if (rawBiz.includes('திருப்பூர்')) bizVal = 'Tiruppur Tea Stall';
+            else if (rawBiz.includes('சுயஉதவிக்')) bizVal = 'SHG Eco Friendly Venture';
+            else if (rawBiz.includes('பால் பண்ணை')) bizVal = 'Amman Dairy Farm';
+            else if (rawBiz.includes('முருகன்') || rawBiz.includes('காபி')) bizVal = 'Murugan Coffee Works';
+            else if (rawBiz.includes('ஆர்கானிக்') || rawBiz.includes('ஃபார்ம்ஸ்') || rawTitle.includes('Agro-Entrepreneur')) bizVal = 'Radha Organic Farms';
+            
+            if (rawTitle.includes('தேநீர்')) titleVal = 'Digital Revolution of a Local Tea Stall: Tiruppur Case Study';
+            else if (rawTitle.includes('சுயஉதவிக்')) titleVal = 'Eco-Friendly Areca Plate Manufacturing Unit by Self-Help Group';
+            else if (rawTitle.includes('பால் பண்ணை')) titleVal = 'Integrated Dairy Automation in Rural Erode';
+            else if (rawTitle.includes('காபி') || rawTitle.includes('கடை')) titleVal = 'Legacy Coffee Brand Digitalization Journey';
+            else if (rawTitle.includes('வகைப்பாடு')) titleVal = 'Case Study: Local Classifieds Advertising Return on Investment';
+            else if (rawTitle.includes('Agro-Entrepreneur')) titleVal = 'From Software Engineer to Successful Agro-Entrepreneur';
+            
+            if (rawDetails.includes('மாரியப்பன்')) detailsVal = 'A detailed case study on how Mariyappan from Tiruppur revolutionized his traditional tea stall business using digital payments.';
+            else if (rawDetails.includes('பாக்கு மட்டை')) detailsVal = 'A business success model detailing how 10 women from Madurai manufactured and exported eco-friendly areca leaf plates.';
+            else if (rawDetails.includes('ரமேஷ்')) detailsVal = 'How Rajesh, a dairy farmer from Erode, implemented digital dairy monitoring technology to increase revenue.';
+            else if (rawDetails.includes('காபி')) detailsVal = 'How Murugan Coffee Works adopted digital supply chain tracking to scale operations globally.';
+            else if (rawDetails.includes('கிருஷ்ணன்') || rawDetails.includes('Agro-Entrepreneur') || rawTitle.includes('Agro-Entrepreneur')) detailsVal = 'Radha Krishnan describes how he set up integrated organic dairy and drip irrigation vegetable farms near Coimbatore.';
+          }
+          
           return {
             id: item.id || item.story_id,
-            author_name: item.authorName || item.author_name || 'பயனர்',
-            business_name: item.businessName || item.business_name || 'வணிகம்',
-            title: item.title,
-            details: item.details,
-            category: item.isCaseStudy ? 'கேஸ் ஸ்டடி' : 'வெற்றிக் கதை',
+            author_name: authorVal || (lang === 'en' ? 'User' : 'பயனர்'),
+            business_name: bizVal || (lang === 'en' ? 'Business' : 'வணிகம்'),
+            title: titleVal,
+            details: detailsVal,
+            category: item.isCaseStudy ? (lang === 'en' ? 'Case Study' : 'கேஸ் ஸ்டடி') : (lang === 'en' ? 'Success Story' : 'வெற்றிக் கதை'),
             icon: item.isCaseStudy ? '📈' : '🌿',
-            readTime: '5 நிமிட வாசிப்பு',
+            readTime: lang === 'en' ? '5 Min Read' : '5 நிமிட வாசிப்பு',
             gradient: fallback.gradient
           };
         }) : [];
@@ -78,7 +149,7 @@ const BusinessStudies = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [lang]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
