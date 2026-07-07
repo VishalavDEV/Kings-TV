@@ -62,6 +62,8 @@ public class VideoController {
         video.setDescription(videoDetails.getDescription());
         video.setIsLiveTv(videoDetails.getIsLiveTv());
         video.setViewsCount(videoDetails.getViewsCount());
+        video.setThumbnailUrl(videoDetails.getThumbnailUrl());
+        video.setDurationSeconds(videoDetails.getDurationSeconds());
         
         VideoContent updated = videoContentRepository.save(video);
         return ResponseEntity.ok(updated);

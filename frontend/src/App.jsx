@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Customizer from './components/Customizer';
+import AiAssistant from './components/AiAssistant';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -14,6 +15,8 @@ import Jobs from './pages/Jobs';
 import BusinessStudies from './pages/BusinessStudies';
 import ArticleDetail from './pages/ArticleDetail';
 import Category from './pages/Category';
+import Videos from './pages/Videos';
+import WebStories from './pages/WebStories';
 
 function App() {
   return (
@@ -41,6 +44,8 @@ function App() {
             <Route path="/business-studies.html" element={<Navigate to="/business-studies" replace />} />
             <Route path="/category/:slug" element={<Category />} />
             <Route path="/category.html" element={<Category />} />
+            <Route path="/videos" element={<Videos />} />
+            <Route path="/web-stories" element={<WebStories />} />
             <Route path="/article/:id" element={<ArticleDetail />} />
             <Route path="/article" element={<Navigate to="/" replace />} />
           </Routes>
@@ -48,6 +53,7 @@ function App() {
 
         <Footer />
         <Customizer />
+        <AiAssistant />
       </div>
     </Router>
   );

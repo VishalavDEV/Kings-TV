@@ -365,6 +365,7 @@ const ArticleDetail = () => {
             categoryNameEn: cat.name,
             categorySlug: cat.slug,
             tags: ['செய்திகள்', 'தமிழகம்'],
+            imageUrl: data.imageUrl,
             gradient: 'linear-gradient(135deg, #1E3A8A, #3B82F6)'
           });
 
@@ -383,6 +384,7 @@ const ArticleDetail = () => {
                       descEn: item.shortDescEn,
                       subcatTa: item.districtId ? 'மாநிலம்' : 'தேசியம்',
                       subcatEn: item.districtId ? 'State' : 'National',
+                      imageUrl: item.imageUrl,
                       gradient: 'linear-gradient(135deg, #3B82F6, #1D4ED8)'
                     }))
                 : [];
@@ -573,14 +575,25 @@ const ArticleDetail = () => {
 
           {/* Full Width Hero Image */}
           <div className="article-hero-img-container" style={{ margin: '24px 0' }}>
-            <div style={{ width: '100%', height: '350px', borderRadius: '12px', background: article.gradient || 'linear-gradient(135deg, #1E3A8A, #3B82F6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.8 }}>
-                <i className="fas fa-image fa-3x" style={{ marginBottom: '10px' }}></i>
-                <span style={{ fontSize: '14px', fontWeight: 700 }}>KINGS 24x7 NEWS MEDIA</span>
+            {article.imageUrl ? (
+              <img 
+                src={article.imageUrl} 
+                alt={lang === 'en' ? article.titleEn : article.titleTa} 
+                style={{ width: '100%', height: '350px', objectFit: 'cover', borderRadius: '12px' }}
+              />
+            ) : (
+              <div style={{ width: '100%', height: '350px', borderRadius: '12px', background: article.gradient || 'linear-gradient(135deg, #1E3A8A, #3B82F6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.8 }}>
+                  <i className="fas fa-image fa-3x" style={{ marginBottom: '10px' }}></i>
+                  <span style={{ fontSize: '14px', fontWeight: 700 }}>KINGS 24x7 NEWS MEDIA</span>
+                </div>
               </div>
-            </div>
+            )}
             <div className="caption" id="imgCaption" style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px', fontStyle: 'italic' }}>
-              {lang === 'en' ? 'Photo: Secretariat, Chennai. (File Photo)' : 'படம்: தலைமைச் செயலகம், சென்னை. (கோப்புப் படம்)'}
+              {article.categoryId === 1 
+                ? (lang === 'en' ? 'Photo: Secretariat, Chennai. (File Photo)' : 'படம்: தலைமைச் செயலகம், சென்னை. (கோப்புப் படம்)')
+                : (lang === 'en' ? `Photo: ${article.titleEn || 'News'}` : `படம்: ${article.titleTa || 'செய்தி'}`)
+              }
             </div>
           </div>
 

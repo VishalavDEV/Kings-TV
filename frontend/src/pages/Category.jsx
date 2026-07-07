@@ -9,6 +9,16 @@ const Category = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (slug === 'regional') {
+      navigate('/directory', { replace: true });
+    }
+  }, [slug, navigate]);
+
+  if (slug === 'regional') {
+    return null;
+  }
+
   // Determine category key (cat query param has precedence, otherwise URL slug, default to 'politics')
   const catKey = (searchParams.get('cat') || slug || 'politics').toLowerCase();
 
@@ -40,6 +50,7 @@ const Category = () => {
           dateEn: '1 Hr Ago',
           readTimeTa: '3 நிமிட வாசிப்பு',
           readTimeEn: '3 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=800',
           gradient: 'linear-gradient(135deg, #1E3A8A, #3B82F6)'
         },
         {
@@ -55,6 +66,7 @@ const Category = () => {
           dateEn: '3 Hr Ago',
           readTimeTa: '2 நிமிட வாசிப்பு',
           readTimeEn: '2 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=800',
           gradient: 'linear-gradient(135deg, #3B82F6, #60A5FA)'
         },
         {
@@ -70,6 +82,7 @@ const Category = () => {
           dateEn: '6 Hr Ago',
           readTimeTa: '5 நிமிட வாசிப்பு',
           readTimeEn: '5 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800',
           gradient: 'linear-gradient(135deg, #1D4ED8, #1E3A8A)'
         },
         {
@@ -85,6 +98,7 @@ const Category = () => {
           dateEn: '12 Hr Ago',
           readTimeTa: '4 நிமிட வாசிப்பு',
           readTimeEn: '4 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800',
           gradient: 'linear-gradient(135deg, #2563EB, #3B82F6)'
         }
       ]
@@ -111,6 +125,7 @@ const Category = () => {
           dateEn: '30 Min Ago',
           readTimeTa: '2 நிமிட வாசிப்பு',
           readTimeEn: '2 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800',
           gradient: 'linear-gradient(135deg, #065F46, #10B981)'
         },
         {
@@ -126,6 +141,7 @@ const Category = () => {
           dateEn: '2 Hr Ago',
           readTimeTa: '3 நிமிட வாசிப்பு',
           readTimeEn: '3 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=800',
           gradient: 'linear-gradient(135deg, #10B981, #34D399)'
         },
         {
@@ -141,6 +157,7 @@ const Category = () => {
           dateEn: '4 Hr Ago',
           readTimeTa: '2 நிமிட வாசிப்பு',
           readTimeEn: '2 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=800',
           gradient: 'linear-gradient(135deg, #047857, #10B981)'
         }
       ]
@@ -167,6 +184,7 @@ const Category = () => {
           dateEn: '10 Min Ago',
           readTimeTa: '4 நிமிட வாசிப்பு',
           readTimeEn: '4 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800',
           gradient: 'linear-gradient(135deg, #C2410C, #F97316)'
         },
         {
@@ -182,6 +200,7 @@ const Category = () => {
           dateEn: '3 Hr Ago',
           readTimeTa: '3 நிமிட வாசிப்பு',
           readTimeEn: '3 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800',
           gradient: 'linear-gradient(135deg, #F97316, #FB923C)'
         }
       ]
@@ -208,6 +227,7 @@ const Category = () => {
           dateEn: '45 Min Ago',
           readTimeTa: '2 நிமிட வாசிப்பு',
           readTimeEn: '2 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800',
           gradient: 'linear-gradient(135deg, #BE185D, #EC4899)'
         },
         {
@@ -223,6 +243,7 @@ const Category = () => {
           dateEn: '4 Hr Ago',
           readTimeTa: '4 நிமிட வாசிப்பு',
           readTimeEn: '4 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=800',
           gradient: 'linear-gradient(135deg, #EC4899, #F472B6)'
         }
       ]
@@ -249,6 +270,7 @@ const Category = () => {
           dateEn: '20 Min Ago',
           readTimeTa: '4 நிமிட வாசிப்பு',
           readTimeEn: '4 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800',
           gradient: 'linear-gradient(135deg, #6D28D9, #A855F7)'
         },
         {
@@ -264,7 +286,62 @@ const Category = () => {
           dateEn: '3 Hr Ago',
           readTimeTa: '3 நிமிட வாசிப்பு',
           readTimeEn: '3 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=800',
           gradient: 'linear-gradient(135deg, #A855F7, #C084FC)'
+        }
+      ]
+    },
+    international: {
+      titleTa: 'சர்வதேச செய்திகள்',
+      titleEn: 'International News',
+      breadTa: 'சர்வதேசம்',
+      breadEn: 'International',
+      themeClass: 'theme-international',
+      subcatsTa: ['அனைத்தும்', 'தேசியம்', 'சர்வதேசம்', 'உலக செய்திகள்'],
+      subcatsEn: ['All', 'National', 'International', 'World News'],
+      articles: [
+        {
+          id: 31,
+          titleTa: 'விண்வெளி ஆய்வு: "ககன்யான்" திட்டத்தின் முக்கிய மைல்கல் - "சால்வ்" சாலிட் மோட்டார் சோதனையை வெற்றிகரமாக முடித்தது இஸ்ரோ',
+          titleEn: 'Space Exploration: ISRO Conducts Successful SOLVE Solid Motor Ground Test for Gaganyaan Mission',
+          descTa: 'ஸ்ரீஹரிகோட்டாவில் ககன்யான் மனித விண்கலத் திட்டத்தின் மீட்பு அமைப்புகளை சோதிப்பதற்கான சாலிட் மோட்டார் சோதனையை வெற்றிகரமாக மேற்கொண்டுள்ளது.',
+          descEn: 'The experimental launch vehicle solid strap-on motor ground test at Sriharikota validates deceleration and recovery module systems.',
+          subcatTa: 'சர்வதேசம்',
+          subcatEn: 'International',
+          type: 'featured',
+          dateTa: '2 மணி நேரம்',
+          dateEn: '2 Hr Ago',
+          readTimeTa: '4 நிமிட வாசிப்பு',
+          readTimeEn: '4 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800',
+          gradient: 'linear-gradient(135deg, #1E40AF, #3B82F6)'
+        }
+      ]
+    },
+    world: {
+      titleTa: 'சர்வதேச செய்திகள்',
+      titleEn: 'International News',
+      breadTa: 'சர்வதேசம்',
+      breadEn: 'International',
+      themeClass: 'theme-international',
+      subcatsTa: ['அனைத்தும்', 'தேசியம்', 'சர்வதேசம்', 'உலக செய்திகள்'],
+      subcatsEn: ['All', 'National', 'International', 'World News'],
+      articles: [
+        {
+          id: 31,
+          titleTa: 'விண்வெளி ஆய்வு: "ககன்யான்" திட்டத்தின் முக்கிய மைல்கல் - "சால்வ்" சாலிட் மோட்டார் சோதனையை வெற்றிகரமாக முடித்தது இஸ்ரோ',
+          titleEn: 'Space Exploration: ISRO Conducts Successful SOLVE Solid Motor Ground Test for Gaganyaan Mission',
+          descTa: 'ஸ்ரீஹரிகோட்டாவில் ககன்யான் மனித விண்கலத் திட்டத்தின் மீட்பு அமைப்புகளை சோதிப்பதற்கான சாலிட் மோட்டார் சோதனையை வெற்றிகரமாக மேற்கொண்டுள்ளது.',
+          descEn: 'The experimental launch vehicle solid strap-on motor ground test at Sriharikota validates deceleration and recovery module systems.',
+          subcatTa: 'சர்வதேசம்',
+          subcatEn: 'International',
+          type: 'featured',
+          dateTa: '2 மணி நேரம்',
+          dateEn: '2 Hr Ago',
+          readTimeTa: '4 நிமிட வாசிப்பு',
+          readTimeEn: '4 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800',
+          gradient: 'linear-gradient(135deg, #1E40AF, #3B82F6)'
         }
       ]
     }
@@ -294,7 +371,7 @@ const Category = () => {
     fetchApi('/articles')
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
-          const catIdMap = { politics: 1, business: 2, sports: 3, cinema: 4, tech: 5 };
+          const catIdMap = { politics: 1, business: 2, sports: 3, cinema: 4, tech: 5, international: 7, world: 7 };
           const targetId = catIdMap[catKey] || 1;
 
           const filtered = data.filter(item => item.categoryId === targetId);
@@ -311,6 +388,7 @@ const Category = () => {
             dateEn: '1 Hr Ago',
             readTimeTa: '3 நிமிட வாசிப்பு',
             readTimeEn: '3 Min Read',
+            imageUrl: item.imageUrl,
             gradient: 'linear-gradient(135deg, #1E40AF, #3B82F6)'
           }));
           setArticles([...formatted, ...fallbackArticles]);
@@ -323,6 +401,10 @@ const Category = () => {
         setArticles(fallbackArticles);
       });
   }, [catKey]);
+
+  useEffect(() => {
+    setSelectedSubcat(lang === 'en' ? 'All' : 'அனைத்தும்');
+  }, [lang]);
 
   useEffect(() => {
     // Perform subcategory and type filtering
@@ -420,7 +502,12 @@ const Category = () => {
                 onClick={() => navigate(`/article/${art.id}`)}
                 style={{ cursor: 'pointer' }}
               >
-                <div className="card-img" style={{ background: art.gradient }}>
+                <div 
+                  className="card-img" 
+                  style={{ 
+                    background: art.imageUrl ? `url(${art.imageUrl}) center/cover` : art.gradient 
+                  }}
+                >
                   <span className="cat-badge" style={{ background: 'var(--category-color, var(--primary))' }}>
                     {lang === 'en' ? art.subcatEn : art.subcatTa}
                   </span>

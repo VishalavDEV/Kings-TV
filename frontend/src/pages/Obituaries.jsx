@@ -18,43 +18,123 @@ const Obituaries = () => {
   const [funeral, setFuneral] = useState('');
   const [desc, setDesc] = useState('');
 
-  const fallbackObits = [
-    { id: 'demo-1', deceasedName: 'தர்மலிங்கம்', age: 72, location: 'சேலம்', demiseDate: '30-06-2026', funeralDetails: '02-07-2026, மாலை 4:00 மணி', shortDescription: 'முன்னாள் அரசு பள்ளி தலைமை ஆசிரியர். அன்னார் தாரமங்கலம் அரசு உயர்நிலைப்பள்ளியில் 30 ஆண்டுகள் பணியாற்றியவர். இவரது இழப்பு குடும்பத்தாருக்கும் மாணவர்களுக்கும் ஈடுசெய்ய முடியாத ஒன்றாகும்.', tributeCount: 118, gender: 'male' },
-    { id: 'demo-2', deceasedName: 'மீனாம்பாள்', age: 68, location: 'கோவை', demiseDate: '29-06-2026', funeralDetails: '01-07-2026, காலை 10:00 மணி', shortDescription: 'பாலசுப்ரமணியன் அவர்களின் தர்மபத்தினி. சமூக ஆர்வலர் மற்றும் உதவும் கரங்கள் அறக்கட்டளையின் மூத்த உறுப்பினர். பல ஆதரவற்ற குழந்தைகளுக்கு கல்வி கற்க உதவியவர்.', tributeCount: 84, gender: 'female' },
-    { id: 'demo-3', deceasedName: 'ராமநாதன் செட்டியார்', age: 85, location: 'காரைக்குடி', demiseDate: '28-06-2026', funeralDetails: '30-06-2026 (முடிந்தது)', shortDescription: 'உள்ளூர் வணிக சங்கத் தலைவர். செட்டியார் நகைக்கடையின் நிறுவனர். காரைக்குடி பகுதியில் பல்வேறு ஆன்மிக மற்றும் தொண்டுப் பணிகளில் தன்னை ஈடுபடுத்திக் கொண்டவர்.', tributeCount: 230, gender: 'male' }
+  const fallbackObits = lang === 'en' ? [
+    { id: 'demo-1', deceasedName: 'Kanthasamy', age: 74, location: 'Trichy', demiseDate: '30-06-2026', funeralDetails: '02-07-2026, 4:00 PM', shortDescription: 'Former Cooperative Bank Manager. He actively participated in various social works in the locality.', tributeCount: 118, gender: 'male' },
+    { id: 'demo-2', deceasedName: 'Saraswathi', age: 70, location: 'Madurai', demiseDate: '29-06-2026', funeralDetails: '01-07-2026, 10:00 AM', shortDescription: 'Beloved homemaker. Her demise is an irreparable loss to her family and relatives.', tributeCount: 84, gender: 'female' },
+    { id: 'demo-3', deceasedName: 'Chidambaram', age: 80, location: 'Tanjore', demiseDate: '28-06-2026', funeralDetails: '30-06-2026 (Completed)', shortDescription: 'Retired government official. A hard worker and an honest human being.', tributeCount: 230, gender: 'male' }
+  ] : [
+    { id: 'demo-1', deceasedName: 'கந்தசாமி', age: 74, location: 'திருச்சி', demiseDate: '30-06-2026', funeralDetails: '02-07-2026, மாலை 4:00 மணி', shortDescription: 'முன்னாள் கூட்டுறவு வங்கி மேலாளர். அன்னார் அப்பகுதியில் பல்வேறு சமூகப் பணிகளில் தன்னை ஈடுபடுத்திக் கொண்டவர்.', tributeCount: 118, gender: 'male' },
+    { id: 'demo-2', deceasedName: 'சரஸ்வதி', age: 70, location: 'மதுரை', demiseDate: '29-06-2026', funeralDetails: '01-07-2026, காலை 10:00 மணி', shortDescription: 'அன்பான குடும்பத்தலைவி. அன்னார் குடும்பத்தாருக்கும் உறவினர்களுக்கும் ஈடுசெய்ய முடியாத பேரிழப்பு.', tributeCount: 84, gender: 'female' },
+    { id: 'demo-3', deceasedName: 'சிதம்பரம்', age: 80, location: 'தஞ்சாவூர்', demiseDate: '28-06-2026', funeralDetails: '30-06-2026 (முடிந்தது)', shortDescription: 'ஓய்வு பெற்ற அரசு அதிகாரி. சிறந்த உழைப்பாளி மற்றும் நேர்மையான மனிதர்.', tributeCount: 230, gender: 'male' }
   ];
+
+  const parseDate = (dateStr) => {
+    if (!dateStr) return null;
+    if (dateStr.includes('-') && dateStr.split('-')[0].length === 4) {
+      return new Date(dateStr);
+    }
+    if (dateStr.includes('-')) {
+      const parts = dateStr.split('-');
+      return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+    }
+    if (dateStr.includes('/')) {
+      const parts = dateStr.split('/');
+      if (parts[2].length === 4) {
+        return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+      }
+      return new Date(dateStr);
+    }
+    return new Date(dateStr);
+  };
+
+  const isWithinOneWeek = (demiseDateStr) => {
+    const demiseDate = parseDate(demiseDateStr);
+    if (!demiseDate || isNaN(demiseDate.getTime())) return true;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const compareDate = new Date(demiseDate);
+    compareDate.setHours(0, 0, 0, 0);
+    const diffTime = today.getTime() - compareDate.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= 7;
+  };
 
   const loadData = () => {
     fetchApi('/obituaries')
       .then(data => {
-        const formatted = Array.isArray(data) ? data.map(item => ({
-          id: item.obit_id || item.id,
-          deceasedName: item.deceasedName || item.deceased_name,
-          age: item.age,
-          location: item.location,
-          demiseDate: item.demiseDate || item.demise_date,
-          funeralDetails: item.funeralDetails || item.funeral_details,
-          shortDescription: item.shortDescription || item.short_description,
-          tributeCount: item.tributeCount || 0,
-          gender: 'male'
-        })) : [];
-        const merged = [...formatted, ...fallbackObits];
-        setObits(merged);
-        setFilteredObits(merged);
+        const formatted = Array.isArray(data) ? data.map(item => {
+          const rawName = item.deceasedName || item.deceased_name || '';
+          const rawLocation = item.location || '';
+          const rawFuneral = item.funeralDetails || item.funeral_details || '';
+          const rawDesc = item.shortDescription || item.short_description || '';
+          
+          let nameVal = rawName;
+          let locationVal = rawLocation;
+          let funeralVal = rawFuneral;
+          let descVal = rawDesc;
+          
+          if (lang === 'en') {
+            if (rawName.includes('சரஸ்வதி')) nameVal = 'Saraswathi';
+            else if (rawName.includes('மீனாம்பாள்')) nameVal = 'Meenambal';
+            else if (rawName.includes('ராமநாதன்')) nameVal = 'Ramanathan Chettiar';
+            else if (rawName.includes('தர்மலிங்கம்')) nameVal = 'Dharmalingam';
+            else if (rawName.includes('கந்தசாமி')) nameVal = 'Kanthasamy';
+            else if (rawName.includes('சிதம்பரம்')) nameVal = 'Chidambaram';
+
+            if (rawLocation.includes('கோவை')) locationVal = 'Coimbatore';
+            else if (rawLocation.includes('திருச்சி')) locationVal = 'Trichy';
+            else if (rawLocation.includes('மதுரை')) locationVal = 'Madurai';
+            else if (rawLocation.includes('தஞ்சாவூர்')) locationVal = 'Tanjore';
+            else if (rawLocation.includes('சேலம்')) locationVal = 'Salem';
+            else if (rawLocation.includes('காரைக்குடி')) locationVal = 'Karaikudi';
+
+            if (rawFuneral.includes('மாலை')) funeralVal = rawFuneral.replace('மாலை', 'PM').replace('மணி', '');
+            else if (rawFuneral.includes('காலை')) funeralVal = rawFuneral.replace('காலை', 'AM').replace('மணி', '');
+            if (rawDesc.includes('அன்பான குடும்பத்தலைவி')) descVal = 'Beloved homemaker. Her demise is an irreparable loss to her family.';
+            else if (rawDesc.includes('முன்னாள் அரசு பள்ளி')) descVal = 'Former government school headmaster. A great loss to his family and students.';
+          }
+          
+          return {
+            id: item.obit_id || item.id,
+            deceasedName: nameVal,
+            age: item.age,
+            location: locationVal,
+            demiseDate: item.demiseDate || item.demise_date,
+            funeralDetails: funeralVal,
+            shortDescription: descVal,
+            tributeCount: item.tributeCount || 0,
+            gender: rawName.includes('சரஸ்வதி') || rawName.includes('மீனாம்பாள்') ? 'female' : 'male'
+          };
+        }) : [];
+        
+        // De-duplicate: only add a fallback notice if the name doesn't exist in the database list
+        const merged = [...formatted];
+        fallbackObits.forEach(fallback => {
+          const exists = formatted.some(f => f.deceasedName.trim().toLowerCase() === fallback.deceasedName.trim().toLowerCase());
+          if (!exists) {
+            merged.push(fallback);
+          }
+        });
+
+        const activeObits = merged.filter(o => isWithinOneWeek(o.demiseDate));
+        
+        setObits(activeObits);
+        setFilteredObits(activeObits);
 
         // Setup initial tributes state
         const initialTributes = {};
-        merged.forEach(o => {
+        activeObits.forEach(o => {
           initialTributes[o.id] = o.tributeCount;
         });
         setTributes(initialTributes);
       })
       .catch((err) => {
         console.warn("Could not fetch obituaries from API, using fallback", err);
-        setObits(fallbackObits);
-        setFilteredObits(fallbackObits);
+        const activeFallback = fallbackObits.filter(o => isWithinOneWeek(o.demiseDate));
+        setObits(activeFallback);
+        setFilteredObits(activeFallback);
         const initialTributes = {};
-        fallbackObits.forEach(o => {
+        activeFallback.forEach(o => {
           initialTributes[o.id] = o.tributeCount;
         });
         setTributes(initialTributes);
@@ -126,7 +206,7 @@ const Obituaries = () => {
         tributeCount: 0,
         gender: 'male'
       };
-      setObits(prev => [newObit, ...prev]);
+      setObits(prev => [newObit, ...prev].filter(o => isWithinOneWeek(o.demiseDate)));
       setTributes(prev => ({ ...prev, [newObit.id]: 0 }));
       setName('');
       setAge('');
@@ -160,7 +240,6 @@ const Obituaries = () => {
       <section className="obituaries-grid">
         {filteredObits.map(obit => (
           <div className="obit-card" key={obit.id}>
-            <div className="obit-ribbon"><i className="fas fa-ribbon"></i></div>
             <div className="obit-photo-frame">
               <i className={obit.gender === 'female' ? "fas fa-user-circle" : "fas fa-user-tie"} style={{ fontSize: '70px', color: '#94a3b8' }}></i>
             </div>
