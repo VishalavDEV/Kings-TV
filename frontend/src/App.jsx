@@ -17,6 +17,10 @@ import ArticleDetail from './pages/ArticleDetail';
 import Category from './pages/Category';
 import Videos from './pages/Videos';
 import WebStories from './pages/WebStories';
+import AboutUs from './pages/AboutUs';
+import Careers from './pages/Careers';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfUse from './pages/TermsOfUse';
 
 function App() {
   return (
@@ -49,6 +53,10 @@ function App() {
             <Route path="/article/:id" element={<ArticleDetail />} />
             <Route path="/article" element={<Navigate to="/" replace />} />
             <Route path="/news/:id" element={<ArticleDetail />} />
+            <Route path="/about-us" element={<AboutUs />} />
+            <Route path="/careers" element={<Careers />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-use" element={<TermsOfUse />} />
           </Routes>
         </main>
 
