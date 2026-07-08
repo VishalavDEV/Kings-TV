@@ -4865,3 +4865,127 @@ ul {
   background: var(--primary-dark);
 }
 
+/* ===== MOBILE ONLY CAROUSEL & HEADER OPTIMIZATIONS ===== */
+@media (max-width: 767px) {
+  /* 1. Convert News Grid lists into Horizontal Scroll Snap carousels */
+  .news-grid-3,
+  .news-grid,
+  .videos-grid-container,
+  .news-grid-4 {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important; /* Momentum scrolling */
+    gap: 16px !important;
+    padding: 4px 4px 16px 4px !important; /* Padding protects card shadow cuts */
+    margin-left: -4px !important;
+    margin-right: -4px !important;
+    scrollbar-width: none !important; /* Firefox */
+  }
+
+  /* Hide scrollbars completely */
+  .news-grid-3::-webkit-scrollbar,
+  .news-grid::-webkit-scrollbar,
+  .videos-grid-container::-webkit-scrollbar,
+  .news-grid-4::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Show 1.2 to 1.3 cards at a time (card width 78% + gap) */
+  .news-grid-3 > *,
+  .news-grid > *,
+  .videos-grid-container > *,
+  .news-grid-4 > * {
+    flex: 0 0 78% !important;
+    width: 78% !important;
+    max-width: 78% !important;
+    scroll-snap-align: start !important;
+  }
+
+  /* 2. Compact Header Optimization - Keep all widgets and elements inline */
+  .header-main {
+    padding: 6px 0 !important;
+  }
+
+  .header-main .container {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+  }
+
+  .header-left {
+    width: auto !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .header-left .logo-link {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .header-left .main-logo-img {
+    height: 30px !important; /* Extremely compact inline size */
+    width: auto !important;
+  }
+
+  .logo-sub-text {
+    display: none !important; /* Remove slogan text on mobile to avoid overlap */
+  }
+
+  .header-right {
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .livetv-btn {
+    padding: 6px 10px !important;
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    border-radius: 4px !important;
+    height: auto !important;
+  }
+
+  /* Top Bar margins and paddings reduction */
+  .top-bar {
+    padding: 2px 0 !important;
+  }
+
+  .top-bar .container {
+    padding: 0 12px !important;
+    gap: 6px !important;
+  }
+
+  .top-bar-left,
+  .top-bar-right {
+    gap: 6px !important;
+  }
+
+  /* 3. Category Buttons Horizontal Scrolling */
+  .quick-grid {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 12px !important;
+    padding-bottom: 8px !important;
+    scrollbar-width: none !important;
+  }
+
+  .quick-grid::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .quick-grid > * {
+    flex: 0 0 auto !important;
+    scroll-snap-align: start !important;
+  }
+}
+
+
