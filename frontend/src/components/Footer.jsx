@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import { Link } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
 
 const Footer = () => {
@@ -49,12 +50,12 @@ const Footer = () => {
 
           <div className="footer-col">
             <h5>{lang === 'en' ? 'Information' : 'தகவல்'}</h5>
-            <a href="#">{lang === 'en' ? 'About Us' : 'எங்களைப் பற்றி'}</a>
-            <a href="#">{lang === 'en' ? 'Contact' : 'தொடர்புக்கு'}</a>
+            <Link to="/about-us">{lang === 'en' ? 'About Us' : 'எங்களைப் பற்றி'}</Link>
+            <Link to="/about-us">{lang === 'en' ? 'Contact' : 'தொடர்புக்கு'}</Link>
             <a href="#">{lang === 'en' ? 'Advertise' : 'விளம்பரம்'}</a>
-            <a href="#">{lang === 'en' ? 'Careers' : 'வேலைவாய்ப்பு'}</a>
-            <a href="#">{lang === 'en' ? 'Privacy Policy' : 'தனியுரிமைக் கொள்கை'}</a>
-            <a href="#">{lang === 'en' ? 'Terms of Use' : 'பயன்பாட்டு விதிமுறைகள்'}</a>
+            <Link to="/careers">{lang === 'en' ? 'Careers' : 'வேலைவாய்ப்பு'}</Link>
+            <Link to="/privacy-policy">{lang === 'en' ? 'Privacy Policy' : 'தனியுரிமைக் கொள்கை'}</Link>
+            <Link to="/terms-of-use">{lang === 'en' ? 'Terms of Use' : 'பயன்பாட்டு விதிமுறைகள்'}</Link>
           </div>
 
           <div className="footer-col">
