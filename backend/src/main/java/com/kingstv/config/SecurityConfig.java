@@ -48,6 +48,7 @@ public class SecurityConfig {
                     "/api/v1/directory", "/api/v1/directory/**",
                     "/api/v1/home", "/api/v1/home/**",
                     "/api/v1/stories", "/api/v1/stories/**",
+                    "/api/v1/web-stories", "/api/v1/web-stories/**",
                     "/api/v1/comments", "/api/v1/comments/**",
                     "/robots.txt", "/sitemap.xml", "/rss.xml", "/news/**",
                     "/error"
