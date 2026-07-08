@@ -48,6 +48,7 @@ function App() {
             <Route path="/web-stories" element={<WebStories />} />
             <Route path="/article/:id" element={<ArticleDetail />} />
             <Route path="/article" element={<Navigate to="/" replace />} />
+            <Route path="/news/:id" element={<ArticleDetail />} />
           </Routes>
         </main>
 
