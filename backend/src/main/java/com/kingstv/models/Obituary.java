@@ -30,11 +30,17 @@ public class Obituary {
     @Column(name = "short_description", nullable = false, columnDefinition = "TEXT")
     private String shortDescription;
 
+    @Column(name = "tribute_count")
+    private Integer tributeCount = 0;
+
     @Column(name = "created_by")
     private Long createdBy;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(nullable = false)
+    private String status = "published";
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -50,7 +56,12 @@ public class Obituary {
     public void setFuneralDetails(String funeralDetails) { this.funeralDetails = funeralDetails; }
     public String getShortDescription() { return shortDescription; }
     public void setShortDescription(String shortDescription) { this.shortDescription = shortDescription; }
+    public Integer getTributeCount() { return tributeCount; }
+    public void setTributeCount(Integer tributeCount) { this.tributeCount = tributeCount; }
     public Long getCreatedBy() { return createdBy; }
     public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }

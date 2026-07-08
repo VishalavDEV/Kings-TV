@@ -38,6 +38,9 @@ public class VideoContent {
     @Column(name = "duration_seconds")
     private Integer durationSeconds = 0;
 
+    @Column(nullable = false)
+    private String status = "published";
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Long getCategoryId() { return categoryId; }
@@ -53,11 +56,13 @@ public class VideoContent {
     public Integer getViewsCount() { return viewsCount; }
     public void setViewsCount(Integer viewsCount) { this.viewsCount = viewsCount; }
     public LocalDateTime getPublishedAt() { return publishedAt; }
-
+    public void setPublishedAt(LocalDateTime publishedAt) { this.publishedAt = publishedAt; }
     public String getThumbnailUrl() { return thumbnailUrl; }
     public void setThumbnailUrl(String thumbnailUrl) { this.thumbnailUrl = thumbnailUrl; }
     public Integer getDurationSeconds() { return durationSeconds; }
     public void setDurationSeconds(Integer durationSeconds) { this.durationSeconds = durationSeconds; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
     public String getDuration() {
         if (durationSeconds == null || durationSeconds == 0) return "3:15";
         int mins = durationSeconds / 60;

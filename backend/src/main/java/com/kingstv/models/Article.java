@@ -47,6 +47,42 @@ public class Article {
     @Column(name = "published_at")
     private LocalDateTime publishedAt = LocalDateTime.now();
 
+    // --- SEO & Google News Extension Fields ---
+    @Column(name = "meta_title")
+    private String metaTitle;
+
+    @Column(name = "meta_description", columnDefinition = "TEXT")
+    private String metaDescription;
+
+    @Column(name = "meta_keywords")
+    private String metaKeywords;
+
+    @Column(unique = true)
+    private String slug;
+
+    @Column(name = "canonical_url")
+    private String canonicalUrl;
+
+    @Column(name = "featured_image")
+    private String featuredImage;
+
+    @Column(name = "author_name")
+    private String authorName = "Kings TV News Desk";
+
+    @Column(name = "seo_status")
+    private String seoStatus = "ready";
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @Transient
+    private String structuredDataJson;
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Long getCategoryId() { return categoryId; }
@@ -73,4 +109,26 @@ public class Article {
     public void setStatus(String status) { this.status = status; }
     public LocalDateTime getPublishedAt() { return publishedAt; }
     public void setPublishedAt(LocalDateTime publishedAt) { this.publishedAt = publishedAt; }
+
+    // SEO Getters/Setters
+    public String getMetaTitle() { return metaTitle; }
+    public void setMetaTitle(String metaTitle) { this.metaTitle = metaTitle; }
+    public String getMetaDescription() { return metaDescription; }
+    public void setMetaDescription(String metaDescription) { this.metaDescription = metaDescription; }
+    public String getMetaKeywords() { return metaKeywords; }
+    public void setMetaKeywords(String metaKeywords) { this.metaKeywords = metaKeywords; }
+    public String getSlug() { return slug; }
+    public void setSlug(String slug) { this.slug = slug; }
+    public String getCanonicalUrl() { return canonicalUrl; }
+    public void setCanonicalUrl(String canonicalUrl) { this.canonicalUrl = canonicalUrl; }
+    public String getFeaturedImage() { return featuredImage; }
+    public void setFeaturedImage(String featuredImage) { this.featuredImage = featuredImage; }
+    public String getAuthorName() { return authorName; }
+    public void setAuthorName(String authorName) { this.authorName = authorName; }
+    public String getSeoStatus() { return seoStatus; }
+    public void setSeoStatus(String seoStatus) { this.seoStatus = seoStatus; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public String getStructuredDataJson() { return structuredDataJson; }
+    public void setStructuredDataJson(String structuredDataJson) { this.structuredDataJson = structuredDataJson; }
 }
