@@ -309,7 +309,8 @@ const Header = () => {
               to={item.path}
               onClick={onLinkClick}
               style={{
-                color: isActive ? 'var(--primary, #B3732A)' : '#64748B',
+                color: isActive ? 'var(--primary, #B3732A)' : '#FFFFFF',
+                opacity: isActive ? '1' : '0.9',
                 background: isActive ? '#FAF4EB' : 'transparent',
                 padding: '6px 14px',
                 borderRadius: '20px',
