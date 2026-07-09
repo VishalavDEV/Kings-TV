@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Link, useLocation, Navigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { AuthContext } from '../context/AuthContext';
@@ -16,15 +16,8 @@ const Header = () => {
   const [timeStr, setTimeStr] = useState('');
   const [district, setDistrict] = useState('சென்னை');
   const [weatherTemp, setWeatherTemp] = useState('32°C');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showDistrictDropdown, setShowDistrictDropdown] = useState(false);
-  
-  // Alternative Header redsign variation selector state
-  // 'compact' | 'newspaper' | 'mobile-app'
-  const [headerStyle, setHeaderStyle] = useState('compact');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [compactUtilityOpen, setCompactUtilityOpen] = useState(false);
-  const [newspaperUtilityOpen, setNewspaperUtilityOpen] = useState(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -57,11 +50,6 @@ const Header = () => {
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, [lang]);
-
-  const activeClass = (path) => {
-    const isActive = location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
-    return isActive ? 'active' : '';
-  };
 
   const handleDistrictChange = (selected) => {
     setDistrict(selected);
@@ -116,7 +104,6 @@ const Header = () => {
     return item ? (lang === 'en' ? item.en : item.ta) : key;
   };
 
-  // Shared UI parts
   const renderLogo = (size = 'normal') => (
     <Link to="/" className="logo-link" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textDecoration: 'none' }}>
       <img 
@@ -148,18 +135,18 @@ const Header = () => {
       textDecoration: 'none',
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
     }}>
-      <i className="fas fa-play-circle"></i> {lang === 'en' ? 'LIVE TV WATCH NOW' : 'லைவ் டிவி பார்க்க'}
+      <i className="fas fa-play-circle"></i> {lang === 'en' ? 'LIVE TV' : 'லைவ் டிவி'}
     </Link>
   );
 
-  const renderDistrictSelector = (darkBg = false) => (
+  const renderDistrictSelector = () => (
     <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
       <button 
         onClick={() => setShowDistrictDropdown(!showDistrictDropdown)}
         style={{
-          background: darkBg ? '#000000' : 'transparent',
+          background: 'transparent',
           border: 'none',
-          color: darkBg ? '#FFFFFF' : (theme === 'dark' ? '#FFFFFF' : '#1A1A1A'),
+          color: theme === 'dark' ? '#FFFFFF' : '#1A1A1A',
           fontSize: '13px',
           fontWeight: '700',
           display: 'flex',
@@ -172,7 +159,7 @@ const Header = () => {
         }}
       >
         <span>{getCurrentDistrictName(district)} 24x7</span>
-        <i className="fas fa-pencil-alt" style={{ fontSize: '10px', color: darkBg ? 'rgba(255,255,255,0.7)' : '#666' }}></i>
+        <i className="fas fa-pencil-alt" style={{ fontSize: '10px', color: '#666' }}></i>
       </button>
       {showDistrictDropdown && (
         <div style={{
@@ -280,379 +267,271 @@ const Header = () => {
     );
   };
 
-  const renderNavMenu = (flexDir = 'row', onLinkClick = () => {}) => {
-    if (isRegionalPage) {
-      return (
-        <ul className="nav-menu" style={{ display: 'flex', flexDirection: flexDir, gap: flexDir === 'column' ? '15px' : '0' }}>
-          <li className={`nav-item ${location.pathname === '/' ? 'active' : ''}`} onClick={onLinkClick}>
-            <Link to="/" className="nav-link">{t('முகப்பு')}</Link>
-          </li>
-          <li className={`nav-item ${location.pathname === '/directory' ? 'active' : ''}`} onClick={onLinkClick}>
-            <Link to="/directory" className="nav-link">{t('நம்ம ஊர்')}</Link>
-          </li>
-          <li className={`nav-item ${location.pathname === '/wishes' ? 'active' : ''}`} onClick={onLinkClick}>
-            <Link to="/wishes" className="nav-link">{t('வாழ்த்து')}</Link>
-          </li>
-          <li className={`nav-item ${location.pathname === '/obituaries' ? 'active' : ''}`} onClick={onLinkClick}>
-            <Link to="/obituaries" className="nav-link">{t('இரங்கல்')}</Link>
-          </li>
-          <li className={`nav-item ${location.pathname === '/business-studies' ? 'active' : ''}`} onClick={onLinkClick}>
-            <Link to="/business-studies" className="nav-link">{t('வணிகம்')}</Link>
-          </li>
-          <li className={`nav-item ${location.pathname === '/jobs' ? 'active' : ''}`} onClick={onLinkClick}>
-            <Link to="/jobs" className="nav-link">{t('வேலை')}</Link>
-          </li>
-          <li className={`nav-item ${location.pathname === '/classifieds' ? 'active' : ''}`} onClick={onLinkClick}>
-            <Link to="/classifieds" className="nav-link">{t('தள்ளுபடி')}</Link>
-          </li>
-        </ul>
-      );
-    }
+  const renderScrollNavMenu = (onLinkClick = () => {}) => {
+    const navItems = isRegionalPage 
+      ? [
+          { path: '/', label: t('முகப்பு') },
+          { path: '/directory', label: t('நம்ம ஊர்') },
+          { path: '/wishes', label: t('வாழ்த்து') },
+          { path: '/obituaries', label: t('இரங்கல்') },
+          { path: '/business-studies', label: t('வணிகம்') },
+          { path: '/jobs', label: t('வேலை') },
+          { path: '/classifieds', label: t('தள்ளுபடி') }
+        ]
+      : [
+          { path: '/', label: lang === 'en' ? 'Home' : 'முகப்பு' },
+          { path: '/category/politics', label: lang === 'en' ? 'Politics' : 'அரசியல்' },
+          { path: '/category/business', label: lang === 'en' ? 'Business' : 'வணிகம்' },
+          { path: '/category/sports', label: lang === 'en' ? 'Sports' : 'விளையாட்டு' },
+          { path: '/category/cinema', label: lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு' },
+          { path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்' },
+          { path: '/directory', label: lang === 'en' ? 'Regional' : 'மாநிலம்' },
+          { path: '/category/world', label: lang === 'en' ? 'International' : 'சர்வதேசம்' },
+          { path: '/videos', label: lang === 'en' ? 'Video' : 'வீடியோ' },
+          { path: '/web-stories', label: lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்' }
+        ];
+
     return (
-      <ul className="nav-menu" style={{ display: 'flex', flexDirection: flexDir, gap: flexDir === 'column' ? '15px' : '0' }}>
-        <li className={`nav-item ${activeClass('/')}`} onClick={onLinkClick}>
-          <Link to="/" className="nav-link">{lang === 'en' ? 'Home' : 'முகப்பு'}</Link>
-        </li>
-        <li className={`nav-item ${activeClass('/category/politics')}`} onClick={onLinkClick}>
-          <Link to="/category/politics" className="nav-link">{lang === 'en' ? 'Politics' : 'அரசியல்'}</Link>
-        </li>
-        <li className={`nav-item ${activeClass('/category/business')}`} onClick={onLinkClick}>
-          <Link to="/category/business" className="nav-link">{lang === 'en' ? 'Business' : 'வணிகம்'}</Link>
-        </li>
-        <li className={`nav-item ${activeClass('/category/sports')}`} onClick={onLinkClick}>
-          <Link to="/category/sports" className="nav-link">{lang === 'en' ? 'Sports' : 'விளையாட்டு'}</Link>
-        </li>
-        <li className={`nav-item ${activeClass('/category/cinema')}`} onClick={onLinkClick}>
-          <Link to="/category/cinema" className="nav-link">{lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு'}</Link>
-        </li>
-        <li className={`nav-item ${activeClass('/category/tech')}`} onClick={onLinkClick}>
-          <Link to="/category/tech" className="nav-link">{lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்'}</Link>
-        </li>
-        <li className={`nav-item ${activeClass('/directory')}`} onClick={onLinkClick}>
-          <Link to="/directory" className="nav-link">{lang === 'en' ? 'Regional' : 'மாநிலம்'}</Link>
-        </li>
-        <li className={`nav-item ${activeClass('/category/world')}`} onClick={onLinkClick}>
-          <Link to="/category/world" className="nav-link">{lang === 'en' ? 'International' : 'சர்வதேசம்'}</Link>
-        </li>
-        <li className={`nav-item ${activeClass('/videos')}`} onClick={onLinkClick}>
-          <Link to="/videos" className="nav-link">{lang === 'en' ? 'Video' : 'வீடியோ'}</Link>
-        </li>
-        <li className={`nav-item ${activeClass('/web-stories')}`} onClick={onLinkClick}>
-          <Link to="/web-stories" className="nav-link">{lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்'}</Link>
-        </li>
+      <div style={{
+        display: 'flex',
+        flexDirection: 'row',
+        flexWrap: 'nowrap',
+        alignItems: 'center',
+        gap: '15px',
+        width: '100%',
+        padding: '8px 0'
+      }}>
+        {navItems.map((item, idx) => {
+          const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+          return (
+            <Link
+              key={idx}
+              to={item.path}
+              onClick={onLinkClick}
+              style={{
+                color: isActive ? 'var(--primary, #B3732A)' : '#64748B',
+                background: isActive ? '#FAF4EB' : 'transparent',
+                padding: '6px 14px',
+                borderRadius: '20px',
+                fontSize: '13px',
+                fontWeight: '700',
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s',
+                display: 'inline-block'
+              }}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderNavMenuVertical = (onLinkClick = () => {}) => {
+    const navItems = isRegionalPage 
+      ? [
+          { path: '/', label: t('முகப்பு') },
+          { path: '/directory', label: t('நம்ம ஊர்') },
+          { path: '/wishes', label: t('வாழ்த்து') },
+          { path: '/obituaries', label: t('இரங்கல்') },
+          { path: '/business-studies', label: t('வணிகம்') },
+          { path: '/jobs', label: t('வேலை') },
+          { path: '/classifieds', label: t('தள்ளுபடி') }
+        ]
+      : [
+          { path: '/', label: lang === 'en' ? 'Home' : 'முகப்பு' },
+          { path: '/category/politics', label: lang === 'en' ? 'Politics' : 'அரசியல்' },
+          { path: '/category/business', label: lang === 'en' ? 'Business' : 'வணிகம்' },
+          { path: '/category/sports', label: lang === 'en' ? 'Sports' : 'விளையாட்டு' },
+          { path: '/category/cinema', label: lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு' },
+          { path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்' },
+          { path: '/directory', label: lang === 'en' ? 'Regional' : 'மாநிலம்' },
+          { path: '/category/world', label: lang === 'en' ? 'International' : 'சர்வதேசம்' },
+          { path: '/videos', label: lang === 'en' ? 'Video' : 'வீடியோ' },
+          { path: '/web-stories', label: lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்' }
+        ];
+
+    return (
+      <ul style={{ display: 'flex', flexDirection: 'column', gap: '15px', padding: 0, listStyle: 'none', margin: 0 }}>
+        {navItems.map((item, idx) => {
+          const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+          return (
+            <li key={idx}>
+              <Link 
+                to={item.path} 
+                onClick={onLinkClick} 
+                style={{
+                  color: isActive ? 'var(--primary, #B3732A)' : 'inherit',
+                  textDecoration: 'none',
+                  fontWeight: '700',
+                  fontSize: '14px',
+                  display: 'block',
+                  padding: '4px 0'
+                }}
+              >
+                {item.label}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     );
   };
 
   return (
-    <div style={{ width: '100%' }}>
-      {/* Live Preview Variation Selector (temporary styling switcher for review) */}
-      <div style={{
-        background: '#1E293B',
-        color: '#FFFFFF',
-        padding: '8px 16px',
-        display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: '10px',
-        fontSize: '11px',
-        fontWeight: 'bold',
-        borderBottom: '2px solid #3B82F6',
-        zIndex: 10002,
-        position: 'relative'
-      }}>
-        <span>PREVIEW ALTERNATIVE DESIGN:</span>
-        <button onClick={() => { setHeaderStyle('compact'); setDrawerOpen(false); }} style={{ background: headerStyle === 'compact' ? '#3B82F6' : '#334155', color: '#FFF', border: 'none', padding: '5px 10px', borderRadius: '3px', cursor: 'pointer' }}>1. Compact Modern</button>
-        <button onClick={() => { setHeaderStyle('newspaper'); setDrawerOpen(false); }} style={{ background: headerStyle === 'newspaper' ? '#3B82F6' : '#334155', color: '#FFF', border: 'none', padding: '5px 10px', borderRadius: '3px', cursor: 'pointer' }}>2. Newspaper Style</button>
-        <button onClick={() => { setHeaderStyle('mobile-app'); setDrawerOpen(false); }} style={{ background: headerStyle === 'mobile-app' ? '#3B82F6' : '#334155', color: '#FFF', border: 'none', padding: '5px 10px', borderRadius: '3px', cursor: 'pointer' }}>3. Mobile App Style</button>
+    <header className="header-mobile-app-style" style={{ background: 'var(--header-bg, #ffffff)', borderBottom: '1px solid #e2e8f0', width: '100%' }}>
+      {/* Minimal top bar */}
+      <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button 
+            onClick={() => setDrawerOpen(true)}
+            style={{ background: 'transparent', border: 'none', fontSize: '20px', color: 'var(--text-dark, #333)', cursor: 'pointer' }}
+            aria-label="Open side drawer menu"
+          >
+            <i className="fas fa-bars"></i>
+          </button>
+          {renderLogo('small')}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {renderLiveTvBtn()}
+          <div className="nav-search" style={{ cursor: 'pointer', fontSize: '16px' }}><i className="fas fa-search"></i></div>
+        </div>
       </div>
 
-      {/* ========================================================
-          SAMPLE 1: COMPACT MODERN HEADER
-          ======================================================== */}
-      {headerStyle === 'compact' && (
-        <header className="header-compact-modern" style={{ background: 'var(--header-bg, #ffffff)', borderBottom: '1px solid #e2e8f0' }}>
-          <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              {renderLogo('small')}
+      {/* Horizontal scrollable category navigation bar in single line */}
+      <nav 
+        className={`main-nav ${isRegionalPage ? 'regional-theme' : ''}`} 
+        style={{ 
+          overflowX: 'auto', 
+          whiteSpace: 'nowrap', 
+          borderTop: '1px solid #f1f5f9',
+          background: '#ffffff',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}
+      >
+        <div className="container" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '0 16px' }}>
+          {renderScrollNavMenu()}
+        </div>
+      </nav>
+
+      {/* Side Drawer Panel */}
+      <div 
+        className={`side-drawer-container ${drawerOpen ? 'open' : ''}`} 
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          visibility: drawerOpen ? 'visible' : 'hidden',
+          zIndex: 99999,
+          transition: 'visibility 0.3s'
+        }}
+      >
+        {/* Overlay */}
+        <div 
+          onClick={() => setDrawerOpen(false)}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'rgba(0,0,0,0.5)',
+            opacity: drawerOpen ? 1 : 0,
+            transition: 'opacity 0.3s'
+          }}
+        />
+        {/* Drawer Content */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '280px',
+          height: '100%',
+          background: theme === 'dark' ? '#1E293B' : '#ffffff',
+          boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
+          transform: drawerOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.3s ease-out',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '24px 20px',
+          gap: '20px',
+          color: theme === 'dark' ? '#ffffff' : '#1e293b',
+          overflowY: 'auto'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {renderLogo('small')}
+            <button onClick={() => setDrawerOpen(false)} style={{ background: 'transparent', border: 'none', fontSize: '20px', color: 'inherit', cursor: 'pointer' }}>
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
+
+          {/* Drawer category items list */}
+          <div style={{ borderBottom: '1px solid #cbd5e1', paddingBottom: '15px', marginTop: '10px' }}>
+            <h4 style={{ margin: '0 0 10px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
+              {lang === 'en' ? 'Sections' : 'பிரிவுகள்'}
+            </h4>
+            {renderNavMenuVertical(() => setDrawerOpen(false))}
+          </div>
+
+          {/* Utility elements inside sidebar */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                {lang === 'en' ? 'District News' : 'மாவட்ட செய்திகள்'}
+              </h4>
               {renderDistrictSelector()}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              {renderLiveTvBtn()}
-              {/* Compact Menu Hamburger */}
-              <button 
-                onClick={() => setCompactUtilityOpen(!compactUtilityOpen)}
-                style={{ background: 'transparent', border: 'none', fontSize: '20px', color: 'var(--text-dark, #333)', cursor: 'pointer' }}
-                aria-label="Toggle utility drawer"
-              >
-                <i className={`fas ${compactUtilityOpen ? 'fa-times' : 'fa-bars'}`}></i>
-              </button>
-            </div>
-          </div>
 
-          {/* Compact Utilities Collapsible Panel */}
-          {compactUtilityOpen && (
-            <div style={{
-              background: theme === 'dark' ? '#1E293B' : '#FAF8FF',
-              borderBottom: '1px solid #e2e8f0',
-              padding: '15px 20px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-              animation: 'slideDown 0.2s ease-out'
-            }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '10px', fontSize: '13px' }}>
-                <span style={{ color: 'var(--text-muted)' }}><i className="far fa-calendar-alt"></i> {timeStr}</span>
-                <span style={{ color: 'var(--text-muted)' }}><i className="fas fa-thermometer-half"></i> {weatherTemp}</span>
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'center', justifyContent: 'space-between' }}>
-                {renderSocials()}
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <button onClick={toggleTheme} style={{ background: 'transparent', border: 'none', color: 'var(--text-dark)', cursor: 'pointer', fontSize: '14px' }}>
+            <div>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                {lang === 'en' ? 'Weather' : 'வானிலை'}
+              </h4>
+              <span><i className="fas fa-thermometer-half"></i> {weatherTemp}</span>
+            </div>
+
+            <div>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                {lang === 'en' ? 'Settings' : 'அமைப்புகள்'}
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{lang === 'en' ? 'Theme Mode' : 'பின்னணி'}</span>
+                  <button onClick={toggleTheme} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '16px' }}>
                     <i className={theme === 'light' ? 'fas fa-moon' : 'fas fa-sun'}></i>
                   </button>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{lang === 'en' ? 'Language' : 'மொழி'}</span>
                   <select value={lang} onChange={(e) => setLang(e.target.value)} style={{ padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', background: 'transparent', color: 'inherit' }}>
                     <option value="ta">தமிழ்</option>
                     <option value="en">English</option>
                   </select>
-                  {renderAuthSection()}
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Navigation link bar */}
-          <nav className={`main-nav ${isRegionalPage ? 'regional-theme' : ''}`} style={{ borderTop: '1px solid #f1f5f9' }}>
-            <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              {renderNavMenu()}
-              <div className="nav-search" style={{ cursor: 'pointer' }}><i className="fas fa-search"></i></div>
-            </div>
-          </nav>
-        </header>
-      )}
-
-      {/* ========================================================
-          SAMPLE 2: NEWSPAPER STYLE HEADER
-          ======================================================== */}
-      {headerStyle === 'newspaper' && (
-        <header className="header-newspaper-style" style={{ background: 'var(--header-bg, #ffffff)', borderBottom: '1px solid #e2e8f0' }}>
-          {/* Top Logo and Primary Action Area */}
-          <div className="container" style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            padding: '20px 20px 10px 20px',
-            gap: '15px',
-            textAlign: 'center'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-              <div>{renderDistrictSelector(true)}</div>
-              <div>{renderLiveTvBtn()}</div>
-            </div>
-            
-            <div style={{ margin: '10px 0' }}>
-              {renderLogo('normal')}
+            <div>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                {lang === 'en' ? 'Account' : 'கணக்கு'}
+              </h4>
+              {renderAuthSection()}
             </div>
 
-            {/* Secondary collapsible menu handler */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', fontSize: '13px', borderTop: '1px solid #f1f5f9', paddingTop: '10px' }}>
-              <span style={{ color: 'var(--text-muted)' }}><i className="far fa-calendar-alt"></i> {timeStr}</span>
-              <button 
-                onClick={() => setNewspaperUtilityOpen(!newspaperUtilityOpen)}
-                style={{ background: 'transparent', border: 'none', fontWeight: 'bold', color: 'var(--primary)', cursor: 'pointer' }}
-              >
-                {lang === 'en' ? 'Utility Options' : 'கூடுதல் தேவைகள்'} <i className={`fas ${newspaperUtilityOpen ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
-              </button>
+            <div>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                {lang === 'en' ? 'Follow Us' : 'எங்களை பின்தொடர'}
+              </h4>
+              {renderSocials()}
             </div>
           </div>
-
-          {/* Newspaper Secondary Collapsible Options */}
-          {newspaperUtilityOpen && (
-            <div style={{
-              background: theme === 'dark' ? '#1E293B' : '#F8FAFC',
-              borderBottom: '1px solid #e2e8f0',
-              padding: '12px 20px',
-              animation: 'slideDown 0.2s ease-out'
-            }}>
-              <div className="container" style={{ display: 'flex', flexWrap: 'wrap', justifyItems: 'center', justifyContent: 'space-between', gap: '15px' }}>
-                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                  <span><i className="fas fa-thermometer-half"></i> {weatherTemp}</span>
-                  {renderSocials()}
-                </div>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <button onClick={toggleTheme} style={{ background: 'transparent', border: 'none', color: 'var(--text-dark)', cursor: 'pointer' }}>
-                    <i className={theme === 'light' ? 'fas fa-moon' : 'fas fa-sun'}></i>
-                  </button>
-                  <select value={lang} onChange={(e) => setLang(e.target.value)} style={{ padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', background: 'transparent', color: 'inherit' }}>
-                    <option value="ta">தமிழ்</option>
-                    <option value="en">English</option>
-                  </select>
-                  {renderAuthSection()}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Clean Primary Navigation below logo */}
-          <nav className={`main-nav ${isRegionalPage ? 'regional-theme' : ''}`}>
-            <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              {renderNavMenu()}
-              <div className="nav-search" style={{ cursor: 'pointer' }}><i className="fas fa-search"></i></div>
-            </div>
-          </nav>
-        </header>
-      )}
-
-      {/* ========================================================
-          SAMPLE 3: MOBILE APP STYLE HEADER (WITH SIDE DRAWER)
-          ======================================================== */}
-      {headerStyle === 'mobile-app' && (
-        <header className="header-mobile-app-style" style={{ background: 'var(--header-bg, #ffffff)', borderBottom: '1px solid #e2e8f0' }}>
-          {/* Mini minimal top bar */}
-          <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <button 
-                onClick={() => setDrawerOpen(true)}
-                style={{ background: 'transparent', border: 'none', fontSize: '20px', color: 'var(--text-dark, #333)', cursor: 'pointer' }}
-                aria-label="Open side drawer menu"
-              >
-                <i className="fas fa-bars"></i>
-              </button>
-              {renderLogo('small')}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              {renderLiveTvBtn()}
-              <div className="nav-search" style={{ cursor: 'pointer', fontSize: '16px' }}><i className="fas fa-search"></i></div>
-            </div>
-          </div>
-
-          {/* Horizontal scrollable category navigation bar */}
-          <nav className={`main-nav ${isRegionalPage ? 'regional-theme' : ''}`} style={{ overflowX: 'auto', whiteSpace: 'nowrap', borderTop: '1px solid #f1f5f9' }}>
-            <div className="container" style={{ display: 'block', padding: '4px 16px' }}>
-              <div className="horizontal-scroll-nav-container" style={{ display: 'inline-flex', gap: '8px' }}>
-                {renderNavMenu()}
-              </div>
-            </div>
-          </nav>
-
-          {/* Side Drawer Panel */}
-          <div 
-            className={`side-drawer-container ${drawerOpen ? 'open' : ''}`} 
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              visibility: drawerOpen ? 'visible' : 'hidden',
-              zIndex: 99999,
-              transition: 'visibility 0.3s'
-            }}
-          >
-            {/* Overlay */}
-            <div 
-              onClick={() => setDrawerOpen(false)}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                background: 'rgba(0,0,0,0.5)',
-                opacity: drawerOpen ? 1 : 0,
-                transition: 'opacity 0.3s'
-              }}
-            />
-            {/* Drawer Content */}
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '280px',
-              height: '100%',
-              background: theme === 'dark' ? '#1E293B' : '#ffffff',
-              boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
-              transform: drawerOpen ? 'translateX(0)' : 'translateX(-100%)',
-              transition: 'transform 0.3s ease-out',
-              display: 'flex',
-              flexDirection: 'column',
-              padding: '24px 20px',
-              gap: '20px',
-              color: theme === 'dark' ? '#ffffff' : '#1e293b',
-              overflowY: 'auto'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                {renderLogo('small')}
-                <button onClick={() => setDrawerOpen(false)} style={{ background: 'transparent', border: 'none', fontSize: '20px', color: 'inherit', cursor: 'pointer' }}>
-                  <i className="fas fa-times"></i>
-                </button>
-              </div>
-
-              {/* Drawer category items list */}
-              <div style={{ borderBottom: '1px solid #cbd5e1', paddingBottom: '15px', marginTop: '10px' }}>
-                <h4 style={{ margin: '0 0 10px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                  {lang === 'en' ? 'Sections' : 'பிரிவுகள்'}
-                </h4>
-                {renderNavMenu('column', () => setDrawerOpen(false))}
-              </div>
-
-              {/* Utility elements inside sidebar */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                <div>
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                    {lang === 'en' ? 'District News' : 'மாவட்ட செய்திகள்'}
-                  </h4>
-                  {renderDistrictSelector()}
-                </div>
-
-                <div>
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                    {lang === 'en' ? 'Weather' : 'வானிலை'}
-                  </h4>
-                  <span><i className="fas fa-thermometer-half"></i> {weatherTemp}</span>
-                </div>
-
-                <div>
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                    {lang === 'en' ? 'Settings' : 'அமைப்புகள்'}
-                  </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>{lang === 'en' ? 'Theme Mode' : 'பின்னணி'}</span>
-                      <button onClick={toggleTheme} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '16px' }}>
-                        <i className={theme === 'light' ? 'fas fa-moon' : 'fas fa-sun'}></i>
-                      </button>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>{lang === 'en' ? 'Language' : 'மொழி'}</span>
-                      <select value={lang} onChange={(e) => setLang(e.target.value)} style={{ padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', background: 'transparent', color: 'inherit' }}>
-                        <option value="ta">தமிழ்</option>
-                        <option value="en">English</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                    {lang === 'en' ? 'Account' : 'கணக்கு'}
-                  </h4>
-                  {renderAuthSection()}
-                </div>
-
-                <div>
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                    {lang === 'en' ? 'Follow Us' : 'எங்களை பின்தொடர'}
-                  </h4>
-                  {renderSocials()}
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-      )}
-    </div>
+        </div>
+      </div>
+    </header>
   );
 };
 
