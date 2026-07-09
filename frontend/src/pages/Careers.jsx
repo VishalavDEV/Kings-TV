@@ -30,7 +30,13 @@ const Careers = () => {
   }
 
   const pageTitle = data ? (lang === 'en' ? data.titleEn : data.titleTa) : (lang === 'en' ? 'Careers' : 'வேலைவாய்ப்பு');
-  const pageContent = data ? (lang === 'en' ? data.contentEn : data.contentTa) : '';
+  
+  const fallbackEn = `Build the future of digital journalism with KINGS 24x7. We look forward to talented journalists, video editors, anchors, and software engineers who are passionate about storytelling and technology. Qualified candidates can send their resumes to careers@kingstv.com.`;
+  const fallbackTa = `கிங்ஸ் 24x7 உடன் இணைந்து டிஜிட்டல் இதழியல் துறையின் எதிர்காலத்தை உருவாக்குங்கள். ஊடகம், வீடியோ எடிட்டிங் மற்றும் மென்பொருள் மேம்பாட்டுத் துறையில் ஆர்வம் கொண்ட திறமையான இளைஞர்களிடம் இருந்து விண்ணப்பங்களை வரவேற்கிறோம். தகுதியான நபர்கள் தங்கள் சுயவிவரத்தை careers@kingstv.com என்ற மின்னஞ்சலுக்கு அனுப்பலாம்.`;
+
+  const pageContent = data 
+    ? (lang === 'en' ? data.contentEn : data.contentTa) 
+    : (lang === 'en' ? fallbackEn : fallbackTa);
 
   return (
     <div className="container" style={{ marginTop: '30px', marginBottom: '50px' }}>

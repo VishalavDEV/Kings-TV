@@ -229,7 +229,7 @@ const Wishes = () => {
             : 'நமது ஊர் மக்கள் அனைவரும் இணைந்து வாழ்த்துக்களைத் தெரிவிக்க இலவசமாகப் பதியுங்கள்.'}
         </p>
         <button onClick={() => setShowModal(true)}>
-          {lang === 'en' ? 'Send Greeting Card' : 'வாழ்த்து அட்டை அனுப்ப'}
+          <i className="fas fa-plus-circle"></i> {lang === 'en' ? 'Send Greeting Card' : 'வாழ்த்து அட்டை அனுப்ப'}
         </button>
       </section>
 

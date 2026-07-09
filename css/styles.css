@@ -3832,7 +3832,8 @@ ul {
   .news-grid-3,
   .news-grid,
   .videos-grid-container,
-  .news-grid-4 {
+  .news-grid-4,
+  .video-grid-4 {
     display: flex !important;
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
@@ -3849,7 +3850,8 @@ ul {
   .news-grid-3::-webkit-scrollbar,
   .news-grid::-webkit-scrollbar,
   .videos-grid-container::-webkit-scrollbar,
-  .news-grid-4::-webkit-scrollbar {
+  .news-grid-4::-webkit-scrollbar,
+  .video-grid-4::-webkit-scrollbar {
     display: none !important;
   }
 
@@ -3857,7 +3859,8 @@ ul {
   .news-grid-3 > *,
   .news-grid > *,
   .videos-grid-container > *,
-  .news-grid-4 > * {
+  .news-grid-4 > *,
+  .video-grid-4 > * {
     flex: 0 0 78% !important;
     width: 78% !important;
     max-width: 78% !important;
@@ -4063,6 +4066,117 @@ ul {
 
 .post-job-banner button:active {
   transform: translateY(1px);
+}
+
+/* Mobile responsive single-line fixes for section titles */
+@media (max-width: 768px) {
+  .section-title h2 {
+    font-size: 16px !important;
+    white-space: nowrap !important;
+  }
+
+  .section-title .view-all {
+    font-size: 12px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .section-title h2 {
+    font-size: 14px !important;
+    letter-spacing: -0.3px;
+  }
+
+  .section-title .view-all {
+    font-size: 11px !important;
+  }
+}
+
+/* Post Wish Banner Card */
+.post-wish-banner {
+  background: #FAF8FF;
+  border: 1px solid #E5DBFF;
+  border-radius: var(--radius-lg, 12px);
+  padding: 32px 24px;
+  text-align: center;
+  margin-bottom: 40px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+.post-wish-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.post-wish-banner h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-dark, #2d3748);
+  margin-bottom: 10px;
+}
+
+.post-wish-banner p {
+  color: var(--text-muted, #718096);
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 600px;
+  margin: 0 auto 18px auto;
+}
+
+.post-wish-banner button {
+  padding: 12px 32px;
+  border-radius: 30px;
+  background: #8B5CF6;
+  color: white !important;
+  border: none;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.post-wish-banner button:hover {
+  background: #7C3AED;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(139, 92, 246, 0.4);
+}
+
+.post-wish-banner button:active {
+  transform: translateY(1px);
+}
+
+/* Redesign Header Variations Animations & Helpers */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.horizontal-scroll-nav-container::-webkit-scrollbar {
+  display: none;
+}
+
+.horizontal-scroll-nav-container {
+  scrollbar-width: none;
+}
+
+/* Side Drawer transition helper states */
+.side-drawer-container.open {
+  pointer-events: auto;
+}
+.side-drawer-container {
+  pointer-events: none;
 }
 
 

@@ -30,7 +30,32 @@ const PrivacyPolicy = () => {
   }
 
   const pageTitle = data ? (lang === 'en' ? data.titleEn : data.titleTa) : (lang === 'en' ? 'Privacy Policy' : 'தனியுரிமைக் கொள்கை');
-  const pageContent = data ? (lang === 'en' ? data.contentEn : data.contentTa) : '';
+  
+  const fallbackEn = `At KINGS 24x7, we prioritize the confidentiality of our visitors. This Privacy Policy details how we collect, store, and process your personal information.
+
+1. Information We Collect
+We collect email addresses and contact information voluntarily submitted during comment registration, wishes, directory submissions, or contact forms.
+
+2. How We Use Information
+We use your details to verify directory entries, publish requested public greetings, and communicate support updates. We do not sell or share your data with third parties.
+
+3. Cookies and Analytics
+We use standard cookies and analytics trackers to improve user experience, monitor load performance, and display targeted advertisements.`;
+
+  const fallbackTa = `கிங்ஸ் 24x7 இணையதளத்தில் வாசகர்களின் தரவுப் பாதுகாப்பு மற்றும் தனியுரிமையை நாங்கள் மதிக்கிறோம். இந்த கொள்கை நாங்கள் எவ்வாறு வாசகர் தரவைச் சேகரிக்கிறோம் என்பதை விளக்குகிறது.
+
+1. நாங்கள் சேகரிக்கும் தகவல்கள்
+கருத்துகள், வாழ்த்துகள், விளம்பரப் பதிவுகள் அல்லது தொடர்புப் படிவங்கள் மூலமாக நீங்கள் எமக்குத் தரும் மின்னஞ்சல் மற்றும் தொலைபேசி எண்களை மட்டுமே நாங்கள் சேகரிக்கிறோம்.
+
+2. தரவுப் பயன்பாடு
+சேகரிக்கப்பட்ட தகவல்கள் உங்களது பதிவுகளை சரிபார்க்கவும், ஆதரவு வழங்கவும் மட்டுமே பயன்படுத்தப்படுகின்றன. இவை யாருடனும் வணிக ரீதியாகப் பகிரப்பட மாட்டாது.
+
+3. குக்கீகள் மற்றும் அனலிட்டிக்ஸ்
+இணையதளத்தின் வேகத்தை அதிகரிக்கவும் சிறந்த பயனர் அனுபவத்தை வழங்கவும் குக்கீகள் மற்றும் பகுப்பாய்வுக் கருவிகள் பயன்படுத்தப்படுகின்றன.`;
+
+  const pageContent = data 
+    ? (lang === 'en' ? data.contentEn : data.contentTa) 
+    : (lang === 'en' ? fallbackEn : fallbackTa);
 
   return (
     <div className="container" style={{ marginTop: '30px', marginBottom: '50px' }}>

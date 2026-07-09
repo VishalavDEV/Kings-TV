@@ -16,7 +16,8 @@ const Header = () => {
   const [timeStr, setTimeStr] = useState('');
   const [district, setDistrict] = useState('சென்னை');
   const [weatherTemp, setWeatherTemp] = useState('32°C');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showDistrictDropdown, setShowDistrictDropdown] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -50,13 +51,7 @@ const Header = () => {
     return () => clearInterval(interval);
   }, [lang]);
 
-  const activeClass = (path) => {
-    const isActive = location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
-    return isActive ? 'active' : '';
-  };
-
-  const handleDistrictChange = (e) => {
-    const selected = e.target.value;
+  const handleDistrictChange = (selected) => {
     setDistrict(selected);
     const temps = {
       'சென்னை': '32°C',
@@ -92,110 +87,466 @@ const Header = () => {
     user: '#3B82F6'
   };
 
-  return (
-    <header style={{ width: '100%' }}>
-      {/* TOP BAR */}
-      <div className="top-bar">
-        <div className="container">
-          <div className="top-bar-left">
-            <span>
-              <i className="far fa-calendar-alt"></i>{' '}
-              <span id="tamilDateTime">{timeStr}</span>
-            </span>
-            <span>
-              <i className="fas fa-map-marker-alt"></i>{' '}
-              <select 
-                id="districtSelector" 
-                className="district-select-top"
-                value={district}
-                onChange={handleDistrictChange}
-                aria-label="District"
-                style={{ background: 'transparent', border: 'none', color: 'inherit', outline: 'none', cursor: 'pointer' }}
-              >
-                {[
-                  { key: 'சென்னை', en: 'Chennai', ta: 'சென்னை' },
-                  { key: 'கோயம்புத்தூர்', en: 'Coimbatore', ta: 'கோயம்புத்தூர்' },
-                  { key: 'மதுரை', en: 'Madurai', ta: 'மதுரை' },
-                  { key: 'சேலம்', en: 'Salem', ta: 'சேலம்' },
-                  { key: 'திருச்சி', en: 'Trichy', ta: 'திருச்சி' },
-                  { key: 'திருநெல்வேலி', en: 'Tirunelveli', ta: 'திருநெல்வேலி' },
-                  { key: 'வேலூர்', en: 'Vellore', ta: 'வேலூர்' },
-                  { key: 'ஈரோடு', en: 'Erode', ta: 'ஈரோடு' },
-                  { key: 'தஞ்சாவூர்', en: 'Tanjore', ta: 'தஞ்சாவூர்' },
-                  { key: 'கன்னியாகுமரி', en: 'Kanyakumari', ta: 'கன்னியாகுமரி' }
-                ].map(item => (
-                  <option key={item.key} value={item.key} style={{ color: 'var(--text-dark)' }}>
-                    {lang === 'en' ? item.en : item.ta}
-                  </option>
-                ))}
-              </select>
-            </span>
-            <span>
-              <i className="fas fa-thermometer-half"></i>{' '}
-              <span id="topTemp">{weatherTemp}</span>
-            </span>
-          </div>
-          <div className="top-bar-right">
-            <a href="#" className="social-icon" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
-            <a href="#" className="social-icon" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
-            <a href="#" className="social-icon" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
-            <a href="#" className="social-icon" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
-            <a href="#" className="social-icon" aria-label="WhatsApp"><i className="fab fa-whatsapp"></i></a>
-            <a href="#" className="social-icon" aria-label="Telegram"><i className="fab fa-telegram-plane"></i></a>
-            
-            <button className="dark-toggle" id="darkToggle" onClick={toggleTheme} aria-label="Toggle dark mode">
-              <i className={theme === 'light' ? 'fas fa-moon' : 'fas fa-sun'}></i>{' '}
-              {theme === 'light' ? (lang === 'en' ? 'Dark' : 'இருள்') : (lang === 'en' ? 'Light' : 'ஒளி')}
-            </button>
-            
-            <select 
-              className="lang-switcher" 
-              value={lang} 
-              onChange={(e) => setLang(e.target.value)} 
-              aria-label="Language"
-            >
-              <option value="ta">தமிழ்</option>
-              <option value="en">English</option>
-            </select>
+  const getCurrentDistrictName = (key) => {
+    const districtNames = {
+      'சென்னை': { en: 'Chennai', ta: 'சென்னை' },
+      'கோயம்புத்தூர்': { en: 'Coimbatore', ta: 'கோயம்புத்தூர்' },
+      'மதுரை': { en: 'Madurai', ta: 'மதுரை' },
+      'சேலம்': { en: 'Salem', ta: 'சேலம்' },
+      'திருச்சி': { en: 'Trichy', ta: 'திருச்சி' },
+      'திருநெல்வேலி': { en: 'Tirunelveli', ta: 'திருநெல்வேலி' },
+      'வேலூர்': { en: 'Vellore', ta: 'வேலூர்' },
+      'ஈரோடு': { en: 'Erode', ta: 'ஈரோடு' },
+      'தஞ்சாவூர்': { en: 'Tanjore', ta: 'தஞ்சாவூர்' },
+      'கன்னியாகுமரி': { en: 'Kanyakumari', ta: 'கன்னியாகுமரி' }
+    };
+    const item = districtNames[key];
+    return item ? (lang === 'en' ? item.en : item.ta) : key;
+  };
 
-            <div style={{
-              display: 'inline-flex',
+  const renderLogo = (size = 'normal', forceDark = false) => {
+    const isDark = forceDark || theme === 'dark';
+    const logoUrl = isDark ? "/assets/images/logo-banner-dark.png" : "/assets/images/logo-banner-light.png";
+    return (
+      <Link to="/" className="logo-link" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textDecoration: 'none' }}>
+        <img 
+          src={logoUrl} 
+          alt="KING 24x7" 
+          style={{ height: size === 'small' ? '40px' : '55px', width: 'auto', objectFit: 'contain', display: 'block' }} 
+        />
+      </Link>
+    );
+  };
+
+  const renderLiveTvBtn = () => (
+    <Link to="/live-tv" className="livetv-btn" style={{
+      background: '#EF4444',
+      color: '#FFFFFF',
+      padding: '4px 10px',
+      borderRadius: '4px',
+      fontSize: '12px',
+      fontWeight: '700',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '6px',
+      textDecoration: 'none',
+      border: 'none'
+    }}>
+      <span style={{
+        display: 'inline-block',
+        width: '6px',
+        height: '6px',
+        borderRadius: '50%',
+        background: '#FFFFFF'
+      }}></span>
+      {lang === 'en' ? 'LIVE' : 'லைவ்'}
+    </Link>
+  );
+
+  const renderProfileIcon = () => {
+    const linkTarget = (session && session.isLoggedIn) ? "/profile" : "/login";
+    return (
+      <Link to={linkTarget} style={{ color: '#ffffff', fontSize: '22px', display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }} aria-label="User Account">
+        <i className="fas fa-user-circle"></i>
+      </Link>
+    );
+  };
+
+  const renderDistrictSelector = (isHeader = false) => (
+    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+      <button 
+        onClick={() => setShowDistrictDropdown(!showDistrictDropdown)}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          color: isHeader ? '#FFFFFF' : (theme === 'dark' ? '#FFFFFF' : '#1A1A1A'),
+          fontSize: '13px',
+          fontWeight: '700',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          cursor: 'pointer',
+          padding: isHeader ? '4px 6px 1px 6px' : '6px 10px',
+          borderRadius: '4px',
+          transition: 'background 0.2s',
+          whiteSpace: 'nowrap'
+        }}
+      >
+        <span>{getCurrentDistrictName(district)} 24x7</span>
+        <i className="fas fa-pencil-alt" style={{ fontSize: '10px', color: isHeader ? '#FFFFFF' : '#666' }}></i>
+      </button>
+      {showDistrictDropdown && (
+        <div style={{
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          background: theme === 'dark' ? '#1E293B' : '#ffffff',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+          borderRadius: '6px',
+          padding: '4px 0',
+          zIndex: 9999,
+          minWidth: '160px',
+          border: theme === 'dark' ? '1px solid #334155' : '1px solid #e2e8f0',
+          marginTop: '6px'
+        }}>
+          {[
+            { key: 'சென்னை', en: 'Chennai', ta: 'சென்னை' },
+            { key: 'கோயம்புத்தூர்', en: 'Coimbatore', ta: 'கோயம்புத்தூர்' },
+            { key: 'மதுரை', en: 'Madurai', ta: 'மதுரை' },
+            { key: 'சேலம்', en: 'Salem', ta: 'சேலம்' },
+            { key: 'திருச்சி', en: 'Trichy', ta: 'திருச்சி' },
+            { key: 'திருநெல்வேலி', en: 'Tirunelveli', ta: 'திருநெல்வேலி' },
+            { key: 'வேலூர்', en: 'Vellore', ta: 'வேலூர்' },
+            { key: 'ஈரோடு', en: 'Erode', ta: 'ஈரோடு' },
+            { key: 'தஞ்சாவூர்', en: 'Tanjore', ta: 'தஞ்சாவூர்' },
+            { key: 'கன்னியாகுமரி', en: 'Kanyakumari', ta: 'கன்னியாகுமரி' }
+          ].map(item => (
+            <button
+              key={item.key}
+              onClick={() => {
+                handleDistrictChange(item.key);
+                setShowDistrictDropdown(false);
+              }}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '10px 16px',
+                background: district === item.key ? (theme === 'dark' ? '#334155' : '#EFF6FF') : 'transparent',
+                color: district === item.key ? '#3B82F6' : (theme === 'dark' ? '#FFFFFF' : '#1E293B'),
+                border: 'none',
+                fontWeight: '700',
+                cursor: 'pointer',
+                fontSize: '13px',
+                display: 'block'
+              }}
+            >
+              {lang === 'en' ? item.en : item.ta}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderSocials = () => (
+    <div style={{ display: 'flex', gap: '8px' }}>
+      <a href="#" className="social-icon" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
+      <a href="#" className="social-icon" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
+      <a href="#" className="social-icon" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
+      <a href="#" className="social-icon" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
+    </div>
+  );
+
+  const renderAuthSection = () => {
+    if (session && session.isLoggedIn) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--top-bar-text)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <i className="fas fa-user-circle" style={{ color: roleColors[session.role] || '#64748B' }}></i>
+            {session.username}
+          </span>
+          <button 
+            onClick={logout} 
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#EF4444',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              padding: '4px 8px',
+              display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              marginLeft: '12px',
-              paddingLeft: '12px',
-              borderLeft: '1px solid var(--top-bar-border)'
-            }}>
+              gap: '4px'
+            }}
+          >
+            <i className="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
+      );
+    }
+    return (
+      <Link to="/login" style={{
+        fontSize: '12px',
+        fontWeight: 700,
+        color: 'var(--primary)',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '4px 8px',
+        textDecoration: 'none'
+      }}>
+        <i className="fas fa-sign-in-alt"></i> {lang === 'en' ? 'Login' : 'உள்நுழை'}
+      </Link>
+    );
+  };
+
+  const renderScrollNavMenu = (onLinkClick = () => {}) => {
+    const navItems = isRegionalPage 
+      ? [
+          { path: '/', label: t('முகப்பு') },
+          { path: '/directory', label: t('நம்ம ஊர்') },
+          { path: '/wishes', label: t('வாழ்த்து') },
+          { path: '/obituaries', label: t('இரங்கல்') },
+          { path: '/business-studies', label: t('வணிகம்') },
+          { path: '/jobs', label: t('வேலை') },
+          { path: '/classifieds', label: t('தள்ளுபடி') }
+        ]
+      : [
+          { path: '/', label: lang === 'en' ? 'Home' : 'முகப்பு' },
+          { path: '/category/politics', label: lang === 'en' ? 'Politics' : 'அரசியல்' },
+          { path: '/category/business', label: lang === 'en' ? 'Business' : 'வணிகம்' },
+          { path: '/category/sports', label: lang === 'en' ? 'Sports' : 'விளையாட்டு' },
+          { path: '/category/cinema', label: lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு' },
+          { path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்' },
+          { path: '/directory', label: lang === 'en' ? 'Regional' : 'மாநிலம்' },
+          { path: '/category/world', label: lang === 'en' ? 'International' : 'சர்வதேசம்' },
+          { path: '/videos', label: lang === 'en' ? 'Video' : 'வீடியோ' },
+          { path: '/web-stories', label: lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்' }
+        ];
+
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'row',
+        flexWrap: 'nowrap',
+        alignItems: 'center',
+        gap: '15px',
+        width: '100%',
+        padding: '8px 0'
+      }}>
+        {navItems.map((item, idx) => {
+          const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+          return (
+            <Link
+              key={idx}
+              to={item.path}
+              onClick={onLinkClick}
+              style={{
+                color: isActive ? 'var(--primary, #B3732A)' : '#FFFFFF',
+                opacity: isActive ? '1' : '0.9',
+                background: isActive ? '#FAF4EB' : 'transparent',
+                padding: '6px 14px',
+                borderRadius: '20px',
+                fontSize: '13px',
+                fontWeight: '700',
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s',
+                display: 'inline-block'
+              }}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderNavMenuVertical = (onLinkClick = () => {}) => {
+    const navItems = isRegionalPage 
+      ? [
+          { path: '/', label: t('முகப்பு') },
+          { path: '/directory', label: t('நம்ம ஊர்') },
+          { path: '/wishes', label: t('வாழ்த்து') },
+          { path: '/obituaries', label: t('இரங்கல்') },
+          { path: '/business-studies', label: t('வணிகம்') },
+          { path: '/jobs', label: t('வேலை') },
+          { path: '/classifieds', label: t('தள்ளுபடி') }
+        ]
+      : [
+          { path: '/', label: lang === 'en' ? 'Home' : 'முகப்பு' },
+          { path: '/category/politics', label: lang === 'en' ? 'Politics' : 'அரசியல்' },
+          { path: '/category/business', label: lang === 'en' ? 'Business' : 'வணிகம்' },
+          { path: '/category/sports', label: lang === 'en' ? 'Sports' : 'விளையாட்டு' },
+          { path: '/category/cinema', label: lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு' },
+          { path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்' },
+          { path: '/directory', label: lang === 'en' ? 'Regional' : 'மாநிலம்' },
+          { path: '/category/world', label: lang === 'en' ? 'International' : 'சர்வதேசம்' },
+          { path: '/videos', label: lang === 'en' ? 'Video' : 'வீடியோ' },
+          { path: '/web-stories', label: lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்' }
+        ];
+
+    return (
+      <ul style={{ display: 'flex', flexDirection: 'column', gap: '15px', padding: 0, listStyle: 'none', margin: 0 }}>
+        {navItems.map((item, idx) => {
+          const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+          return (
+            <li key={idx}>
+              <Link 
+                to={item.path} 
+                onClick={onLinkClick} 
+                style={{
+                  color: isActive ? 'var(--primary, #B3732A)' : 'inherit',
+                  textDecoration: 'none',
+                  fontWeight: '700',
+                  fontSize: '14px',
+                  display: 'block',
+                  padding: '4px 0'
+                }}
+              >
+                {item.label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
+
+  return (
+    <header className="header-mobile-app-style" style={{ background: '#000000', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', width: '100%' }}>
+      {/* Minimal top bar */}
+      <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', flexShrink: 0, paddingBottom: '3px' }}>
+          <button 
+            onClick={() => setDrawerOpen(true)}
+            style={{ 
+              background: 'transparent', 
+              border: 'none', 
+              fontSize: '20px', 
+              color: '#ffffff', 
+              cursor: 'pointer', 
+              paddingRight: '6px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              marginBottom: '2px' 
+            }}
+            aria-label="Open side drawer menu"
+          >
+            <i className="fas fa-bars"></i>
+          </button>
+          {renderLogo('small', true)}
+          {renderDistrictSelector(true)}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+          <button 
+            onClick={() => window.dispatchEvent(new CustomEvent('toggle-ai-assistant', { detail: { tab: 'search' } }))}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#ffffff', padding: '4px' }}
+            aria-label="Search"
+          >
+            <i className="fas fa-search"></i>
+          </button>
+          {renderLiveTvBtn()}
+        </div>
+      </div>
+
+      {/* Horizontal scrollable category navigation bar in single line */}
+      <nav 
+        className={`main-nav ${isRegionalPage ? 'regional-theme' : ''}`} 
+        style={{ 
+          overflowX: 'auto', 
+          whiteSpace: 'nowrap', 
+          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          background: '#000000',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}
+      >
+        <div className="container" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '0 16px' }}>
+          {renderScrollNavMenu()}
+        </div>
+      </nav>
+
+      {/* Side Drawer Panel */}
+      <div 
+        className={`side-drawer-container ${drawerOpen ? 'open' : ''}`} 
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          visibility: drawerOpen ? 'visible' : 'hidden',
+          zIndex: 99999,
+          transition: 'visibility 0.3s'
+        }}
+      >
+        {/* Overlay */}
+        <div 
+          onClick={() => setDrawerOpen(false)}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'rgba(0,0,0,0.5)',
+            opacity: drawerOpen ? 1 : 0,
+            transition: 'opacity 0.3s'
+          }}
+        />
+        {/* Drawer Content */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '280px',
+          height: '100%',
+          background: theme === 'dark' ? '#000000' : '#ffffff',
+          boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
+          transform: drawerOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.3s ease-out',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '24px 20px',
+          gap: '20px',
+          color: theme === 'dark' ? '#ffffff' : '#1e293b',
+          overflowY: 'auto'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {renderLogo('small')}
+            <button onClick={() => setDrawerOpen(false)} style={{ background: 'transparent', border: 'none', fontSize: '20px', color: 'inherit', cursor: 'pointer' }}>
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
+
+          {/* Profile section below the logo */}
+          <div style={{ 
+            marginTop: '5px', 
+            padding: '12px', 
+            borderRadius: '8px', 
+            background: theme === 'dark' ? '#1E293B' : '#F8FAFC',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <Link 
+              to={(session && session.isLoggedIn) ? "/profile" : "/login"} 
+              onClick={() => setDrawerOpen(false)}
+              style={{ 
+                color: theme === 'dark' ? '#ffffff' : '#1e293b', 
+                fontSize: '28px', 
+                display: 'inline-flex', 
+                alignItems: 'center' 
+              }}
+              aria-label="User Account"
+            >
+              <i className="fas fa-user-circle"></i>
+            </Link>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
               {session && session.isLoggedIn ? (
                 <>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--top-bar-text)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                    <i className="fas fa-user-circle" style={{ color: roleColors[session.role] || '#64748B' }}></i>
-                    {session.username}
-                    <span style={{
-                      fontSize: '10px',
-                      background: roleColors[session.role] || '#64748B',
-                      color: 'white',
-                      padding: '1px 5px',
-                      borderRadius: '4px',
-                      fontWeight: 700
-                    }}>
-                      {lang === 'en' ? session.role.toUpperCase() : getTamilRole(session.role)}
-                    </span>
-                  </span>
+                  <span style={{ fontSize: '14px', fontWeight: '700' }}>{session.username}</span>
                   <button 
-                    onClick={logout} 
+                    onClick={() => {
+                      logout();
+                      setDrawerOpen(false);
+                    }} 
                     style={{
                       background: 'transparent',
                       border: 'none',
                       color: '#EF4444',
                       fontSize: '12px',
-                      fontWeight: 700,
+                      fontWeight: '700',
                       cursor: 'pointer',
-                      padding: '4px 8px',
+                      padding: 0,
+                      marginTop: '2px',
+                      textAlign: 'left',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '4px',
-                      outline: 'none'
+                      gap: '4px'
                     }}
                   >
                     <i className="fas fa-sign-out-alt"></i> {lang === 'en' ? 'Logout' : 'வெளியேறு'}
@@ -204,125 +555,75 @@ const Header = () => {
               ) : (
                 <Link 
                   to="/login" 
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    color: 'var(--primary)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
+                  onClick={() => setDrawerOpen(false)}
+                  style={{ 
+                    fontSize: '14px', 
+                    fontWeight: '700', 
+                    color: 'var(--primary, #B3732A)',
                     textDecoration: 'none'
                   }}
                 >
-                  <i className="fas fa-sign-in-alt"></i> {lang === 'en' ? 'Login' : 'உள்நுழை'}
+                  {lang === 'en' ? 'Login / Register' : 'உள்நுழை / பதிவு செய்'}
                 </Link>
               )}
             </div>
           </div>
+
+          {/* Drawer category items list */}
+          <div style={{ borderBottom: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #cbd5e1', paddingBottom: '15px', marginTop: '10px' }}>
+            <h4 style={{ margin: '0 0 10px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
+              {lang === 'en' ? 'Sections' : 'பிரிவுகள்'}
+            </h4>
+            {renderNavMenuVertical(() => setDrawerOpen(false))}
+          </div>
+
+          {/* Utility elements inside sidebar */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                {lang === 'en' ? 'District News' : 'மாவட்ட செய்திகள்'}
+              </h4>
+              {renderDistrictSelector()}
+            </div>
+
+            <div>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                {lang === 'en' ? 'Weather' : 'வானிலை'}
+              </h4>
+              <span><i className="fas fa-thermometer-half"></i> {weatherTemp}</span>
+            </div>
+
+            <div>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                {lang === 'en' ? 'Settings' : 'அமைப்புகள்'}
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{lang === 'en' ? 'Theme Mode' : 'பின்னணி'}</span>
+                  <button onClick={toggleTheme} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '16px' }}>
+                    <i className={theme === 'light' ? 'fas fa-moon' : 'fas fa-sun'}></i>
+                  </button>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{lang === 'en' ? 'Language' : 'மொழி'}</span>
+                  <select value={lang} onChange={(e) => setLang(e.target.value)} style={{ padding: '4px', borderRadius: '4px', border: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid #cbd5e1', background: 'transparent', color: 'inherit' }}>
+                    <option value="ta">தமிழ்</option>
+                    <option value="en">English</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+
+            <div>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                {lang === 'en' ? 'Follow Us' : 'எங்களை பின்தொடர'}
+              </h4>
+              {renderSocials()}
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* HEADER MAIN */}
-      <header className="header-main">
-        <div className="container">
-          <div className="header-left">
-            <Link to="/" className="logo-link">
-              <img src="/assets/images/logo-banner-light.png" alt="KING 24x7" className="main-logo-img logo-light-only" />
-              <img src="/assets/images/logo-banner-dark.png" alt="KING 24x7" className="main-logo-img logo-dark-only" />
-              <span className="logo-sub-text">LIVE • TRUE • TAMIL</span>
-            </Link>
-          </div>
-          <div className="header-center"></div>
-          <div className="header-right">
-            <Link to="/" className="livetv-btn">
-              <i className="fas fa-play-circle"></i> LIVE TV WATCH NOW
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* NAVIGATION */}
-      <nav className={`main-nav ${isRegionalPage ? 'regional-theme' : ''}`} id="mainNav">
-        <div className="container">
-          <div 
-            className="mobile-menu-btn" 
-            id="mobileMenuBtn" 
-            aria-label="Menu"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            <i className="fas fa-bars"></i>
-          </div>
-          {isRegionalPage ? (
-            <ul className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`} id="navMenu">
-              <li className={`nav-item ${location.pathname === '/' ? 'active' : ''}`} id="sub-nav-home">
-                <Link to="/" className="nav-link">{t('முகப்பு')}</Link>
-              </li>
-              <li className={`nav-item ${location.pathname === '/directory' ? 'active' : ''}`} id="sub-nav-directory">
-                <Link to="/directory" className="nav-link">{t('நம்ம ஊர்')}</Link>
-              </li>
-              <li className={`nav-item ${location.pathname === '/wishes' ? 'active' : ''}`} id="sub-nav-wishes">
-                <Link to="/wishes" className="nav-link">{t('வாழ்த்து')}</Link>
-              </li>
-              <li className={`nav-item ${location.pathname === '/obituaries' ? 'active' : ''}`} id="sub-nav-obituaries">
-                <Link to="/obituaries" className="nav-link">{t('இரங்கல்')}</Link>
-              </li>
-              <li className={`nav-item ${location.pathname === '/business-studies' ? 'active' : ''}`} id="sub-nav-business">
-                <Link to="/business-studies" className="nav-link">{t('வணிகம்')}</Link>
-              </li>
-              <li className={`nav-item ${location.pathname === '/jobs' ? 'active' : ''}`} id="sub-nav-jobs">
-                <Link to="/jobs" className="nav-link">{t('வேலை')}</Link>
-              </li>
-              <li className={`nav-item ${location.pathname === '/classifieds' ? 'active' : ''}`} id="sub-nav-classifieds">
-                <Link to="/classifieds" className="nav-link">{t('தள்ளுபடி')}</Link>
-              </li>
-            </ul>
-          ) : (
-            <ul className={`nav-menu ${mobileMenuOpen ? 'open' : ''}`} id="navMenu">
-              <li className={`nav-item ${activeClass('/')}`} id="nav-home">
-                <Link to="/" className="nav-link">{lang === 'en' ? 'Home' : 'முகப்பு'}</Link>
-              </li>
-              <li className={`nav-item ${activeClass('/category/politics')}`} id="nav-politics">
-                <Link to="/category/politics" className="nav-link">{lang === 'en' ? 'Politics' : 'அரசியல்'}</Link>
-              </li>
-              <li className={`nav-item ${activeClass('/category/business')}`} id="nav-business">
-                <Link to="/category/business" className="nav-link">{lang === 'en' ? 'Business' : 'வணிகம்'}</Link>
-              </li>
-              <li className={`nav-item ${activeClass('/category/sports')}`} id="nav-sports">
-                <Link to="/category/sports" className="nav-link">{lang === 'en' ? 'Sports' : 'விளையாட்டு'}</Link>
-              </li>
-              <li className={`nav-item ${activeClass('/category/cinema')}`} id="nav-cinema">
-                <Link to="/category/cinema" className="nav-link">{lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு'}</Link>
-              </li>
-              <li className={`nav-item ${activeClass('/category/tech')}`} id="nav-tech">
-                <Link to="/category/tech" className="nav-link">{lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்'}</Link>
-              </li>
-              <li className={`nav-item ${activeClass('/directory')}`} id="nav-directory">
-                <Link to="/directory" className="nav-link">{lang === 'en' ? 'Regional' : 'மாநிலம்'}</Link>
-              </li>
-              <li className={`nav-item ${activeClass('/category/world')}`} id="nav-world">
-                <Link to="/category/world" className="nav-link">{lang === 'en' ? 'International' : 'சர்வதேசம்'}</Link>
-              </li>
-              <li className={`nav-item ${activeClass('/videos')}`} id="nav-videos">
-                <Link to="/videos" className="nav-link">{lang === 'en' ? 'Video' : 'வீடியோ'}</Link>
-              </li>
-              <li className={`nav-item ${activeClass('/web-stories')}`} id="nav-web-stories">
-                <Link to="/web-stories" className="nav-link">{lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்'}</Link>
-              </li>
-            </ul>
-          )}
-          <div className="nav-search" id="searchToggle" aria-label="Search"><i className="fas fa-search"></i></div>
-        </div>
-      </nav>
-      {mobileMenuOpen && (
-        <div 
-          className="mobile-overlay" 
-          id="mobileOverlay" 
-          style={{ display: 'block' }}
-          onClick={() => setMobileMenuOpen(false)}
-        ></div>
-      )}
     </header>
   );
 };

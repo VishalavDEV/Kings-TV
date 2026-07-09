@@ -28,6 +28,27 @@ const AiAssistant = () => {
     }).catch(err => console.warn("AI Assistant failed to load videos", err));
   }, []);
 
+  // Listen for custom open events (e.g. from header search button)
+  useEffect(() => {
+    const handleToggle = (e) => {
+      setIsOpen(true);
+      if (e.detail && e.detail.tab) {
+        setActiveTab(e.detail.tab);
+      }
+      setChatHistory(prev => {
+        if (prev.length === 0) {
+          const welcomeMsg = lang === 'en'
+            ? "Hello! I am your KINGS 24x7 AI Assistant. Search news or use the voice assistant to hear audio updates."
+            : "வணக்கம்! நான் கிங்ஸ் 24x7 ஏஐ குரல் மற்றும் தேடல் செயலி. செய்திகளைத் தேட அல்லது குரல் வழி செய்திகளைக் கேட்கப் பேசுங்கள்.";
+          return [{ sender: 'bot', text: welcomeMsg }];
+        }
+        return prev;
+      });
+    };
+    window.addEventListener('toggle-ai-assistant', handleToggle);
+    return () => window.removeEventListener('toggle-ai-assistant', handleToggle);
+  }, [lang]);
+
   // Set up Speech Recognition
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
