@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ta" data-theme="light">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>செய்தி வாசிப்பு - KING 24x7 | Tamil News Portal</title>
+  <link rel="stylesheet" href="css/styles.css?v=8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="assets/icons/favicon-light.png" id="favicon">
+</head>
+
+<body class="theme-politics" id="articlePageBody">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="container">
+      <div class="top-bar-left">
+        <span><i class="far fa-calendar-alt"></i> <span id="tamilDate"></span></span>
+        <span><i class="far fa-clock"></i> <span id="currentTime"></span></span>
+        <span><i class="fas fa-map-marker-alt"></i> 
+          <select id="districtSelector" class="district-select-top" aria-label="District">
+            <option value="சென்னை" selected>சென்னை</option>
+            <option value="கோயம்புத்தூர்">கோயம்புத்தூர்</option>
+            <option value="மதுரை">மதுரை</option>
+            <option value="சேலம்">சேலம்</option>
+            <option value="திருச்சி">திருச்சி</option>
+          </select>
+        </span>
+        <span><i class="fas fa-thermometer-half"></i> <span id="topTemp">32°C</span></span>
+      </div>
+      <div class="top-bar-right">
+        <a href="#" class="social-icon" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" class="social-icon" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+        <a href="#" class="social-icon" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="#" class="social-icon" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        <button class="dark-toggle" id="darkToggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i> இருள்</button>
+        <select class="lang-switcher" aria-label="Language">
+          <option value="ta" selected>தமிழ்</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+        <!-- HEADER MAIN -->
+  <header class="header-main">
+    <div class="container">
+      <div class="header-left">
+        <a href="index.html" class="logo-link">
+          <img src="assets/images/logo-banner-light.png" alt="KING 24x7" class="main-logo-img logo-light-only">
+          <img src="assets/images/logo-banner-dark.png" alt="KING 24x7" class="main-logo-img logo-dark-only">
+          <span class="logo-sub-text">LIVE • TRUE • TAMIL</span>
+        </a>
+      </div>
+      <div class="header-center"></div>
+      <div class="header-right">
+        <a href="index.html#section-livetv" class="livetv-btn">
+          <i class="fas fa-play-circle"></i> LIVE TV WATCH NOW
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVIGATION -->
+  <nav class="main-nav" id="mainNav">
+    <div class="container">
+      <div class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">
+        <i class="fas fa-bars"></i>
+      </div>
+            <ul class="nav-menu" id="navMenu">
+        <li class="nav-item" id="nav-home"><a href="index.html" class="nav-link">முகப்பு</a></li>
+        <li class="nav-item" id="nav-politics"><a href="category.html?cat=politics" class="nav-link">அரசியல்</a></li>
+        <li class="nav-item" id="nav-business"><a href="category.html?cat=business" class="nav-link">வணிகம்</a></li>
+        <li class="nav-item" id="nav-sports"><a href="category.html?cat=sports" class="nav-link">விளையாட்டு</a></li>
+        <li class="nav-item" id="nav-cinema"><a href="category.html?cat=cinema" class="nav-link">பொழுதுபோக்கு</a></li>
+        <li class="nav-item" id="nav-tech"><a href="category.html?cat=tech" class="nav-link">தொழில்நுட்பம்</a></li>
+        <li class="nav-item" id="nav-state"><a href="directory.html" class="nav-link">மாநிலம்</a></li>
+        <li class="nav-item" id="nav-world"><a href="category.html?cat=politics" class="nav-link">சர்வதேசம்</a></li>
+        <li class="nav-item"><a href="index.html#section-video" class="nav-link">வீдео</a></li>
+        <li class="nav-item"><a href="index.html#section-stories" class="nav-link">வெப் ஸ்டோரிஸ்</a></li>
+      </ul>
+      <div class="nav-search" id="searchToggle" aria-label="Search"><i class="fas fa-search"></i></div>
+    </div>
+  </nav>
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+
+  <!-- BREAKING NEWS -->
+  <div class="breaking-news">
+    <div class="container">
+      <div class="breaking-label" style="background-color: #FFD700; color: #000;"><i class="fas fa-bolt"></i> BREAKING NEWS</div>
+      <div class="breaking-ticker">
+        <div class="breaking-track" id="breakTrack">
+          <a href="#">🌧️ தமிழகத்தில் அடுத்த 3 நாட்களுக்கு மழைக்கு வாய்ப்பு – வானிலை ஆய்வு மையம்</a>
+          <a href="#">🏏 IPL 2025: சென்னை அணி அபார வெற்றி – ரசிகர்கள் உற்சாகம்</a>
+          <a href="#">📈 பங்குச்சந்தை உயர்வு – முதலீட்டாளர்கள் பெரும் மகிழ்ச்சி</a>
+        </div>
+      </div>
+      <div class="breaking-controls">
+        <button id="breakPrev" aria-label="Previous"><i class="fas fa-chevron-left"></i></button>
+        <button id="breakNext" aria-label="Next"><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTAINER -->
+  <div class="container">
+    <div class="article-container">
+      
+      <!-- Floating Share Sidebar -->
+      <aside class="share-sidebar" id="shareSidebar">
+        <button class="share-btn whatsapp" id="shareWA" aria-label="Share on WhatsApp"><i class="fab fa-whatsapp"></i></button>
+        <button class="share-btn facebook" id="shareFB" aria-label="Share on Facebook"><i class="fab fa-facebook-f"></i></button>
+        <button class="share-btn twitter" id="shareTW" aria-label="Share on Twitter"><i class="fab fa-twitter"></i></button>
+        <button class="share-btn telegram" id="shareTG" aria-label="Share on Telegram"><i class="fab fa-telegram-plane"></i></button>
+        <button class="share-btn copy" id="shareCopy" aria-label="Copy Link" title="நகலெடு"><i class="fas fa-link"></i></button>
+      </aside>
+
+      <!-- Main Article Column -->
+      <main class="article-main">
+        <!-- Breadcrumbs -->
+        <div class="breadcrumbs">
+          <a href="index.html">முகப்பு</a>
+          <i class="fas fa-chevron-right" style="font-size:10px;"></i>
+          <a href="#" id="breadCategoryLink">அரசியல்</a>
+          <i class="fas fa-chevron-right" style="font-size:10px;"></i>
+          <span id="breadArticleTitle">கட்டுரை</span>
+        </div>
+
+        <!-- Headlines -->
+        <div class="article-headlines">
+          <h1 id="artTitleTa">தமிழக சட்டமன்றக் கூட்டத்தொடர் புதிய பட்ஜெட் அறிவிப்புகள் – நேரடித் தகவல்கள்</h1>
+          <h2 id="artTitleEn">Tamil Nadu Assembly Session New Budget Declarations: Live Updates and Key Announcements</h2>
+        </div>
+
+        <!-- Meta Info & Byline -->
+        <div class="article-meta-info">
+          <div class="author-profile">
+            <!-- Round photo placeholder using linear-gradient -->
+            <div style="width:48px; height:48px; border-radius:50%; background:linear-gradient(135deg, var(--category-color, var(--primary)), #8B5CF6); display:flex; align-items:center; justify-content:center; color:white; font-weight:700;" id="authorPhoto">ந</div>
+            <div class="author-details">
+              <h4 id="authorName">செல்வகுமார்</h4>
+              <span>தலைமைச் செய்தி நிருபர்</span>
+            </div>
+          </div>
+          <div class="article-time">
+            <div><i class="far fa-calendar-alt"></i> வெளியிடப்பட்டது: <span id="pubDate">20 மே 2025 | 10:30 AM</span></div>
+            <div><i class="fas fa-history"></i> புதுப்பிக்கப்பட்டது: <span id="updDate">21 மே 2025 | 09:15 AM</span></div>
+            <div style="font-weight:600; color:var(--category-color, var(--primary)); margin-top:4px;"><i class="far fa-clock"></i> <span id="readTime">3 நிமிட வாசிப்பு</span></div>
+          </div>
+        </div>
+
+        <!-- Full Width Hero Image -->
+        <div class="article-hero-img-container">
+          <div style="width: 100%; height: 350px; border-radius: var(--radius-md); background: linear-gradient(135deg, #1E3A8A, #3B82F6); display: flex; align-items: center; justify-content: center; color: white;" id="heroImgGradient">
+            <i class="fas fa-image fa-3x" style="opacity: 0.5;"></i>
+          </div>
+          <div class="caption" id="imgCaption">படம்: தலைமைச் செயலகம், சென்னை. (கோப்புப் படம்)</div>
+        </div>
+
+        <!-- Article Body -->
+        <article class="article-body-text" id="articleBody">
+          <p>தமிழக அரசின் 2026 பட்ஜெட் கூட்டத்தொடரில் பல முக்கிய அறிவிப்புகள் வெளியிடப்பட்டுள்ளன. குறிப்பாக, கல்வி, விவசாயம் மற்றும் உள்கட்டமைப்பு மேம்பாட்டிற்கு இந்த பட்ஜெட்டில் முக்கியத்துவம் அளிக்கப்பட்டுள்ளது. முதலமைச்சர் சட்டப்பேரவையில் இன்று ஆற்றிய உரையில், ஏழை எளிய மக்களின் வாழ்வாதாரத்தை மேம்படுத்தும் பல புதிய திட்டங்களை அறிவித்தார்.</p>
+          <p>அமைச்சர் நிதி ஒதுக்கீடு குறித்துப் பேசுகையில், "மாநிலத்தின் நிதிநிலையைக் கருத்தில் கொண்டு, அதே சமயம் மக்கள் நலத் திட்டங்கள் முடங்கிவிடாமல் இருக்க தகுந்த நடவடிக்கைகள் எடுக்கப்பட்டுள்ளன. அடுத்த சில மாதங்களில் இந்த திட்டங்கள் அனைத்தும் செயல்பாட்டிற்கு வரும்" என்றார்.</p>
+          <p>எதிர்க்கட்சிகள் பட்ஜெட் நிதிப் பகிர்வு குறித்து சில விமர்சனங்களை எழுப்பிய போதிலும், பெரும்பான்மையான சட்டமன்ற உறுப்பினர்கள் இந்த அறிவிப்புகளுக்கு வரவேற்பு தெரிவித்துள்ளனர். பட்ஜெட் கூட்டத்தொடரின் மீதான விவாதம் இன்னும் சில நாட்களுக்குத் தொடரும் என்று சபாநாயகர் அறிவித்துள்ளார்.</p>
+        </article>
+
+        <!-- Tags -->
+        <div class="article-tags" id="articleTags">
+          <span class="article-tag">சட்டமன்றம்</span>
+          <span class="article-tag">தமிழக பட்ஜெட்</span>
+          <span class="article-tag">அரசு கொள்கை</span>
+        </div>
+
+        <!-- Related Articles Grid -->
+        <div class="related-articles">
+          <h3 class="related-title">தொடர்புடைய செய்திகள்</h3>
+          <div class="news-grid-3" id="relatedArticlesGrid">
+            <!-- Dynamic related articles insert -->
+          </div>
+        </div>
+
+        <!-- Comments Section -->
+        <div class="comments-section">
+          <h3 class="comments-count" id="commentCountTitle">3 கருத்துக்கள்</h3>
+          <div class="comments-list" id="commentsList">
+            <div class="comment-item">
+              <div class="comment-avatar">கு</div>
+              <div class="comment-content">
+                <div class="comment-header">
+                  <h5>குமரன்</h5>
+                  <span>10 மணி நேரத்திற்கு முன்</span>
+                </div>
+                <p class="comment-text">அருமையான பட்ஜெட் அறிவிப்புகள். குறிப்பாக கல்விக்கான நிதி ஒதுக்கீடு உயர்த்தப்பட்டுள்ளது பாராட்டத்தக்கது.</p>
+              </div>
+            </div>
+            <div class="comment-item">
+              <div class="comment-avatar">ம</div>
+              <div class="comment-content">
+                <div class="comment-header">
+                  <h5>மகேஷ்வரன்</h5>
+                  <span>8 மணி நேரத்திற்கு முன்</span>
+                </div>
+                <p class="comment-text">விவசாயிகளுக்கான இலவச மின்சாரம் மற்றும் மானியங்கள் தொடருமா என்பதில் சட்டமன்றத்தில் தெளிவுபடுத்த வேண்டும்.</p>
+              </div>
+            </div>
+            <div class="comment-item">
+              <div class="comment-avatar">க</div>
+              <div class="comment-content">
+                <div class="comment-header">
+                  <h5>கவிதா</h5>
+                  <span>5 மணி நேரத்திற்கு முன்</span>
+                </div>
+                <p class="comment-text">புதிய சாலை மேம்பாட்டுத் திட்டங்கள் போக்குவரத்தை சீரமைக்கும் என நம்புகிறேன்.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Comment Form -->
+          <div class="comment-form-container">
+            <h4>கருத்துக்களைப் பகிரவும்</h4>
+            <form class="comment-form" id="commentForm">
+              <input type="text" placeholder="உங்கள் பெயர் (கட்டாயமானது)" id="commentorName" required>
+              <input type="email" placeholder="மின்னஞ்சல் முகவரி (வெளியிடப்படாது)" id="commentorEmail" required>
+              <textarea placeholder="உங்கள் கருத்துக்களை இங்கு எழுதவும்..." id="commentText" required></textarea>
+              <button type="submit">பதிவு செய்க</button>
+            </form>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- Sidebar Area -->
+      <aside style="display:flex; flex-direction:column; gap:20px;">
+        <!-- Weather Widget (Reused) -->
+        <div class="weather-widget">
+          <h4 style="font-size:16px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px"><i
+              class="fas fa-cloud-sun" style="color:var(--primary)"></i> சென்னை வானிலை</h4>
+          <div class="weather-current">
+            <div class="temp">32°C</div>
+            <div class="details">
+              <strong>மேகமூட்டம்</strong>
+              <span>ஈரப்பதம்: 72%</span>
+              <span>காற்று: 18 km/h</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Trending Widget -->
+        <div class="trending-list">
+          <h4 style="font-size:16px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px"><i
+              class="fas fa-fire" style="color:#EF4444"></i> ட்ரெண்டிங் செய்திகள்</h4>
+          <div class="trending-item">
+            <span class="rank top3">1</span>
+            <div class="info">
+              <h5>சென்னை மெட்ரோ புதிய மெட்ரோ ரயில் திட்டம்</h5>
+            </div>
+          </div>
+          <div class="trending-item">
+            <span class="rank top3">2</span>
+            <div class="info">
+              <h5>தங்கம் விலை அதிரடி வீழ்ச்சி</h5>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification Alert -->
+  <div class="toast-alert" id="toastAlert">நகலெடுக்கப்பட்டது! (Link Copied!)</div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <img src="assets/icons/logo-icon-light.png" alt="KING 24x7" style="height: 40px; width: auto;" class="logo-light-only">
+            <img src="assets/icons/logo-icon-dark.png" alt="KING 24x7" style="height: 40px; width: auto;" class="logo-dark-only">
+            <span style="font-size:24px; font-weight:800; color:white;">KING 24x7</span>
+          </div>
+          <div class="tagline" style="color:rgba(255,255,255,0.5); margin-top:8px;">உண்மை. பொறுப்புடன். தமிழ்.</div>
+          <p>KING 24x7 ஒரு முன்னணி தமிழ் செய்தி போர்டல். தமிழகம், இந்தியா மற்றும் உலகம் முழுவதும் இருந்து தமிழில் உடனடி,
+            நம்பகமான செய்திகளை வழங்குகிறோம்.</p>
+        </div>
+<div class="footer-col">
+          <h5>செய்திகள்</h5>
+          <a href="category.html?cat=politics">அரசியல்</a>
+          <a href="category.html?cat=business">வணிகம்</a>
+          <a href="category.html?cat=sports">விளையாட்டு</a>
+          <a href="category.html?cat=cinema">சினிமா</a>
+          <a href="category.html?cat=tech">தொழில்நுட்பம்</a>
+        </div>
+        <div class="footer-col">
+          <h5>கூடுதல்</h5>
+          <a href="index.html#section-video">வீடியோக்கள்</a>
+          <a href="index.html#section-livetv">லைவ் டிவி</a>
+          <a href="index.html#section-stories">வெப் ஸ்டோரிஸ்</a>
+        </div>
+        <div class="footer-col">
+          <h5>தகவல்</h5>
+          <a href="#">எங்களைப் பற்றி</a>
+          <a href="#">தொடர்புக்கு</a>
+          <a href="#">தனியுரிமைக் கொள்கை</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <div>© 2025 <strong>KING 24x7</strong> - All Rights Reserved.</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
+  <script src="js/main.js?v=4" charset="UTF-8"></script>
+
+  <!-- ARTICLE DYNAMIC POPULATION & COMMENTS/SHARE SCRIPT -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // 1. Get Query Parameters
+      const params = new URLSearchParams(window.location.search);
+      let cat = params.get('cat') || 'politics';
+      cat = cat.toLowerCase();
+      let artId = parseInt(params.get('id')) || 1;
+
+      // Category config maps
+      const catConfigs = {
+        politics: {
+          name: 'அரசியல்',
+          themeClass: 'theme-politics',
+          color: '#3B82F6'
+        },
+        business: {
+          name: 'வணிகம்',
+          themeClass: 'theme-business',
+          color: '#22C55E'
+        },
+        sports: {
+          name: 'விளையாட்டு',
+          themeClass: 'theme-sports',
+          color: '#F97316'
+        },
+        cinema: {
+          name: 'பொழுதுபோக்கு',
+          themeClass: 'theme-cinema',
+          color: '#EC4899'
+        },
+        tech: {
+          name: 'தொழில்நுட்பம்',
+          themeClass: 'theme-tech',
+          color: '#A855F7'
+        }
+      };
+
+      const currentConfig = catConfigs[cat] || catConfigs['politics'];
+      document.body.className = currentConfig.themeClass;
+
+      // Set category breadcrumb link
+      const catLink = document.getElementById('breadCategoryLink');
+      catLink.textContent = currentConfig.name;
+      catLink.href = 'category.html?cat=' + cat;
+
+      // Articles Data
+      const articlesData = {
+        1: {
+          titleTa: 'தமிழக சட்டமன்றக் கூட்டத்தொடர் புதிய பட்ஜெட் அறிவிப்புகள் – நேரடித் தகவல்கள்',
+          titleEn: 'Tamil Nadu Assembly Session New Budget Declarations: Live Updates and Key Announcements',
+          author: 'செல்வகுமார்',
+          authorPhotoChar: 'செ',
+          pubDate: '20 மே 2025 | 10:30 AM',
+          updDate: '21 மே 2025 | 09:15 AM',
+          readTime: '3 நிமிட வாசிப்பு',
+          gradient: 'linear-gradient(135deg, #1E3A8A, #3B82F6)',
+          paragraphs: [
+            'தமிழக அரசின் 2026 பட்ஜெட் கூட்டத்தொடரில் பல முக்கிய அறிவிப்புகள் வெளியிடப்பட்டுள்ளன. குறிப்பாக, கல்வி, விவசாயம் மற்றும் உள்கட்டமைப்பு மேம்பாட்டிற்கு இந்த பட்ஜெட்டில் முக்கியத்துவம் அளிக்கப்பட்டுள்ளது. முதலமைச்சர் சட்டப்பேரவையில் இன்று ஆற்றிய உரையில், ஏழை எளிய மக்களின் வாழ்வாதாரத்தை மேம்படுத்தும் பல புதிய திட்டங்களை அறிவித்தார்.',
+            'அமைச்சர் நிதி ஒதுக்கீடு குறித்துப் பேசுகையில், "மாநிலத்தின் நிதிநிலையைக் கருத்தில் கொண்டு, அதே சமயம் மக்கள் நலத் திட்டங்கள் முடங்கிவிடாமல் இருக்க தகுந்த நடவடிக்கைகள் எடுக்கப்பட்டுள்ளன. அடுத்த சில மாதங்களில் இந்த திட்டங்கள் அனைத்தும் செயல்பாட்டிற்கு வரும்" என்றார்.',
+            'எதிர்க்கட்சிகள் பட்ஜெட் நிதிப் பகிர்வு குறித்து சில விமர்சனங்களை எழுப்பிய போதிலும், பெரும்பான்மையான சட்டமன்ற உறுப்பினர்கள் இந்த அறிவிப்புகளுக்கு வரவேற்பு தெரிவித்துள்ளனர். பட்ஜெட் கூட்டத்தொடரின் மீதான விவாதம் இன்னும் சில நாட்களுக்குத் தொடரும் என்று சபாநாயகர் அறிவித்துள்ளார்.'
+          ],
+          tags: ['சட்டமன்றம்', 'தமிழக பட்ஜெட்', 'அரசு கொள்கை', 'நிதி ஒதுக்கீடு'],
+          related: [
+            { title: 'தேசிய தேர்தல் களம்: புது தில்லியில் அனைத்துக் கட்சிக் கூட்டம் இன்று', cat: 'politics', id: 2, gradient: 'linear-gradient(135deg, #3B82F6, #60A5FA)' },
+            { title: 'இந்திய-அமெரிக்க வெளியுறவுத் துறை அமைச்சர்கள் சந்திப்பு', cat: 'politics', id: 3, gradient: 'linear-gradient(135deg, #1D4ED8, #1E3A8A)' },
+            { title: 'புதிய கல்விக் கொள்கை 2026: மாநில அரசுகள் ஆலோசனை', cat: 'politics', id: 4, gradient: 'linear-gradient(135deg, #2563EB, #3B82F6)' }
+          ]
+        },
+        7: {
+          titleTa: 'பங்குச்சந்தை வரலாறு காணாத உயர்வு – சென்செக்ஸ் 83,000 புள்ளிகளைத் தாண்டியது',
+          titleEn: 'Stock Market Reaches Historic High: Sensex Crosses 83,000 Milestone on Technology and Banking Surge',
+          author: 'கிருஷ்ணமூர்த்தி',
+          authorPhotoChar: 'கி',
+          pubDate: '20 மே 2025 | 11:15 AM',
+          updDate: '20 மே 2025 | 03:30 PM',
+          readTime: '2 நிமிட வாசிப்பு',
+          gradient: 'linear-gradient(135deg, #065F46, #10B981)',
+          paragraphs: [
+            'சர்வதேச சந்தைகளில் ஏற்பட்ட சாதகமான சூழல் மற்றும் இந்திய நிறுவனங்களின் சிறந்த காலாண்டு முடிவுகள் காரணமாக இன்று பங்குச்சந்தை புதிய வரலாற்று உச்சத்தை எட்டியுள்ளது. சென்செக்ஸ் குறியீடு வர்த்தக முடிவில் 83,120 புள்ளிகளாகவும், நிஃப்டி குறியீடு 25,300 புள்ளிகளாகவும் நிலைபெற்றது.',
+            'குறிப்பாக, ஐடி மற்றும் வங்கித்துறை பங்குகள் 4% வரை உயர்ந்து சந்தை எழுச்சிக்கு வித்திட்டன. சந்தை நிபுணர்கள் கூறுகையில், "இந்தியப் பொருளாதாரத்தின் வலுவான அடிப்படைக் கூறுகள் மற்றும் தொடர்ந்து வரும் வெளிநாட்டு முதலீடுகள் பங்குச்சந்தைக்கு கூடுதல் பலம் சேர்த்துள்ளன" என்றனர்.',
+            'இந்த திடீர் உயர்வு காரணமாக முதலீட்டாளர்களின் சொத்து மதிப்பு இன்று ஒரே நாளில் பல லட்சம் கோடி ரூபாய் அதிகரித்துள்ளது. எனினும், வரும் நாட்களில் முதலீட்டாளர்கள் லாப நோக்கம் கருதி பங்குகளை விற்கக்கூடும் என்பதால் கவனத்துடன் செயல்படுமாறு அறிவுறுத்தப்படுகிறார்கள்.'
+          ],
+          tags: ['பங்குச்சந்தை', 'வணிகம்', 'முதலீடு', 'பொருளாதாரம்'],
+          related: [
+            { title: 'டாடா மோட்டார்ஸ் மின்சார வாகன உற்பத்தியில் புதிய முதலீடுகள்', cat: 'business', id: 8, gradient: 'linear-gradient(135deg, #10B981, #34D399)' },
+            { title: 'தங்கத்தின் விலை அதிரடி வீழ்ச்சி - இன்றைய நிலவரம்', cat: 'business', id: 9, gradient: 'linear-gradient(135deg, #047857, #10B981)' },
+            { title: 'சென்னையில் புதிய ஸ்டார்ட்அப் கண்காட்சி - இளைஞர்கள் ஆர்வம்', cat: 'business', id: 10, gradient: 'linear-gradient(135deg, #059669, #34D399)' }
+          ]
+        },
+        13: {
+          titleTa: 'IPL 2025: சென்னை சூப்பர் கிங்ஸ் அணி இறுதிப்போட்டிக்கு தகுதி பெற்றது',
+          titleEn: 'IPL 2025: Chennai Super Kings Qualifies for Finals After Thrilling Victory Over Mumbai',
+          author: 'விஜயராகவன்',
+          authorPhotoChar: 'வி',
+          pubDate: '20 மே 2025 | 11:50 PM',
+          updDate: '21 மே 2025 | 07:30 AM',
+          readTime: '4 நிமிட வாசிப்பு',
+          gradient: 'linear-gradient(135deg, #C2410C, #F97316)',
+          paragraphs: [
+            'ஐபிஎல் 2025 தொடரின் பரபரப்பான அரையிறுதிப் போட்டியில் மும்பை இந்தியன்ஸ் அணியை வீழ்த்தி சென்னை சூப்பர் கிங்ஸ் அணி இறுதிப் போட்டிக்கு தகுதி பெற்றது. முதலில் பேட்டிங் செய்த சென்னை அணி 20 ஓவர்களில் 5 விக்கெட் இழப்பிற்கு 198 ரன்கள் எடுத்தது.',
+            'சென்னை அணியின் சார்பில் ருதுராஜ் கெய்க்வாட் அதிரடியாக விளையாடி 82 ரன்கள் குவித்தார். தொடர்ந்து களமிறங்கிய மும்பை அணி சென்னை அணியின் துல்லியமான பந்துவீச்சை எதிர்கொள்ள முடியாமல் 182 ரன்களுக்கு ஆல்-அவுட் ஆனது. இதன் மூலம் சென்னை அணி 16 ரன்கள் வித்தியாசத்தில் அபார வெற்றி பெற்றது.',
+            'இறுதிப் போட்டியில் விளையாட சென்னை தகுதி பெற்றுள்ள நிலையில், ரசிகர்கள் சமூக ஊடகங்களில் வெற்றியை விமரிசையாகக் கொண்டாடி வருகின்றனர். அடுத்த ஞாயிற்றுக்கிழமை நடைபெற உள்ள இறுதிப் போட்டிக்கான டிக்கெட் விற்பனை தற்போதே சூடுபிடிக்கத் துவங்கியுள்ளது.'
+          ],
+          tags: ['IPL 2025', 'கிரிக்கெட்', 'விளையாட்டு', 'சிஎஸ்கே'],
+          related: [
+            { title: 'உலகக் கோப்பை தகுதிச் சுற்று கால்பந்து: இந்திய அணி அபார ஆட்டம்', cat: 'sports', id: 14, gradient: 'linear-gradient(135deg, #F97316, #FB923C)' },
+            { title: 'விம்பிள்டன் டென்னிஸ் 2025: அரையிறுதியில் ரோகன் போபண்ணா ஜோடி', cat: 'sports', id: 15, gradient: 'linear-gradient(135deg, #EA580C, #F97316)' },
+            { title: 'தமிழ்நாடு மாநில அளவிலான தடகள போட்டி மதுரையில் தொடக்கம்', cat: 'sports', id: 16, gradient: 'linear-gradient(135deg, #F97316, #FB923C)' }
+          ]
+        },
+        19: {
+          titleTa: 'விஜய் 69-வது படம்: அனிருத் இசையமைப்பில் உருவாவதாக அதிகாரப்பூர்வ அறிவிப்பு',
+          titleEn: 'Vijay 69: Official Announcement Confirms Anirudh Ravichander as Music Composer for Blockbuster Collaboration',
+          author: 'செல்வி',
+          authorPhotoChar: 'செ',
+          pubDate: '20 மே 2025 | 06:15 PM',
+          updDate: '21 மே 2025 | 10:00 AM',
+          readTime: '2 நிமிட வாசிப்பு',
+          gradient: 'linear-gradient(135deg, #BE185D, #EC4899)',
+          paragraphs: [
+            'தளபதி விஜய்யின் நடிப்பில் உருவாகும் 69-வது திரைப்படத்திற்கு ராக்ஸ்டார் அனிருத் இசையமைக்க உள்ளதாக படத்தயாரிப்பு நிறுவனம் அதிகாரப்பூர்வமாக ட்விட்டரில் அறிவித்துள்ளது. இந்த பிரம்மாண்ட அறிவிப்பு விஜய் ரசிகர்கள் மற்றும் திரை ஆர்வலர்கள் மத்தியில் பெரும் மகிழ்ச்சியை ஏற்படுத்தியுள்ளது.',
+            'ஏற்கனவே விஜய்-அனிருத் கூட்டணியில் வெளியான கத்தி, மாஸ்டர், லியோ போன்ற படங்கள் பிளாக்பஸ்டர் இசையைக் கொடுத்து சாதனை படைத்த நிலையில், இக்கூட்டணி நான்காவது முறையாக இணைவதால் பாடல்கள் மீதான எதிர்பார்ப்பு விண்ணை முட்டியுள்ளது.',
+            'இயக்குனர் ஹெச்.வினோத் இயக்க உள்ள இத்திரைப்படத்தின் படப்பிடிப்புகள் அடுத்த மாதம் துவங்க உள்ளன. இது விஜய்யின் கடைசி படம் என்பதால் ஒட்டுமொத்த கோலிவுட்டும் இத்திரைப்படத்தின் அடுத்தடுத்த அப்டேட்டுகளை ஆவலுடன் எதிர்பார்த்துக் கொண்டிருக்கிறது.'
+          ],
+          tags: ['விஜய் 69', 'கோலிவுட்', 'சினிமா', 'அனிருத்'],
+          related: [
+            { title: 'ஆஸ்கார் 2026 பரிந்துரை பட்டியலில் இடம் பிடித்த தமிழ் திரைப்படம்', cat: 'cinema', id: 20, gradient: 'linear-gradient(135deg, #EC4899, #F472B6)' },
+            { title: 'சமீபத்திய பிளாக்பஸ்டர் படத்தின் நேர்மையான விமர்சனம்', cat: 'cinema', id: 21, gradient: 'linear-gradient(135deg, #9D174D, #EC4899)' },
+            { title: 'பாலிவுட்டின் பிரம்மாண்ட புதிய படம் டீசர் வைரல்', cat: 'cinema', id: 22, gradient: 'linear-gradient(135deg, #EC4899, #F472B6)' }
+          ]
+        },
+        25: {
+          titleTa: 'ChatGPT 5.0 வெளியீடு: செயற்கை நுண்ணறிவில் அடுத்த கட்ட பாய்ச்சல்',
+          titleEn: 'ChatGPT 5.0 Launched: The Next Big Leap in Generative AI Featuring High Cognitive Capabilities and Real-time Voice Analysis',
+          author: 'தினேஷ் கார்த்திக்',
+          authorPhotoChar: 'தி',
+          pubDate: '20 மே 2025 | 02:00 PM',
+          updDate: '20 மே 2025 | 08:30 PM',
+          readTime: '4 நிமிட வாசிப்பு',
+          gradient: 'linear-gradient(135deg, #6D28D9, #A855F7)',
+          paragraphs: [
+            'செயற்கை நுண்ணறிவுத் துறையில் புரட்சிகரமான மாற்றங்களை ஏற்படுத்தும் வகையில், ஓபன்ஏஐ நிறுவனம் தங்களின் மேம்படுத்தப்பட்ட ChatGPT 5.0 மாடலை அதிகாரப்பூர்வமாக வெளியிட்டுள்ளது. இது முந்தைய பதிப்பை விட 10 மடங்கு கூடுதல் வேகம் மற்றும் பகுத்தறியும் திறன் கொண்டது.',
+            'குறிப்பாக, மனித குரலின் தொனி, கோபம் மற்றும் மகிழ்ச்சி ஆகிய உணர்வுகளைப் புரிந்து கொண்டு அதற்கேற்ப பதிலளிக்கும் பிரத்யேக கேமரா & குரல் தொடர்பு வசதி இதில் இணைக்கப்பட்டுள்ளது. கல்வி மற்றும் வணிக நிறுவனங்களில் மெய்நிகர் உதவியாளராக இது பெரும் பங்காற்றும் எனத் தெரிகிறது.',
+            'இதன் வரவு உலகளாவிய தொழில்நுட்ப நிறுவனங்களுக்கு இடையே புதிய போட்டியை உருவாக்கியுள்ளது. தொழில்நுட்ப வல்லுநர்கள் கூறுகையில், "இந்த புதிய AI மாடல் மனித வேலைகளுக்கு உதவியாக இருக்குமே தவிர, வேலைகளைப் பறிக்காது" என தங்கள் கருத்துக்களைப் பதிவு செய்துள்ளனர்.'
+          ],
+          tags: ['ChatGPT 5', 'AI', 'தொழில்நுட்பம்', 'OpenAI'],
+          related: [
+            { title: 'ஆப்பிள் நிறுவனத்தின் புதிய ஐபோன் 17 சீரிஸ் தகவல்கள் கசிந்தன', cat: 'tech', id: 26, gradient: 'linear-gradient(135deg, #A855F7, #C084FC)' },
+            { title: 'இஸ்ரோவின் அடுத்த மைல்கல்: நிலவுக்கு விண்கலம் அனுப்ப திட்டம்', cat: 'tech', id: 27, gradient: 'linear-gradient(135deg, #5B21B6, #A855F7)' },
+            { title: 'இந்தியாவின் புதிய சைபர் பாதுகாப்பு கொள்கை மற்றும் கட்டுப்பாடுகள்', cat: 'tech', id: 28, gradient: 'linear-gradient(135deg, #A855F7, #C084FC)' }
+          ]
+        }
+      };
+
+      const currentArticle = articlesData[artId] || articlesData[1];
+
+      // Update titles
+      document.getElementById('artTitleTa').textContent = currentArticle.titleTa;
+      document.getElementById('artTitleEn').textContent = currentArticle.titleEn;
+      document.getElementById('breadArticleTitle').textContent = currentArticle.titleTa.substring(0, 25) + '...';
+      document.title = currentArticle.titleTa + ' - KING 24x7';
+
+      // Update author byline info
+      document.getElementById('authorName').textContent = currentArticle.author;
+      document.getElementById('authorPhoto').textContent = currentArticle.authorPhotoChar;
+      document.getElementById('authorPhoto').style.background = 'linear-gradient(135deg, ' + currentConfig.color + ', #8B5CF6)';
+      document.getElementById('pubDate').textContent = currentArticle.pubDate;
+      document.getElementById('updDate').textContent = currentArticle.updDate;
+      document.getElementById('readTime').innerHTML = '<i class="far fa-clock"></i> ' + currentArticle.readTime;
+
+      // Update hero image gradient & caption
+      document.getElementById('heroImgGradient').style.background = currentArticle.gradient;
+      document.getElementById('imgCaption').textContent = 'படம்: ' + currentArticle.titleTa + ' செய்தித் தொகுப்பு.';
+
+      // Render paragraph texts
+      const bodyContainer = document.getElementById('articleBody');
+      bodyContainer.innerHTML = '';
+      currentArticle.paragraphs.forEach(para => {
+        const p = document.createElement('p');
+        p.textContent = para;
+        bodyContainer.appendChild(p);
+      });
+
+      // Render tags
+      const tagsContainer = document.getElementById('articleTags');
+      tagsContainer.innerHTML = '';
+      currentArticle.tags.forEach(tag => {
+        const span = document.createElement('span');
+        span.className = 'article-tag';
+        span.textContent = tag;
+        tagsContainer.appendChild(span);
+      });
+
+      // Render related articles
+      const relatedGrid = document.getElementById('relatedArticlesGrid');
+      relatedGrid.innerHTML = '';
+      currentArticle.related.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'news-card';
+        card.onclick = function() {
+          window.location.href = 'article.html?cat=' + item.cat + '&id=' + item.id;
+        };
+        card.innerHTML = `
+          <div class="card-img" style="background: ${item.gradient}; height: 120px;">
+            <span class="cat-badge" style="background: var(--category-color, var(--primary));">${currentConfig.name}</span>
+          </div>
+          <div class="card-body" style="padding:10px;">
+            <h3 style="font-size:13px; line-height:1.4;">${item.title}</h3>
+            <div class="card-meta" style="font-size:10px; margin-top:6px;">
+              <span><i class="far fa-clock"></i> 1 நாள் முன்</span>
+            </div>
+          </div>
+        `;
+        relatedGrid.appendChild(card);
+      });
+
+      // 2. Floating Social Share Button Functionality
+      const shareUrl = window.location.href;
+      const shareText = currentArticle.titleTa;
+
+      document.getElementById('shareWA').onclick = function() {
+        window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(shareText + ' - ' + shareUrl), '_blank');
+      };
+      document.getElementById('shareFB').onclick = function() {
+        window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(shareUrl), '_blank');
+      };
+      document.getElementById('shareTW').onclick = function() {
+        window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText) + '&url=' + encodeURIComponent(shareUrl), '_blank');
+      };
+      document.getElementById('shareTG').onclick = function() {
+        window.open('https://t.me/share/url?url=' + encodeURIComponent(shareUrl) + '&text=' + encodeURIComponent(shareText), '_blank');
+      };
+      
+      // Copy Link
+      document.getElementById('shareCopy').onclick = function() {
+        navigator.clipboard.writeText(shareUrl).then(function() {
+          const toast = document.getElementById('toastAlert');
+          toast.classList.add('show');
+          setTimeout(function() {
+            toast.classList.remove('show');
+          }, 2000);
+        });
+      };
+
+      // 3. Dynamic Comment Section posting
+      const commentForm = document.getElementById('commentForm');
+      const commentsList = document.getElementById('commentsList');
+      const commentCountTitle = document.getElementById('commentCountTitle');
+      let commentsCount = 3;
+
+      commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const nameVal = document.getElementById('commentorName').value.trim();
+        const textVal = document.getElementById('commentText').value.trim();
+
+        if (!nameVal || !textVal) return;
+
+        // Create new comment item element
+        const commentItem = document.createElement('div');
+        commentItem.className = 'comment-item';
+        commentItem.style.opacity = '0';
+        commentItem.style.transform = 'translateY(10px)';
+        commentItem.style.transition = 'all 0.3s ease';
+
+        const initial = nameVal.charAt(0).toUpperCase();
+
+        commentItem.innerHTML = `
+          <div class="comment-avatar" style="background: var(--category-color, var(--primary)); color: white;">${initial}</div>
+          <div class="comment-content">
+            <div class="comment-header">
+              <h5>${nameVal}</h5>
+              <span>இப்போது</span>
+            </div>
+            <p class="comment-text">${textVal}</p>
+          </div>
+        `;
+
+        commentsList.appendChild(commentItem);
+
+        // Animate append
+        setTimeout(function() {
+          commentItem.style.opacity = '1';
+          commentItem.style.transform = 'translateY(0)';
+        }, 50);
+
+        // Update comment counter
+        commentsCount++;
+        commentCountTitle.textContent = commentsCount + ' கருத்துக்கள்';
+
+        // Clear input form
+        document.getElementById('commentorName').value = '';
+        document.getElementById('commentorEmail').value = '';
+        document.getElementById('commentText').value = '';
+
+        // Trigger toast confirmation
+        const toast = document.getElementById('toastAlert');
+        toast.textContent = 'உங்கள் கருத்து வெற்றிகரமாக பகிரப்பட்டது!';
+        toast.style.background = '#10B981';
+        toast.classList.add('show');
+        setTimeout(function() {
+          toast.classList.remove('show');
+          toast.textContent = 'நகலெடுக்கப்பட்டது! (Link Copied!)';
+          toast.style.background = '#10B981';
+        }, 2500);
+      });
+
+    });
+  </script>
+</body>
+
+</html>
