@@ -277,7 +277,7 @@ const Obituaries = () => {
             : 'நமது ஊர் மக்கள் அஞ்சலி செலுத்தவும் இறுதிச் சடங்கு விபரங்களை அறியவும் இலவசமாகப் பதியுங்கள்.'}
         </p>
         <button onClick={() => setShowModal(true)}>
-          {lang === 'en' ? 'Submit Obituary' : 'இரங்கல் பதிவு செய்ய'}
+          <i className="fas fa-plus-circle"></i> {lang === 'en' ? 'Submit Obituary' : 'இரங்கல் பதிவு செய்ய'}
         </button>
       </section>
 

@@ -1981,13 +1981,68 @@ ul {
     padding: 10px 20px;
   }
 
-  .nav-menu .nav-link {
+  .nav-menu .nav-link,
+  .main-nav.regional-theme .nav-menu .nav-link {
     color: var(--text-dark) !important;
   }
 
   .nav-menu .nav-item.active .nav-link,
-  .nav-menu .nav-link:hover {
+  .nav-menu .nav-link:hover,
+  .main-nav.regional-theme .nav-menu .nav-item.active .nav-link,
+  .main-nav.regional-theme .nav-menu .nav-link:hover {
     color: var(--primary) !important;
+  }
+
+  .main-nav.regional-theme .mobile-menu-btn {
+    display: block !important;
+  }
+
+  .main-nav.regional-theme .nav-menu {
+    display: none !important;
+    flex-direction: column !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: var(--white) !important;
+    box-shadow: var(--shadow-lg) !important;
+    padding: 12px 0 !important;
+    z-index: 100 !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+    width: 100% !important;
+    overflow-x: visible !important;
+  }
+
+  .main-nav.regional-theme .nav-menu.open {
+    display: flex !important;
+  }
+
+  .main-nav.regional-theme .nav-item {
+    width: 100% !important;
+    text-align: center !important;
+    flex: 0 0 auto !important;
+  }
+
+  .main-nav.regional-theme .nav-link {
+    color: var(--text-dark) !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    border-bottom: none !important;
+    display: inline-block !important;
+    width: auto !important;
+  }
+
+  .main-nav.regional-theme .nav-link:hover {
+    color: var(--primary) !important;
+    background: transparent !important;
+  }
+
+  .main-nav.regional-theme .nav-item.active .nav-link {
+    background: #FAF4EB !important;
+    color: var(--primary) !important;
+    border-radius: 4px !important;
   }
 
   .mega-menu {
@@ -5009,6 +5064,64 @@ ul {
     flex: 0 0 auto !important;
     scroll-snap-align: start !important;
   }
+}
+
+/* Post Obituary Banner Card */
+.post-obit-banner {
+  background: #FAF6F0;
+  border: 1px solid #E5D5C5;
+  border-radius: var(--radius-lg, 12px);
+  padding: 32px 24px;
+  text-align: center;
+  margin-bottom: 40px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+.post-obit-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.post-obit-banner h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-dark, #2d3748);
+  margin-bottom: 10px;
+}
+
+.post-obit-banner p {
+  color: var(--text-muted, #718096);
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 600px;
+  margin: 0 auto 18px auto;
+}
+
+.post-obit-banner button {
+  padding: 12px 32px;
+  border-radius: 30px;
+  background: var(--primary, #B3732A);
+  color: white !important;
+  border: none;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(179, 115, 42, 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.post-obit-banner button:hover {
+  background: var(--primary-dark, #8A541B);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(179, 115, 42, 0.4);
+}
+
+.post-obit-banner button:active {
+  transform: translateY(1px);
 }
 
 
