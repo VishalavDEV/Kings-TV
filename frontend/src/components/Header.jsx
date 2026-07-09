@@ -257,25 +257,24 @@ const Header = () => {
               <button 
                 onClick={() => setShowDistrictDropdown(!showDistrictDropdown)}
                 style={{
-                  background: '#1A1A1A',
+                  background: 'transparent',
                   border: 'none',
-                  color: '#FFFFFF',
-                  fontSize: '13px',
+                  color: theme === 'dark' ? '#FFFFFF' : 'var(--text-dark, #1A1A1A)',
+                  fontSize: '14px',
                   fontWeight: '700',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
                   cursor: 'pointer',
-                  padding: '6px 12px',
+                  padding: '6px 10px',
                   borderRadius: '4px',
-                  transition: 'background 0.2s',
-                  boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                  transition: 'background 0.2s'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.background = '#2A2A2A'}
-                onMouseLeave={(e) => e.currentTarget.style.background = '#1A1A1A'}
+                onMouseEnter={(e) => e.currentTarget.style.background = theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
               >
                 <span>{getCurrentDistrictName(district)} 24x7</span>
-                <i className="fas fa-pencil-alt" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}></i>
+                <i className="fas fa-pencil-alt" style={{ fontSize: '11px', color: theme === 'dark' ? 'rgba(255,255,255,0.6)' : '#666666' }}></i>
               </button>
               
               {showDistrictDropdown && (
@@ -283,13 +282,13 @@ const Header = () => {
                   position: 'absolute',
                   top: '100%',
                   left: 0,
-                  background: '#ffffff',
+                  background: theme === 'dark' ? '#1E293B' : '#ffffff',
                   boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
                   borderRadius: '6px',
                   padding: '4px 0',
                   zIndex: 999,
                   minWidth: '160px',
-                  border: '1px solid #e2e8f0',
+                  border: theme === 'dark' ? '1px solid #334155' : '1px solid #e2e8f0',
                   marginTop: '6px'
                 }}>
                   {[
@@ -327,8 +326,8 @@ const Header = () => {
                         width: '100%',
                         textAlign: 'left',
                         padding: '10px 16px',
-                        background: district === item.key ? '#EFF6FF' : 'transparent',
-                        color: district === item.key ? '#1E40AF' : '#1E293B',
+                        background: district === item.key ? (theme === 'dark' ? '#334155' : '#EFF6FF') : 'transparent',
+                        color: district === item.key ? '#3B82F6' : (theme === 'dark' ? '#FFFFFF' : '#1E293B'),
                         border: 'none',
                         fontWeight: '700',
                         cursor: 'pointer',
@@ -336,8 +335,8 @@ const Header = () => {
                         display: 'block',
                         transition: 'background 0.1s'
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = '#F1F5F9'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = district === item.key ? '#EFF6FF' : 'transparent'}
+                      onMouseEnter={(e) => e.currentTarget.style.background = theme === 'dark' ? '#475569' : '#F1F5F9'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = district === item.key ? (theme === 'dark' ? '#334155' : '#EFF6FF') : 'transparent'}
                     >
                       {lang === 'en' ? item.en : item.ta}
                     </button>
