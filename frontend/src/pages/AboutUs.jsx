@@ -31,7 +31,13 @@ const AboutUs = () => {
 
   // Fallback defaults
   const pageTitle = data ? (lang === 'en' ? data.titleEn : data.titleTa) : (lang === 'en' ? 'About Us' : 'எங்களைப் பற்றி');
-  const pageContent = data ? (lang === 'en' ? data.contentEn : data.contentTa) : '';
+  
+  const fallbackEn = `KINGS 24x7 is a premier digital news portal and television library broadcaster based in Tamil Nadu. Founded with a vision to deliver unbiased, prompt, and accurate news, we provide round-the-clock coverage of politics, business, sports, entertainment, technology, and regional updates. Our motto is: Truth. Responsibility. In Tamil.`;
+  const fallbackTa = `கிங்ஸ் 24x7 என்பது தமிழ்நாட்டைச் சேர்ந்த ஒரு முன்னணி டிஜிட்டல் செய்தி போர்டல் மற்றும் தொலைக்காட்சி ஊடகமாகும். நடுநிலையான, விரைவான மற்றும் துல்லியமான செய்திகளை வழங்குவதை லட்சியமாகக் கொண்டு, அரசியல், வணிகம், விளையாட்டு, பொழுதுபோக்கு, தொழில்நுட்பம் மற்றும் உள்ளூர் நிகழ்வுகளை 24 மணி நேரமும் உடனுக்குடன் வழங்கி வருகிறோம். எங்களது தாரக மந்திரம்: உண்மை. பொறுப்புடன். தமிழில்.`;
+
+  const pageContent = data 
+    ? (lang === 'en' ? data.contentEn : data.contentTa) 
+    : (lang === 'en' ? fallbackEn : fallbackTa);
   const contactPhone = data?.contactPhone || '+91 98765 43210';
   const contactEmail = data?.contactEmail || 'contact@kingstv.com';
   const contactAddress = data?.contactAddress || '123, Anna Salai, Chennai, Tamil Nadu, India';
