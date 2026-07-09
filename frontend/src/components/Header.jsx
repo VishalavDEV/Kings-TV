@@ -17,6 +17,7 @@ const Header = () => {
   const [district, setDistrict] = useState('சென்னை');
   const [weatherTemp, setWeatherTemp] = useState('32°C');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showDistrictDropdown, setShowDistrictDropdown] = useState(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -90,6 +91,23 @@ const Header = () => {
     editor: '#8B5CF6',
     reporter: '#F59E0B',
     user: '#3B82F6'
+  };
+
+  const getCurrentDistrictName = (key) => {
+    const districtNames = {
+      'சென்னை': { en: 'Chennai', ta: 'சென்னை' },
+      'கோயம்புத்தூர்': { en: 'Coimbatore', ta: 'கோயம்புத்தூர்' },
+      'மதுரை': { en: 'Madurai', ta: 'மதுரை' },
+      'சேலம்': { en: 'Salem', ta: 'சேலம்' },
+      'திருச்சி': { en: 'Trichy', ta: 'திருச்சி' },
+      'திருநெல்வேலி': { en: 'Tirunelveli', ta: 'திருநெல்வேலி' },
+      'வேலூர்': { en: 'Vellore', ta: 'வேலூர்' },
+      'ஈரோடு': { en: 'Erode', ta: 'ஈரோடு' },
+      'தஞ்சாவூர்': { en: 'Tanjore', ta: 'தஞ்சாவூர்' },
+      'கன்னியாகுமரி': { en: 'Kanyakumari', ta: 'கன்னியாகுமரி' }
+    };
+    const item = districtNames[key];
+    return item ? (lang === 'en' ? item.en : item.ta) : key;
   };
 
   return (
@@ -227,12 +245,106 @@ const Header = () => {
       {/* HEADER MAIN */}
       <header className="header-main">
         <div className="container">
-          <div className="header-left">
+          <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <Link to="/" className="logo-link">
               <img src="/assets/images/logo-banner-light.png" alt="KING 24x7" className="main-logo-img logo-light-only" />
               <img src="/assets/images/logo-banner-dark.png" alt="KING 24x7" className="main-logo-img logo-dark-only" />
               <span className="logo-sub-text">LIVE • TRUE • TAMIL</span>
             </Link>
+            
+            {/* Custom Premium District Selector next to the Logo */}
+            <div className="district-logo-selector" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+              <button 
+                onClick={() => setShowDistrictDropdown(!showDistrictDropdown)}
+                style={{
+                  background: '#1A1A1A',
+                  border: 'none',
+                  color: '#FFFFFF',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  transition: 'background 0.2s',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#2A2A2A'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#1A1A1A'}
+              >
+                <span>{getCurrentDistrictName(district)} 24x7</span>
+                <i className="fas fa-pencil-alt" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}></i>
+              </button>
+              
+              {showDistrictDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  background: '#ffffff',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                  borderRadius: '6px',
+                  padding: '4px 0',
+                  zIndex: 999,
+                  minWidth: '160px',
+                  border: '1px solid #e2e8f0',
+                  marginTop: '6px'
+                }}>
+                  {[
+                    { key: 'சென்னை', en: 'Chennai', ta: 'சென்னை' },
+                    { key: 'கோயம்புத்தூர்', en: 'Coimbatore', ta: 'கோயம்புத்தூர்' },
+                    { key: 'மதுரை', en: 'Madurai', ta: 'மதுரை' },
+                    { key: 'சேலம்', en: 'Salem', ta: 'சேலம்' },
+                    { key: 'திருச்சி', en: 'Trichy', ta: 'திருச்சி' },
+                    { key: 'திருநெல்வேலி', en: 'Tirunelveli', ta: 'திருநெல்வேலி' },
+                    { key: 'வேலூர்', en: 'Vellore', ta: 'வேலூர்' },
+                    { key: 'ஈரோடு', en: 'Erode', ta: 'ஈரோடு' },
+                    { key: 'தஞ்சாவூர்', en: 'Tanjore', ta: 'தஞ்சாவூர்' },
+                    { key: 'கன்னியாகுமரி', en: 'Kanyakumari', ta: 'கன்னியாகுமரி' }
+                  ].map(item => (
+                    <button
+                      key={item.key}
+                      onClick={() => {
+                        setDistrict(item.key);
+                        const temps = {
+                          'சென்னை': '32°C',
+                          'கோயம்புத்தூர்': '28°C',
+                          'மதுரை': '34°C',
+                          'சேலம்': '31°C',
+                          'திருச்சி': '33°C',
+                          'திருநெல்வேலி': '35°C',
+                          'வேலூர்': '33°C',
+                          'ஈரோடு': '30°C',
+                          'தஞ்சாவூர்': '32°C',
+                          'கன்னியாகுமரி': '29°C'
+                        };
+                        setWeatherTemp(temps[item.key] || '32°C');
+                        setShowDistrictDropdown(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '10px 16px',
+                        background: district === item.key ? '#EFF6FF' : 'transparent',
+                        color: district === item.key ? '#1E40AF' : '#1E293B',
+                        border: 'none',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        display: 'block',
+                        transition: 'background 0.1s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = '#F1F5F9'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = district === item.key ? '#EFF6FF' : 'transparent'}
+                    >
+                      {lang === 'en' ? item.en : item.ta}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="header-center"></div>
           <div className="header-right">
