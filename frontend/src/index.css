@@ -5268,4 +5268,32 @@ ul {
   transform: translateY(1px);
 }
 
+/* Redesign Header Variations Animations & Helpers */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.horizontal-scroll-nav-container::-webkit-scrollbar {
+  display: none;
+}
+
+.horizontal-scroll-nav-container {
+  scrollbar-width: none;
+}
+
+/* Side Drawer transition helper states */
+.side-drawer-container.open {
+  pointer-events: auto;
+}
+.side-drawer-container {
+  pointer-events: none;
+}
+
 
