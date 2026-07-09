@@ -63,7 +63,8 @@ const Header = () => {
       'வேலூர்': '33°C',
       'ஈரோடு': '30°C',
       'தஞ்சாவூர்': '32°C',
-      'கன்னியாகுமரி': '29°C'
+      'கன்னியாகுமரி': '29°C',
+      'நாமக்கல்': '31°C'
     };
     setWeatherTemp(temps[selected] || '32°C');
   };
@@ -98,7 +99,8 @@ const Header = () => {
       'வேலூர்': { en: 'Vellore', ta: 'வேலூர்' },
       'ஈரோடு': { en: 'Erode', ta: 'ஈரோடு' },
       'தஞ்சாவூர்': { en: 'Tanjore', ta: 'தஞ்சாவூர்' },
-      'கன்னியாகுமரி': { en: 'Kanyakumari', ta: 'கன்னியாகுமரி' }
+      'கன்னியாகுமரி': { en: 'Kanyakumari', ta: 'கன்னியாகுமரி' },
+      'நாமக்கல்': { en: 'Namakkal', ta: 'நாமக்கல்' }
     };
     const item = districtNames[key];
     return item ? (lang === 'en' ? item.en : item.ta) : key;
@@ -191,7 +193,7 @@ const Header = () => {
         }}>
           {[
             { key: 'சென்னை', en: 'Chennai', ta: 'சென்னை' },
-            { key: 'கோயம்புத்தூர்', en: 'Coimbatore', ta: 'கோயம்புத்தூர்' },
+            { key: 'கோயம்புத்தூர்', en: 'Coimbatore', ta: 'Coimbatore' },
             { key: 'மதுரை', en: 'Madurai', ta: 'மதுரை' },
             { key: 'சேலம்', en: 'Salem', ta: 'சேலம்' },
             { key: 'திருச்சி', en: 'Trichy', ta: 'திருச்சி' },
@@ -199,7 +201,8 @@ const Header = () => {
             { key: 'வேலூர்', en: 'Vellore', ta: 'வேலூர்' },
             { key: 'ஈரோடு', en: 'Erode', ta: 'ஈரோடு' },
             { key: 'தஞ்சாவூர்', en: 'Tanjore', ta: 'தஞ்சாவூர்' },
-            { key: 'கன்னியாகுமரி', en: 'Kanyakumari', ta: 'கன்னியாகுமரி' }
+            { key: 'கன்னியாகுமரி', en: 'Kanyakumari', ta: 'கன்னியாகுமரி' },
+            { key: 'நாமக்கல்', en: 'Namakkal', ta: 'நாமக்கல்' }
           ].map(item => (
             <button
               key={item.key}

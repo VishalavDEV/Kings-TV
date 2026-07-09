@@ -5296,4 +5296,26 @@ ul {
   pointer-events: none;
 }
 
+/* Responsive Login Form */
+@media (max-width: 850px) {
+  .login-container {
+    grid-template-columns: 1fr !important;
+    margin: 10px !important;
+  }
+  .login-left {
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    padding: 30px 20px !important;
+  }
+  .login-right {
+    padding: 30px 20px !important;
+  }
+  .logo-display-section {
+    display: none !important;
+  }
+  #rightTitle {
+    font-size: 24px !important;
+  }
+}
+
 
