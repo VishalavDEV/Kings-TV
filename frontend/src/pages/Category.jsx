@@ -15,9 +15,7 @@ const Category = () => {
     }
   }, [slug, navigate]);
 
-  if (slug === 'regional') {
-    return null;
-  }
+
 
   // Determine category key (cat query param has precedence, otherwise URL slug, default to 'politics')
   const catKey = (searchParams.get('cat') || slug || 'politics').toLowerCase();
@@ -427,6 +425,10 @@ const Category = () => {
   }, [selectedSubcat, selectedFilter, articles, lang]);
 
   const subcategories = lang === 'en' ? currentCat.subcatsEn : currentCat.subcatsTa;
+
+  if (slug === 'regional') {
+    return null;
+  }
 
   return (
     <main className="news-section" style={{ width: '100%' }}>

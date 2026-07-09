@@ -5048,4 +5048,62 @@ ul {
   }
 }
 
+/* Post Obituary Banner Card */
+.post-obit-banner {
+  background: #FAF6F0;
+  border: 1px solid #E5D5C5;
+  border-radius: var(--radius-lg, 12px);
+  padding: 32px 24px;
+  text-align: center;
+  margin-bottom: 40px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+.post-obit-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.post-obit-banner h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-dark, #2d3748);
+  margin-bottom: 10px;
+}
+
+.post-obit-banner p {
+  color: var(--text-muted, #718096);
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 600px;
+  margin: 0 auto 18px auto;
+}
+
+.post-obit-banner button {
+  padding: 12px 32px;
+  border-radius: 30px;
+  background: var(--primary, #B3732A);
+  color: white !important;
+  border: none;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(179, 115, 42, 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.post-obit-banner button:hover {
+  background: var(--primary-dark, #8A541B);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(179, 115, 42, 0.4);
+}
+
+.post-obit-banner button:active {
+  transform: translateY(1px);
+}
+
 
