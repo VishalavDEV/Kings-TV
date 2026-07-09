@@ -2,6 +2,7 @@ package com.kingstv.controllers;
 
 import com.kingstv.models.SubCategory;
 import com.kingstv.repository.SubCategoryRepository;
+import com.kingstv.services.SlugService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +23,9 @@ public class SubCategoryController {
 
     @Autowired
     private SubCategoryRepository subCategoryRepository;
+
+    @Autowired
+    private SlugService slugService;
 
     @GetMapping("/getAll")
     public Page<SubCategory> getAll(
@@ -53,13 +57,14 @@ public class SubCategoryController {
 
     @PostMapping("/saveUpdate")
     public ResponseEntity<?> save(@RequestBody SubCategory entity) {
-        if (entity.getName() == null || entity.getNameTa() == null || entity.getSlug() == null || entity.getCategoryId() == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "name, nameTa, slug and categoryId are required"));
+        if (entity.getName() == null || entity.getNameTa() == null || entity.getCategoryId() == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "name, nameTa, and categoryId are required"));
         }
         if (entity.getCreatedAt() == null) {
             entity.setCreatedAt(LocalDateTime.now());
         }
         entity.setUpdatedAt(LocalDateTime.now());
+        slugService.generateAndSetSlug(entity);
         SubCategory saved = subCategoryRepository.save(entity);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
@@ -82,6 +87,7 @@ public class SubCategoryController {
         existing.setStatus(entity.getStatus());
         existing.setUpdatedAt(LocalDateTime.now());
         
+        slugService.generateAndSetSlug(existing);
         SubCategory saved = subCategoryRepository.save(existing);
         return ResponseEntity.ok(saved);
     }
