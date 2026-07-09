@@ -236,7 +236,7 @@ const Header = () => {
           </div>
           <div className="header-center"></div>
           <div className="header-right">
-            <Link to="/" className="livetv-btn">
+            <Link to="/live-tv" className="livetv-btn">
               <i className="fas fa-play-circle"></i> LIVE TV WATCH NOW
             </Link>
           </div>

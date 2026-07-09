@@ -23,6 +23,8 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfUse from './pages/TermsOfUse';
 import ContactUs from './pages/ContactUs';
 import Advertise from './pages/Advertise';
+import LiveTv from './pages/LiveTv';
+import Weather from './pages/Weather';
 
 function App() {
   return (
@@ -58,6 +60,8 @@ function App() {
             <Route path="/about-us" element={<AboutUs />} />
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/advertise" element={<Advertise />} />
+            <Route path="/live-tv" element={<LiveTv />} />
+            <Route path="/weather" element={<Weather />} />
             <Route path="/careers" element={<Careers />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-use" element={<TermsOfUse />} />

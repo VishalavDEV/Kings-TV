@@ -40,12 +40,9 @@ const Footer = () => {
           <div className="footer-col">
             <h5>{lang === 'en' ? 'More' : 'கூடுதல்'}</h5>
             <Link to="/videos">{lang === 'en' ? 'Videos' : 'வீடியோக்கள்'}</Link>
-            <Link to="/">{lang === 'en' ? 'Live TV' : 'லைவ் டிவி'}</Link>
-            <Link to="/">{lang === 'en' ? 'Podcasts' : 'பாட்காஸ்ட்கள்'}</Link>
+            <Link to="/live-tv">{lang === 'en' ? 'Live TV' : 'லைவ் டிவி'}</Link>
             <Link to="/web-stories">{lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்'}</Link>
-            <Link to="/">{lang === 'en' ? 'Weather' : 'வானிலை'}</Link>
-            <Link to="/">{lang === 'en' ? 'Election Hub' : 'தேர்தல் மையம்'}</Link>
-            <Link to="/">{lang === 'en' ? 'Market Rates' : 'சந்தை விலை'}</Link>
+            <Link to="/weather">{lang === 'en' ? 'Weather' : 'வானிலை'}</Link>
           </div>
 
           <div className="footer-col">
