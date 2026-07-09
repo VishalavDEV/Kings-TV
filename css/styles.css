@@ -1914,6 +1914,15 @@ ul {
     padding: 10px 20px;
   }
 
+  .nav-menu .nav-link {
+    color: var(--text-dark) !important;
+  }
+
+  .nav-menu .nav-item.active .nav-link,
+  .nav-menu .nav-link:hover {
+    color: var(--primary) !important;
+  }
+
   .mega-menu {
     display: none !important;
   }

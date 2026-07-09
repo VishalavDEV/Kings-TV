@@ -2,6 +2,7 @@ package com.kingstv.controllers;
 
 import com.kingstv.models.Category;
 import com.kingstv.repository.CategoryRepository;
+import com.kingstv.services.SlugService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +24,9 @@ public class CategoryController {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    @Autowired
+    private SlugService slugService;
+
     // --- KEEP Existing Front-End Endpoint Map ---
     @GetMapping
     public List<Category> getCategories() {
@@ -40,9 +44,10 @@ public class CategoryController {
 
     @PostMapping
     public ResponseEntity<?> createCategory(@RequestBody Category category) {
-        if (category.getName() == null || category.getNameTa() == null || category.getSlug() == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Name, Tamil Name, and Slug are required"));
+        if (category.getName() == null || category.getNameTa() == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Name and Tamil Name are required"));
         }
+        slugService.generateAndSetSlug(category);
         Category saved = categoryRepository.save(category);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
@@ -93,6 +98,7 @@ public class CategoryController {
         category.setNameTa(entity.getNameTa());
         category.setSlug(entity.getSlug());
         
+        slugService.generateAndSetSlug(category);
         Category updated = categoryRepository.save(category);
         return ResponseEntity.ok(updated);
     }
