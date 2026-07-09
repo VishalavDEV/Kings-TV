@@ -104,62 +104,76 @@ const Header = () => {
     return item ? (lang === 'en' ? item.en : item.ta) : key;
   };
 
-  const renderLogo = (size = 'normal') => (
-    <Link to="/" className="logo-link" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textDecoration: 'none' }}>
-      <img 
-        src="/assets/images/logo-banner-light.png" 
-        alt="KING 24x7" 
-        className="logo-light-only" 
-        style={{ height: size === 'small' ? '40px' : '55px', width: 'auto', objectFit: 'contain', display: 'block' }} 
-      />
-      <img 
-        src="/assets/images/logo-banner-dark.png" 
-        alt="KING 24x7" 
-        className="logo-dark-only" 
-        style={{ height: size === 'small' ? '40px' : '55px', width: 'auto', objectFit: 'contain', display: 'block' }} 
-      />
-    </Link>
-  );
+  const renderLogo = (size = 'normal', forceDark = false) => {
+    const isDark = forceDark || theme === 'dark';
+    const logoUrl = isDark ? "/assets/images/logo-banner-dark.png" : "/assets/images/logo-banner-light.png";
+    return (
+      <Link to="/" className="logo-link" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textDecoration: 'none' }}>
+        <img 
+          src={logoUrl} 
+          alt="KING 24x7" 
+          style={{ height: size === 'small' ? '40px' : '55px', width: 'auto', objectFit: 'contain', display: 'block' }} 
+        />
+      </Link>
+    );
+  };
 
   const renderLiveTvBtn = () => (
     <Link to="/live-tv" className="livetv-btn" style={{
-      background: '#B3732A',
-      color: 'white',
-      padding: '8px 16px',
+      background: '#EF4444',
+      color: '#FFFFFF',
+      padding: '4px 10px',
       borderRadius: '4px',
       fontSize: '12px',
-      fontWeight: 'bold',
+      fontWeight: '700',
       display: 'inline-flex',
       alignItems: 'center',
-      gap: '8px',
+      gap: '6px',
       textDecoration: 'none',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      border: 'none'
     }}>
-      <i className="fas fa-play-circle"></i> {lang === 'en' ? 'LIVE TV' : 'லைவ் டிவி'}
+      <span style={{
+        display: 'inline-block',
+        width: '6px',
+        height: '6px',
+        borderRadius: '50%',
+        background: '#FFFFFF'
+      }}></span>
+      {lang === 'en' ? 'LIVE' : 'லைவ்'}
     </Link>
   );
 
-  const renderDistrictSelector = () => (
+  const renderProfileIcon = () => {
+    const linkTarget = (session && session.isLoggedIn) ? "/profile" : "/login";
+    return (
+      <Link to={linkTarget} style={{ color: '#ffffff', fontSize: '22px', display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }} aria-label="User Account">
+        <i className="fas fa-user-circle"></i>
+      </Link>
+    );
+  };
+
+  const renderDistrictSelector = (isHeader = false) => (
     <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
       <button 
         onClick={() => setShowDistrictDropdown(!showDistrictDropdown)}
         style={{
           background: 'transparent',
           border: 'none',
-          color: theme === 'dark' ? '#FFFFFF' : '#1A1A1A',
+          color: isHeader ? '#FFFFFF' : (theme === 'dark' ? '#FFFFFF' : '#1A1A1A'),
           fontSize: '13px',
           fontWeight: '700',
           display: 'flex',
           alignItems: 'center',
           gap: '6px',
           cursor: 'pointer',
-          padding: '6px 10px',
+          padding: isHeader ? '4px 6px 1px 6px' : '6px 10px',
           borderRadius: '4px',
-          transition: 'background 0.2s'
+          transition: 'background 0.2s',
+          whiteSpace: 'nowrap'
         }}
       >
         <span>{getCurrentDistrictName(district)} 24x7</span>
-        <i className="fas fa-pencil-alt" style={{ fontSize: '10px', color: '#666' }}></i>
+        <i className="fas fa-pencil-alt" style={{ fontSize: '10px', color: isHeader ? '#FFFFFF' : '#666' }}></i>
       </button>
       {showDistrictDropdown && (
         <div style={{
@@ -382,22 +396,39 @@ const Header = () => {
   };
 
   return (
-    <header className="header-mobile-app-style" style={{ background: 'var(--header-bg, #ffffff)', borderBottom: '1px solid #e2e8f0', width: '100%' }}>
+    <header className="header-mobile-app-style" style={{ background: '#000000', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', width: '100%' }}>
       {/* Minimal top bar */}
       <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', flexShrink: 0, paddingBottom: '3px' }}>
           <button 
             onClick={() => setDrawerOpen(true)}
-            style={{ background: 'transparent', border: 'none', fontSize: '20px', color: 'var(--text-dark, #333)', cursor: 'pointer' }}
+            style={{ 
+              background: 'transparent', 
+              border: 'none', 
+              fontSize: '20px', 
+              color: '#ffffff', 
+              cursor: 'pointer', 
+              paddingRight: '6px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              marginBottom: '2px' 
+            }}
             aria-label="Open side drawer menu"
           >
             <i className="fas fa-bars"></i>
           </button>
-          {renderLogo('small')}
+          {renderLogo('small', true)}
+          {renderDistrictSelector(true)}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+          <button 
+            onClick={() => window.dispatchEvent(new CustomEvent('toggle-ai-assistant', { detail: { tab: 'search' } }))}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#ffffff', padding: '4px' }}
+            aria-label="Search"
+          >
+            <i className="fas fa-search"></i>
+          </button>
           {renderLiveTvBtn()}
-          <div className="nav-search" style={{ cursor: 'pointer', fontSize: '16px' }}><i className="fas fa-search"></i></div>
         </div>
       </div>
 
@@ -407,8 +438,8 @@ const Header = () => {
         style={{ 
           overflowX: 'auto', 
           whiteSpace: 'nowrap', 
-          borderTop: '1px solid #f1f5f9',
-          background: '#ffffff',
+          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          background: '#000000',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none'
         }}
@@ -453,7 +484,7 @@ const Header = () => {
           left: 0,
           width: '280px',
           height: '100%',
-          background: theme === 'dark' ? '#1E293B' : '#ffffff',
+          background: theme === 'dark' ? '#000000' : '#ffffff',
           boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
           transform: drawerOpen ? 'translateX(0)' : 'translateX(-100%)',
           transition: 'transform 0.3s ease-out',
@@ -471,8 +502,75 @@ const Header = () => {
             </button>
           </div>
 
+          {/* Profile section below the logo */}
+          <div style={{ 
+            marginTop: '5px', 
+            padding: '12px', 
+            borderRadius: '8px', 
+            background: theme === 'dark' ? '#1E293B' : '#F8FAFC',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <Link 
+              to={(session && session.isLoggedIn) ? "/profile" : "/login"} 
+              onClick={() => setDrawerOpen(false)}
+              style={{ 
+                color: theme === 'dark' ? '#ffffff' : '#1e293b', 
+                fontSize: '28px', 
+                display: 'inline-flex', 
+                alignItems: 'center' 
+              }}
+              aria-label="User Account"
+            >
+              <i className="fas fa-user-circle"></i>
+            </Link>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {session && session.isLoggedIn ? (
+                <>
+                  <span style={{ fontSize: '14px', fontWeight: '700' }}>{session.username}</span>
+                  <button 
+                    onClick={() => {
+                      logout();
+                      setDrawerOpen(false);
+                    }} 
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#EF4444',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      padding: 0,
+                      marginTop: '2px',
+                      textAlign: 'left',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <i className="fas fa-sign-out-alt"></i> {lang === 'en' ? 'Logout' : 'வெளியேறு'}
+                  </button>
+                </>
+              ) : (
+                <Link 
+                  to="/login" 
+                  onClick={() => setDrawerOpen(false)}
+                  style={{ 
+                    fontSize: '14px', 
+                    fontWeight: '700', 
+                    color: 'var(--primary, #B3732A)',
+                    textDecoration: 'none'
+                  }}
+                >
+                  {lang === 'en' ? 'Login / Register' : 'உள்நுழை / பதிவு செய்'}
+                </Link>
+              )}
+            </div>
+          </div>
+
           {/* Drawer category items list */}
-          <div style={{ borderBottom: '1px solid #cbd5e1', paddingBottom: '15px', marginTop: '10px' }}>
+          <div style={{ borderBottom: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #cbd5e1', paddingBottom: '15px', marginTop: '10px' }}>
             <h4 style={{ margin: '0 0 10px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
               {lang === 'en' ? 'Sections' : 'பிரிவுகள்'}
             </h4>
@@ -508,7 +606,7 @@ const Header = () => {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span>{lang === 'en' ? 'Language' : 'மொழி'}</span>
-                  <select value={lang} onChange={(e) => setLang(e.target.value)} style={{ padding: '4px', borderRadius: '4px', border: '1px solid #cbd5e1', background: 'transparent', color: 'inherit' }}>
+                  <select value={lang} onChange={(e) => setLang(e.target.value)} style={{ padding: '4px', borderRadius: '4px', border: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid #cbd5e1', background: 'transparent', color: 'inherit' }}>
                     <option value="ta">தமிழ்</option>
                     <option value="en">English</option>
                   </select>
@@ -516,12 +614,6 @@ const Header = () => {
               </div>
             </div>
 
-            <div>
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                {lang === 'en' ? 'Account' : 'கணக்கு'}
-              </h4>
-              {renderAuthSection()}
-            </div>
 
             <div>
               <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
