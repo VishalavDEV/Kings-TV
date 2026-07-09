@@ -328,7 +328,7 @@ const Jobs = () => {
             : 'உள்ளூர் தகுதியுள்ள நபர்களை உடனடியாக வேலைக்கு எடுங்கள்.'}
         </p>
         <button onClick={() => setShowPostModal(true)}>
-          {lang === 'en' ? 'Advertise Job' : 'வேலையை அறிவிக்கவும்'}
+          <i className="fas fa-plus-circle"></i> {lang === 'en' ? 'Advertise Job' : 'வேலையை அறிவிக்கவும்'}
         </button>
       </section>
 

@@ -10,5 +10,6 @@ import java.util.Optional;
 @Repository
 public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpecificationExecutor<Article> {
     List<Article> findByStatusOrderByPublishedAtDesc(String status);
+    List<Article> findTop50ByStatusOrderByPublishedAtDesc(String status);
     Optional<Article> findBySlug(String slug);
 }

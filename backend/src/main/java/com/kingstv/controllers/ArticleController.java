@@ -38,7 +38,7 @@ public class ArticleController {
     @GetMapping
     public List<Article> getArticles(@RequestParam(required = false) String status) {
         String activeStatus = status != null ? status : "published";
-        return articleRepository.findByStatusOrderByPublishedAtDesc(activeStatus);
+        return articleRepository.findTop50ByStatusOrderByPublishedAtDesc(activeStatus);
     }
 
     @GetMapping("/{idOrSlug}")
