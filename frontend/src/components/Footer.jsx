@@ -51,8 +51,8 @@ const Footer = () => {
           <div className="footer-col">
             <h5>{lang === 'en' ? 'Information' : 'தகவல்'}</h5>
             <Link to="/about-us">{lang === 'en' ? 'About Us' : 'எங்களைப் பற்றி'}</Link>
-            <Link to="/about-us">{lang === 'en' ? 'Contact' : 'தொடர்புக்கு'}</Link>
-            <Link to="/about-us">{lang === 'en' ? 'Advertise' : 'விளம்பரம்'}</Link>
+            <Link to="/contact">{lang === 'en' ? 'Contact' : 'தொடர்புக்கு'}</Link>
+            <Link to="/advertise">{lang === 'en' ? 'Advertise' : 'விளம்பரம்'}</Link>
             <Link to="/careers">{lang === 'en' ? 'Careers' : 'வேலைவாய்ப்பு'}</Link>
             <Link to="/privacy-policy">{lang === 'en' ? 'Privacy Policy' : 'தனியுரிமைக் கொள்கை'}</Link>
             <Link to="/terms-of-use">{lang === 'en' ? 'Terms of Use' : 'பயன்பாட்டு விதிமுறைகள்'}</Link>
