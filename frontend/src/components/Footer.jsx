@@ -28,31 +28,31 @@ const Footer = () => {
           
           <div className="footer-col">
             <h5>{lang === 'en' ? 'News' : 'செய்திகள்'}</h5>
-            <a href="#">{lang === 'en' ? 'Politics' : 'அரசியல்'}</a>
-            <a href="#">{lang === 'en' ? 'Tamil Nadu' : 'தமிழ்நாடு'}</a>
-            <a href="#">{lang === 'en' ? 'India' : 'இந்தியா'}</a>
-            <a href="#">{lang === 'en' ? 'World' : 'உலகம்'}</a>
-            <a href="#">{lang === 'en' ? 'Business' : 'வணிகம்'}</a>
-            <a href="#">{lang === 'en' ? 'Sports' : 'விளையாட்டு'}</a>
-            <a href="#">{lang === 'en' ? 'Cinema' : 'சினிமா'}</a>
+            <Link to="/category/politics">{lang === 'en' ? 'Politics' : 'அரசியல்'}</Link>
+            <Link to="/category/business">{lang === 'en' ? 'Business' : 'வணிகம்'}</Link>
+            <Link to="/category/sports">{lang === 'en' ? 'Sports' : 'விளையாட்டு'}</Link>
+            <Link to="/category/cinema">{lang === 'en' ? 'Cinema' : 'சினிமா'}</Link>
+            <Link to="/category/tech">{lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்'}</Link>
+            <Link to="/directory">{lang === 'en' ? 'Regional' : 'மாநிலம்'}</Link>
+            <Link to="/category/international">{lang === 'en' ? 'International' : 'சர்வதேசம்'}</Link>
           </div>
 
           <div className="footer-col">
             <h5>{lang === 'en' ? 'More' : 'கூடுதல்'}</h5>
-            <a href="#">{lang === 'en' ? 'Videos' : 'வீடியோக்கள்'}</a>
-            <a href="#">{lang === 'en' ? 'Live TV' : 'லைவ் டிவி'}</a>
-            <a href="#">{lang === 'en' ? 'Podcasts' : 'பாட்காஸ்ட்கள்'}</a>
-            <a href="#">{lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்'}</a>
-            <a href="#">{lang === 'en' ? 'Weather' : 'வானிலை'}</a>
-            <a href="#">{lang === 'en' ? 'Election Hub' : 'தேர்தல் மையம்'}</a>
-            <a href="#">{lang === 'en' ? 'Market Rates' : 'சந்தை விலை'}</a>
+            <Link to="/videos">{lang === 'en' ? 'Videos' : 'வீடியோக்கள்'}</Link>
+            <Link to="/">{lang === 'en' ? 'Live TV' : 'லைவ் டிவி'}</Link>
+            <Link to="/">{lang === 'en' ? 'Podcasts' : 'பாட்காஸ்ட்கள்'}</Link>
+            <Link to="/web-stories">{lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்'}</Link>
+            <Link to="/">{lang === 'en' ? 'Weather' : 'வானிலை'}</Link>
+            <Link to="/">{lang === 'en' ? 'Election Hub' : 'தேர்தல் மையம்'}</Link>
+            <Link to="/">{lang === 'en' ? 'Market Rates' : 'சந்தை விலை'}</Link>
           </div>
 
           <div className="footer-col">
             <h5>{lang === 'en' ? 'Information' : 'தகவல்'}</h5>
             <Link to="/about-us">{lang === 'en' ? 'About Us' : 'எங்களைப் பற்றி'}</Link>
             <Link to="/about-us">{lang === 'en' ? 'Contact' : 'தொடர்புக்கு'}</Link>
-            <a href="#">{lang === 'en' ? 'Advertise' : 'விளம்பரம்'}</a>
+            <Link to="/about-us">{lang === 'en' ? 'Advertise' : 'விளம்பரம்'}</Link>
             <Link to="/careers">{lang === 'en' ? 'Careers' : 'வேலைவாய்ப்பு'}</Link>
             <Link to="/privacy-policy">{lang === 'en' ? 'Privacy Policy' : 'தனியுரிமைக் கொள்கை'}</Link>
             <Link to="/terms-of-use">{lang === 'en' ? 'Terms of Use' : 'பயன்பாட்டு விதிமுறைகள்'}</Link>
@@ -60,17 +60,17 @@ const Footer = () => {
 
           <div className="footer-col">
             <h5>{lang === 'en' ? 'Download' : 'பதிவிறக்கம்'}</h5>
-            <a href="#"><i className="fab fa-google-play"></i> Google Play</a>
-            <a href="#"><i className="fab fa-apple"></i> App Store</a>
+            <a href="https://play.google.com" target="_blank" rel="noopener noreferrer"><i className="fab fa-google-play"></i> Google Play</a>
+            <a href="https://apps.apple.com" target="_blank" rel="noopener noreferrer"><i className="fab fa-apple"></i> App Store</a>
             <div style={{ marginTop: '12px' }}>
               <h5 style={{ marginBottom: '8px' }}>{lang === 'en' ? 'Follow Us' : 'பின்தொடர'}</h5>
               <div className="footer-social">
-                <a href="#" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
-                <a href="#" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
-                <a href="#" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
-                <a href="#" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
-                <a href="#" aria-label="WhatsApp"><i className="fab fa-whatsapp"></i></a>
-                <a href="#" aria-label="Telegram"><i className="fab fa-telegram-plane"></i></a>
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
+                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
+                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
+                <a href="https://whatsapp.com" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><i className="fab fa-whatsapp"></i></a>
+                <a href="https://telegram.org" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i className="fab fa-telegram-plane"></i></a>
               </div>
             </div>
           </div>
@@ -79,10 +79,10 @@ const Footer = () => {
         <div className="footer-bottom">
           <div>© {currentYear} <strong>KING 24x7</strong> - All Rights Reserved.</div>
           <div>
-            <a href="#">RSS Feeds</a> <span style={{ margin: '0 8px', opacity: 0.3 }}>|</span>
-            <a href="#">Sitemap</a> <span style={{ margin: '0 8px', opacity: 0.3 }}>|</span>
-            <a href="#">Accessibility</a> <span style={{ margin: '0 8px', opacity: 0.3 }}>|</span>
-            <a href="#">Terms</a>
+            <Link to="/">RSS Feeds</Link> <span style={{ margin: '0 8px', opacity: 0.3 }}>|</span>
+            <Link to="/">Sitemap</Link> <span style={{ margin: '0 8px', opacity: 0.3 }}>|</span>
+            <Link to="/">Accessibility</Link> <span style={{ margin: '0 8px', opacity: 0.3 }}>|</span>
+            <Link to="/terms-of-use">Terms</Link>
           </div>
         </div>
       </div>
