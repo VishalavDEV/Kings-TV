@@ -4949,7 +4949,8 @@ ul {
   .news-grid-3,
   .news-grid,
   .videos-grid-container,
-  .news-grid-4 {
+  .news-grid-4,
+  .video-grid-4 {
     display: flex !important;
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
@@ -4966,7 +4967,8 @@ ul {
   .news-grid-3::-webkit-scrollbar,
   .news-grid::-webkit-scrollbar,
   .videos-grid-container::-webkit-scrollbar,
-  .news-grid-4::-webkit-scrollbar {
+  .news-grid-4::-webkit-scrollbar,
+  .video-grid-4::-webkit-scrollbar {
     display: none !important;
   }
 
@@ -4974,7 +4976,8 @@ ul {
   .news-grid-3 > *,
   .news-grid > *,
   .videos-grid-container > *,
-  .news-grid-4 > * {
+  .news-grid-4 > *,
+  .video-grid-4 > * {
     flex: 0 0 78% !important;
     width: 78% !important;
     max-width: 78% !important;
