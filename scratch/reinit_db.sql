@@ -285,6 +285,22 @@ CREATE TABLE `pdf_contents` (
     `publish_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
+-- -----------------------------------------------------
+-- Table `page_contents`
+-- -----------------------------------------------------
+CREATE TABLE `page_contents` (
+    `page_key` VARCHAR(50) PRIMARY KEY,
+    `title_ta` VARCHAR(255) NOT NULL,
+    `title_en` VARCHAR(255) NULL,
+    `content_ta` TEXT NULL,
+    `content_en` TEXT NULL,
+    `contact_phone` VARCHAR(20) NULL,
+    `contact_email` VARCHAR(100) NULL,
+    `contact_address` TEXT NULL,
+    `google_map_url` TEXT NULL,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
 
 -- =====================================================
 -- SEED DATA INSERT STATEMENTS
