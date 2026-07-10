@@ -431,6 +431,7 @@ const Header = () => {
           >
             <i className="fas fa-search"></i>
           </button>
+          {renderProfileIcon()}
           {renderLiveTvBtn()}
         </div>
       </div>
