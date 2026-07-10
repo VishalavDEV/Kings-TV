@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { AuthContext } from '../context/AuthContext';
+import { fetchApi } from '../utils/api';
 
 const Header = () => {
   const { t, lang, setLang } = useContext(LanguageContext);
@@ -18,6 +19,142 @@ const Header = () => {
   const [weatherTemp, setWeatherTemp] = useState('32°C');
   const [showDistrictDropdown, setShowDistrictDropdown] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [allArticles, setAllArticles] = useState([]);
+  const [allVideos, setAllVideos] = useState([]);
+
+  const fallbackArticles = [
+    {
+      id: "demo-1",
+      titleTa: "தமிழக சட்டப்பேரவையில் புதிய மசோதா தாக்கல் - எதிர்க்கட்சிகள் எதிர்ப்பு",
+      titleEn: "New bill tabled in TN assembly - opposition registers strong protest",
+      shortDescTa: "சட்டப்பேரவையில் இன்று தாக்கல் செய்யப்பட்ட புதிய மசோதாவுக்கு எதிர்க்கட்சிகள் கடும் எதிர்ப்பு தெரிவித்துள்ளனர். இந்த மசோதா மக்கள் நலனுக்கு பாதகமானது என கூறியுள்ளனர்.",
+      shortDescEn: "Opposition parties voiced strong protests against the new bill tabled in the assembly today, calling it detrimental to public welfare."
+    },
+    {
+      id: "demo-2",
+      titleTa: "இந்திய கிரிக்கெட் அணி ஆஸ்திரேலியாவை வீழ்த்தியது - 3-0 அபாரம்",
+      titleEn: "Indian cricket team beats Australia 3-0 in T20 series",
+      shortDescTa: "ஆஸ்திரேலியாவுக்கு எதிரான டி20 தொடரை 3-0 என்ற கணக்கில் இந்திய அணி முழுமையாக வென்றது. விராட் கோலி அபார ஆட்டம்.",
+      shortDescEn: "India clean sweeps T20 series against Australia 3-0. Virat Kohli shines with a brilliant match-winning performance."
+    },
+    {
+      id: "demo-3",
+      titleTa: "பங்குச் சந்தை புதிய உச்சம் - முதலீட்டாளர்களுக்கு வார இறுதி பரிசு",
+      titleEn: "Share market reaches new peak - weekend gift for investors",
+      shortDescTa: "சென்செக்ஸ் 82,000 புள்ளிகளை தாண்டி புதிய சாதனை படைத்தது. ஐடி, பேங்கிங் பங்குகள் முன்னணி.",
+      shortDescEn: "Sensex creates new record by crossing 82,000 points. IT and Banking sectors lead the gainers list."
+    },
+    {
+      id: "demo-4",
+      titleTa: "செயற்கை நுண்ணறிவில் தமிழக இளைஞர்கள் சாதனை - சர்வதேச அங்கீகாரம்",
+      titleEn: "Tamil Nadu youth excel in AI research - receive international awards",
+      shortDescTa: "செயற்கை நுண்ணறிவில் தமிழக இளைஞர்கள் செய்த புதிய கண்டுபிடிப்புகளுக்கு சர்வதேச அறிவியல் சபை விருது வழங்கி கௌரவித்துள்ளது.",
+      shortDescEn: "International science council honors youth from Tamil Nadu for their ground-breaking developments in AI."
+    },
+    {
+      id: "demo-5",
+      titleTa: "தளபதி விஜய்யின் அடுத்த படம் குறித்த முக்கிய அறிவிப்பு வெளியானது",
+      titleEn: "Major update released on Thalapathy Vijay's upcoming movie",
+      shortDescTa: "இயக்குனர் வெங்கட் பிரபு இயக்கத்தில் விஜய் நடிக்கும் 69-வது படம் குறித்த அதிகாரப்பூர்வ தகவல் வெளியாகியுள்ளது.",
+      shortDescEn: "Official details and title launch info released for Vijay's 69th film directed by Venkat Prabhu."
+    },
+    {
+      id: "demo-6",
+      titleTa: "நெல் கொள்முதல் விலை உயர்வு - விவசாயிகள் சங்கம் வரவேற்பு",
+      titleEn: "Paddy procurement price increased - farmers association welcomes move",
+      shortDescTa: "நெல்லுக்கான குறைந்தபட்ச ஆதரவு விலையை மத்திய அரசு உயர்த்தியுள்ள நிலையில் விவசாயிகள் மகிழ்ச்சி தெரிவித்துள்ளனர்.",
+      shortDescEn: "Farmers express joy as central government increases the minimum support price (MSP) for paddy procurement."
+    }
+  ];
+
+  const fallbackVideos = [
+    { id: "demo-1", title: "தமிழக பட்ஜெட் 2026 - முக்கிய அம்சங்கள் விளக்கம்" },
+    { id: "demo-2", title: "கிரிக்கெட் போட்டி சிறப்பம்சங்கள் - இந்தியா vs ஆஸ்திரேலியா" },
+    { id: "demo-3", title: "விவசாயிகளுக்கான புதிய திட்டங்கள் - நேரடி அறிக்கை" },
+    { id: "demo-4", title: "பங்குச் சந்தை ஆய்வு - நிபுணர்களின் முக்கிய ஆலோசனை" }
+  ];
+
+  useEffect(() => {
+    fetchApi('/articles')
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setAllArticles([...data, ...fallbackArticles]);
+        } else {
+          setAllArticles(fallbackArticles);
+        }
+      })
+      .catch(err => {
+        console.warn("Header normal search failed to load articles", err);
+        setAllArticles(fallbackArticles);
+      });
+
+    fetchApi('/videos')
+      .then(data => {
+        const translatedFallbackVideos = fallbackVideos.map(vid => {
+          let titleVal = vid.title;
+          if (lang === 'en') {
+            if (vid.title.includes('பட்ஜெட்')) titleVal = 'Tamil Nadu Budget 2026 - Key Highlights Explained';
+            else if (vid.title.includes('கிரிக்கெட்')) titleVal = 'Cricket Match Highlights - India vs Australia';
+            else if (vid.title.includes('விவசாயிகளுக்கான')) titleVal = 'New Schemes for Farmers - Ground Report';
+            else if (vid.title.includes('பங்கு')) titleVal = 'Stock Market Analysis - Expert Advice';
+          }
+          return { ...vid, title: titleVal };
+        });
+        if (Array.isArray(data) && data.length > 0) {
+          setAllVideos([...data, ...translatedFallbackVideos]);
+        } else {
+          setAllVideos(translatedFallbackVideos);
+        }
+      })
+      .catch(err => {
+        console.warn("Header normal search failed to load videos", err);
+        const translatedFallbackVideos = fallbackVideos.map(vid => {
+          let titleVal = vid.title;
+          if (lang === 'en') {
+            if (vid.title.includes('பட்ஜெட்')) titleVal = 'Tamil Nadu Budget 2026 - Key Highlights Explained';
+            else if (vid.title.includes('கிரிக்கெட்')) titleVal = 'Cricket Match Highlights - India vs Australia';
+            else if (vid.title.includes('விவசாயிகளுக்கான')) titleVal = 'New Schemes for Farmers - Ground Report';
+            else if (vid.title.includes('பங்கு')) titleVal = 'Stock Market Analysis - Expert Advice';
+          }
+          return { ...vid, title: titleVal };
+        });
+        setAllVideos(translatedFallbackVideos);
+      });
+  }, [lang]);
+
+  const getFilteredResults = () => {
+    if (!searchQuery.trim()) return { articles: [], videos: [] };
+    const query = searchQuery.toLowerCase().trim();
+    
+    const filteredArts = allArticles.filter(art => 
+      (art.titleEn || '').toLowerCase().includes(query) ||
+      (art.titleTa || '').toLowerCase().includes(query) ||
+      (art.shortDescEn || '').toLowerCase().includes(query) ||
+      (art.shortDescTa || '').toLowerCase().includes(query)
+    );
+
+    const filteredVids = allVideos.filter(vid =>
+      (vid.title || '').toLowerCase().includes(query)
+    );
+
+    return {
+      articles: filteredArts.slice(0, 5),
+      videos: filteredVids.slice(0, 3)
+    };
+  };
+
+  const { articles: searchArticles, videos: searchVideos } = getFilteredResults();
+
+  useEffect(() => {
+    const handleToggleDrawer = () => {
+      setDrawerOpen(prev => !prev);
+    };
+    window.addEventListener('toggle-side-drawer', handleToggleDrawer);
+    return () => window.removeEventListener('toggle-side-drawer', handleToggleDrawer);
+  }, []);
 
   useEffect(() => {
     const updateTime = () => {
@@ -396,41 +533,182 @@ const Header = () => {
   };
 
   return (
-    <header className="header-mobile-app-style" style={{ background: '#000000', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', width: '100%' }}>
+    <header className="header-mobile-app-style" style={{ position: 'relative', background: '#000000', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', width: '100%' }}>
       {/* Minimal top bar */}
-      <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', flexShrink: 0, paddingBottom: '3px' }}>
-          <button 
-            onClick={() => setDrawerOpen(true)}
-            style={{ 
-              background: 'transparent', 
-              border: 'none', 
-              fontSize: '20px', 
-              color: '#ffffff', 
-              cursor: 'pointer', 
-              paddingRight: '6px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              marginBottom: '2px' 
+      {isSearchOpen ? (
+        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '10px', background: theme === 'dark' ? '#1E293B' : '#1e1e1e', padding: '6px 12px', borderRadius: '24px' }}>
+            <i className="fas fa-search" style={{ color: '#888888', fontSize: '14px' }}></i>
+            <input
+              type="text"
+              placeholder={lang === 'en' ? 'Search news, videos...' : 'செய்திகள், வீடியோக்களைத் தேடுக...'}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              autoFocus
+              style={{
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                color: '#ffffff',
+                fontSize: '14px',
+                outline: 'none'
+              }}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px', color: '#888888', padding: '2px' }}
+              >
+                <i className="fas fa-times-circle"></i>
+              </button>
+            )}
+          </div>
+          <button
+            onClick={() => {
+              setIsSearchOpen(false);
+              setSearchQuery('');
             }}
-            aria-label="Open side drawer menu"
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px', color: '#ffffff', padding: '4px', whiteSpace: 'nowrap', fontWeight: 'bold' }}
+            aria-label="Cancel Search"
           >
-            <i className="fas fa-bars"></i>
+            {lang === 'en' ? 'Cancel' : 'ரத்து'}
           </button>
-          {renderLogo('small', true)}
-          {renderDistrictSelector(true)}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-          <button 
-            onClick={() => window.dispatchEvent(new CustomEvent('toggle-ai-assistant', { detail: { tab: 'search' } }))}
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#ffffff', padding: '4px' }}
-            aria-label="Search"
-          >
-            <i className="fas fa-search"></i>
-          </button>
-          {renderLiveTvBtn()}
+      ) : (
+        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', flexShrink: 0, paddingBottom: '3px' }}>
+            <button 
+              onClick={() => setDrawerOpen(true)}
+              style={{ 
+                background: 'transparent', 
+                border: 'none', 
+                fontSize: '20px', 
+                color: '#ffffff', 
+                cursor: 'pointer', 
+                paddingRight: '6px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                marginBottom: '2px' 
+              }}
+              aria-label="Open side drawer menu"
+            >
+              <i className="fas fa-bars"></i>
+            </button>
+            {renderLogo('small', true)}
+            {renderDistrictSelector(true)}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+            <button 
+              onClick={() => setIsSearchOpen(true)}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#ffffff', padding: '4px' }}
+              aria-label="Search"
+            >
+              <i className="fas fa-search"></i>
+            </button>
+            {renderLiveTvBtn()}
+            {renderProfileIcon()}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Normal Search Results Dropdown Overlay */}
+      {isSearchOpen && searchQuery.trim() !== '' && (
+        <div style={{
+          position: 'absolute',
+          top: '55px',
+          left: 0,
+          right: 0,
+          background: theme === 'dark' ? '#121212' : '#ffffff',
+          borderBottom: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #cbd5e1',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+          zIndex: 99999,
+          maxHeight: '400px',
+          overflowY: 'auto',
+          padding: '12px 16px'
+        }}>
+          {searchArticles.length === 0 && searchVideos.length === 0 ? (
+            <div style={{ padding: '16px', textAlign: 'center', color: theme === 'dark' ? '#888888' : '#666666', fontSize: '14px' }}>
+              {lang === 'en' ? 'No results found.' : 'தேடல் முடிவுகள் எதுவும் இல்லை.'}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {searchArticles.length > 0 && (
+                <div>
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                    {lang === 'en' ? 'News Articles' : 'செய்தி கட்டுரைகள்'}
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {searchArticles.map((art) => (
+                      <Link
+                        key={art.id || art.article_id}
+                        to={`/article/${art.id || art.article_id}`}
+                        onClick={() => {
+                          setIsSearchOpen(false);
+                          setSearchQuery('');
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          textDecoration: 'none',
+                          color: theme === 'dark' ? '#ffffff' : '#1a1a1a',
+                          padding: '6px 8px',
+                          borderRadius: '6px',
+                          transition: 'background 0.2s',
+                          cursor: 'pointer'
+                        }}
+                        className="search-result-item"
+                      >
+                        <i className="far fa-newspaper" style={{ color: 'var(--primary, #B3732A)', flexShrink: 0 }}></i>
+                        <span style={{ fontSize: '13px', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {lang === 'en' ? (art.titleEn || art.titleTa) : (art.titleTa || art.titleEn)}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {searchVideos.length > 0 && (
+                <div>
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                    {lang === 'en' ? 'Videos' : 'வீடியோக்கள்'}
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {searchVideos.map((vid) => (
+                      <Link
+                        key={vid.id}
+                        to="/videos"
+                        onClick={() => {
+                          setIsSearchOpen(false);
+                          setSearchQuery('');
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          textDecoration: 'none',
+                          color: theme === 'dark' ? '#ffffff' : '#1a1a1a',
+                          padding: '6px 8px',
+                          borderRadius: '6px',
+                          transition: 'background 0.2s',
+                          cursor: 'pointer'
+                        }}
+                        className="search-result-item"
+                      >
+                        <i className="fas fa-play-circle" style={{ color: '#EF4444', flexShrink: 0 }}></i>
+                        <span style={{ fontSize: '13px', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {vid.title}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Horizontal scrollable category navigation bar in single line */}
       <nav 
