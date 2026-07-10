@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Customizer from './components/Customizer';
 import AiAssistant from './components/AiAssistant';
+import SplashScreen from './components/SplashScreen';
+import MobileBottomNav from './components/MobileBottomNav';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -27,9 +29,12 @@ import LiveTv from './pages/LiveTv';
 import Weather from './pages/Weather';
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
   return (
     <Router>
       <div className="app-container">
+        {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
         <Header />
         
         <main className="main-content">
@@ -69,6 +74,7 @@ function App() {
         </main>
 
         <Footer />
+        <MobileBottomNav />
         <Customizer />
         <AiAssistant />
       </div>
