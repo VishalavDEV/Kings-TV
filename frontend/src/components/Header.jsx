@@ -19,6 +19,15 @@ const Header = () => {
   const [weatherTemp, setWeatherTemp] = useState('32°C');
   const [showDistrictDropdown, setShowDistrictDropdown] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -534,6 +543,91 @@ const Header = () => {
       </ul>
     );
   };
+
+  if (!isMobile) {
+    return (
+      <div className="header-wrapper">
+        {/* TOP BAR */}
+        <div className="top-bar" style={{ background: theme === 'dark' ? '#0f172a' : '#f1f5f9', color: theme === 'dark' ? '#cbd5e1' : '#475569', borderBottom: theme === 'dark' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>
+          <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 16px' }}>
+            <div className="top-bar-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', fontSize: '12px' }}>
+              <span><i className="far fa-clock"></i> {timeStr}</span>
+              <span><i className="fas fa-thermometer-half"></i> {weatherTemp}</span>
+              {renderDistrictSelector()}
+            </div>
+            <div className="top-bar-right" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              {renderSocials()}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <button onClick={toggleTheme} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '16px' }}>
+                  <i className={theme === 'light' ? 'fas fa-moon' : 'fas fa-sun'}></i>
+                </button>
+                <select value={lang} onChange={(e) => setLang(e.target.value)} style={{ padding: '4px', borderRadius: '4px', border: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid #cbd5e1', background: 'transparent', color: 'inherit' }}>
+                  <option value="ta">தமிழ்</option>
+                  <option value="en">English</option>
+                </select>
+                {renderAuthSection()}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* HEADER MAIN */}
+        <header className="header-main" style={{ background: theme === 'dark' ? '#000000' : '#ffffff', borderBottom: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #e2e8f0', padding: '20px 0' }}>
+          <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px' }}>
+            <div className="header-left">
+              {renderLogo('normal')}
+            </div>
+            <div className="header-center"></div>
+            <div className="header-right">
+              <Link to="/live-tv" className="livetv-btn" style={{
+                background: '#EF4444',
+                color: '#FFFFFF',
+                padding: '8px 18px',
+                borderRadius: '4px',
+                fontSize: '13px',
+                fontWeight: '700',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                textDecoration: 'none'
+              }}>
+                <i className="fas fa-play-circle" style={{ fontSize: '16px' }}></i>
+                {lang === 'en' ? 'LIVE TV WATCH NOW' : 'லைவ் டிவி இப்பொழுது பாருங்கள்'}
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        {/* NAVIGATION */}
+        <nav className={`main-nav ${isRegionalPage ? 'regional-theme' : ''}`} style={{ background: '#000000', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+          <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px' }}>
+            <div 
+              className="mobile-menu-btn" 
+              id="mobileMenuBtn" 
+              aria-label="Menu"
+              onClick={() => setDrawerOpen(true)}
+              style={{ display: 'none' }}
+            >
+              <i className="fas fa-bars"></i>
+            </div>
+            
+            {/* Normal categories navigation menu */}
+            <div style={{ display: 'flex', flexGrow: 1, overflowX: 'auto', scrollbarWidth: 'none' }}>
+              {renderScrollNavMenu()}
+            </div>
+            
+            <div 
+              onClick={() => window.dispatchEvent(new CustomEvent('toggle-ai-assistant', { detail: { tab: 'search' } }))}
+              style={{ color: '#ffffff', cursor: 'pointer', padding: '10px', fontSize: '16px' }} 
+              aria-label="Search"
+            >
+              <i className="fas fa-search"></i>
+            </div>
+          </div>
+        </nav>
+      </div>
+    );
+  }
 
   return (
     <header className="header-mobile-app-style" style={{ position: 'relative', background: '#000000', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', width: '100%' }}>
