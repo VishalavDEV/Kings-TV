@@ -15,6 +15,8 @@ const Login = () => {
   const [selectedDisplayName, setSelectedDisplayName] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [toastText, setToastText] = useState('');
+  const [isRegister, setIsRegister] = useState(false);
+  const [fullName, setFullName] = useState('');
 
   const rolesList = [
     { role: 'admin', labelTa: 'நிர்வாகி (Admin)', labelEn: 'Admin', email: 'admin@king24x7.com', pwd: 'admin123' },
@@ -71,15 +73,23 @@ const Login = () => {
 
     login({
       email,
-      username: email.split('@')[0],
+      username: isRegister ? (fullName || email.split('@')[0]) : email.split('@')[0],
       role,
       displayName
     });
 
-    if (lang === 'en') {
-      setToastText(`Successfully logged in as ${role.toUpperCase()}!`);
+    if (isRegister) {
+      if (lang === 'en') {
+        setToastText(`Account created! Welcome, ${isRegister ? fullName : email.split('@')[0]}!`);
+      } else {
+        setToastText(`கணக்கு உருவாக்கப்பட்டது! நல்வரவு, ${isRegister ? fullName : email.split('@')[0]}!`);
+      }
     } else {
-      setToastText(`${displayName} வெற்றிகரமாக உள்நுழைந்தார்!`);
+      if (lang === 'en') {
+        setToastText(`Successfully logged in as ${role.toUpperCase()}!`);
+      } else {
+        setToastText(`${displayName} வெற்றிகரமாக உள்நுழைந்தார்!`);
+      }
     }
     
     setShowToast(true);
@@ -117,14 +127,43 @@ const Login = () => {
         <div className="login-right" style={{ padding: '50px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <div className="login-right-header" style={{ marginBottom: '32px' }}>
             <h3 id="rightTitle" style={{ fontSize: '28px', fontWeight: 800, color: 'white', marginBottom: '8px' }}>
-              {lang === 'en' ? 'Welcome Back!' : 'நல்வரவு!'}
+              {isRegister ? (lang === 'en' ? 'Create Account' : 'கணக்கை உருவாக்கு') : (lang === 'en' ? 'Welcome Back!' : 'நல்வரவு!')}
             </h3>
             <p id="rightSubtitle" style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.5 }}>
-              {lang === 'en' ? 'Enter your email and password to access your role workspace.' : 'உங்கள் பங்கிற்கான பணியிடத்தை அணுக மின்னஞ்சல் மற்றும் கடவுச்சொல்லை உள்ளிடவும்.'}
+              {isRegister ? (lang === 'en' ? 'Join KINGS 24x7. Enter your details to create an account.' : 'கிங்ஸ் 24x7-ல் இணையுங்கள். கணக்கை உருவாக்க விவரங்களை உள்ளிடவும்.') : (lang === 'en' ? 'Enter your email and password to access your role workspace.' : 'உங்கள் பங்கிற்கான பணியிடத்தை அணுக மின்னஞ்சல் மற்றும் கடவுச்சொல்லை உள்ளிடவும்.')}
             </p>
           </div>
 
           <form id="loginForm" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {isRegister && (
+              <div className="form-group" style={{ position: 'relative' }}>
+                <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.7)', display: 'block', marginBottom: '8px' }}>
+                  {lang === 'en' ? 'Full Name *' : 'முழு பெயர் *'}
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <i className="fas fa-user" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.4)' }}></i>
+                  <input 
+                    type="text" 
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required 
+                    placeholder={lang === 'en' ? 'Your Name' : 'உங்கள் பெயர்'} 
+                    style={{
+                      width: '100%',
+                      padding: '14px 16px 14px 44px',
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      color: 'white',
+                      outline: 'none',
+                      fontSize: '14px',
+                      transition: 'all 0.3s'
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="form-group" style={{ position: 'relative' }}>
               <label id="labelEmail" style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.7)', display: 'block', marginBottom: '8px' }}>
                 {lang === 'en' ? 'Email Address *' : 'மின்னஞ்சல் முகவரி *'}
@@ -223,8 +262,35 @@ const Login = () => {
                 transition: 'all 0.3s'
               }}
             >
-              <span id="submitBtnText">{lang === 'en' ? 'Sign In' : 'உள்நுழைய'}</span>
+              <span id="submitBtnText">{isRegister ? (lang === 'en' ? 'Sign Up' : 'பதிவு செய்') : (lang === 'en' ? 'Sign In' : 'உள்நுழைய')}</span>
             </button>
+
+            <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)' }}>
+              {isRegister ? (
+                <>
+                  {lang === 'en' ? 'Already have an account? ' : 'ஏற்கனவே கணக்கு உள்ளதா? '}
+                  <span 
+                    onClick={() => {
+                      setIsRegister(false);
+                      setFullName('');
+                    }} 
+                    style={{ color: 'var(--primary)', cursor: 'pointer', fontWeight: 700 }}
+                  >
+                    {lang === 'en' ? 'Sign In' : 'உள்நுழைய'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  {lang === 'en' ? "Don't have an account? " : 'புதிய கணக்கு வேண்டுமா? '}
+                  <span 
+                    onClick={() => setIsRegister(true)} 
+                    style={{ color: 'var(--primary)', cursor: 'pointer', fontWeight: 700 }}
+                  >
+                    {lang === 'en' ? 'Create Account' : 'கணக்கை உருவாக்கு'}
+                  </span>
+                </>
+              )}
+            </div>
           </form>
         </div>
 
