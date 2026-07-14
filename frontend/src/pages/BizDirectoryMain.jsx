@@ -201,28 +201,26 @@ const BizDirectoryMain = () => {
         </p>
 
         {/* Search form controls */}
-        <div className="bg-white p-3 rounded-xl shadow-xl flex flex-col md:flex-row items-stretch w-full max-w-4xl gap-2 text-gray-800">
-          <div className="flex items-center px-3 flex-1 border-b md:border-b-0 md:border-r border-gray-200">
-            <i className="fas fa-search text-gray-400 mr-2"></i>
+        <div className="biz-search-bar">
+          <div className="biz-search-field">
+            <i className="fas fa-search"></i>
             <input 
               type="text" 
               placeholder={lang === 'en' ? 'Search businesses, services...' : 'வணிகங்கள், சேவைகளைத் தேடுக...'} 
-              className="w-full bg-transparent focus:outline-none p-2 text-sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="flex items-center px-3 flex-1 border-b md:border-b-0 md:border-r border-gray-200">
-            <i className="fas fa-map-marker-alt text-gray-400 mr-2"></i>
+          <div className="biz-search-field">
+            <i className="fas fa-map-marker-alt"></i>
             <input 
               type="text" 
               placeholder={lang === 'en' ? 'Chennai, Tamil Nadu' : 'சென்னை, தமிழ்நாடு'} 
-              className="w-full bg-transparent focus:outline-none p-2 text-sm"
               value={locationQuery}
               onChange={(e) => setLocationQuery(e.target.value)}
             />
           </div>
-          <button className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg text-sm transition duration-150">
+          <button className="biz-search-btn">
             {lang === 'en' ? 'Search' : 'தேடுக'}
           </button>
         </div>
