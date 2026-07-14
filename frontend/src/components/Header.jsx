@@ -257,13 +257,21 @@ const Header = () => {
       const tech = findDbItem('tech') || findDbItem('technology');
       dynamicItems.push(tech || { id: 'tech', path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்', subcategories: [] });
 
-      // Regional (No dropdown chevron)
+      // Regional (with dropdown chevron)
       const regional = findDbItem('regional');
-      dynamicItems.push(regional || {
+      const regionalSubcategories = [
+        { id: 'reg-dir', slug: 'directory', path: '/directory', name: 'Local Directory', nameTa: 'நம்ம ஊர்' },
+        { id: 'reg-wishes', slug: 'wishes', path: '/wishes', name: 'Wishes', nameTa: 'வாழ்த்து' },
+        { id: 'reg-obituaries', slug: 'obituaries', path: '/obituaries', name: 'Obituaries', nameTa: 'இரங்கல்' },
+        { id: 'reg-business', slug: 'business-studies', path: '/business-studies', name: 'Business', nameTa: 'வணிகம்' },
+        { id: 'reg-jobs', slug: 'jobs', path: '/jobs', name: 'Jobs', nameTa: 'வேலை' },
+        { id: 'reg-classifieds', slug: 'classifieds', path: '/classifieds', name: 'Classifieds', nameTa: 'தள்ளுபடி' }
+      ];
+      dynamicItems.push(regional ? { ...regional, subcategories: regionalSubcategories } : {
         id: 'regional',
         path: '/directory',
         label: lang === 'en' ? 'Regional' : 'மாநிலம்',
-        subcategories: []
+        subcategories: regionalSubcategories
       });
 
       // International
@@ -310,7 +318,19 @@ const Header = () => {
           { path: '/category/sports', label: lang === 'en' ? 'Sports' : 'விளையாட்டு', subcategories: [ { id: 'fs-1', slug: 'cricket', name: 'Cricket', nameTa: 'கிரிக்கெட்' } ] },
           { path: '/category/cinema', label: lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு', subcategories: [ { id: 'fc-1', slug: 'kollywood', name: 'Kollywood', nameTa: 'கோலிவுட்' } ] },
           { path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்', subcategories: [ { id: 'ft-1', slug: 'smartphones', name: 'Smartphones', nameTa: 'ஸ்மார்ட் போன்' } ] },
-          { path: '/directory', label: lang === 'en' ? 'Regional' : 'மாநிலம்', subcategories: [] },
+          { 
+            id: 'regional',
+            path: '/directory', 
+            label: lang === 'en' ? 'Regional' : 'மாநிலம்', 
+            subcategories: [
+              { id: 'reg-dir', slug: 'directory', path: '/directory', name: 'Local Directory', nameTa: 'நம்ம ஊர்' },
+              { id: 'reg-wishes', slug: 'wishes', path: '/wishes', name: 'Wishes', nameTa: 'வாழ்த்து' },
+              { id: 'reg-obituaries', slug: 'obituaries', path: '/obituaries', name: 'Obituaries', nameTa: 'இரங்கல்' },
+              { id: 'reg-business', slug: 'business-studies', path: '/business-studies', name: 'Business', nameTa: 'வணிகம்' },
+              { id: 'reg-jobs', slug: 'jobs', path: '/jobs', name: 'Jobs', nameTa: 'வேலை' },
+              { id: 'reg-classifieds', slug: 'classifieds', path: '/classifieds', name: 'Classifieds', nameTa: 'தள்ளுபடி' }
+            ] 
+          },
           { path: '/category/international', label: lang === 'en' ? 'International' : 'சர்வதேசம்', subcategories: [ { id: 'fi-1', slug: 'world-news', name: 'World News', nameTa: 'உலக செய்திகள்' } ] },
           { path: '/videos', label: lang === 'en' ? 'Video' : 'வீடியோ', subcategories: [
             { id: 'v-state', slug: 'v-state', name: 'State', nameTa: 'மாநிலம்' },
@@ -882,7 +902,12 @@ const Header = () => {
             <div
               key={idx}
               className="nav-item-wrapper"
-              style={{ position: 'relative', display: 'inline-block' }}
+              style={{ 
+                position: 'relative', 
+                display: 'inline-flex', 
+                alignItems: 'center',
+                borderBottom: isActive ? '3px solid var(--primary, #B3732A)' : '3px solid transparent'
+              }}
             >
               <Link
                 to={item.path}
@@ -892,41 +917,44 @@ const Header = () => {
                     ? (theme === 'dark' ? '#FFFFFF' : '#000000') 
                     : (theme === 'dark' ? '#94A3B8' : '#71717A'),
                   background: 'transparent',
-                  padding: '8px 12px 6px 12px',
-                  borderRadius: '0px',
-                  borderBottom: isActive ? '3px solid var(--primary, #B3732A)' : '3px solid transparent',
+                  padding: '8px 4px 6px 12px',
                   fontSize: '13px',
                   fontWeight: '700',
                   textDecoration: 'none',
                   whiteSpace: 'nowrap',
                   transition: 'all 0.2s',
-                  display: 'inline-flex',
-                  alignItems: 'center'
+                  display: 'inline-block'
                 }}
               >
                 {item.label}
-                {item.subcategories && item.subcategories.length > 0 && item.path !== '/directory' && (
-                  <span
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setActiveDropdown(activeDropdown === item.id ? null : item.id);
-                    }}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      padding: '2px',
-                      marginLeft: '3px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <i className="fas fa-chevron-down" style={{ fontSize: '7px', opacity: 0.7 }}></i>
-                  </span>
-                )}
               </Link>
+              {item.subcategories && item.subcategories.length > 0 && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setActiveDropdown(activeDropdown === item.id ? null : item.id);
+                  }}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    padding: '8px 12px 6px 4px',
+                    cursor: 'pointer',
+                    color: isActive 
+                      ? (theme === 'dark' ? '#FFFFFF' : '#000000') 
+                      : (theme === 'dark' ? '#94A3B8' : '#71717A'),
+                    transition: 'all 0.2s'
+                  }}
+                  aria-label="Toggle subcategories"
+                >
+                  <i className="fas fa-chevron-down" style={{ fontSize: '8px', opacity: 0.7 }}></i>
+                </button>
+              )}
 
               {/* Subcategories Dropdown directly below this link */}
-              {activeDropdown === item.id && item.subcategories && item.subcategories.length > 0 && item.path !== '/directory' && (
+              {activeDropdown === item.id && item.subcategories && item.subcategories.length > 0 && (
                 <div 
                   className="category-dropdown-menu"
                   style={{
@@ -1013,10 +1041,11 @@ const Header = () => {
                   {item.subcategories.map(sub => {
                     const subcatName = lang === 'en' ? getSubcatEn(sub) : sub.nameTa;
                     const catSlug = item.path.split('/category/')[1];
+                    const subcatLinkPath = sub.path || `/category/${catSlug}?subcat=${subcatName}`;
                     return (
                       <div key={sub.id} className="dropdown-sub-container">
                         <Link 
-                          to={`/category/${catSlug}?subcat=${subcatName}`}
+                          to={subcatLinkPath}
                           onClick={() => setActiveDropdown(null)}
                           className="dropdown-sub-link"
                         >
@@ -1026,23 +1055,23 @@ const Header = () => {
                           )}
                         </Link>
 
-                      {/* Nested Sub-dropdown Overlay */}
-                      {sub.subcategories && sub.subcategories.length > 0 && (
-                        <div className="nested-dropdown">
-                          {sub.subcategories.map(child => (
-                            <Link
-                              key={child.id}
-                              to={`/category/${child.slug}`}
-                              onClick={() => setActiveDropdown(null)}
-                              className="dropdown-nested-link"
-                            >
-                              {lang === 'en' ? getSubcatEn(child) : child.nameTa}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
+                        {/* Nested Sub-dropdown Overlay */}
+                        {sub.subcategories && sub.subcategories.length > 0 && (
+                          <div className="nested-dropdown">
+                            {sub.subcategories.map(child => (
+                              <Link
+                                key={child.id}
+                                to={child.path || `/category/${child.slug}`}
+                                onClick={() => setActiveDropdown(null)}
+                                className="dropdown-nested-link"
+                              >
+                                {lang === 'en' ? getSubcatEn(child) : child.nameTa}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
                   })}
                 </div>
               )}
@@ -1060,7 +1089,7 @@ const Header = () => {
       <ul style={{ display: 'flex', flexDirection: 'column', gap: '15px', padding: 0, listStyle: 'none', margin: 0 }}>
         {navItems.map((item, idx) => {
           const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
-          const hasSubs = item.subcategories && item.subcategories.length > 0 && item.path !== '/directory';
+          const hasSubs = item.subcategories && item.subcategories.length > 0;
           const isExpanded = mobileExpandedCat === item.id;
 
           const toggleExpand = (e) => {
@@ -1104,7 +1133,7 @@ const Header = () => {
                   {item.subcategories.map(sub => (
                     <li key={sub.id}>
                       <Link 
-                        to={`/category/${sub.slug}`}
+                        to={sub.path || `/category/${sub.slug}`}
                         onClick={onLinkClick}
                         style={{
                           color: 'inherit',
