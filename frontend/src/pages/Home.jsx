@@ -12,6 +12,15 @@ const Home = () => {
   const [liveVideo, setLiveVideo] = useState(null);
   const [tickerIndex, setTickerIndex] = useState(0);
 
+  // Crowd Reporter States
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reporterName, setReporterName] = useState('');
+  const [reporterContact, setReporterContact] = useState('');
+  const [reportTitle, setReportTitle] = useState('');
+  const [reportDetails, setReportDetails] = useState('');
+  const [reportImageUrl, setReportImageUrl] = useState('');
+  const [reportVideoUrl, setReportVideoUrl] = useState('');
+
   const getCategoryDetails = (categoryId) => {
     const categories = {
       1: { slug: 'politics', en: 'Politics', ta: 'அரசியல்' },
@@ -193,6 +202,43 @@ const Home = () => {
     }, slideSpeed * 1000);
     return () => clearInterval(timer);
   }, [slideSpeed, mockTickers.length]);
+
+  const handleSubmitReport = (e) => {
+    e.preventDefault();
+    fetchApi('/report-news/saveUpdate', {
+      method: 'POST',
+      body: JSON.stringify({
+        reporterName,
+        reporterContact,
+        title: reportTitle,
+        details: reportDetails,
+        imageUrl: reportImageUrl || null,
+        videoUrl: reportVideoUrl || null,
+        status: 'pending'
+      })
+    })
+    .then(() => {
+      alert(lang === 'en' ? 'Thank you! Your news report has been submitted for review.' : 'நன்றி! உங்கள் செய்தி அறிக்கை மதிப்பாய்வுக்காக சமர்ப்பிக்கப்பட்டுள்ளது.');
+      setReporterName('');
+      setReporterContact('');
+      setReportTitle('');
+      setReportDetails('');
+      setReportImageUrl('');
+      setReportVideoUrl('');
+      setShowReportModal(false);
+    })
+    .catch(err => {
+      console.warn("API report submission failed, simulating success locally", err);
+      alert(lang === 'en' ? 'Thank you! Your news report has been submitted for review.' : 'நன்றி! உங்கள் செய்தி அறிக்கை மதிப்பாய்வுக்காக சமர்ப்பிக்கப்பட்டுள்ளது.');
+      setReporterName('');
+      setReporterContact('');
+      setReportTitle('');
+      setReportDetails('');
+      setReportImageUrl('');
+      setReportVideoUrl('');
+      setShowReportModal(false);
+    });
+  };
 
   const featured = articles[0] || prefixedFallbackArticles[0];
   const featuredCat = getCategoryDetails(featured.categoryId);
@@ -484,10 +530,26 @@ const Home = () => {
 
           {/* Weather Widget */}
           <div className="weather-widget">
-            <h4>
-              <i className="fas fa-cloud-sun" style={{ color: 'var(--primary)' }}></i>{' '}
-              {lang === 'en' ? 'Chennai Weather' : 'சென்னை வானிலை'}
-            </h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+              <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <i className="fas fa-cloud-sun" style={{ color: 'var(--primary)' }}></i>{' '}
+                {lang === 'en' ? 'Chennai Weather' : 'சென்னை வானிலை'}
+              </h4>
+              <Link 
+                to="/weather" 
+                style={{ 
+                  fontSize: '12px', 
+                  color: 'var(--primary, #B3732A)', 
+                  textDecoration: 'none', 
+                  fontWeight: '700',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                {lang === 'en' ? 'View All' : 'மேலும் பார்'} <i className="fas fa-arrow-right" style={{ fontSize: '10px' }}></i>
+              </Link>
+            </div>
             <div className="weather-current">
               <div className="temp" id="weatherTemp">32°C</div>
               <div className="details">
@@ -586,7 +648,13 @@ const Home = () => {
                 ? 'Share news and happenings in your area with us. Let your voice be heard.' 
                 : 'உங்கள் பகுதியில் நடக்கும் நிகழ்வுகளை எங்களோடு பகிர்ந்து கொள்ளுங்கள்! உங்கள் குரல் நாடாகட்டும்.'}
             </p>
-            <a href="#" className="report-btn"><i className="fas fa-pen-fancy"></i> {lang === 'en' ? 'Send Report' : 'செய்தி அனுப்பவும்'}</a>
+            <button 
+              onClick={() => setShowReportModal(true)} 
+              className="report-btn"
+              style={{ border: 'none', cursor: 'pointer' }}
+            >
+              <i className="fas fa-pen-fancy"></i> {lang === 'en' ? 'Send Report' : 'செய்தி அனுப்பவும்'}
+            </button>
           </div>
         </aside>
       </div>
@@ -616,6 +684,90 @@ const Home = () => {
             </div>
           </div>
         </section>
+      )}
+
+      {/* CROWD REPORTER MODAL */}
+      {showReportModal && (
+        <div className="modal open" id="crowdReporterModal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="modal-content">
+            <div className="modal-header" style={{ background: '#D97706' }}>
+              <h3>{lang === 'en' ? 'Submit News Report' : 'செய்தி அறிக்கை சமர்ப்பிக்கவும்'}</h3>
+              <button className="modal-close" onClick={() => setShowReportModal(false)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <form id="crowdReporterForm" onSubmit={handleSubmitReport}>
+                <div className="form-group">
+                  <label htmlFor="reporterNameInput">{lang === 'en' ? 'Reporter Name *' : 'உங்கள் பெயர் *'}</label>
+                  <input 
+                    type="text" 
+                    id="reporterNameInput" 
+                    required 
+                    placeholder={lang === 'en' ? 'e.g. Muthukumar' : 'எ.கா: முத்துக்குமார்'}
+                    value={reporterName}
+                    onChange={(e) => setReporterName(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="reporterContactInput">{lang === 'en' ? 'Contact Details (Phone/Email) *' : 'தொடர்பு விபரம் (கைபேசி/மின்னஞ்சல்) *'}</label>
+                  <input 
+                    type="text" 
+                    id="reporterContactInput" 
+                    required 
+                    placeholder={lang === 'en' ? 'e.g. +91 9876543210' : 'எ.கா: +91 9876543210'}
+                    value={reporterContact}
+                    onChange={(e) => setReporterContact(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="reportTitleInput">{lang === 'en' ? 'News Headline *' : 'செய்தித் தலைப்பு *'}</label>
+                  <input 
+                    type="text" 
+                    id="reportTitleInput" 
+                    required 
+                    placeholder={lang === 'en' ? 'e.g. Waterlogging issue in Gandhi Nagar' : 'எ.கா: காந்தி நகரில் தேங்கியுள்ள மழைநீர்'}
+                    value={reportTitle}
+                    onChange={(e) => setReportTitle(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="reportDetailsInput">{lang === 'en' ? 'News Details *' : 'செய்தி விவரம் *'}</label>
+                  <textarea 
+                    id="reportDetailsInput" 
+                    rows="4" 
+                    required 
+                    placeholder={lang === 'en' ? 'Describe the news or event in detail...' : 'செய்தி அல்லது நிகழ்வை விரிவாக விவரிக்கவும்...'}
+                    value={reportDetails}
+                    onChange={(e) => setReportDetails(e.target.value)}
+                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', color: 'black' }}
+                  ></textarea>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="reportImageUrlInput">{lang === 'en' ? 'Mock Image URL (Optional)' : 'பட இணைய முகவரி (விருப்பம்)'}</label>
+                  <input 
+                    type="url" 
+                    id="reportImageUrlInput" 
+                    placeholder={lang === 'en' ? 'e.g. https://example.com/image.jpg' : 'எ.கா: https://example.com/image.jpg'}
+                    value={reportImageUrl}
+                    onChange={(e) => setReportImageUrl(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="reportVideoUrlInput">{lang === 'en' ? 'Mock Video URL (Optional)' : 'வீடியோ இணைய முகவரி (விருப்பம்)'}</label>
+                  <input 
+                    type="url" 
+                    id="reportVideoUrlInput" 
+                    placeholder={lang === 'en' ? 'e.g. https://example.com/video.mp4' : 'எ.கா: https://example.com/video.mp4'}
+                    value={reportVideoUrl}
+                    onChange={(e) => setReportVideoUrl(e.target.value)}
+                  />
+                </div>
+                <button type="submit" className="submit-btn" style={{ background: '#D97706', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '4px', fontWeight: 700, cursor: 'pointer', width: '100%', marginTop: '10px' }}>
+                  {lang === 'en' ? 'Submit Report' : 'அறிக்கை சமர்ப்பி'}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

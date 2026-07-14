@@ -2,8 +2,9 @@ package com.kingstv.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
@@ -14,7 +15,21 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
+    private Key key;
+
+    @PostConstruct
+    public void init() {
+        byte[] keyBytes = jwtSecret.getBytes();
+        if (keyBytes.length < 32) {
+            byte[] padded = new byte[32];
+            System.arraycopy(keyBytes, 0, padded, 0, Math.min(keyBytes.length, 32));
+            keyBytes = padded;
+        }
+        this.key = Keys.hmacShaKeyFor(keyBytes);
+    }
 
     public String generateToken(String username, String role, Long userId) {
         Map<String, Object> claims = new HashMap<>();

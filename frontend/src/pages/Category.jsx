@@ -3,6 +3,50 @@ import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { LanguageContext } from '../context/LanguageContext';
 import { fetchApi } from '../utils/api';
 
+const subcatEnTranslations = {
+  'மாநிலம்': 'State',
+  'தேசியம்': 'National',
+  'சர்வதேசம்': 'International',
+  'அரசு கொள்கைகள்': 'Governance',
+  'சந்தை': 'Markets',
+  'நிறுவனங்கள்': 'Companies',
+  'முதலீடு': 'Investment',
+  'ஸ்டார்ட்அப்': 'Startups',
+  'கிரிக்கெட்': 'Cricket',
+  'கால்பந்து': 'Football',
+  'டென்னிஸ்': 'Tennis',
+  'உள்ளூர்': 'Local Sports',
+  'கோலிவுட்': 'Kollywood',
+  'பாலிவுட்': 'Bollywood',
+  'விமர்சனங்கள்': 'Reviews',
+  'இசை': 'Music',
+  'ஸ்மார்ட்போன்': 'Smartphones',
+  'மென்பொருள்': 'Software',
+  'AI': 'AI',
+  'விண்வெளி': 'Space',
+  'உலக செய்திகள்': 'World News',
+  'state': 'State',
+  'national': 'National',
+  'international': 'International',
+  'governance': 'Governance',
+  'markets': 'Markets',
+  'companies': 'Companies',
+  'investment': 'Investment',
+  'startups': 'Startups',
+  'cricket': 'Cricket',
+  'football': 'Football',
+  'tennis': 'Tennis',
+  'local sports': 'Local Sports',
+  'kollywood': 'Kollywood',
+  'bollywood': 'Bollywood',
+  'reviews': 'Reviews',
+  'music': 'Music',
+  'smartphones': 'Smartphones',
+  'software': 'Software',
+  'space': 'Space',
+  'world news': 'World News'
+};
+
 const Category = () => {
   const { lang } = useContext(LanguageContext);
   const { slug } = useParams();
@@ -24,6 +68,17 @@ const Category = () => {
   const [filteredArticles, setFilteredArticles] = useState([]);
   const [selectedSubcat, setSelectedSubcat] = useState('அனைத்தும்');
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [navCategories, setNavCategories] = useState([]);
+
+  useEffect(() => {
+    fetchApi('/categories/nav')
+      .then(data => {
+        if (Array.isArray(data)) {
+          setNavCategories(data);
+        }
+      })
+      .catch(err => console.warn("Failed to load nav categories in Category page", err));
+  }, []);
 
   const catConfigurations = {
     politics: {
@@ -401,8 +456,13 @@ const Category = () => {
   }, [catKey]);
 
   useEffect(() => {
-    setSelectedSubcat(lang === 'en' ? 'All' : 'அனைத்தும்');
-  }, [lang]);
+    const subcatParam = searchParams.get('subcat');
+    if (subcatParam) {
+      setSelectedSubcat(subcatParam);
+    } else {
+      setSelectedSubcat(lang === 'en' ? 'All' : 'அனைத்தும்');
+    }
+  }, [lang, searchParams, catKey]);
 
   useEffect(() => {
     // Perform subcategory and type filtering
@@ -424,7 +484,19 @@ const Category = () => {
     setFilteredArticles(temp);
   }, [selectedSubcat, selectedFilter, articles, lang]);
 
-  const subcategories = lang === 'en' ? currentCat.subcatsEn : currentCat.subcatsTa;
+  const getSubcatEn = (s) => {
+    if (!s) return '';
+    const nameStr = s.name || '';
+    const nameTaStr = s.nameTa || '';
+    return subcatEnTranslations[nameStr] || subcatEnTranslations[nameTaStr] || subcatEnTranslations[nameStr.toLowerCase()] || nameStr;
+  };
+
+  const matchedCat = navCategories.find(c => c.slug === catKey);
+  const subcategories = matchedCat 
+    ? (lang === 'en' 
+        ? ['All', ...matchedCat.subcategories.map(s => getSubcatEn(s))] 
+        : ['அனைத்தும்', ...matchedCat.subcategories.map(s => s.nameTa)])
+    : (lang === 'en' ? currentCat.subcatsEn : currentCat.subcatsTa);
 
   if (slug === 'regional') {
     return null;
@@ -496,7 +568,7 @@ const Category = () => {
             {lang === 'en' ? 'No articles found matching filters.' : 'செய்திகள் ஏதும் இல்லை.'}
           </div>
         ) : (
-          <div className="news-grid-3">
+          <div className="news-grid">
             {filteredArticles.map(art => (
               <div 
                 className="news-card" 
@@ -511,7 +583,7 @@ const Category = () => {
                   }}
                 >
                   <span className="cat-badge" style={{ background: 'var(--category-color, var(--primary))' }}>
-                    {lang === 'en' ? art.subcatEn : art.subcatTa}
+                    {lang === 'en' ? (subcatEnTranslations[art.subcatTa] || art.subcatEn) : art.subcatTa}
                   </span>
                 </div>
                 <div className="card-body">
