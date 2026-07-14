@@ -1,7 +1,9 @@
 package com.kingstv.controllers;
 
 import com.kingstv.models.Category;
+import com.kingstv.models.SubCategory;
 import com.kingstv.repository.CategoryRepository;
+import com.kingstv.repository.SubCategoryRepository;
 import com.kingstv.services.SlugService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,6 +15,8 @@ import com.kingstv.repository.SpecificationBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,7 +29,62 @@ public class CategoryController {
     private CategoryRepository categoryRepository;
 
     @Autowired
+    private SubCategoryRepository subCategoryRepository;
+
+    @Autowired
     private SlugService slugService;
+
+    @GetMapping("/nav")
+    public List<Map<String, Object>> getNavMenu() {
+        List<Category> categories = categoryRepository.findByIsActiveAndIsNavOrderByDisplayOrderAsc(true, true);
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (Category cat : categories) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", cat.getId());
+            map.put("name", cat.getName());
+            map.put("nameTa", cat.getNameTa());
+            map.put("slug", cat.getSlug());
+            map.put("icon", cat.getIcon());
+            map.put("displayOrder", cat.getDisplayOrder());
+
+            List<SubCategory> subs = subCategoryRepository.findByCategoryIdAndStatusOrderByDisplayOrderAsc(cat.getId(), "active");
+            
+            // Build tree hierarchy of subcategories
+            Map<Long, Map<String, Object>> subMapById = new LinkedHashMap<>();
+            List<Map<String, Object>> rootSubList = new ArrayList<>();
+
+            for (SubCategory sub : subs) {
+                Map<String, Object> subMap = new LinkedHashMap<>();
+                subMap.put("id", sub.getSubcategoryId());
+                subMap.put("name", sub.getName());
+                subMap.put("nameTa", sub.getNameTa());
+                subMap.put("slug", sub.getSlug());
+                subMap.put("displayOrder", sub.getDisplayOrder());
+                subMap.put("parentId", sub.getParentId());
+                subMap.put("subcategories", new ArrayList<Map<String, Object>>());
+                
+                subMapById.put(sub.getSubcategoryId(), subMap);
+            }
+
+            for (SubCategory sub : subs) {
+                Map<String, Object> currentMap = subMapById.get(sub.getSubcategoryId());
+                if (sub.getParentId() != null && subMapById.containsKey(sub.getParentId())) {
+                    Map<String, Object> parentMap = subMapById.get(sub.getParentId());
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> parentChildren = (List<Map<String, Object>>) parentMap.get("subcategories");
+                    parentChildren.add(currentMap);
+                } else {
+                    rootSubList.add(currentMap);
+                }
+            }
+
+            map.put("subcategories", rootSubList);
+            result.add(map);
+        }
+
+        return result;
+    }
 
     // --- KEEP Existing Front-End Endpoint Map ---
     @GetMapping

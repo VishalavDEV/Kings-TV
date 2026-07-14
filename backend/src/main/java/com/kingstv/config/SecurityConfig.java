@@ -36,6 +36,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/v1/auth/**", 
+                    "/api/auth/**",
+                    "/uploads/**",
                     "/api/v1/health", 
                     "/api/v1/articles", "/api/v1/articles/**",
                     "/api/v1/categories", "/api/v1/categories/**",
@@ -46,11 +48,13 @@ public class SecurityConfig {
                     "/api/v1/wishes", "/api/v1/wishes/**",
                     "/api/v1/obituaries", "/api/v1/obituaries/**",
                     "/api/v1/directory", "/api/v1/directory/**",
+                    "/api/v1/districts", "/api/v1/districts/**",
                     "/api/v1/home", "/api/v1/home/**",
                     "/api/v1/stories", "/api/v1/stories/**",
                     "/api/v1/web-stories", "/api/v1/web-stories/**",
                     "/api/v1/pages", "/api/v1/pages/**",
                     "/api/v1/comments", "/api/v1/comments/**",
+                    "/api/v1/report-news/saveUpdate",
                     "/robots.txt", "/sitemap.xml", "/rss.xml", "/news/**",
                     "/error"
                 ).permitAll()

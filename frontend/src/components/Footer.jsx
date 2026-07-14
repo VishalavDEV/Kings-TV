@@ -38,48 +38,38 @@ const Footer = () => {
           </div>
 
           <div className="footer-col">
-            <h5>{lang === 'en' ? 'More' : 'கூடுதல்'}</h5>
-            <Link to="/videos">{lang === 'en' ? 'Videos' : 'வீடியோக்கள்'}</Link>
-            <Link to="/live-tv">{lang === 'en' ? 'Live TV' : 'லைவ் டிவி'}</Link>
-            <Link to="/web-stories">{lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்'}</Link>
-            <Link to="/weather">{lang === 'en' ? 'Weather' : 'வானிலை'}</Link>
-          </div>
-
-          <div className="footer-col">
-            <h5>{lang === 'en' ? 'Information' : 'தகவல்'}</h5>
-            <Link to="/about-us">{lang === 'en' ? 'About Us' : 'எங்களைப் பற்றி'}</Link>
-            <Link to="/contact">{lang === 'en' ? 'Contact' : 'தொடர்புக்கு'}</Link>
-            <Link to="/advertise">{lang === 'en' ? 'Advertise' : 'விளம்பரம்'}</Link>
-            <Link to="/careers">{lang === 'en' ? 'Careers' : 'வேலைவாய்ப்பு'}</Link>
-            <Link to="/privacy-policy">{lang === 'en' ? 'Privacy Policy' : 'தனியுரிமைக் கொள்கை'}</Link>
-            <Link to="/terms-of-use">{lang === 'en' ? 'Terms of Use' : 'பயன்பாட்டு விதிமுறைகள்'}</Link>
-          </div>
-
-          <div className="footer-col">
             <h5>{lang === 'en' ? 'Download' : 'பதிவிறக்கம்'}</h5>
             <a href="https://play.google.com" target="_blank" rel="noopener noreferrer"><i className="fab fa-google-play"></i> Google Play</a>
             <a href="https://apps.apple.com" target="_blank" rel="noopener noreferrer"><i className="fab fa-apple"></i> App Store</a>
-            <div style={{ marginTop: '12px' }}>
-              <h5 style={{ marginBottom: '8px' }}>{lang === 'en' ? 'Follow Us' : 'பின்தொடர'}</h5>
-              <div className="footer-social">
-                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
-                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
-                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
-                <a href="https://whatsapp.com" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><i className="fab fa-whatsapp"></i></a>
-                <a href="https://telegram.org" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i className="fab fa-telegram-plane"></i></a>
-              </div>
+          </div>
+
+          <div className="footer-col">
+            <h5>{lang === 'en' ? 'Followers' : 'பின்தொடர'}</h5>
+            <div className="footer-social" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
+              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
+              <a href="https://whatsapp.com" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><i className="fab fa-whatsapp"></i></a>
+              <a href="https://telegram.org" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i className="fab fa-telegram-plane"></i></a>
             </div>
           </div>
         </div>
 
-        <div className="footer-bottom">
+        <div className="footer-bottom" style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center', justifyContent: 'space-between', padding: '20px 0' }}>
           <div>© {currentYear} <strong>KING 24x7</strong> - All Rights Reserved.</div>
-          <div>
-            <Link to="/">RSS Feeds</Link> <span style={{ margin: '0 8px', opacity: 0.3 }}>|</span>
-            <Link to="/">Sitemap</Link> <span style={{ margin: '0 8px', opacity: 0.3 }}>|</span>
-            <Link to="/">Accessibility</Link> <span style={{ margin: '0 8px', opacity: 0.3 }}>|</span>
-            <Link to="/terms-of-use">Terms</Link>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Link to="/about-us" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', fontSize: '13px' }}>{lang === 'en' ? 'About Us' : 'எங்களைப் பற்றி'}</Link>
+            <span style={{ opacity: 0.3 }}>|</span>
+            <Link to="/contact" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', fontSize: '13px' }}>{lang === 'en' ? 'Contact' : 'தொடர்புக்கு'}</Link>
+            <span style={{ opacity: 0.3 }}>|</span>
+            <Link to="/advertise" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', fontSize: '13px' }}>{lang === 'en' ? 'Advertise' : 'விளம்பரம் செய்ய'}</Link>
+            <span style={{ opacity: 0.3 }}>|</span>
+            <Link to="/careers" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', fontSize: '13px' }}>{lang === 'en' ? 'Careers' : 'வேலைவாய்ப்பு'}</Link>
+            <span style={{ opacity: 0.3 }}>|</span>
+            <Link to="/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', fontSize: '13px' }}>{lang === 'en' ? 'Privacy Policy' : 'தனியுரிமைக் கொள்கை'}</Link>
+            <span style={{ opacity: 0.3 }}>|</span>
+            <Link to="/terms-of-use" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', fontSize: '13px' }}>{lang === 'en' ? 'Terms & Conditions' : 'விதிமுறைகள்'}</Link>
           </div>
         </div>
       </div>

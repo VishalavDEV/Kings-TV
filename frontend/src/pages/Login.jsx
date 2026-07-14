@@ -1,103 +1,175 @@
-import React, { useContext, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useContext, useState, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { LanguageContext } from '../context/LanguageContext';
+import { authService } from '../services/authService';
 
 const Login = () => {
   const { login } = useContext(AuthContext);
-  const { t, lang } = useContext(LanguageContext);
+  const { lang } = useContext(LanguageContext);
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
   const [pwd, setPwd] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('');
-  const [selectedDisplayName, setSelectedDisplayName] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [toastText, setToastText] = useState('');
-  const [isRegister, setIsRegister] = useState(false);
-  const [fullName, setFullName] = useState('');
+  const [toastColor, setToastColor] = useState('#10B981');
+  const [rememberMe, setRememberMe] = useState(false);
+  const location = useLocation();
 
-  const rolesList = [
-    { role: 'admin', labelTa: 'நிர்வாகி (Admin)', labelEn: 'Admin', email: 'admin@king24x7.com', pwd: 'admin123' },
-    { role: 'vendor', labelTa: 'வணிகர் (Vendor)', labelEn: 'Vendor', email: 'vendor@king24x7.com', pwd: 'vendor123' },
-    { role: 'editor', labelTa: 'ஆசிரியர் (Editor)', labelEn: 'Editor', email: 'editor@king24x7.com', pwd: 'editor123' },
-    { role: 'reporter', labelTa: 'செய்தியாளர் (Reporter)', labelEn: 'Reporter', email: 'reporter@king24x7.com', pwd: 'reporter123' },
-    { role: 'user', labelTa: 'வாசகர் (User)', labelEn: 'User', email: 'user@king24x7.com', pwd: 'user123' }
-  ];
+  // Login method toggles
+  const [loginMethod, setLoginMethod] = useState('email'); // 'email' or 'phone'
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
+  const [phoneOtpCountdown, setPhoneOtpCountdown] = useState(60);
 
-  const handlePillClick = (item) => {
-    setEmail(item.email);
-    setPwd(item.pwd);
-    setSelectedRole(item.role);
-    setSelectedDisplayName(lang === 'en' ? item.labelEn : item.labelTa);
-  };
-
-  const handleEmailInput = (e) => {
-    setEmail(e.target.value);
-    setSelectedRole('');
-    setSelectedDisplayName('');
-  };
-
-  const handlePasswordInput = (e) => {
-    setPwd(e.target.value);
-    setSelectedRole('');
-    setSelectedDisplayName('');
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    const emailVal = email.toLowerCase();
-    let role = selectedRole;
-    let displayName = selectedDisplayName;
-
-    if (!role) {
-      if (emailVal.includes('admin')) {
-        role = 'admin';
-        displayName = lang === 'en' ? 'Admin' : 'நிர்வாகி (Admin)';
-      } else if (emailVal.includes('vendor')) {
-        role = 'vendor';
-        displayName = lang === 'en' ? 'Vendor' : 'வணிகர் (Vendor)';
-      } else if (emailVal.includes('editor')) {
-        role = 'editor';
-        displayName = lang === 'en' ? 'Editor' : 'ஆசிரியர் (Editor)';
-      } else if (emailVal.includes('reporter')) {
-        role = 'reporter';
-        displayName = lang === 'en' ? 'Reporter' : 'செய்தியாளர் (Reporter)';
-      } else {
-        role = 'user';
-        displayName = lang === 'en' ? 'User' : 'வாசகர் (User)';
-      }
+  useEffect(() => {
+    if (location.state?.isRegister) {
+      navigate('/register', { replace: true });
     }
+  }, [location.state, navigate]);
 
-    login({
-      email,
-      username: isRegister ? (fullName || email.split('@')[0]) : email.split('@')[0],
-      role,
-      displayName
-    });
-
-    if (isRegister) {
-      if (lang === 'en') {
-        setToastText(`Account created! Welcome, ${isRegister ? fullName : email.split('@')[0]}!`);
-      } else {
-        setToastText(`கணக்கு உருவாக்கப்பட்டது! நல்வரவு, ${isRegister ? fullName : email.split('@')[0]}!`);
-      }
+  // Handle countdown for phone OTP
+  useEffect(() => {
+    let interval = null;
+    if (phoneOtpSent && phoneOtpCountdown > 0) {
+      interval = setInterval(() => {
+        setPhoneOtpCountdown(prev => prev - 1);
+      }, 1000);
     } else {
-      if (lang === 'en') {
-        setToastText(`Successfully logged in as ${role.toUpperCase()}!`);
-      } else {
-        setToastText(`${displayName} வெற்றிகரமாக உள்நுழைந்தார்!`);
-      }
+      clearInterval(interval);
     }
-    
-    setShowToast(true);
+    return () => clearInterval(interval);
+  }, [phoneOtpSent, phoneOtpCountdown]);
 
+  // Forgot password flow states
+  const [forgotFlow, setForgotFlow] = useState(false);
+  const [otpStep, setOtpStep] = useState(1); // 1: Send OTP, 2: Verify OTP, 3: Reset Password
+  const [otpEmail, setOtpEmail] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [forgotError, setForgotError] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState('');
+  
+  // Social login simulation state
+  const [showSocialModal, setShowSocialModal] = useState(false);
+  const [socialProvider, setSocialProvider] = useState('');
+  const [socialName, setSocialName] = useState('');
+  const [socialEmail, setSocialEmail] = useState('');
+  const [socialImage, setSocialImage] = useState('');
+
+  const triggerToast = (text, color = '#10B981') => {
+    setToastText(text);
+    setToastColor(color);
+    setShowToast(true);
     setTimeout(() => {
       setShowToast(false);
-      navigate('/');
-    }, 1200);
+    }, 2500);
+  };
+
+  const handleSendPhoneOtp = () => {
+    if (!phoneNumber.trim()) {
+      triggerToast(lang === 'en' ? 'Please enter a valid phone number' : 'தயவுசெய்து செல்லுபடியாகும் தொலைபேசி எண்ணை உள்ளிடவும்', '#EF4444');
+      return;
+    }
+    setPhoneOtpSent(true);
+    setPhoneOtpCountdown(60);
+    triggerToast(lang === 'en' ? 'Simulated OTP code 123456 sent successfully!' : 'மாதிரி OTP குறியீடு 123456 வெற்றிகரமாக அனுப்பப்பட்டது!');
+  };
+
+  const handlePhoneAuth = async (e) => {
+    e.preventDefault();
+    if (phoneOtp !== '123456') {
+      triggerToast(lang === 'en' ? 'Invalid OTP code! Use 123456 for testing.' : 'தவறான OTP குறியீடு! சோதனைக்கு 123456 ஐப் பயன்படுத்தவும்.', '#EF4444');
+      return;
+    }
+
+    try {
+      const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
+      const mockEmail = `phone_${cleanPhone}@king24x7.com`;
+      const mockName = `Phone User ${cleanPhone.slice(-4)}`;
+      
+      const res = await authService.googleLogin(mockEmail, mockName, '');
+      login(res.user, res.accessToken, res.refreshToken, rememberMe);
+      triggerToast(lang === 'en' ? 'Successfully logged in with Phone!' : 'தொலைபேசி மூலம் வெற்றிகரமாக உள்நுழைந்தீர்கள்!');
+      setTimeout(() => navigate('/'), 1200);
+    } catch (err) {
+      triggerToast(err.message, '#EF4444');
+    }
+  };
+
+  const handleManualAuth = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await authService.login(email, pwd);
+      login(res.user, res.accessToken, res.refreshToken, rememberMe);
+      triggerToast(lang === 'en' ? 'Successfully logged in!' : 'வெற்றிகரமாக உள்நுழைந்துவிட்டீர்கள்!');
+      setTimeout(() => navigate('/'), 1200);
+    } catch (err) {
+      triggerToast(err.message, '#EF4444');
+    }
+  };
+
+  const handleSocialClick = (provider) => {
+    setSocialProvider(provider);
+    
+    if (provider === 'google') {
+      setSocialName('Google Tester');
+      setSocialEmail('google.tester@gmail.com');
+      setSocialImage('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150');
+    }
+    
+    setShowSocialModal(true);
+  };
+
+  const submitSocialAuth = async (e) => {
+    e.preventDefault();
+    setShowSocialModal(false);
+
+    try {
+      let res;
+      if (socialProvider === 'google') {
+        res = await authService.googleLogin(socialEmail, socialName, socialImage);
+      } else {
+        return;
+      }
+
+      login(res.user, res.accessToken, res.refreshToken, rememberMe);
+      triggerToast(lang === 'en' ? `Connected with ${socialProvider.toUpperCase()}!` : `${socialProvider.toUpperCase()} உடன் இணைக்கப்பட்டது!`);
+      setTimeout(() => navigate('/'), 1200);
+    } catch (err) {
+      triggerToast(err.message, '#EF4444');
+    }
+  };
+
+  const handleForgotSubmit = async (e) => {
+    e.preventDefault();
+    setForgotError('');
+    setForgotSuccess('');
+
+    try {
+      if (otpStep === 1) {
+        await authService.forgotPassword(otpEmail);
+        setForgotSuccess('OTP code printed to backend terminal logs!');
+        setOtpStep(2);
+      } else if (otpStep === 2) {
+        await authService.verifyOtp(otpEmail, otpCode);
+        setForgotSuccess('OTP verified successfully! Please enter your new password.');
+        setOtpStep(3);
+      } else if (otpStep === 3) {
+        await authService.resetPassword(otpEmail, otpCode, newPassword);
+        triggerToast('Password reset successfully. Please log in.', '#10B981');
+        setForgotFlow(false);
+        setOtpStep(1);
+        setOtpEmail('');
+        setOtpCode('');
+        setNewPassword('');
+      }
+    } catch (err) {
+      setForgotError(err.message);
+    }
   };
 
   return (
@@ -107,219 +179,665 @@ const Login = () => {
         <div className="login-left" style={{ background: 'rgba(0, 0, 0, 0.3)', padding: '40px 30px', borderRight: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div className="login-left-header">
             <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--primary)', letterSpacing: '1px', marginBottom: '8px' }}>KINGS 24x7</div>
-            <h2 id="leftTitle" style={{ fontSize: '22px', fontWeight: 800, color: 'white', lineHeight: 1.3, marginBottom: '12px' }}>
-              {lang === 'en' ? 'Authentication Hub' : 'அங்கீகார மையம்'}
+            <h2 style={{ fontSize: '22px', fontWeight: 800, color: 'white', lineHeight: 1.3, marginBottom: '12px' }}>
+              {forgotFlow 
+                ? (lang === 'en' ? 'Password Reset' : 'கடவுச்சொல் மீட்பு')
+                : (lang === 'en' ? 'Authentication Hub' : 'அங்கீகார மையம்')}
             </h2>
-            <p id="leftDesc" style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.6)', lineHeight: 1.6 }}>
+            <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.6)', lineHeight: 1.6 }}>
               {lang === 'en' ? 'Truth. Responsibility. In Tamil. Access portal components tailored to your role.' : 'உண்மை. பொறுப்பு. தமிழில். உங்கள் பங்கிற்கு ஏற்ப வடிவமைக்கப்பட்ட பக்கங்களை அணுகவும்.'}
             </p>
           </div>
 
-          <div className="logo-display-section" style={{ marginTop: '40px', flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {!forgotFlow && (
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.4)', fontStyle: 'italic' }}>
+                {lang === 'en' ? 'Access your personalized news experience.' : 'உங்களின் பிரத்யேக செய்தி அனுபவத்தை அணுகவும்.'}
+              </p>
+            </div>
+          )}
+
+          <div style={{ marginTop: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img 
               src="/assets/icons/logo-icon-dark.png" 
-              alt="Kings TV Logo" 
-              style={{ maxWidth: '140px', height: 'auto', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', filter: 'drop-shadow(0 4px 10px rgba(179,115,42,0.2))' }}
+              alt="Logo" 
+              style={{ maxWidth: '90px', height: 'auto', opacity: 0.8 }}
             />
           </div>
         </div>
 
         <div className="login-right" style={{ padding: '50px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div className="login-right-header" style={{ marginBottom: '32px' }}>
-            <h3 id="rightTitle" style={{ fontSize: '28px', fontWeight: 800, color: 'white', marginBottom: '8px' }}>
-              {isRegister ? (lang === 'en' ? 'Create Account' : 'கணக்கை உருவாக்கு') : (lang === 'en' ? 'Welcome Back!' : 'நல்வரவு!')}
-            </h3>
-            <p id="rightSubtitle" style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.5 }}>
-              {isRegister ? (lang === 'en' ? 'Join KINGS 24x7. Enter your details to create an account.' : 'கிங்ஸ் 24x7-ல் இணையுங்கள். கணக்கை உருவாக்க விவரங்களை உள்ளிடவும்.') : (lang === 'en' ? 'Enter your email and password to access your role workspace.' : 'உங்கள் பங்கிற்கான பணியிடத்தை அணுக மின்னஞ்சல் மற்றும் கடவுச்சொல்லை உள்ளிடவும்.')}
-            </p>
-          </div>
+          
+          {forgotFlow ? (
+            <div>
+              <div style={{ marginBottom: '32px' }}>
+                <h3 style={{ fontSize: '28px', fontWeight: 800, color: 'white', marginBottom: '8px' }}>
+                  Forgot Password?
+                </h3>
+                <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.5 }}>
+                  {otpStep === 1 && 'Enter your email to receive a 6-digit OTP verification code.'}
+                  {otpStep === 2 && 'Enter the 6-digit OTP code printed in your backend server logs.'}
+                  {otpStep === 3 && 'Choose a secure new password.'}
+                </p>
+              </div>
 
-          <form id="loginForm" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {isRegister && (
-              <div className="form-group" style={{ position: 'relative' }}>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.7)', display: 'block', marginBottom: '8px' }}>
-                  {lang === 'en' ? 'Full Name *' : 'முழு பெயர் *'}
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <i className="fas fa-user" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.4)' }}></i>
-                  <input 
-                    type="text" 
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required 
-                    placeholder={lang === 'en' ? 'Your Name' : 'உங்கள் பெயர்'} 
-                    style={{
-                      width: '100%',
-                      padding: '14px 16px 14px 44px',
-                      background: 'rgba(255, 255, 255, 0.03)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '8px',
-                      color: 'white',
-                      outline: 'none',
-                      fontSize: '14px',
-                      transition: 'all 0.3s'
-                    }}
-                  />
+              {forgotError && (
+                <div style={{ color: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '12px', borderRadius: '6px', fontSize: '13px', marginBottom: '16px', fontWeight: 600 }}>
+                  {forgotError}
                 </div>
-              </div>
-            )}
+              )}
+              {forgotSuccess && (
+                <div style={{ color: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '12px', borderRadius: '6px', fontSize: '13px', marginBottom: '16px', fontWeight: 600 }}>
+                  {forgotSuccess}
+                </div>
+              )}
 
-            <div className="form-group" style={{ position: 'relative' }}>
-              <label id="labelEmail" style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.7)', display: 'block', marginBottom: '8px' }}>
-                {lang === 'en' ? 'Email Address *' : 'மின்னஞ்சல் முகவரி *'}
-              </label>
-              <div style={{ position: 'relative' }}>
-                <i className="fas fa-envelope" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.4)' }}></i>
-                <input 
-                  type="email" 
-                  value={email}
-                  onChange={handleEmailInput}
-                  required 
-                  placeholder="name@king24x7.com" 
+              <form onSubmit={handleForgotSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {otpStep === 1 && (
+                  <div className="form-group">
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.7)', display: 'block', marginBottom: '8px' }}>
+                      Email Address
+                    </label>
+                    <input 
+                      type="email" 
+                      required
+                      value={otpEmail}
+                      onChange={(e) => setOtpEmail(e.target.value)}
+                      placeholder="name@email.com"
+                      style={{
+                        width: '100%',
+                        padding: '14px 16px',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '8px',
+                        color: 'white',
+                        outline: 'none',
+                        fontSize: '14px'
+                      }}
+                    />
+                  </div>
+                )}
+
+                {otpStep === 2 && (
+                  <div className="form-group">
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.7)', display: 'block', marginBottom: '8px' }}>
+                      Enter 6-Digit OTP Code
+                    </label>
+                    <input 
+                      type="text" 
+                      required
+                      maxLength="6"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value)}
+                      placeholder="123456"
+                      style={{
+                        width: '100%',
+                        padding: '14px 16px',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '8px',
+                        color: 'white',
+                        outline: 'none',
+                        fontSize: '14px',
+                        letterSpacing: '8px',
+                        textAlign: 'center',
+                        fontWeight: 'bold'
+                      }}
+                    />
+                  </div>
+                )}
+
+                {otpStep === 3 && (
+                  <div className="form-group">
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.7)', display: 'block', marginBottom: '8px' }}>
+                      Choose New Password (Min 8 characters)
+                    </label>
+                    <input 
+                      type="password" 
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      style={{
+                        width: '100%',
+                        padding: '14px 16px',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '8px',
+                        color: 'white',
+                        outline: 'none',
+                        fontSize: '14px'
+                      }}
+                    />
+                  </div>
+                )}
+
+                <button 
+                  type="submit"
                   style={{
                     width: '100%',
-                    padding: '14px 16px 14px 44px',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '8px',
+                    padding: '14px',
+                    background: 'var(--primary)',
                     color: 'white',
-                    outline: 'none',
-                    fontSize: '14px',
-                    transition: 'all 0.3s'
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="form-group" style={{ position: 'relative' }}>
-              <label id="labelPwd" style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.7)', display: 'block', marginBottom: '8px' }}>
-                {lang === 'en' ? 'Password *' : 'கடவுச்சொல் *'}
-              </label>
-              <div style={{ position: 'relative' }}>
-                <i className="fas fa-lock" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.4)' }}></i>
-                <input 
-                  type={showPassword ? 'text' : 'password'} 
-                  value={pwd}
-                  onChange={handlePasswordInput}
-                  required 
-                  placeholder="••••••••" 
-                  style={{
-                    width: '100%',
-                    padding: '14px 44px 14px 44px',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '8px',
-                    color: 'white',
-                    outline: 'none',
-                    fontSize: '14px',
-                    transition: 'all 0.3s'
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(prev => !prev)}
-                  style={{
-                    position: 'absolute',
-                    right: '16px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'transparent',
+                    fontWeight: 700,
                     border: 'none',
-                    color: 'rgba(255, 255, 255, 0.4)',
+                    borderRadius: '8px',
                     cursor: 'pointer',
-                    outline: 'none'
+                    fontSize: '15px',
+                    boxShadow: '0 4px 15px rgba(179,115,42,0.3)',
+                    transition: 'all 0.3s'
                   }}
                 >
-                  <i className={showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'}></i>
+                  {otpStep === 1 && 'Send Verification Code'}
+                  {otpStep === 2 && 'Verify OTP'}
+                  {otpStep === 3 && 'Reset Password'}
                 </button>
-              </div>
-            </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '8px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input type="checkbox" style={{ accentColor: 'var(--primary)' }} />
-                <span id="rememberText">{lang === 'en' ? 'Remember Me' : 'என்னை நினைவில் கொள்'}</span>
-              </label>
-              <a href="#" id="forgotText" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
-                {lang === 'en' ? 'Forgot Password?' : 'கடவுச்சொல் மறந்துவிட்டதா?'}
-              </a>
-            </div>
-
-            <button 
-              type="submit" 
-              style={{
-                width: '100%',
-                padding: '14px',
-                background: 'var(--primary)',
-                color: 'white',
-                fontWeight: 700,
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '15px',
-                marginTop: '16px',
-                boxShadow: '0 4px 15px rgba(0, 87, 255, 0.3)',
-                transition: 'all 0.3s'
-              }}
-            >
-              <span id="submitBtnText">{isRegister ? (lang === 'en' ? 'Sign Up' : 'பதிவு செய்') : (lang === 'en' ? 'Sign In' : 'உள்நுழைய')}</span>
-            </button>
-
-            <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)' }}>
-              {isRegister ? (
-                <>
-                  {lang === 'en' ? 'Already have an account? ' : 'ஏற்கனவே கணக்கு உள்ளதா? '}
+                <div style={{ textAlign: 'center', marginTop: '10px' }}>
                   <span 
                     onClick={() => {
-                      setIsRegister(false);
-                      setFullName('');
+                      setForgotFlow(false);
+                      setOtpStep(1);
                     }} 
-                    style={{ color: 'var(--primary)', cursor: 'pointer', fontWeight: 700 }}
+                    style={{ color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}
                   >
-                    {lang === 'en' ? 'Sign In' : 'உள்நுழைய'}
+                    ← Back to Login
                   </span>
-                </>
-              ) : (
-                <>
-                  {lang === 'en' ? "Don't have an account? " : 'புதிய கணக்கு வேண்டுமா? '}
-                  <span 
-                    onClick={() => setIsRegister(true)} 
-                    style={{ color: 'var(--primary)', cursor: 'pointer', fontWeight: 700 }}
-                  >
-                    {lang === 'en' ? 'Create Account' : 'கணக்கை உருவாக்கு'}
-                  </span>
-                </>
-              )}
+                </div>
+              </form>
             </div>
-          </form>
+          ) : (
+            <div>
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '28px', fontWeight: 800, color: 'white', marginBottom: '8px' }}>
+                  {lang === 'en' ? 'Welcome Back!' : 'நல்வரவு!'}
+                </h3>
+                <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.5 }}>
+                  {loginMethod === 'email'
+                    ? (lang === 'en' ? 'Enter your email and password to access your role workspace.' : 'உங்கள் பங்கிற்கான பணியிடத்தை அணுக மின்னஞ்சல் மற்றும் கடவுச்சொல்லை உள்ளிடவும்.')
+                    : (lang === 'en' ? 'Enter your phone number to receive a simulated OTP code.' : 'மாதிரி OTP குறியீட்டைப் பெற உங்கள் தொலைபேசி எண்ணை உள்ளிடவும்.')}
+                </p>
+              </div>
+
+              {/* Login Method Tabs */}
+              <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '24px' }}>
+                <button
+                  type="button"
+                  onClick={() => setLoginMethod('email')}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: loginMethod === 'email' ? '2px solid var(--primary)' : '2px solid transparent',
+                    color: loginMethod === 'email' ? 'white' : 'rgba(255,255,255,0.4)',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {lang === 'en' ? 'Email Login' : 'மின்னஞ்சல் உள்நுழைவு'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLoginMethod('phone')}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: loginMethod === 'phone' ? '2px solid var(--primary)' : '2px solid transparent',
+                    color: loginMethod === 'phone' ? 'white' : 'rgba(255,255,255,0.4)',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {lang === 'en' ? 'Phone OTP' : 'தொலைபேசி OTP'}
+                </button>
+              </div>
+
+              {loginMethod === 'email' ? (
+                <form onSubmit={handleManualAuth} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div className="form-group" style={{ position: 'relative' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.7)', display: 'block', marginBottom: '8px' }}>
+                      {lang === 'en' ? 'Email Address *' : 'மின்னஞ்சல் முகவரி *'}
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <i className="fas fa-envelope" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.4)' }}></i>
+                      <input 
+                        type="email" 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required 
+                        placeholder="name@email.com" 
+                        style={{
+                          width: '100%',
+                          padding: '14px 16px 14px 44px',
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '8px',
+                          color: 'white',
+                          outline: 'none',
+                          fontSize: '14px',
+                          transition: 'all 0.3s'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group" style={{ position: 'relative' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.7)', display: 'block', marginBottom: '8px' }}>
+                      {lang === 'en' ? 'Password *' : 'கடவுச்சொல் *'}
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <i className="fas fa-lock" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.4)' }}></i>
+                      <input 
+                        type={showPassword ? 'text' : 'password'} 
+                        value={pwd}
+                        onChange={(e) => setPwd(e.target.value)}
+                        required 
+                        placeholder="••••••••" 
+                        style={{
+                          width: '100%',
+                          padding: '14px 44px 14px 44px',
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '8px',
+                          color: 'white',
+                          outline: 'none',
+                          fontSize: '14px',
+                          transition: 'all 0.3s'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(prev => !prev)}
+                        style={{
+                          position: 'absolute',
+                          right: '16px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'rgba(255, 255, 255, 0.4)',
+                          cursor: 'pointer',
+                          outline: 'none'
+                        }}
+                      >
+                        <i className={showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'}></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '8px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        style={{ accentColor: 'var(--primary)' }} 
+                      />
+                      <span>{lang === 'en' ? 'Remember Me' : 'என்னை நினைவில் கொள்'}</span>
+                    </label>
+                    <span 
+                      onClick={() => {
+                        setForgotFlow(true);
+                        setOtpStep(1);
+                        setOtpEmail(email);
+                      }} 
+                      style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      {lang === 'en' ? 'Forgot Password?' : 'கடவுச்சொல் மறந்துவிட்டதா?'}
+                    </span>
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    style={{
+                      width: '100%',
+                      padding: '14px',
+                      background: 'var(--primary)',
+                      color: 'white',
+                      fontWeight: 700,
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '15px',
+                      marginTop: '16px',
+                      boxShadow: '0 4px 15px rgba(179, 115, 42, 0.3)',
+                      transition: 'all 0.3s'
+                    }}
+                  >
+                    <span>{lang === 'en' ? 'Sign In' : 'உள்நுழைய'}</span>
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handlePhoneAuth} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div className="form-group" style={{ position: 'relative' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.7)', display: 'block', marginBottom: '8px' }}>
+                      {lang === 'en' ? 'Phone Number *' : 'தொலைபேசி எண் *'}
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <i className="fas fa-phone" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.4)' }}></i>
+                      <input 
+                        type="tel" 
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        required 
+                        disabled={phoneOtpSent}
+                        placeholder={lang === 'en' ? 'e.g. +91 98765 43210' : 'எ.கா: +91 98765 43210'}
+                        style={{
+                          width: '100%',
+                          padding: '14px 16px 14px 44px',
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '8px',
+                          color: 'white',
+                          outline: 'none',
+                          fontSize: '14px',
+                          transition: 'all 0.3s'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {phoneOtpSent && (
+                    <div className="form-group" style={{ position: 'relative' }}>
+                      <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.7)', display: 'block', marginBottom: '8px' }}>
+                        {lang === 'en' ? '6-Digit OTP Code *' : '6-இலக்க OTP குறியீடு *'}
+                      </label>
+                      <div style={{ position: 'relative' }}>
+                        <i className="fas fa-key" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.4)' }}></i>
+                        <input 
+                          type="text" 
+                          maxLength="6"
+                          value={phoneOtp}
+                          onChange={(e) => setPhoneOtp(e.target.value)}
+                          required 
+                          placeholder="e.g. 123456" 
+                          style={{
+                            width: '100%',
+                            padding: '14px 16px 14px 44px',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '8px',
+                            color: 'white',
+                            outline: 'none',
+                            fontSize: '14px',
+                            transition: 'all 0.3s'
+                          }}
+                        />
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>{lang === 'en' ? 'Simulated OTP is: 123456' : 'மாதிரி OTP: 123456'}</span>
+                        {phoneOtpCountdown > 0 ? (
+                          <span>Resend in {phoneOtpCountdown}s</span>
+                        ) : (
+                          <span 
+                            onClick={handleSendPhoneOtp} 
+                            style={{ color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}
+                          >
+                            {lang === 'en' ? 'Resend OTP' : 'OTP-ஐ மீண்டும் அனுப்பு'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {!phoneOtpSent ? (
+                    <button 
+                      type="button" 
+                      onClick={handleSendPhoneOtp}
+                      style={{
+                        width: '100%',
+                        padding: '14px',
+                        background: 'var(--primary)',
+                        color: 'white',
+                        fontWeight: 700,
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '15px',
+                        marginTop: '16px',
+                        boxShadow: '0 4px 15px rgba(179, 115, 42, 0.3)',
+                        transition: 'all 0.3s'
+                      }}
+                    >
+                      <span>{lang === 'en' ? 'Send OTP' : 'OTP அனுப்பு'}</span>
+                    </button>
+                  ) : (
+                    <button 
+                      type="submit" 
+                      style={{
+                        width: '100%',
+                        padding: '14px',
+                        background: 'var(--primary)',
+                        color: 'white',
+                        fontWeight: 700,
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '15px',
+                        marginTop: '16px',
+                        boxShadow: '0 4px 15px rgba(179, 115, 42, 0.3)',
+                        transition: 'all 0.3s'
+                      }}
+                    >
+                      <span>{lang === 'en' ? 'Verify & Sign In' : 'சரிபார்த்து உள்நுழைய'}</span>
+                    </button>
+                  )}
+                </form>
+              )}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '20px 0' }}>
+                <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }}></div>
+                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', fontWeight: 600, textTransform: 'uppercase' }}>or</span>
+                <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }}></div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => handleSocialClick('google')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px',
+                    width: '100%',
+                    padding: '12px',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '8px',
+                    color: '#ffffff',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                  }}
+                >
+                  <i className="fab fa-google" style={{ color: '#EA4335' }}></i> {lang === 'en' ? 'Continue with Google' : 'கூகுள் மூலம் தொடரவும்'}
+                </button>
+              </div>
+
+              <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)' }}>
+                {lang === 'en' ? "Don't have an account? " : 'புதிய கணக்கு வேண்டுமா? '}
+                <Link 
+                  to="/register" 
+                  style={{ color: 'var(--primary)', cursor: 'pointer', fontWeight: 700, textDecoration: 'none' }}
+                >
+                  {lang === 'en' ? 'Create Account' : 'கணக்கை உருவாக்கு'}
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>
 
+      {/* SIMULATED OAUTH CONSENT MODAL */}
+      {showSocialModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#121212',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '12px',
+            width: '100%',
+            maxWidth: '450px',
+            padding: '30px',
+            boxShadow: '0 25px 50px rgba(0,0,0,0.6)'
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <span style={{
+                fontSize: '28px',
+                display: 'inline-flex',
+                padding: '12px',
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.05)',
+                marginBottom: '12px'
+              }}>
+                {socialProvider === 'google' && <i className="fab fa-google" style={{ color: '#EA4335' }}></i>}
+                {socialProvider === 'apple' && <i className="fab fa-apple" style={{ color: '#ffffff' }}></i>}
+                {socialProvider === 'facebook' && <i className="fab fa-facebook" style={{ color: '#1877F2' }}></i>}
+              </span>
+              <h4 style={{ fontSize: '18px', fontWeight: 800, color: '#ffffff' }}>
+                Simulated {socialProvider.toUpperCase()} OAuth Consent
+              </h4>
+              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>
+                Testing production-ready sign-in flow. Modify credentials below if desired.
+              </p>
+            </div>
+
+            <form onSubmit={submitSocialAuth} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="form-group">
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: '6px' }}>
+                  Mock Full Name
+                </label>
+                <input 
+                  type="text"
+                  required
+                  value={socialName}
+                  onChange={(e) => setSocialName(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '6px',
+                    color: 'white',
+                    fontSize: '13px'
+                  }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: '6px' }}>
+                  Mock Email Address
+                </label>
+                <input 
+                  type="email"
+                  required
+                  value={socialEmail}
+                  onChange={(e) => setSocialEmail(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '6px',
+                    color: 'white',
+                    fontSize: '13px'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowSocialModal(false)}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    background: 'transparent',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: 'white',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    background: 'var(--primary)',
+                    border: 'none',
+                    color: 'white',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: '700'
+                  }}
+                >
+                  Confirm & Connect
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <div 
         className={`toast ${showToast ? 'show' : ''}`} 
-        id="successToast"
         style={{
           position: 'fixed',
           bottom: '24px',
           left: '50%',
           transform: 'translateX(-50%) ' + (showToast ? 'translateY(0)' : 'translateY(100px)'),
           opacity: showToast ? 1 : 0,
-          background: '#10B981',
+          background: toastColor,
           color: 'white',
           padding: '16px 32px',
           borderRadius: '8px',
-          boxShadow: '0 10px 25px -5px rgba(16, 185, 129, 0.3)',
+          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)',
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
           fontWeight: 700,
-          zIndex: 9999,
+          zIndex: 99999,
           transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
-        <i className="fas fa-check-circle" style={{ fontSize: '20px' }}></i>
-        <span id="toastText">{toastText}</span>
+        <i className={toastColor === '#EF4444' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle'} style={{ fontSize: '20px' }}></i>
+        <span>{toastText}</span>
       </div>
     </div>
   );

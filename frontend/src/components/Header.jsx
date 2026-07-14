@@ -1,15 +1,87 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useContext, useEffect, useState, useRef } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { AuthContext } from '../context/AuthContext';
 import { fetchApi } from '../utils/api';
+import UserAvatar from './UserAvatar';
+import UserDropdown from './UserDropdown';
+
+const subcatEnTranslations = {
+  'மாநிலம்': 'State',
+  'தேசியம்': 'National',
+  'சர்வதேசம்': 'International',
+  'அரசு கொள்கைகள்': 'Governance',
+  'சந்தை': 'Markets',
+  'நிறுவனங்கள்': 'Companies',
+  'முதலீடு': 'Investment',
+  'ஸ்டார்ட்அப்': 'Startups',
+  'கிரிக்கெட்': 'Cricket',
+  'கால்பந்து': 'Football',
+  'டென்னிஸ்': 'Tennis',
+  'உள்ளூர்': 'Local Sports',
+  'கோலிவுட்': 'Kollywood',
+  'பாலிவுட்': 'Bollywood',
+  'விமர்சனங்கள்': 'Reviews',
+  'இசை': 'Music',
+  'ஸ்மார்ட்போன்': 'Smartphones',
+  'மென்பொருள்': 'Software',
+  'AI': 'AI',
+  'விண்வெளி': 'Space',
+  'உலக செய்திகள்': 'World News',
+  'state': 'State',
+  'national': 'National',
+  'international': 'International',
+  'governance': 'Governance',
+  'markets': 'Markets',
+  'companies': 'Companies',
+  'investment': 'Investment',
+  'startups': 'Startups',
+  'cricket': 'Cricket',
+  'football': 'Football',
+  'tennis': 'Tennis',
+  'local sports': 'Local Sports',
+  'kollywood': 'Kollywood',
+  'bollywood': 'Bollywood',
+  'reviews': 'Reviews',
+  'music': 'Music',
+  'smartphones': 'Smartphones',
+  'software': 'Software',
+  'space': 'Space',
+  'world news': 'World News'
+};
 
 const Header = () => {
   const { t, lang, setLang } = useContext(LanguageContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
-  const { session, logout } = useContext(AuthContext);
+  const { session, logout, user, isAuthenticated } = useContext(AuthContext);
   const location = useLocation();
+  const navigate = useNavigate();
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const unauthDropdownRef = useRef(null);
+
+  const getSubcatEn = (s) => {
+    if (!s) return '';
+    const nameStr = s.name || '';
+    const nameTaStr = s.nameTa || '';
+    return subcatEnTranslations[nameStr] || subcatEnTranslations[nameTaStr] || subcatEnTranslations[nameStr.toLowerCase()] || nameStr;
+  };
+
+  const handleLogout = async () => {
+    setShowUserDropdown(false);
+    await logout();
+    navigate('/login');
+  };
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (showUserDropdown && unauthDropdownRef.current && !unauthDropdownRef.current.contains(e.target)) {
+        setShowUserDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [showUserDropdown]);
 
   const regionalPaths = ['/directory', '/wishes', '/obituaries', '/jobs', '/classifieds', '/business-studies'];
   const isRegionalPage = regionalPaths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
@@ -21,6 +93,80 @@ const Header = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [navCategories, setNavCategories] = useState([]);
+  const [districtsList, setDistrictsList] = useState([]);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [dropdownTimer, setDropdownTimer] = useState(null);
+  const [mobileExpandedCat, setMobileExpandedCat] = useState(null);
+
+  const getDynamicNavItems = () => {
+    let dynamicItems = [];
+    if (navCategories && navCategories.length > 0) {
+      dynamicItems = navCategories.map(cat => {
+        let path = `/category/${cat.slug}`;
+        if (cat.slug === 'web-stories') path = '/web-stories';
+        else if (cat.slug === 'video') path = '/videos';
+        else if (cat.slug === 'regional') path = '/directory';
+
+        const enTranslations = {
+          'politics': 'Politics',
+          'business': 'Business',
+          'sports': 'Sports',
+          'cinema': 'Cinema',
+          'tech': 'Technology',
+          'technology': 'Technology',
+          'regional': 'Regional',
+          'international': 'International',
+          'world': 'International',
+          'video': 'Videos',
+          'videos': 'Videos',
+          'web-stories': 'Web Stories'
+        };
+
+        const labelVal = lang === 'en' 
+          ? (enTranslations[cat.slug.toLowerCase()] || cat.name) 
+          : cat.nameTa;
+
+        return {
+          id: cat.id,
+          path,
+          label: labelVal,
+          subcategories: cat.subcategories
+        };
+      });
+      // Prepend Home category
+      dynamicItems.unshift({
+        id: 'home',
+        path: '/',
+        label: lang === 'en' ? 'Home' : 'முகப்பு',
+        subcategories: []
+      });
+    }
+
+    return isRegionalPage 
+      ? [
+          { path: '/', label: t('முகப்பு'), subcategories: [] },
+          { path: '/directory', label: t('நம்ம ஊர்'), subcategories: [] },
+          { path: '/wishes', label: t('வாழ்த்து'), subcategories: [] },
+          { path: '/obituaries', label: t('இரங்கல்'), subcategories: [] },
+          { path: '/business-studies', label: t('வணிகம்'), subcategories: [] },
+          { path: '/jobs', label: t('வேலை'), subcategories: [] },
+          { path: '/classifieds', label: t('தள்ளுபடி'), subcategories: [] }
+        ]
+      : (dynamicItems.length > 0 ? dynamicItems : [
+          { path: '/', label: lang === 'en' ? 'Home' : 'முகப்பு', subcategories: [] },
+          { path: '/category/politics', label: lang === 'en' ? 'Politics' : 'அரசியல்', subcategories: [] },
+          { path: '/category/business', label: lang === 'en' ? 'Business' : 'வணிகம்', subcategories: [] },
+          { path: '/category/sports', label: lang === 'en' ? 'Sports' : 'விளையாட்டு', subcategories: [] },
+          { path: '/category/cinema', label: lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு', subcategories: [] },
+          { path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்', subcategories: [] },
+          { path: '/directory', label: lang === 'en' ? 'Regional' : 'மாநிலம்', subcategories: [] },
+          { path: '/category/international', label: lang === 'en' ? 'International' : 'சர்வதேசம்', subcategories: [] },
+          { path: '/videos', label: lang === 'en' ? 'Video' : 'வீடியோ', subcategories: [] },
+          { path: '/web-stories', label: lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்', subcategories: [] }
+        ]);
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
   const [allArticles, setAllArticles] = useState([]);
   const [allVideos, setAllVideos] = useState([]);
@@ -247,47 +393,164 @@ const Header = () => {
     const isDark = forceDark || theme === 'dark';
     const logoUrl = isDark ? "/assets/images/logo-banner-dark.png" : "/assets/images/logo-banner-light.png";
     return (
-      <Link to="/" className="logo-link" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textDecoration: 'none' }}>
+      <Link to="/" className="logo-link" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
         <img 
           src={logoUrl} 
           alt="KING 24x7" 
-          style={{ height: size === 'small' ? '40px' : '55px', width: 'auto', objectFit: 'contain', display: 'block' }} 
+          className="header-logo-img"
+          style={{ height: size === 'small' ? '30px' : '55px', width: 'auto', objectFit: 'contain', display: 'block' }} 
         />
       </Link>
     );
   };
 
   const renderLiveTvBtn = () => (
-    <Link to="/live-tv" className="livetv-btn" style={{
-      background: '#EF4444',
-      color: '#FFFFFF',
-      padding: '4px 10px',
-      borderRadius: '4px',
-      fontSize: '12px',
-      fontWeight: '700',
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '6px',
-      textDecoration: 'none',
-      border: 'none'
-    }}>
-      <span style={{
-        display: 'inline-block',
-        width: '6px',
-        height: '6px',
-        borderRadius: '50%',
-        background: '#FFFFFF'
-      }}></span>
-      {lang === 'en' ? 'LIVE' : 'லைவ்'}
-    </Link>
+    <>
+      <style>{`
+        @keyframes live-tv-blink {
+          0% {
+            opacity: 0.5;
+            box-shadow: 0 0 4px rgba(239, 68, 68, 0.4);
+          }
+          100% {
+            opacity: 1;
+            box-shadow: 0 0 16px #EF4444, 0 0 6px rgba(239, 68, 68, 0.6);
+          }
+        }
+        @keyframes live-dot-white-pulse {
+          0% {
+            transform: scale(0.65);
+            opacity: 0.2;
+          }
+          100% {
+            transform: scale(1.3);
+            opacity: 1;
+          }
+        }
+      `}</style>
+      <Link to="/live-tv" className="livetv-btn" style={{
+        background: '#EF4444',
+        border: '1px solid #B91C1C',
+        color: '#FFFFFF',
+        padding: '3px 10px 3px 8px',
+        borderRadius: '6px',
+        fontSize: '10px',
+        fontWeight: '800',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        textDecoration: 'none',
+        height: '24px',
+        transition: 'all 0.2s ease',
+        whiteSpace: 'nowrap',
+        boxShadow: 'inset 0 0 3px rgba(255,255,255,0.2)',
+        animation: 'live-tv-blink 1s infinite alternate ease-in-out'
+      }}>
+        <i className="fas fa-tv" style={{ fontSize: '10px', color: '#FFFFFF' }}></i>
+        <span style={{
+          display: 'inline-block',
+          width: '5px',
+          height: '5px',
+          borderRadius: '50%',
+          background: '#FFFFFF',
+          animation: 'live-dot-white-pulse 0.5s infinite alternate ease-in-out'
+        }}></span>
+        <span style={{ letterSpacing: '0.5px' }}>{lang === 'en' ? 'LIVE' : 'லைவ்'}</span>
+      </Link>
+    </>
   );
 
   const renderProfileIcon = () => {
-    const linkTarget = (session && session.isLoggedIn) ? "/profile" : "/login";
+    if (isAuthenticated && user) {
+      return (
+        <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+          <UserAvatar user={user} size={30} onClick={() => setShowUserDropdown(!showUserDropdown)} />
+          <UserDropdown 
+            isOpen={showUserDropdown} 
+            onClose={() => setShowUserDropdown(false)} 
+            onLogout={handleLogout} 
+          />
+        </div>
+      );
+    }
+    
     return (
-      <Link to={linkTarget} style={{ color: '#ffffff', fontSize: '22px', display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }} aria-label="User Account">
-        <i className="fas fa-user-circle"></i>
-      </Link>
+      <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+        <button 
+          onClick={() => setShowUserDropdown(!showUserDropdown)} 
+          style={{ background: 'transparent', border: 'none', color: '#ffffff', fontSize: '20px', display: 'inline-flex', alignItems: 'center', cursor: 'pointer', padding: '2px' }} 
+          aria-label="User Account"
+        >
+          <i className="fas fa-user-circle"></i>
+        </button>
+        {showUserDropdown && (
+          <div 
+            ref={unauthDropdownRef}
+            style={{
+              position: 'absolute',
+              top: '100%',
+              right: 0,
+              marginTop: '12px',
+              width: '160px',
+              backgroundColor: '#121212',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '8px',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
+              zIndex: 9999,
+              padding: '6px 0',
+              overflow: 'hidden'
+            }}
+          >
+            <Link 
+              to="/login" 
+              onClick={() => setShowUserDropdown(false)}
+              style={{
+                display: 'block',
+                padding: '10px 16px',
+                color: 'rgba(255, 255, 255, 0.8)',
+                textDecoration: 'none',
+                fontSize: '13px',
+                fontWeight: '600',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#ffffff';
+                e.currentTarget.style.backgroundColor = 'rgba(179, 115, 42, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              Login
+            </Link>
+            <Link 
+              to="/register" 
+              onClick={() => setShowUserDropdown(false)}
+              style={{
+                display: 'block',
+                padding: '10px 16px',
+                color: 'rgba(255, 255, 255, 0.8)',
+                textDecoration: 'none',
+                fontSize: '13px',
+                fontWeight: '600',
+                transition: 'all 0.2s',
+                borderTop: '1px solid rgba(255, 255, 255, 0.05)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#ffffff';
+                e.currentTarget.style.backgroundColor = 'rgba(179, 115, 42, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              Create Account
+            </Link>
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -295,6 +558,7 @@ const Header = () => {
     <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
       <button 
         onClick={() => setShowDistrictDropdown(!showDistrictDropdown)}
+        className="header-district-btn"
         style={{
           background: 'transparent',
           border: 'none',
@@ -422,28 +686,7 @@ const Header = () => {
   };
 
   const renderScrollNavMenu = (onLinkClick = () => {}) => {
-    const navItems = isRegionalPage 
-      ? [
-          { path: '/', label: t('முகப்பு') },
-          { path: '/directory', label: t('நம்ம ஊர்') },
-          { path: '/wishes', label: t('வாழ்த்து') },
-          { path: '/obituaries', label: t('இரங்கல்') },
-          { path: '/business-studies', label: t('வணிகம்') },
-          { path: '/jobs', label: t('வேலை') },
-          { path: '/classifieds', label: t('தள்ளுபடி') }
-        ]
-      : [
-          { path: '/', label: lang === 'en' ? 'Home' : 'முகப்பு' },
-          { path: '/category/politics', label: lang === 'en' ? 'Politics' : 'அரசியல்' },
-          { path: '/category/business', label: lang === 'en' ? 'Business' : 'வணிகம்' },
-          { path: '/category/sports', label: lang === 'en' ? 'Sports' : 'விளையாட்டு' },
-          { path: '/category/cinema', label: lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு' },
-          { path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்' },
-          { path: '/directory', label: lang === 'en' ? 'Regional' : 'மாநிலம்' },
-          { path: '/category/world', label: lang === 'en' ? 'International' : 'சர்வதேசம்' },
-          { path: '/videos', label: lang === 'en' ? 'Video' : 'வீடியோ' },
-          { path: '/web-stories', label: lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்' }
-        ];
+    const navItems = getDynamicNavItems();
 
     return (
       <div style={{
@@ -457,27 +700,181 @@ const Header = () => {
       }}>
         {navItems.map((item, idx) => {
           const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+          
+          const handleMouseEnter = () => {
+            if (item.subcategories && item.subcategories.length > 0) {
+              if (dropdownTimer) clearTimeout(dropdownTimer);
+              setActiveDropdown(item.id);
+            } else {
+              setActiveDropdown(null);
+            }
+          };
+
+          const handleMouseLeave = () => {
+            if (item.subcategories && item.subcategories.length > 0) {
+              const timer = setTimeout(() => {
+                setActiveDropdown(null);
+              }, 150);
+              setDropdownTimer(timer);
+            }
+          };
+
+          const handleLinkClick = (e) => {
+            onLinkClick();
+            if (item.subcategories && item.subcategories.length > 0) {
+              if (window.innerWidth <= 768) {
+                if (activeDropdown !== item.id) {
+                  e.preventDefault();
+                  setActiveDropdown(item.id);
+                } else {
+                  setActiveDropdown(null);
+                }
+              } else {
+                setActiveDropdown(null);
+              }
+            } else {
+              setActiveDropdown(null);
+            }
+          };
+
           return (
-            <Link
+            <div
               key={idx}
-              to={item.path}
-              onClick={onLinkClick}
-              style={{
-                color: isActive ? 'var(--primary, #B3732A)' : '#FFFFFF',
-                opacity: isActive ? '1' : '0.9',
-                background: isActive ? '#FAF4EB' : 'transparent',
-                padding: '6px 14px',
-                borderRadius: '20px',
-                fontSize: '13px',
-                fontWeight: '700',
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.2s',
-                display: 'inline-block'
-              }}
+              className="nav-item-wrapper"
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+              style={{ position: 'relative', display: 'inline-block' }}
             >
-              {item.label}
-            </Link>
+              <Link
+                to={item.path}
+                onClick={handleLinkClick}
+                style={{
+                  color: isActive ? 'var(--primary, #B3732A)' : '#FFFFFF',
+                  opacity: isActive ? '1' : '0.9',
+                  background: isActive ? '#FAF4EB' : 'transparent',
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.2s',
+                  display: 'inline-flex',
+                  alignItems: 'center'
+                }}
+              >
+                {item.label}
+                {item.subcategories && item.subcategories.length > 0 && (
+                  <i className="fas fa-chevron-down" style={{ fontSize: '8px', marginLeft: '6px', opacity: 0.7 }}></i>
+                )}
+              </Link>
+
+              {/* Subcategories Dropdown directly below this link */}
+              {activeDropdown === item.id && item.subcategories && item.subcategories.length > 0 && (
+                <div 
+                  className="category-dropdown-menu"
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: theme === 'dark' ? '#1E293B' : '#ffffff',
+                    border: theme === 'dark' ? '1px solid #334155' : '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                    padding: '8px 0',
+                    zIndex: 9999,
+                    minWidth: '220px',
+                    marginTop: '8px',
+                    textAlign: 'left'
+                  }}
+                >
+                  <style>{`
+                    .dropdown-sub-container {
+                      position: relative;
+                    }
+                    .dropdown-sub-link {
+                      display: flex;
+                      align-items: center;
+                      justify-content: space-between;
+                      padding: 10px 16px;
+                      color: ${theme === 'dark' ? '#cbd5e1' : '#334155'};
+                      text-decoration: none;
+                      font-size: 13.5px;
+                      font-weight: 600;
+                      transition: all 0.2s ease;
+                      white-space: nowrap;
+                    }
+                    .dropdown-sub-link:hover {
+                      background: ${theme === 'dark' ? '#334155' : '#EFF6FF'};
+                      color: var(--primary, #B3732A);
+                    }
+                    .nested-dropdown {
+                      position: absolute;
+                      top: 0;
+                      left: 100%;
+                      background: ${theme === 'dark' ? '#1E293B' : '#ffffff'};
+                      border: ${theme === 'dark' ? '1px solid #334155' : '1px solid #e2e8f0'};
+                      border-radius: 8px;
+                      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+                      padding: 6px 0;
+                      min-width: 180px;
+                      margin-left: 2px;
+                      display: none;
+                      z-index: 10001;
+                    }
+                    .dropdown-sub-container:hover .nested-dropdown {
+                      display: block;
+                    }
+                    .dropdown-nested-link {
+                      display: block;
+                      padding: 8px 16px;
+                      color: ${theme === 'dark' ? '#e2e8f0' : '#334155'};
+                      text-decoration: none;
+                      font-size: 13px;
+                      font-weight: 600;
+                      transition: all 0.2s ease;
+                      white-space: nowrap;
+                      text-align: left;
+                    }
+                    .dropdown-nested-link:hover {
+                      background: ${theme === 'dark' ? '#334155' : '#EFF6FF'};
+                      color: var(--primary, #B3732A);
+                    }
+                  `}</style>
+                  {item.subcategories.map(sub => (
+                    <div key={sub.id} className="dropdown-sub-container">
+                      <Link 
+                        to={`/category/${sub.slug}`}
+                        onClick={() => setActiveDropdown(null)}
+                        className="dropdown-sub-link"
+                      >
+                        <span>{lang === 'en' ? getSubcatEn(sub) : sub.nameTa}</span>
+                        {sub.subcategories && sub.subcategories.length > 0 && (
+                          <i className="fas fa-chevron-right" style={{ fontSize: '9px', opacity: 0.6 }}></i>
+                        )}
+                      </Link>
+
+                      {/* Nested Sub-dropdown Overlay */}
+                      {sub.subcategories && sub.subcategories.length > 0 && (
+                        <div className="nested-dropdown">
+                          {sub.subcategories.map(child => (
+                            <Link
+                              key={child.id}
+                              to={`/category/${child.slug}`}
+                              onClick={() => setActiveDropdown(null)}
+                              className="dropdown-nested-link"
+                            >
+                              {lang === 'en' ? getSubcatEn(child) : child.nameTa}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
@@ -485,49 +882,97 @@ const Header = () => {
   };
 
   const renderNavMenuVertical = (onLinkClick = () => {}) => {
-    const navItems = isRegionalPage 
-      ? [
-          { path: '/', label: t('முகப்பு') },
-          { path: '/directory', label: t('நம்ம ஊர்') },
-          { path: '/wishes', label: t('வாழ்த்து') },
-          { path: '/obituaries', label: t('இரங்கல்') },
-          { path: '/business-studies', label: t('வணிகம்') },
-          { path: '/jobs', label: t('வேலை') },
-          { path: '/classifieds', label: t('தள்ளுபடி') }
-        ]
-      : [
-          { path: '/', label: lang === 'en' ? 'Home' : 'முகப்பு' },
-          { path: '/category/politics', label: lang === 'en' ? 'Politics' : 'அரசியல்' },
-          { path: '/category/business', label: lang === 'en' ? 'Business' : 'வணிகம்' },
-          { path: '/category/sports', label: lang === 'en' ? 'Sports' : 'விளையாட்டு' },
-          { path: '/category/cinema', label: lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு' },
-          { path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்' },
-          { path: '/directory', label: lang === 'en' ? 'Regional' : 'மாநிலம்' },
-          { path: '/category/world', label: lang === 'en' ? 'International' : 'சர்வதேசம்' },
-          { path: '/videos', label: lang === 'en' ? 'Video' : 'வீடியோ' },
-          { path: '/web-stories', label: lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்' }
-        ];
+    const navItems = getDynamicNavItems();
 
     return (
       <ul style={{ display: 'flex', flexDirection: 'column', gap: '15px', padding: 0, listStyle: 'none', margin: 0 }}>
         {navItems.map((item, idx) => {
           const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+          const hasSubs = item.subcategories && item.subcategories.length > 0;
+          const isExpanded = mobileExpandedCat === item.id;
+
+          const toggleExpand = (e) => {
+            if (hasSubs) {
+              e.preventDefault();
+              setMobileExpandedCat(isExpanded ? null : item.id);
+            }
+          };
+
           return (
-            <li key={idx}>
-              <Link 
-                to={item.path} 
-                onClick={onLinkClick} 
-                style={{
-                  color: isActive ? 'var(--primary, #B3732A)' : 'inherit',
-                  textDecoration: 'none',
-                  fontWeight: '700',
-                  fontSize: '14px',
-                  display: 'block',
-                  padding: '4px 0'
-                }}
-              >
-                {item.label}
-              </Link>
+            <li key={idx} style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Link 
+                  to={item.path} 
+                  onClick={hasSubs ? toggleExpand : onLinkClick} 
+                  style={{
+                    color: isActive ? 'var(--primary, #B3732A)' : 'inherit',
+                    textDecoration: 'none',
+                    fontWeight: '700',
+                    fontSize: '14px',
+                    display: 'block',
+                    padding: '4px 0',
+                    flex: 1
+                  }}
+                >
+                  {item.label}
+                </Link>
+                {hasSubs && (
+                  <button 
+                    onClick={toggleExpand}
+                    style={{ background: 'transparent', border: 'none', color: 'inherit', padding: '6px 12px', cursor: 'pointer' }}
+                  >
+                    <i className={`fas ${isExpanded ? 'fa-chevron-up' : 'fa-chevron-down'}`} style={{ fontSize: '12px' }}></i>
+                  </button>
+                )}
+              </div>
+
+              {/* Collapsible Subcategories list */}
+              {hasSubs && isExpanded && (
+                <ul style={{ paddingLeft: '16px', listStyle: 'none', margin: '4px 0', display: 'flex', flexDirection: 'column', gap: '10px', borderLeft: '1px solid var(--border-color)' }}>
+                  {item.subcategories.map(sub => (
+                    <li key={sub.id}>
+                      <Link 
+                        to={`/category/${sub.slug}`}
+                        onClick={onLinkClick}
+                        style={{
+                          color: 'inherit',
+                          textDecoration: 'none',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          display: 'block',
+                          padding: '2px 0'
+                        }}
+                      >
+                        {lang === 'en' ? getSubcatEn(sub) : sub.nameTa}
+                      </Link>
+
+                      {/* Nested sub-subcategories (AI -> ChatGPT) */}
+                      {sub.subcategories && sub.subcategories.length > 0 && (
+                        <ul style={{ paddingLeft: '12px', listStyle: 'none', margin: '4px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {sub.subcategories.map(child => (
+                            <li key={child.id}>
+                              <Link
+                                to={`/category/${child.slug}`}
+                                onClick={onLinkClick}
+                                style={{
+                                  color: 'var(--text-muted)',
+                                  textDecoration: 'none',
+                                  fontSize: '12px',
+                                  fontWeight: '600',
+                                  display: 'block',
+                                  padding: '2px 0'
+                                }}
+                              >
+                                {lang === 'en' ? getSubcatEn(child) : child.nameTa}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           );
         })}
@@ -579,7 +1024,7 @@ const Header = () => {
         </div>
       ) : (
         <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', flexShrink: 0, paddingBottom: '3px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             <button 
               onClick={() => setDrawerOpen(true)}
               style={{ 
@@ -590,17 +1035,18 @@ const Header = () => {
                 cursor: 'pointer', 
                 paddingRight: '6px', 
                 display: 'flex', 
-                alignItems: 'center', 
-                marginBottom: '2px' 
+                alignItems: 'center'
               }}
               aria-label="Open side drawer menu"
             >
               <i className="fas fa-bars"></i>
             </button>
-            {renderLogo('small', true)}
-            {renderDistrictSelector(true)}
+            <div className="logo-district-container" style={{ display: 'flex', gap: '8px' }}>
+              {renderLogo('small', true)}
+              {renderDistrictSelector(true)}
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             <button 
               onClick={() => setIsSearchOpen(true)}
               style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#ffffff', padding: '4px' }}
@@ -714,8 +1160,48 @@ const Header = () => {
       )}
 
       {/* Horizontal scrollable category navigation bar in single line */}
+      <style>{`
+        @media (min-width: 769px) {
+          .main-nav-desktop-overflow {
+            overflow: visible !important;
+            overflow-x: visible !important;
+          }
+          .main-nav-container-desktop {
+            overflow: visible !important;
+          }
+        }
+        @media (max-width: 768px) {
+          .logo-district-container {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            justify-content: center !important;
+            gap: 2px !important;
+          }
+          .header-logo-img {
+            height: 30px !important;
+          }
+          .header-district-btn {
+            font-size: 11px !important;
+            padding: 2px 0px !important;
+          }
+        }
+        @media (min-width: 769px) {
+          .logo-district-container {
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 12px !important;
+          }
+          .header-logo-img {
+            height: 40px !important;
+          }
+          .header-district-btn {
+            font-size: 13px !important;
+            padding: 4px 6px 1px 6px !important;
+          }
+        }
+      `}</style>
       <nav 
-        className={`main-nav ${isRegionalPage ? 'regional-theme' : ''}`} 
+        className={`main-nav main-nav-desktop-overflow ${isRegionalPage ? 'regional-theme' : ''}`} 
         style={{ 
           overflowX: 'auto', 
           whiteSpace: 'nowrap', 
@@ -725,7 +1211,7 @@ const Header = () => {
           msOverflowStyle: 'none'
         }}
       >
-        <div className="container" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '0 16px' }}>
+        <div className="container main-nav-container-desktop" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '0 16px' }}>
           {renderScrollNavMenu()}
         </div>
       </nav>
@@ -793,45 +1279,63 @@ const Header = () => {
             alignItems: 'center',
             gap: '12px'
           }}>
-            <Link 
-              to={(session && session.isLoggedIn) ? "/profile" : "/login"} 
-              onClick={() => setDrawerOpen(false)}
-              style={{ 
-                color: theme === 'dark' ? '#ffffff' : '#1e293b', 
-                fontSize: '28px', 
-                display: 'inline-flex', 
-                alignItems: 'center' 
-              }}
-              aria-label="User Account"
-            >
-              <i className="fas fa-user-circle"></i>
-            </Link>
+            {isAuthenticated && user ? (
+              <UserAvatar user={user} size={36} onClick={() => {
+                navigate('/profile');
+                setDrawerOpen(false);
+              }} />
+            ) : (
+              <Link 
+                to="/login" 
+                onClick={() => setDrawerOpen(false)}
+                style={{ 
+                  color: theme === 'dark' ? '#ffffff' : '#1e293b', 
+                  fontSize: '28px', 
+                  display: 'inline-flex', 
+                  alignItems: 'center' 
+                }}
+                aria-label="User Account"
+              >
+                <i className="fas fa-user-circle"></i>
+              </Link>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {session && session.isLoggedIn ? (
+              {isAuthenticated && user ? (
                 <>
-                  <span style={{ fontSize: '14px', fontWeight: '700' }}>{session.username}</span>
-                  <button 
-                    onClick={() => {
-                      logout();
-                      setDrawerOpen(false);
-                    }} 
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: '#EF4444',
-                      fontSize: '12px',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      padding: 0,
-                      marginTop: '2px',
-                      textAlign: 'left',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    <i className="fas fa-sign-out-alt"></i> {lang === 'en' ? 'Logout' : 'வெளியேறு'}
-                  </button>
+                  <span style={{ fontSize: '14px', fontWeight: '700', color: theme === 'dark' ? '#ffffff' : '#1e293b' }}>{user.fullName}</span>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '2px' }}>
+                    <Link 
+                      to="/profile"
+                      onClick={() => setDrawerOpen(false)}
+                      style={{
+                        color: 'var(--primary)',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        textDecoration: 'none'
+                      }}
+                    >
+                      {lang === 'en' ? 'Profile' : 'சுயவிவரம்'}
+                    </Link>
+                    <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '11px' }}>|</span>
+                    <button 
+                      onClick={() => {
+                        handleLogout();
+                        setDrawerOpen(false);
+                      }} 
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#EF4444',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        padding: 0,
+                        textAlign: 'left'
+                      }}
+                    >
+                      {lang === 'en' ? 'Logout' : 'வெளியேறு'}
+                    </button>
+                  </div>
                 </>
               ) : (
                 <Link 

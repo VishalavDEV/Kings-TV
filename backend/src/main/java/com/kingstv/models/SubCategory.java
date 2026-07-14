@@ -29,6 +29,9 @@ public class SubCategory {
     @Column(nullable = false)
     private String status = "active";
 
+    @Column(name = "parent_id")
+    private Long parentId;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -60,6 +63,9 @@ public class SubCategory {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public Long getParentId() { return parentId; }
+    public void setParentId(Long parentId) { this.parentId = parentId; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

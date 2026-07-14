@@ -310,9 +310,69 @@ const ArticleDetail = () => {
     }
   ];
 
+  const getCategoryDummyComments = (catId) => {
+    const defaultComments = {
+      1: [
+        { id: 'demo-c1-1', commentorName: 'குமரன்', commentorNameEn: 'Kumaran', commentText: 'அருமையான பட்ஜெட் அறிவிப்புகள். குறிப்பாக கல்விக்கான நிதி ஒதுக்கீடு உயர்த்தப்பட்டுள்ளது பாராட்டத்தக்கது.', commentTextEn: 'Excellent budget announcements. In particular, the increase in funding for education is commendable.', createdAt: '10 மணி நேரத்திற்கு முன்', createdAtEn: '10 hours ago' },
+        { id: 'demo-c1-2', commentorName: 'மகேஷ்வரன்', commentorNameEn: 'Maheshwaran', commentText: 'விவசாயிகளுக்கான இலவச மின்சாரம் மற்றும் மானியங்கள் தொடருமா என்பதில் சட்டமன்றத்தில் தெளிவுபடுத்த வேண்டும்.', commentTextEn: 'Need clarification in assembly on whether free electricity and subsidies for farmers will continue.', createdAt: '8 மணி நேரத்திற்கு முன்', createdAtEn: '8 hours ago' },
+        { id: 'demo-c1-3', commentorName: 'ரமேஷ்', commentorNameEn: 'Ramesh', commentText: 'மிகவும் விரிவான விளக்கம். இந்த பயனுள்ள தகவலுக்கு நன்றி.', commentTextEn: 'Very detailed breakdown. Thanks for this useful information.', createdAt: '6 மணி நேரத்திற்கு முன்', createdAtEn: '6 hours ago' },
+        { id: 'demo-c1-4', commentorName: 'கீதா', commentorNameEn: 'Geetha', commentText: 'இந்த புதிய கொள்கைகள் எவ்வாறு களத்தில் செயல்படுத்தப்படும் என்பதை நாம் பொறுத்திருந்து பார்க்க வேண்டும்.', commentTextEn: 'We need to wait and see how these new policies will be implemented on the ground.', createdAt: '4 மணி நேரத்திற்கு முன்', createdAtEn: '4 hours ago' }
+      ],
+      2: [
+        { id: 'demo-c2-1', commentorName: 'அருள்', commentorNameEn: 'Arul', commentText: 'சந்தையின் வளர்ச்சி நன்றாக உள்ளது, ஆனால் பணவீக்கம் இன்னும் கவலையளிக்கிறது.', commentTextEn: 'Market growth is impressive, but inflation remains a concern.', createdAt: '5 மணி நேரத்திற்கு முன்', createdAtEn: '5 hours ago' },
+        { id: 'demo-c2-2', commentorName: 'திவ்யா', commentorNameEn: 'Divya', commentText: 'குறியீட்டு நிதிகளில் முதலீடு செய்ய இது சரியான தருணம் என்று நினைக்கிறேன்.', commentTextEn: 'I think this is the right time to invest in index funds.', createdAt: '2 மணி நேரத்திற்கு முன்', createdAtEn: '2 hours ago' },
+        { id: 'demo-c2-3', commentorName: 'மணி', commentorNameEn: 'Mani', commentText: 'சென்னையில் புதிய ஸ்டார்ட்அப் நிறுவனங்கள் அதிவேகமாக வளர்ந்து வருகின்றன.', commentTextEn: 'New startups are growing rapidly in Chennai.', createdAt: '4 மணி நேரத்திற்கு முன்', createdAtEn: '4 hours ago' },
+        { id: 'demo-c2-4', commentorName: 'செல்வி', commentorNameEn: 'Selvi', commentText: 'இந்த வாரம் தங்கம் விலை மிகவும் ஏற்ற இறக்கத்துடன் காணப்படுகிறது.', commentTextEn: 'Gold price remains highly volatile this week.', createdAt: '3 மணி நேரத்திற்கு முன்', createdAtEn: '3 hours ago' }
+      ],
+      3: [
+        { id: 'demo-c3-1', commentorName: 'கார்த்திக்', commentorNameEn: 'Karthik', commentText: 'இந்தியாவின் அபார வெற்றி! அருமையான கூட்டு முயற்சி.', commentTextEn: 'Great victory for India! Brilliant team effort.', createdAt: '4 மணி நேரத்திற்கு முன்', createdAtEn: '4 hours ago' },
+        { id: 'demo-c3-2', commentorName: 'சுரேஷ்', commentorNameEn: 'Suresh', commentText: 'இறுதிப் போட்டிக்காக ஆவலுடன் காத்திருக்கிறோம்!', commentTextEn: 'Looking forward to the finals match!', createdAt: '3 மணி நேரத்திற்கு முன்', createdAtEn: '3 hours ago' },
+        { id: 'demo-c3-3', commentorName: 'கார்த்தி', commentorNameEn: 'Karthi', commentText: 'இரண்டாவது பாதியில் பயிற்சியாளரின் சிறந்த உத்தி ஆட்டத்தின் போக்கை மாற்றியது.', commentTextEn: 'Brilliant strategy by the coach in the second half changed the game.', createdAt: '2 மணி நேரத்திற்கு முன்', createdAtEn: '2 hours ago' },
+        { id: 'demo-c3-4', commentorName: 'ரவி', commentorNameEn: 'Ravi', commentText: 'அடுத்து வரும் உலகக்கோப்பை தொடரின் மீது எங்களுக்கு அதிக எதிர்பார்ப்பு உள்ளது.', commentTextEn: 'We have high hopes for the upcoming world cup tournament.', createdAt: '1 மணி நேரத்திற்கு முன்', createdAtEn: '1 hour ago' }
+      ],
+      4: [
+        { id: 'demo-c4-1', commentorName: 'விக்னேஷ்', commentorNameEn: 'Vignesh', commentText: 'அனிருத்தின் இசை அற்புதம், பின்னணி இசை அடுத்த லெவலில் உள்ளது!', commentTextEn: 'Amazing music by Anirudh, background score is next level!', createdAt: '6 மணி நேரத்திற்கு முன்', createdAtEn: '6 hours ago' },
+        { id: 'demo-c4-2', commentorName: 'பிரியா', commentorNameEn: 'Priya', commentText: 'பிளாக்பஸ்டர் திரைப்படம்! குடும்பத்துடன் பார்க்க வேண்டும்.', commentTextEn: 'Blockbuster movie! A must watch with family.', createdAt: '1 மணி நேரத்திற்கு முன்', createdAtEn: '1 hour ago' },
+        { id: 'demo-c4-3', commentorName: 'கோபி', commentorNameEn: 'Gopi', commentText: 'அருமையான திரைக்கதை மற்றும் இயக்கம். கண்டிப்பாக பார்க்க வேண்டும்!', commentTextEn: 'Superb screenplay and direction. Must watch!', createdAt: '4 மணி நேரத்திற்கு முன்', createdAtEn: '4 hours ago' },
+        { id: 'demo-c4-4', commentorName: 'ஷாலினி', commentorNameEn: 'Shalini', commentText: 'திரைப்படத்தின் பாடல்கள் ஏற்கனவே இணையத்தில் மிகப்பெரிய சாதனைகளை படைத்து வருகின்றன.', commentTextEn: 'Songs of the movie are already breaking records online.', createdAt: '2 மணி நேரத்திற்கு முன்', createdAtEn: '2 hours ago' }
+      ],
+      5: [
+        { id: 'demo-c5-1', commentorName: 'ஹரிஷ்', commentorNameEn: 'Harish', commentText: 'ChatGPT 5.0 புரட்சிகரமானது, AI அனைத்தையும் வேகமாக மாற்றுகிறது.', commentTextEn: 'ChatGPT 5.0 is revolutionary, AI is changing everything fast.', createdAt: '3 மணி நேரத்திற்கு முன்', createdAtEn: '3 hours ago' },
+        { id: 'demo-c5-2', commentorName: 'ரம்யா', commentorNameEn: 'Ramya', commentText: 'ஐபோன் 17 வெளியீட்டிற்காகக் காத்திருக்கிறேன், சிறப்பம்சங்கள் நன்றாக உள்ளன.', commentTextEn: 'Waiting for the iPhone 17 launch, specs look solid.', createdAt: '2 மணி நேரத்திற்கு முன்', createdAtEn: '2 hours ago' },
+        { id: 'demo-c5-3', commentorName: 'நரேன்', commentorNameEn: 'Naren', commentText: 'தினசரி அலுவலகப் பணிகளில் AI இன் ஒருங்கிணைப்பு மிகவும் வியக்க வைக்கிறது.', commentTextEn: 'The integration of AI in daily work tasks is very impressive.', createdAt: '5 மணி நேரத்திற்கு முன்', createdAtEn: '5 hours ago' },
+        { id: 'demo-c5-4', commentorName: 'ஸ்வேதா', commentorNameEn: 'Swetha', commentText: 'தனியுரிமை பாதுகாப்பு குறித்து இணைய நிறுவனங்கள் கூடுதல் கவனம் செலுத்த வேண்டும்.', commentTextEn: 'Internet companies need to focus more on privacy protection.', createdAt: '1 மணி நேரத்திற்கு முன்', createdAtEn: '1 hour ago' }
+      ],
+      6: [
+        { id: 'demo-c6-1', commentorName: 'முருகன்', commentorNameEn: 'Murugan', commentText: 'உள்ளாட்சி அமைப்புகளின் புதிய திட்டங்கள் விவசாயிகளுக்கு மிகவும் உதவியாக இருக்கும்.', commentTextEn: 'Local body initiatives are very helpful for farmers.', createdAt: '12 மணி நேரத்திற்கு முன்', createdAtEn: '12 hours ago' },
+        { id: 'demo-c6-2', commentorName: 'ராதா', commentorNameEn: 'Radha', commentText: 'கிராமப்புற சாலை உள்கட்டமைப்புகளில் கூடுதல் கவனம் செலுத்த வேண்டும்.', commentTextEn: 'Road infrastructure in rural areas needs more focus.', createdAt: '9 மணி நேரத்திற்கு முன்', createdAtEn: '9 hours ago' },
+        { id: 'demo-c6-3', commentorName: 'வெற்றி', commentorNameEn: 'Vetri', commentText: 'நகராட்சி குடிநீர் திட்டங்களின் புதிய விரிவாக்கத்தை கண்டு மகிழ்ச்சி.', commentTextEn: 'Happy to see municipal water schemes expansion.', createdAt: '5 மணி நேரத்திற்கு முன்', createdAtEn: '5 hours ago' },
+        { id: 'demo-c6-4', commentorName: 'ஈஸ்வரி', commentorNameEn: 'Eswari', commentText: 'பொது பூங்காக்கள் மற்றும் விளையாட்டு மைதானங்களின் பராமரிப்புக்கு முன்னுரிமை அளிக்க வேண்டும்.', commentTextEn: 'Public parks and playgrounds maintenance should be prioritized.', createdAt: '3 மணி நேரத்திற்கு முன்', createdAtEn: '3 hours ago' }
+      ],
+      7: [
+        { id: 'demo-c7-1', commentorName: 'விஜய்', commentorNameEn: 'Vijay', commentText: 'ககன்யான் தரை சோதனைகளில் இஸ்ரோவுக்கு பெருமையான தருணம்.', commentTextEn: 'Proud moment for ISRO on Gaganyaan ground tests.', createdAt: '7 மணி நேரத்திற்கு முன்', createdAtEn: '7 hours ago' },
+        { id: 'demo-c7-2', commentorName: 'ஆனந்த்', commentorNameEn: 'Anand', commentText: 'உலகளாவிய கூட்டணிகள் விண்வெளி ஆய்வின் எதிர்காலத்தை வடிவமைக்கும்.', commentTextEn: 'Global collaborations will shape the future of space exploration.', createdAt: '6 மணி நேரத்திற்கு முன்', createdAtEn: '6 hours ago' },
+        { id: 'demo-c7-3', commentorName: 'பிரகாஷ்', commentorNameEn: 'Prakash', commentText: 'ககன்யான் விண்கலத்தின் க்ரூ மாடல் மிகவும் அதிநவீனமாக வடிவமைக்கப்பட்டுள்ளது.', commentTextEn: 'Gaganyaan crew module design looks very advanced.', createdAt: '4 மணி நேரத்திற்கு முன்', createdAtEn: '4 hours ago' },
+        { id: 'demo-c7-4', commentorName: 'தீபா', commentorNameEn: 'Deepa', commentText: 'விண்வெளி ஆராய்ச்சி மையங்களுக்கு இடையிலான இந்த ஒருங்கிணைப்பு அருமை.', commentTextEn: 'Great coordination between space research centers.', createdAt: '3 மணி நேரத்திற்கு முன்', createdAtEn: '3 hours ago' }
+      ]
+    };
+    return defaultComments[catId] || defaultComments[1];
+  };
+
   const loadData = () => {
     const idKey = String(id).startsWith('demo-') ? id : `demo-${id}`;
     const fallbackArticle = allFallbackArticles.find(art => art.id === idKey) || allFallbackArticles[0];
+
+    // Find category ID based on slug or default to 1
+    let initialCategoryId = 1;
+    if (fallbackArticle) {
+      if (fallbackArticle.categorySlug === 'politics') initialCategoryId = 1;
+      else if (fallbackArticle.categorySlug === 'business') initialCategoryId = 2;
+      else if (fallbackArticle.categorySlug === 'sports') initialCategoryId = 3;
+      else if (fallbackArticle.categorySlug === 'cinema') initialCategoryId = 4;
+      else if (fallbackArticle.categorySlug === 'tech') initialCategoryId = 5;
+      else if (fallbackArticle.categorySlug === 'regional') initialCategoryId = 6;
+      else if (fallbackArticle.categorySlug === 'international') initialCategoryId = 7;
+    }
 
     const catLookup = {
       1: { slug: 'politics', name: 'Politics', nameTa: 'அரசியல்' },
@@ -324,11 +384,6 @@ const ArticleDetail = () => {
       7: { slug: 'international', name: 'International', nameTa: 'சர்வதேச செய்திகள்' }
     };
 
-    const fallbackComments = [
-      { id: 'demo-1', commentorName: 'குமரன்', commentText: 'அருமையான பட்ஜெட் அறிவிப்புகள். குறிப்பாக கல்விக்கான நிதி ஒதுக்கீடு உயர்த்தப்பட்டுள்ளது பாராட்டத்தக்கது.', createdAt: '10 மணி நேரத்திற்கு முன்' },
-      { id: 'demo-2', commentorName: 'மகேஷ்வரன்', commentText: 'விவசாயிகளுக்கான இலவச மின்சாரம் மற்றும் மானியங்கள் தொடருமா என்பதில் சட்டமன்றத்தில் தெளிவுபடுத்த வேண்டும்.', createdAt: '8 மணி நேரத்திற்கு முன்' }
-    ];
-
     const fallbackRelated = [
       { id: 'demo-2', titleTa: 'தேசிய தேர்தல் களம்: புது தில்லியில் அனைத்துக் கட்சிக் கூட்டம் இன்று', titleEn: 'National elections: all-party meet in New Delhi today', descTa: 'எதிர்வரும் பாராளுமன்றக் கூட்டத்தொடரை சுமுகமாக நடத்துவது குறித்து முக்கிய விவாதங்கள் நடைபெறுகின்றன.', gradient: 'linear-gradient(135deg, #3B82F6, #60A5FA)', subcatTa: 'தேசியம்', subcatEn: 'National' },
       { id: 'demo-3', titleTa: 'இந்திய-அமெரிக்க வெளியுறவுத் துறை அமைச்சர்கள் சந்திப்பு - முக்கிய ஒப்பந்தங்கள்', titleEn: 'India-US foreign ministers meet - key bilateral agreements signed', descTa: 'இரு நாடுகளுக்கு இடையிலான பாதுகாப்பு மற்றும் வர்த்தக உறவுகள் குறித்து உயர்மட்ட ஆலோசனைகள் நடைபெற்றன.', gradient: 'linear-gradient(135deg, #1D4ED8, #1E3A8A)', subcatTa: 'சர்வதேசம்', subcatEn: 'International' }
@@ -339,11 +394,31 @@ const ArticleDetail = () => {
       { id: 'demo-2', rank: 2, title: 'தங்கம் விலை அதிரடி வீழ்ச்சி' }
     ];
 
+    let currentCategoryId = initialCategoryId;
+
+    const fetchComments = (catId) => {
+      fetchApi(`/articles/${id}/comments`)
+        .then(data => {
+          const formatted = Array.isArray(data) ? data.map(item => ({
+            id: item.comment_id || item.id,
+            commentorName: item.commentorName || item.commenterName || item.commentor_name || 'Anonymous',
+            commentText: item.commentText || item.comment_text,
+            createdAt: item.createdAt || '1 மணி நேரம்'
+          })) : [];
+          const dummy = getCategoryDummyComments(catId);
+          setComments([...formatted, ...dummy]);
+        })
+        .catch(() => {
+          const dummy = getCategoryDummyComments(catId);
+          setComments(dummy);
+        });
+    };
+
     // 1. Fetch single article
     fetchApi(`/articles/${id}`)
       .then(data => {
         if (data && data.titleTa) {
-          const currentCategoryId = data.categoryId || 1;
+          currentCategoryId = data.categoryId || 1;
           const cat = catLookup[currentCategoryId] || { slug: 'politics', name: 'Politics', nameTa: 'அரசியல்' };
 
           setArticle({
@@ -356,7 +431,9 @@ const ArticleDetail = () => {
             contentTa: data.contentTa,
             contentEn: data.contentEn,
             authorName: data.authorName || 'கே. செல்வக்குமார்',
+            authorNameEn: data.authorNameEn || 'K. Selvakumar',
             authorRole: 'தலைமைச் செய்தி நிருபர்',
+            authorRoleEn: 'Chief News Reporter',
             pubDate: data.publishedAt ? new Date(data.publishedAt).toLocaleDateString() : '20 மே 2025',
             updDate: data.updatedAt ? new Date(data.updatedAt).toLocaleDateString() : '21 மே 2025',
             readTime: '3 நிமிட வாசிப்பு',
@@ -397,26 +474,13 @@ const ArticleDetail = () => {
           setArticle(fallbackArticle);
           setRelated(fallbackRelated);
         }
+        fetchComments(currentCategoryId);
       })
       .catch(err => {
         console.warn("Could not load article from API, using fallback", err);
         setArticle(fallbackArticle);
         setRelated(fallbackRelated);
-      });
-
-    // 2. Fetch comments
-    fetchApi(`/articles/${id}/comments`)
-      .then(data => {
-        const formatted = Array.isArray(data) ? data.map(item => ({
-          id: item.comment_id || item.id,
-          commentorName: item.commentorName || item.commenterName || item.commentor_name || 'Anonymous',
-          commentText: item.commentText || item.comment_text,
-          createdAt: item.createdAt || '1 மணி நேரம்'
-        })) : [];
-        setComments([...formatted, ...fallbackComments]);
-      })
-      .catch(() => {
-        setComments(fallbackComments);
+        fetchComments(currentCategoryId);
       });
 
     // 4. Trending
@@ -474,6 +538,90 @@ const ArticleDetail = () => {
     triggerToast(lang === 'en' ? 'Link Copied!' : 'நகலெடுக்கப்பட்டது!');
   };
 
+  const getAuthorNameEn = () => {
+    if (!article) return '';
+    if (article.authorNameEn) return article.authorNameEn;
+    const authorTranslations = {
+      'கே. செல்வக்குமார்': 'K. Selvakumar',
+      'ஏ. கவிதா': 'A. Kavitha',
+      'கே. சூர்யா': 'K. Surya',
+      'எம். ராஜேஷ்': 'M. Rajesh',
+      'எஸ். கார்த்திக்': 'S. Karthik'
+    };
+    return authorTranslations[article.authorName] || article.authorName || 'K. Selvakumar';
+  };
+
+  const getAuthorRoleEn = () => {
+    if (!article) return '';
+    if (article.authorRoleEn) return article.authorRoleEn;
+    const roleTranslations = {
+      'தலைமைச் செய்தி நிருபர்': 'Chief News Reporter',
+      'தொழில்நுட்ப செய்தியாளர்': 'Technology Reporter',
+      'சினிமா நிருபர்': 'Cinema Reporter',
+      'விளையாட்டு நிருபர்': 'Sports Reporter'
+    };
+    return roleTranslations[article.authorRole] || article.authorRole || 'News Reporter';
+  };
+
+  const getCommentsList = () => {
+    return comments.map(c => {
+      let name = lang === 'en' ? (c.commentorNameEn || c.commentorName) : c.commentorName;
+      let text = lang === 'en' ? (c.commentTextEn || c.commentText || c.comment_text) : (c.commentText || c.comment_text);
+      let time = lang === 'en' ? (c.createdAtEn || c.createdAt) : c.createdAt;
+
+      if (lang === 'en') {
+        if (name === 'குமரன்') name = 'Kumaran';
+        else if (name === 'மகேஷ்வரன்') name = 'Maheshwaran';
+        else if (name === 'அருள்') name = 'Arul';
+        else if (name === 'திவ்யா') name = 'Divya';
+        else if (name === 'கார்த்திக்') name = 'Karthik';
+        else if (name === 'சுரேஷ்') name = 'Suresh';
+        else if (name === 'விக்னேஷ்') name = 'Vignesh';
+        else if (name === 'பிரியா') name = 'Priya';
+        else if (name === 'ஹரிஷ்') name = 'Harish';
+        else if (name === 'ரம்யா') name = 'Ramya';
+        else if (name === 'முருகன்') name = 'Murugan';
+        else if (name === 'ராதா') name = 'Radha';
+        else if (name === 'விஜய்') name = 'Vijay';
+        else if (name === 'ஆனந்த்') name = 'Anand';
+
+        if (time === '10 மணி நேரத்திற்கு முன்') time = '10 hours ago';
+        else if (time === '8 மணி நேரத்திற்கு முன்') time = '8 hours ago';
+        else if (time === '5 மணி நேரத்திற்கு முன்') time = '5 hours ago';
+        else if (time === '2 மணி நேரத்திற்கு முன்') time = '2 hours ago';
+        else if (time === '4 மணி நேரத்திற்கு முன்') time = '4 hours ago';
+        else if (time === '3 மணி நேரத்திற்கு முன்') time = '3 hours ago';
+        else if (time === '6 மணி நேரத்திற்கு முன்') time = '6 hours ago';
+        else if (time === '1 மணி நேரத்திற்கு முன்') time = '1 hour ago';
+        else if (time === '12 மணி நேரத்திற்கு முன்') time = '12 hours ago';
+        else if (time === '9 மணி நேரத்திற்கு முன்') time = '9 hours ago';
+        else if (time === '7 மணி நேரத்திற்கு முன்') time = '7 hours ago';
+        else if (time === '1 மணி நேரம்') time = '1 hour ago';
+
+        if (text && text.includes('பட்ஜெட்')) {
+          text = 'Excellent budget announcements. In particular, the increase in funding for education is commendable.';
+        } else if (text && text.includes('விவசாயிகளுக்கான')) {
+          text = 'Need clarification in assembly on whether free electricity and subsidies for farmers will continue.';
+        }
+      }
+      return { ...c, commentorName: name, commentText: text, createdAt: time };
+    });
+  };
+
+  const getTrendingList = () => {
+    return trending.map(tItem => {
+      let title = tItem.title;
+      if (lang === 'en') {
+        if (title === 'சென்னை மெட்ரோ புதிய மெட்ரோ ரயில் திட்டம்') {
+          title = 'Chennai Metro new metro rail project';
+        } else if (title === 'தங்கம் விலை அதிரடி வீழ்ச்சி') {
+          title = 'Gold prices plunge sharply';
+        }
+      }
+      return { ...tItem, title };
+    });
+  };
+
   if (!article) {
     return <div style={{ padding: '60px', textAlign: 'center' }}>{lang === 'en' ? 'Loading article details...' : 'கட்டுரை ஏற்றப்படுகிறது...'}</div>;
   }
@@ -482,53 +630,7 @@ const ArticleDetail = () => {
     <div className="container" style={{ marginTop: '20px', marginBottom: '40px' }}>
       <div className="article-container">
         
-        {/* Floating Share Sidebar */}
-        <aside className="share-sidebar" id="shareSidebar" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <a 
-            href={`https://api.whatsapp.com/send?text=${encodeURIComponent(window.location.href)}`} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="share-btn whatsapp" 
-            aria-label="Share on WhatsApp"
-          >
-            <i className="fab fa-whatsapp"></i>
-          </a>
-          <a 
-            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="share-btn facebook" 
-            aria-label="Share on Facebook"
-          >
-            <i className="fab fa-facebook-f"></i>
-          </a>
-          <a 
-            href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}`} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="share-btn twitter" 
-            aria-label="Share on Twitter"
-          >
-            <i className="fab fa-twitter"></i>
-          </a>
-          <a 
-            href={`https://telegram.me/share/url?url=${encodeURIComponent(window.location.href)}`} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="share-btn telegram" 
-            aria-label="Share on Telegram"
-          >
-            <i className="fab fa-telegram-plane"></i>
-          </a>
-          <button 
-            className="share-btn copy" 
-            onClick={handleCopyLink} 
-            aria-label="Copy Link" 
-            title="நகலெடு"
-          >
-            <i className="fas fa-link"></i>
-          </button>
-        </aside>
+        {/* Floating Share Sidebar deleted completely */}
 
         {/* Main Article Column */}
         <main className="article-main">
@@ -545,32 +647,9 @@ const ArticleDetail = () => {
 
           {/* Headlines */}
           <div className="article-headlines">
-            <h1 id="artTitleTa" style={{ fontSize: '26px', fontWeight: 800, lineHeight: 1.4, marginBottom: '10px' }}>
-              {article.titleTa}
+            <h1 id="artTitle" style={{ fontSize: '26px', fontWeight: 800, lineHeight: 1.4, marginBottom: '20px', color: 'var(--text-dark)' }}>
+              {lang === 'en' ? (article.titleEn || article.titleTa) : article.titleTa}
             </h1>
-            <h2 id="artTitleEn" style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: '20px' }}>
-              {article.titleEn}
-            </h2>
-          </div>
-
-          {/* Meta Info & Byline */}
-          <div className="article-meta-info">
-            <div className="author-profile">
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--category-color, var(--primary)), #000000)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700 }}>
-                {article.authorName.charAt(0)}
-              </div>
-              <div className="author-details">
-                <h4 id="authorName" style={{ fontWeight: 800, fontSize: '14px' }}>{article.authorName}</h4>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{article.authorRole}</span>
-              </div>
-            </div>
-            <div className="article-time" style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              <div><i className="far fa-calendar-alt"></i> {lang === 'en' ? 'Published: ' : 'வெளியிடப்பட்டது: '} <span id="pubDate">{article.pubDate}</span></div>
-              <div><i className="fas fa-history"></i> {lang === 'en' ? 'Updated: ' : 'புதுப்பிக்கப்பட்டது: '} <span id="updDate">{article.updDate}</span></div>
-              <div style={{ fontWeight: 600, color: 'var(--category-color, var(--primary))', marginTop: '4px' }}>
-                <i className="far fa-clock"></i> <span id="readTime">{lang === 'en' ? article.readTimeEn : article.readTime}</span>
-              </div>
-            </div>
           </div>
 
           {/* Full Width Hero Image */}
@@ -578,7 +657,7 @@ const ArticleDetail = () => {
             {article.imageUrl ? (
               <img 
                 src={article.imageUrl} 
-                alt={lang === 'en' ? article.titleEn : article.titleTa} 
+                alt={lang === 'en' ? (article.titleEn || article.titleTa) : article.titleTa} 
                 style={{ width: '100%', height: '350px', objectFit: 'cover', borderRadius: '12px' }}
               />
             ) : (
@@ -599,26 +678,196 @@ const ArticleDetail = () => {
 
           {/* Article Body */}
           <article className="article-body-text" id="articleBody" style={{ fontSize: '16px', lineHeight: 1.8, color: 'var(--text-dark)' }}>
-            {(lang === 'en' ? article.contentEn : article.contentTa).split('\n').map((para, i) => (
+            {(lang === 'en' ? (article.contentEn || article.contentTa) : article.contentTa).split('\n').map((para, i) => (
               <p key={i} style={{ marginBottom: '16px' }}>{para}</p>
             ))}
           </article>
 
           {/* Tags */}
           <div className="article-tags" id="articleTags" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '24px 0' }}>
-            {article.tags.map((tg, i) => (
-              <span className="article-tag" key={i} style={{ background: 'var(--primary-light)', color: 'var(--primary)', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: 700 }}>
-                {tg}
-              </span>
-            ))}
+            {article.tags.map((tg, i) => {
+              const tagTranslations = {
+                'செய்திகள்': 'News',
+                'தமிழகம்': 'Tamil Nadu',
+                'செய்தி': 'News',
+                'விளையாட்டு': 'Sports'
+              };
+              const tagLabel = lang === 'en' ? (tagTranslations[tg] || tg) : tg;
+              return (
+                <span className="article-tag" key={i} style={{ background: 'var(--primary-light)', color: 'var(--primary)', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: 700 }}>
+                  {tagLabel}
+                </span>
+              );
+            })}
+          </div>
+
+          {/* Article Information (Redesigned Meta Info & Byline) */}
+          <div className="article-meta-info" style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            padding: '16px', 
+            background: 'var(--card-bg)', 
+            border: '1px solid var(--border-color)', 
+            borderRadius: '12px',
+            marginBottom: '20px'
+          }}>
+            <div className="author-profile">
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--category-color, var(--primary)), #000000)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700 }}>
+                {(lang === 'en' ? getAuthorNameEn() : (article.authorName || 'கே')).charAt(0)}
+              </div>
+              <div className="author-details">
+                <h4 id="authorName" style={{ fontWeight: 800, fontSize: '14px', margin: 0 }}>
+                  {lang === 'en' ? getAuthorNameEn() : article.authorName}
+                </h4>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  {lang === 'en' ? getAuthorRoleEn() : article.authorRole}
+                </span>
+              </div>
+            </div>
+            <div className="article-time" style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+              <div><i className="far fa-calendar-alt"></i> {lang === 'en' ? 'Published: ' : 'வெளியிடப்பட்டது: '} <span id="pubDate">{article.pubDate}</span></div>
+              <div><i className="fas fa-history"></i> {lang === 'en' ? 'Updated: ' : 'புதுப்பிக்கப்பட்டது: '} <span id="updDate">{article.updDate}</span></div>
+              <div style={{ fontWeight: 600, color: 'var(--category-color, var(--primary))', marginTop: '4px' }}>
+                <i className="far fa-clock"></i> <span id="readTime">{lang === 'en' ? article.readTimeEn : article.readTime}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Share Card (Horizontal list below Article Info) */}
+          <div className="share-card" style={{
+            background: 'var(--card-bg)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '12px',
+            padding: '20px',
+            marginBottom: '20px'
+          }}>
+            <h4 style={{ fontSize: '14px', fontWeight: 800, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-dark)' }}>
+              {lang === 'en' ? 'Share this news' : 'இந்த செய்தியைப் பகிர்க'}
+            </h4>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <a 
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(window.location.href)}`} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: '#25D366', color: '#FFF', borderRadius: '6px', textDecoration: 'none', fontWeight: 700, fontSize: '12px' }}
+              >
+                <i className="fab fa-whatsapp"></i> WhatsApp
+              </a>
+              <a 
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: '#1877F2', color: '#FFF', borderRadius: '6px', textDecoration: 'none', fontWeight: 700, fontSize: '12px' }}
+              >
+                <i className="fab fa-facebook-f"></i> Facebook
+              </a>
+              <a 
+                href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}`} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: '#000000', color: '#FFF', borderRadius: '6px', textDecoration: 'none', fontWeight: 700, fontSize: '12px' }}
+              >
+                <i className="fab fa-twitter"></i> X
+              </a>
+              <a 
+                href={`https://telegram.me/share/url?url=${encodeURIComponent(window.location.href)}`} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: '#0088cc', color: '#FFF', borderRadius: '6px', textDecoration: 'none', fontWeight: 700, fontSize: '12px' }}
+              >
+                <i className="fab fa-telegram-plane"></i> Telegram
+              </a>
+              <button 
+                onClick={handleCopyLink}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: '#64748B', color: '#FFF', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '12px' }}
+              >
+                <i className="fas fa-link"></i> {lang === 'en' ? 'Copy Link' : 'நகலெடுக்க'}
+              </button>
+            </div>
+          </div>
+
+          {/* Comment Card (Comments list + Add Comment form) */}
+          <div className="comment-card" style={{
+            background: 'var(--card-bg)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '12px',
+            padding: '24px',
+            marginBottom: '20px'
+          }}>
+            <h3 className="comments-count" id="commentCountTitle" style={{ fontSize: '16px', fontWeight: 800, marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              {comments.length} {lang === 'en' ? 'Comments' : 'கருத்துக்கள்'}
+            </h3>
+            
+            <div className="comments-list" id="commentsList" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+              {getCommentsList().length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-muted)', fontSize: '13px', fontStyle: 'italic' }}>
+                  {lang === 'en' ? 'No comments yet. Be the first to comment!' : 'கருத்துகள் ஏதும் இல்லை. முதல் நபராக கருத்து தெரிவிக்கவும்!'}
+                </div>
+              ) : (
+                getCommentsList().map((c, i) => (
+                  <div className="comment-item" key={c.id || i} style={{ display: 'flex', gap: '15px', background: 'var(--bg-light)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '16px' }}>
+                    <div className="comment-avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>
+                      {(c.commentorName || 'A').charAt(0)}
+                    </div>
+                    <div className="comment-content" style={{ flex: 1 }}>
+                      <div className="comment-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <h5 style={{ fontWeight: 800, fontSize: '13px', margin: 0 }}>{c.commentorName}</h5>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{c.createdAt || new Date(c.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <p className="comment-text" style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-dark)', margin: 0 }}>
+                        {c.commentText || c.comment_text}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="comment-form-container" style={{ borderTop: comments.length > 0 ? '1px solid var(--border-color)' : 'none', paddingTop: comments.length > 0 ? '24px' : '0' }}>
+              <h4 style={{ fontSize: '14px', fontWeight: 800, marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                {lang === 'en' ? 'Share Your Comments' : 'கருத்துக்களைப் பகிரவும்'}
+              </h4>
+              <form className="comment-form" id="commentForm" onSubmit={handleCommentSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className="comment-form-grid">
+                  <input 
+                    type="text" 
+                    placeholder={lang === 'en' ? 'Name *' : 'பெயர் *'}
+                    value={commentor}
+                    onChange={(e) => setCommentor(e.target.value)}
+                    required
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-light)', color: 'var(--text-dark)', fontSize: '12px' }}
+                  />
+                  <input 
+                    type="email" 
+                    placeholder={lang === 'en' ? 'Email *' : 'மின்னஞ்சல் *'}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-light)', color: 'var(--text-dark)', fontSize: '12px' }}
+                  />
+                </div>
+                <textarea 
+                  placeholder={lang === 'en' ? 'Write comment here...' : 'உங்கள் கருத்துக்களை இங்கு எழுதவும்...'}
+                  value={msg}
+                  onChange={(e) => setMsg(e.target.value)}
+                  required
+                  rows="3"
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-light)', color: 'var(--text-dark)', fontSize: '12px', resize: 'vertical' }}
+                ></textarea>
+                <button type="submit" style={{ padding: '8px 16px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 700, width: 'max-content', fontSize: '12px' }}>
+                  {lang === 'en' ? 'Submit' : 'பதிவு செய்க'}
+                </button>
+              </form>
+            </div>
           </div>
 
           {/* Related Articles Grid */}
-          <div className="related-articles" style={{ marginTop: '40px', paddingTop: '30px', borderTop: '1px solid var(--border-color)' }}>
-            <h3 className="related-title" style={{ fontSize: '18px', fontWeight: 800, marginBottom: '20px' }}>
+          <div className="related-articles" style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--border-color)' }}>
+            <h3 className="related-title" style={{ fontSize: '16px', fontWeight: 800, marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               {lang === 'en' ? 'Related News' : 'தொடர்புடைய செய்திகள்'}
             </h3>
-            <div className="news-grid-3">
+            <div className="news-grid">
               {related.map(rel => (
                 <div 
                   className="news-card" 
@@ -626,82 +875,25 @@ const ArticleDetail = () => {
                   onClick={() => navigate(`/article/${rel.id}`)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <div className="card-img" style={{ background: rel.gradient, height: '140px' }}>
+                  <div 
+                    className="card-img" 
+                    style={{ 
+                      background: rel.imageUrl ? `url(${rel.imageUrl}) center/cover` : (rel.gradient || 'linear-gradient(135deg, #3B82F6, #60A5FA)'), 
+                      height: '140px',
+                      position: 'relative'
+                    }}
+                  >
                     <span className="cat-badge" style={{ background: 'var(--category-color, var(--primary))' }}>
                       {lang === 'en' ? rel.subcatEn : rel.subcatTa}
                     </span>
                   </div>
                   <div className="card-body" style={{ padding: '16px' }}>
-                    <h3 style={{ fontSize: '14px', fontWeight: 800, lineHeight: 1.4, margin: 0 }}>
+                    <h3 style={{ fontSize: '13px', fontWeight: 800, lineHeight: 1.4, margin: 0, color: 'var(--text-dark)' }}>
                       {lang === 'en' ? rel.titleEn : rel.titleTa}
                     </h3>
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* Comments Section */}
-          <div className="comments-section" style={{ marginTop: '40px' }}>
-            <h3 className="comments-count" id="commentCountTitle" style={{ fontSize: '18px', fontWeight: 800, marginBottom: '20px' }}>
-              {comments.length} {lang === 'en' ? 'Comments' : 'கருத்துக்கள்'}
-            </h3>
-            
-            <div className="comments-list" id="commentsList" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '30px' }}>
-              {comments.map((c, i) => (
-                <div className="comment-item" key={c.id || i} style={{ display: 'flex', gap: '15px', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '16px' }}>
-                  <div className="comment-avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
-                    {(c.commentorName || 'A').charAt(0)}
-                  </div>
-                  <div className="comment-content" style={{ flex: 1 }}>
-                    <div className="comment-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <h5 style={{ fontWeight: 800, fontSize: '13px', margin: 0 }}>{c.commentorName}</h5>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{c.createdAt || new Date(c.created_at).toLocaleDateString()}</span>
-                    </div>
-                    <p className="comment-text" style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-dark)', margin: 0 }}>
-                      {c.commentText || c.comment_text}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Add Comment Form */}
-            <div className="comment-form-container" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '24px' }}>
-              <h4 style={{ fontSize: '15px', fontWeight: 800, marginBottom: '16px' }}>
-                {lang === 'en' ? 'Share Your Comments' : 'கருத்துக்களைப் பகிரவும்'}
-              </h4>
-              <form className="comment-form" id="commentForm" onSubmit={handleCommentSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <input 
-                    type="text" 
-                    placeholder={lang === 'en' ? 'Your Name (Required)' : 'உங்கள் பெயர் (கட்டாயமானது)'}
-                    value={commentor}
-                    onChange={(e) => setCommentor(e.target.value)}
-                    required
-                    style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-light)', color: 'var(--text-dark)', fontSize: '13px' }}
-                  />
-                  <input 
-                    type="email" 
-                    placeholder={lang === 'en' ? 'Email Address (Will not be published)' : 'மின்னஞ்சல் முகவரி (வெளியிடப்படாது)'}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-light)', color: 'var(--text-dark)', fontSize: '13px' }}
-                  />
-                </div>
-                <textarea 
-                  placeholder={lang === 'en' ? 'Write your comment here...' : 'உங்கள் கருத்துக்களை இங்கு எழுதவும்...'}
-                  value={msg}
-                  onChange={(e) => setMsg(e.target.value)}
-                  required
-                  rows="4"
-                  style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-light)', color: 'var(--text-dark)', fontSize: '13px', resize: 'vertical' }}
-                ></textarea>
-                <button type="submit" style={{ padding: '12px 24px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, width: 'max-content' }}>
-                  {lang === 'en' ? 'Post Comment' : 'பதிவு செய்க'}
-                </button>
-              </form>
             </div>
           </div>
         </main>
@@ -730,7 +922,7 @@ const ArticleDetail = () => {
               <i className="fas fa-fire" style={{ color: '#EF4444' }}></i> 
               {lang === 'en' ? 'Trending News' : 'ட்ரெண்டிங் செய்திகள்'}
             </h4>
-            {trending.map(tItem => (
+            {getTrendingList().map(tItem => (
               <div className="trending-item" key={tItem.id} style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>
                 <span className="rank top3" style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#EF4444', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700 }}>
                   {tItem.rank}

@@ -19,6 +19,18 @@ public class Category {
     @Column(nullable = false, unique = true)
     private String slug;
 
+    @Column(name = "display_order")
+    private Integer displayOrder = 0;
+
+    @Column(name = "icon")
+    private String icon;
+
+    @Column(name = "is_nav")
+    private Boolean isNav = true;
+
+    @Column(name = "is_active")
+    private Boolean isActive = true;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getName() { return name; }
@@ -27,4 +39,13 @@ public class Category {
     public void setNameTa(String nameTa) { this.nameTa = nameTa; }
     public String getSlug() { return slug; }
     public void setSlug(String slug) { this.slug = slug; }
+
+    public Integer getDisplayOrder() { return displayOrder; }
+    public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }
+    public String getIcon() { return icon; }
+    public void setIcon(String icon) { this.icon = icon; }
+    public Boolean getIsNav() { return isNav; }
+    public void setIsNav(Boolean isNav) { this.isNav = isNav; }
+    public Boolean getIsActive() { return isActive; }
+    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
 }
