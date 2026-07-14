@@ -1422,30 +1422,46 @@ const Header = () => {
           }
         }
          @media (max-width: 768px) {
+          .nav-item-wrapper {
+            position: static !important;
+          }
           .category-dropdown-menu {
             left: 0 !important;
-            transform: none !important;
-            min-width: 160px !important;
-          }
-          .nav-item-wrapper:nth-last-child(-n+3) .category-dropdown-menu {
-            left: auto !important;
             right: 0 !important;
+            width: 100% !important;
+            transform: none !important;
+            top: 100% !important;
+            margin-top: 0 !important;
+            border-radius: 0 0 8px 8px !important;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
+            border-left: none !important;
+            border-right: none !important;
           }
         }
       `}</style>
       <nav 
-        className={`main-nav main-nav-desktop-overflow ${isRegionalPage ? 'regional-theme' : ''}`} 
+        className={`main-nav ${isRegionalPage ? 'regional-theme' : ''}`} 
         style={{ 
-          overflowX: activeDropdown ? 'visible' : 'auto', 
+          position: 'relative',
+          overflow: 'visible', 
           whiteSpace: 'nowrap', 
           borderTop: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #E5E7EB',
           borderBottom: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #E5E7EB',
-          background: theme === 'dark' ? '#000000' : '#FFFFFF',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none'
+          background: theme === 'dark' ? '#000000' : '#FFFFFF'
         }}
       >
-        <div className="container main-nav-container-desktop" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '0 16px' }}>
+        <div 
+          className="container main-nav-container-desktop" 
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            width: '100%', 
+            padding: '0 16px',
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
+        >
           {renderScrollNavMenu()}
         </div>
       </nav>
