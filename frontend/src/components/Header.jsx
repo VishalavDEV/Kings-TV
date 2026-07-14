@@ -301,17 +301,7 @@ const Header = () => {
       });
     }
 
-    return isRegionalPage 
-      ? [
-          { path: '/', label: t('முகப்பு'), subcategories: [] },
-          { path: '/directory', label: t('நம்ம ஊர்'), subcategories: [] },
-          { path: '/wishes', label: t('வாழ்த்து'), subcategories: [] },
-          { path: '/obituaries', label: t('இரங்கல்'), subcategories: [] },
-          { path: '/business-studies', label: t('வணிகம்'), subcategories: [] },
-          { path: '/jobs', label: t('வேலை'), subcategories: [] },
-          { path: '/classifieds', label: t('தள்ளுபடி'), subcategories: [] }
-        ]
-      : (dynamicItems.length > 0 ? dynamicItems : [
+    return dynamicItems.length > 0 ? dynamicItems : [
           { path: '/', label: lang === 'en' ? 'Home' : 'முகப்பு', subcategories: [] },
           { path: '/category/politics', label: lang === 'en' ? 'Politics' : 'அரசியல்', subcategories: [ { id: 'fp-1', slug: 'state', name: 'State', nameTa: 'மாநிலம்' } ] },
           { path: '/category/business', label: lang === 'en' ? 'Business' : 'வணிகம்', subcategories: [ { id: 'fb-1', slug: 'markets', name: 'Markets', nameTa: 'சந்தை' } ] },
@@ -338,7 +328,7 @@ const Header = () => {
             { id: 'v-cinema', slug: 'v-cinema', name: 'Cinema', nameTa: 'சினிமா' }
           ] },
           { path: '/web-stories', label: lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்', subcategories: [] }
-        ]);
+        ];
   };
 
   const [searchQuery, setSearchQuery] = useState('');
