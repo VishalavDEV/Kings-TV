@@ -14,6 +14,10 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Directory from './pages/Directory';
+import BizDirectoryMain from './pages/BizDirectoryMain';
+import NfcCardDashboard from './pages/NfcCardDashboard';
+import DealsListing from './pages/DealsListing';
+import RfqMarketplace from './pages/RfqMarketplace';
 import Classifieds from './pages/Classifieds';
 import Wishes from './pages/Wishes';
 import Obituaries from './pages/Obituaries';
@@ -50,7 +54,10 @@ function App() {
               <Route path="/login.html" element={<Navigate to="/login" replace />} />
               <Route path="/register" element={<Register />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/directory" element={<Directory />} />
+              <Route path="/directory" element={<BizDirectoryMain />} />
+              <Route path="/nfc" element={<NfcCardDashboard />} />
+              <Route path="/deals" element={<DealsListing />} />
+              <Route path="/rfq" element={<RfqMarketplace />} />
               <Route path="/directory.html" element={<Navigate to="/directory" replace />} />
               <Route path="/classifieds" element={<Classifieds />} />
               <Route path="/classifieds.html" element={<Navigate to="/classifieds" replace />} />

@@ -273,6 +273,30 @@ const Header = () => {
       const tech = findDbItem('tech') || findDbItem('technology');
       dynamicItems.push(tech || { id: 'tech', path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்', subcategories: [] });
 
+      // Deals (No dropdown chevron)
+      dynamicItems.push({
+        id: 'deals',
+        path: '/deals',
+        label: lang === 'en' ? 'Deals' : 'சலுகைகள்',
+        subcategories: []
+      });
+
+      // RFQ (No dropdown chevron)
+      dynamicItems.push({
+        id: 'rfq',
+        path: '/rfq',
+        label: lang === 'en' ? 'RFQ' : 'கோரிக்கைகள்',
+        subcategories: []
+      });
+
+      // NFC Card (No dropdown chevron)
+      dynamicItems.push({
+        id: 'nfc',
+        path: '/nfc',
+        label: lang === 'en' ? 'NFC Card' : 'என்எஃப்சி கார்டு',
+        subcategories: []
+      });
+
       // Regional (with dropdown chevron)
       const regional = findDbItem('regional');
       const regionalSubcategories = [
@@ -324,6 +348,9 @@ const Header = () => {
           { path: '/category/sports', label: lang === 'en' ? 'Sports' : 'விளையாட்டு', subcategories: [ { id: 'fs-1', slug: 'cricket', name: 'Cricket', nameTa: 'கிரிக்கெட்' } ] },
           { path: '/category/cinema', label: lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு', subcategories: [ { id: 'fc-1', slug: 'kollywood', name: 'Kollywood', nameTa: 'கோலிவுட்' } ] },
           { path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்', subcategories: [ { id: 'ft-1', slug: 'smartphones', name: 'Smartphones', nameTa: 'ஸ்மார்ட் போன்' } ] },
+          { path: '/deals', label: lang === 'en' ? 'Deals' : 'சலுகைகள்', subcategories: [] },
+          { path: '/rfq', label: lang === 'en' ? 'RFQ' : 'கோரிக்கைகள்', subcategories: [] },
+          { path: '/nfc', label: lang === 'en' ? 'NFC Card' : 'என்எஃப்சி கார்டு', subcategories: [] },
           { 
             id: 'regional',
             path: '/directory', 
