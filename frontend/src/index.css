@@ -5462,3 +5462,183 @@ ul {
 
 
 
+
+/* ==========================================
+   PREMIUM DIRECTORY & SEARCH BAR NEW LOOK
+   ========================================== */
+.biz-search-bar {
+  background: #ffffff !important;
+  padding: 8px 12px !important;
+  border-radius: 50px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: 800px !important;
+  margin: 0 auto !important;
+  gap: 10px !important;
+}
+
+.biz-search-field {
+  display: flex !important;
+  align-items: center !important;
+  flex: 1 !important;
+  padding: 0 16px !important;
+  position: relative !important;
+}
+
+.biz-search-field:not(:last-child) {
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+.biz-search-field i {
+  color: #94a3b8 !important;
+  margin-right: 10px !important;
+  font-size: 16px !important;
+}
+
+.biz-search-field input {
+  width: 100% !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 10px 0 !important;
+  font-size: 15px !important;
+  color: #1e293b !important;
+  outline: none !important;
+}
+
+.biz-search-btn {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border: none !important;
+  padding: 12px 32px !important;
+  border-radius: 30px !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.biz-search-btn:hover {
+  background: #b91c1c !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Premium category card styling */
+.biz-cat-grid {
+  display: grid !important;
+  grid-template-columns: repeat(8, 1fr) !important;
+  gap: 16px !important;
+  margin-bottom: 24px !important;
+}
+
+@media (max-width: 1024px) {
+  .biz-cat-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .biz-cat-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+.biz-cat-card {
+  background: var(--white) !important;
+  border: 1px solid var(--top-bar-border) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  cursor: pointer !important;
+  transition: var(--transition) !important;
+}
+
+.biz-cat-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: var(--shadow-md) !important;
+  border-color: var(--primary) !important;
+}
+
+.biz-cat-icon {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 20px !important;
+  margin-bottom: 10px !important;
+}
+
+.biz-cat-name {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--text-dark) !important;
+}
+
+/* Premium Directory Listings Layout */
+.biz-listings-layout {
+  display: grid !important;
+  grid-template-columns: 1fr 300px !important;
+  gap: 24px !important;
+}
+
+@media (max-width: 1024px) {
+  .biz-listings-layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.biz-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 20px !important;
+}
+
+@media (max-width: 640px) {
+  .biz-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.biz-card {
+  background: var(--white) !important;
+  border: 1px solid var(--top-bar-border) !important;
+  border-radius: var(--radius-md) !important;
+  overflow: hidden !important;
+  box-shadow: var(--shadow-sm) !important;
+  transition: var(--transition) !important;
+  position: relative !important;
+}
+
+.biz-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* Mobile responsive search bar */
+@media (max-width: 768px) {
+  .biz-search-bar {
+    flex-direction: column !important;
+    border-radius: 16px !important;
+    padding: 16px !important;
+  }
+  .biz-search-field {
+    width: 100% !important;
+    border-right: none !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 8px 0 !important;
+  }
+  .biz-search-btn {
+    width: 100% !important;
+    border-radius: 8px !important;
+  }
+}
