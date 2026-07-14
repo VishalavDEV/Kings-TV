@@ -111,6 +111,22 @@ const Header = () => {
   const [showHeaderSubcatDropdown, setShowHeaderSubcatDropdown] = useState(false);
   const [districtsList, setDistrictsList] = useState([]);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [dropdownLeft, setDropdownLeft] = useState(0);
+
+  const toggleDropdown = (e, itemId) => {
+    const parent = e.currentTarget.closest('.nav-item-wrapper');
+    const navElement = document.querySelector('.main-nav');
+    if (parent && navElement) {
+      const navRect = navElement.getBoundingClientRect();
+      const parentRect = parent.getBoundingClientRect();
+      
+      const dropdownWidth = 220;
+      const maxLeft = window.innerWidth - dropdownWidth - 16;
+      const leftOffset = Math.max(16, Math.min(maxLeft, parentRect.left - navRect.left));
+      setDropdownLeft(leftOffset);
+    }
+    setActiveDropdown(activeDropdown === itemId ? null : itemId);
+  };
   const [dropdownTimer, setDropdownTimer] = useState(null);
   const [mobileExpandedCat, setMobileExpandedCat] = useState(null);
 
@@ -879,7 +895,7 @@ const Header = () => {
               if (isActive) {
                 // If already active, toggle dropdown menu
                 e.preventDefault();
-                setActiveDropdown(activeDropdown === item.id ? null : item.id);
+                toggleDropdown(e, item.id);
               } else {
                 setActiveDropdown(null);
               }
@@ -923,7 +939,7 @@ const Header = () => {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setActiveDropdown(activeDropdown === item.id ? null : item.id);
+                    toggleDropdown(e, item.id);
                   }}
                   style={{
                     background: 'transparent',
@@ -950,8 +966,8 @@ const Header = () => {
                   style={{
                     position: 'absolute',
                     top: '100%',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
+                    left: window.innerWidth <= 768 ? `${dropdownLeft}px` : '50%',
+                    transform: window.innerWidth <= 768 ? 'none' : 'translateX(-50%)',
                     background: theme === 'dark' ? '#1E293B' : '#ffffff',
                     border: theme === 'dark' ? '1px solid #334155' : '1px solid #e2e8f0',
                     borderRadius: '8px',
@@ -1426,16 +1442,10 @@ const Header = () => {
             position: static !important;
           }
           .category-dropdown-menu {
-            left: 0 !important;
-            right: 0 !important;
-            width: 100% !important;
             transform: none !important;
-            top: 100% !important;
-            margin-top: 0 !important;
-            border-radius: 0 0 8px 8px !important;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
-            border-left: none !important;
-            border-right: none !important;
+            margin-top: 8px !important;
+            border-radius: 8px !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
           }
         }
       `}</style>
