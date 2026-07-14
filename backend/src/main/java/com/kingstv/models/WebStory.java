@@ -17,6 +17,9 @@ public class WebStory {
     @Column(name = "title_en")
     private String titleEn;
 
+    @Column(name = "title")
+    private String title;
+
     @Column(name = "category_id")
     private Long categoryId;
 
@@ -78,4 +81,7 @@ public class WebStory {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 }

@@ -1,14 +1,18 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
+import { ThemeContext } from '../context/ThemeContext';
 
 const Weather = () => {
   const { lang } = useContext(LanguageContext);
+  const { theme } = useContext(ThemeContext);
+  const isDark = theme === 'dark';
+  const pageBg = isDark ? '#000000' : '#F8FAFC';
+  const textDark = isDark ? '#ffffff' : '#0F172A';
+  const textMuted = isDark ? 'rgba(255, 255, 255, 0.6)' : '#64748B';
+  const cardBg = isDark ? 'rgba(255, 255, 255, 0.03)' : '#ffffff';
+  const cardBorder = isDark ? 'rgba(255, 255, 255, 0.08)' : '#e2e8f0';
   const [selectedCity, setSelectedCity] = useState('Chennai');
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
 
   const citiesWeather = {
     Chennai: { 
@@ -199,7 +203,113 @@ const Weather = () => {
     }
   };
 
-  const current = citiesWeather[selectedCity] || citiesWeather.Chennai;
+  const [weatherData, setWeatherData] = useState(citiesWeather);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
+    const cityCoords = {
+      Chennai: { lat: 13.0827, lon: 80.2707 },
+      Coimbatore: { lat: 11.0168, lon: 76.9558 },
+      Madurai: { lat: 9.9252, lon: 78.1198 },
+      Trichy: { lat: 10.7905, lon: 78.7047 },
+      Salem: { lat: 11.6643, lon: 78.1460 }
+    };
+
+    const coords = cityCoords[selectedCity];
+    if (!coords) return;
+
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.current) {
+          const currentCode = data.current.weather_code;
+          const conditionMapping = {
+            0: { en: 'Sunny', ta: 'வெயில்', icon: '☀️' },
+            1: { en: 'Partly Cloudy', ta: 'பகுதி மேகமூட்டம்', icon: '⛅' },
+            2: { en: 'Partly Cloudy', ta: 'பகுதி மேகமூட்டம்', icon: '⛅' },
+            3: { en: 'Partly Cloudy', ta: 'பகுதி மேகமூட்டம்', icon: '⛅' },
+            45: { en: 'Foggy', ta: 'மூடுபனி', icon: '🌫️' },
+            48: { en: 'Foggy', ta: 'மூடுபனி', icon: '🌫️' },
+            51: { en: 'Drizzle', ta: 'சாரல் மழை', icon: '🌧️' },
+            53: { en: 'Drizzle', ta: 'சாரல் மழை', icon: '🌧️' },
+            55: { en: 'Drizzle', ta: 'சாரல் மழை', icon: '🌧️' },
+            61: { en: 'Rainy', ta: 'மழை', icon: '🌧️' },
+            63: { en: 'Rainy', ta: 'மழை', icon: '🌧️' },
+            65: { en: 'Heavy Rain', ta: 'கனமழை', icon: '🌧️' },
+            80: { en: 'Showers', ta: 'மழைச்சாரல்', icon: '🌦️' },
+            81: { en: 'Showers', ta: 'மழைச்சாரல்', icon: '🌦️' },
+            82: { en: 'Showers', ta: 'மழைச்சாரல்', icon: '🌦️' },
+            95: { en: 'Thunderstorms', ta: 'இடிமழை', icon: '⛈️' },
+            96: { en: 'Thunderstorms', ta: 'இடிமழை', icon: '⛈️' },
+            99: { en: 'Thunderstorms', ta: 'இடிமழை', icon: '⛈️' }
+          };
+
+          const condition = conditionMapping[currentCode] || { en: 'Cloudy', ta: 'மேகமூட்டம்', icon: '☁️' };
+          const maxTemp = Math.round(data.daily.temperature_2m_max[0]);
+          const minTemp = Math.round(data.daily.temperature_2m_min[0]);
+          
+          // Helper to format time cleanly
+          const formatTime = (isoStr) => {
+            try {
+              const d = new Date(isoStr);
+              return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch(e) {
+              return isoStr.split('T')[1] || isoStr;
+            }
+          };
+
+          const sunriseRaw = formatTime(data.daily.sunrise[0]);
+          const sunsetRaw = formatTime(data.daily.sunset[0]);
+
+          const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+          const daysOfWeekTa = ['ஞாயிறு', 'திங்கள்', 'செவ்வாய்', 'புதன்', 'வியாழன்', 'வெள்ளி', 'சனி'];
+          const forecast = [];
+          
+          for (let i = 0; i < 7; i++) {
+            const timeStr = data.daily.time[i];
+            const dateObj = new Date(timeStr);
+            const dayName = daysOfWeek[dateObj.getDay()];
+            const dayNameTa = daysOfWeekTa[dateObj.getDay()];
+            const dayMax = Math.round(data.daily.temperature_2m_max[i]);
+            const dayCode = data.daily.weather_code ? data.daily.weather_code[i] : 0;
+            const dayCond = conditionMapping[dayCode] || { en: 'Sunny', ta: 'வெயில்', icon: '☀️' };
+            
+            forecast.push({
+              day: dayName,
+              dayTa: dayNameTa,
+              icon: dayCond.icon,
+              temp: `${dayMax}°`,
+              desc: dayCond.en,
+              descTa: dayCond.ta
+            });
+          }
+
+          setWeatherData(prev => ({
+            ...prev,
+            [selectedCity]: {
+              ...prev[selectedCity],
+              temp: `${Math.round(data.current.temperature_2m)}°C`,
+              condition: condition.en,
+              conditionTa: condition.ta,
+              humidity: `${data.current.relative_humidity_2m}%`,
+              wind: `${data.current.wind_speed_10m} km/h`,
+              uv: `Index (${Math.round(data.daily.uv_index_max[0])})`,
+              sunrise: sunriseRaw,
+              sunset: sunsetRaw,
+              forecastSummaryEn: `Expect ${condition.en.toLowerCase()} conditions today with a high of ${maxTemp}°C and low of ${minTemp}°C.`,
+              forecastSummaryTa: `இன்று ${condition.ta} வானிலை காணப்படும், அதிகபட்சமாக ${maxTemp}°C மற்றும் குறைந்தபட்சமாக ${minTemp}°C வெப்பம் பதிவாகும்.`,
+              forecast: forecast
+            }
+          }));
+        }
+      })
+      .catch(err => console.warn("Failed to fetch live weather details", err));
+  }, [selectedCity]);
+
+  const current = weatherData[selectedCity] || weatherData.Chennai;
 
   const weatherIcons = {
     'Sunny': 'fas fa-sun',
@@ -291,7 +401,7 @@ const Weather = () => {
   const activeAdvisories = getDynamicAdvisories();
 
   return (
-    <div className="weather-page-wrapper" style={{ background: '#000000', color: '#ffffff', minHeight: '100vh', padding: '30px 20px' }}>
+    <div className="weather-page-wrapper" style={{ background: pageBg, color: textDark, minHeight: '100vh', padding: '30px 20px' }}>
       <style dangerouslySetInnerHTML={{__html: `
         /* Desktop vs Mobile display triggers */
         .weather-mobile-view {
@@ -337,7 +447,7 @@ const Weather = () => {
       <div className="weather-desktop-view">
         <div className="container" style={{ maxWidth: '1200px', margin: '0 auto' }}>
           {/* BREADCRUMBS */}
-          <div className="breadcrumbs" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'rgba(255, 255, 255, 0.6)' }}>
+          <div className="breadcrumbs" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: textMuted }}>
             <Link to="/" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: '600' }}>
               {lang === 'en' ? 'Home' : 'முகப்பு'}
             </Link>
@@ -345,14 +455,14 @@ const Weather = () => {
             <span style={{ fontWeight: '600' }}>{lang === 'en' ? 'Weather' : 'வானிலை'}</span>
           </div>
 
-          <h1 style={{ fontSize: '32px', fontWeight: 800, marginBottom: '30px', color: 'white', letterSpacing: '0.5px' }}>
+          <h1 style={{ fontSize: '32px', fontWeight: 800, marginBottom: '30px', color: textDark, letterSpacing: '0.5px' }}>
             {lang === 'en' ? 'Local Weather Forecast' : 'தமிழக மாவட்ட வானிலை நிலவரம்'}
           </h1>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2.8fr', gap: '30px', alignItems: 'start' }}>
             {/* CITY SELECTOR */}
-            <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '24px', borderRadius: '12px', backdropFilter: 'blur(20px)' }}>
-              <h3 style={{ margin: '0 0 20px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '12px', fontSize: '16px', fontWeight: 700, color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ background: cardBg, border: '1px solid ' + cardBorder, padding: '24px', borderRadius: '12px', backdropFilter: 'blur(20px)' }}>
+              <h3 style={{ margin: '0 0 20px 0', borderBottom: '1px solid ' + cardBorder, paddingBottom: '12px', fontSize: '16px', fontWeight: 700, color: textDark, display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <i className="fas fa-map-marker-alt" style={{ color: 'var(--primary)' }}></i>
                 {lang === 'en' ? 'Select Location' : 'மாவட்டத்தைத் தேர்வு செய்க'}
               </h3>
@@ -364,9 +474,9 @@ const Weather = () => {
                     style={{
                       padding: '12px 16px',
                       borderRadius: '8px',
-                      border: '1px solid ' + (selectedCity === city ? 'var(--primary)' : 'rgba(255, 255, 255, 0.08)'),
-                      background: selectedCity === city ? 'rgba(179, 115, 42, 0.15)' : 'rgba(255, 255, 255, 0.01)',
-                      color: selectedCity === city ? 'white' : 'rgba(255, 255, 255, 0.7)',
+                      border: '1px solid ' + (selectedCity === city ? 'var(--primary)' : cardBorder),
+                      background: selectedCity === city ? 'rgba(179, 115, 42, 0.15)' : (isDark ? 'rgba(255, 255, 255, 0.01)' : '#f1f5f9'),
+                      color: selectedCity === city ? 'white' : textDark,
                       fontWeight: '700',
                       textAlign: 'left',
                       cursor: 'pointer',
@@ -382,9 +492,9 @@ const Weather = () => {
 
             {/* DETAILS CONTAINER */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-              <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '40px 30px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backdropFilter: 'blur(20px)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)' }}>
+              <div style={{ background: cardBg, border: '1px solid ' + cardBorder, padding: '40px 30px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backdropFilter: 'blur(20px)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)' }}>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: '36px', fontWeight: 800, color: 'white' }}>{lang === 'en' ? selectedCity : current.ta}</h2>
+                  <h2 style={{ margin: 0, fontSize: '36px', fontWeight: 800, color: textDark }}>{lang === 'en' ? selectedCity : current.ta}</h2>
                   <span style={{ fontSize: '18px', color: 'var(--primary)', fontWeight: '600', display: 'block', marginTop: '6px' }}>
                     {lang === 'en' ? current.condition : current.conditionTa}
                   </span>
@@ -392,41 +502,41 @@ const Weather = () => {
                   {/* Expanded 3x3 Grid of Metrics */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px 30px', marginTop: '30px' }}>
                     <div>
-                      <small style={{ color: 'rgba(255, 255, 255, 0.4)', display: 'block', textTransform: 'uppercase', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>{lang === 'en' ? 'Humidity' : 'ஈரப்பதம்'}</small>
-                      <strong style={{ fontSize: '15px', color: 'white' }}>{current.humidity}</strong>
+                      <small style={{ color: textMuted, display: 'block', textTransform: 'uppercase', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>{lang === 'en' ? 'Humidity' : 'ஈரப்பதம்'}</small>
+                      <strong style={{ fontSize: '15px', color: textDark }}>{current.humidity}</strong>
                     </div>
                     <div>
-                      <small style={{ color: 'rgba(255, 255, 255, 0.4)', display: 'block', textTransform: 'uppercase', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>{lang === 'en' ? 'Wind Speed' : 'காற்றின் வேகம்'}</small>
-                      <strong style={{ fontSize: '15px', color: 'white' }}>{current.wind}</strong>
+                      <small style={{ color: textMuted, display: 'block', textTransform: 'uppercase', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>{lang === 'en' ? 'Wind Speed' : 'காற்றின் வேகம்'}</small>
+                      <strong style={{ fontSize: '15px', color: textDark }}>{current.wind}</strong>
                     </div>
                     <div>
-                      <small style={{ color: 'rgba(255, 255, 255, 0.4)', display: 'block', textTransform: 'uppercase', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>{lang === 'en' ? 'UV Index' : 'யுவி குறியீடு'}</small>
-                      <strong style={{ fontSize: '15px', color: 'white' }}>{current.uv}</strong>
+                      <small style={{ color: textMuted, display: 'block', textTransform: 'uppercase', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>{lang === 'en' ? 'UV Index' : 'யுவி குறியீடு'}</small>
+                      <strong style={{ fontSize: '15px', color: textDark }}>{current.uv}</strong>
                     </div>
                     <div>
-                      <small style={{ color: 'rgba(255, 255, 255, 0.4)', display: 'block', textTransform: 'uppercase', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>{lang === 'en' ? 'Barometer' : 'அழுத்தம்'}</small>
-                      <strong style={{ fontSize: '15px', color: 'white' }}>{current.pressure}</strong>
+                      <small style={{ color: textMuted, display: 'block', textTransform: 'uppercase', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>{lang === 'en' ? 'Barometer' : 'அழுத்தம்'}</small>
+                      <strong style={{ fontSize: '15px', color: textDark }}>{current.pressure}</strong>
                     </div>
                     <div>
-                      <small style={{ color: 'rgba(255, 255, 255, 0.4)', display: 'block', textTransform: 'uppercase', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>{lang === 'en' ? 'Air Quality' : 'காற்று தரம்'}</small>
-                      <strong style={{ fontSize: '15px', color: 'white' }}>{lang === 'en' ? current.aqi : current.aqiTa}</strong>
+                      <small style={{ color: textMuted, display: 'block', textTransform: 'uppercase', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>{lang === 'en' ? 'Air Quality' : 'காற்று தரம்'}</small>
+                      <strong style={{ fontSize: '15px', color: textDark }}>{lang === 'en' ? current.aqi : current.aqiTa}</strong>
                     </div>
                     <div>
-                      <small style={{ color: 'rgba(255, 255, 255, 0.4)', display: 'block', textTransform: 'uppercase', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>{lang === 'en' ? 'Visibility' : 'பார்வைதிறன்'}</small>
-                      <strong style={{ fontSize: '15px', color: 'white' }}>{lang === 'en' ? current.visibility : current.visibilityTa}</strong>
+                      <small style={{ color: textMuted, display: 'block', textTransform: 'uppercase', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>{lang === 'en' ? 'Visibility' : 'பார்வைதிறன்'}</small>
+                      <strong style={{ fontSize: '15px', color: textDark }}>{lang === 'en' ? current.visibility : current.visibilityTa}</strong>
                     </div>
                     <div>
-                      <small style={{ color: 'rgba(255, 255, 255, 0.4)', display: 'block', textTransform: 'uppercase', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>{lang === 'en' ? 'Rain Chance' : 'மழை வாய்ப்பு'}</small>
-                      <strong style={{ fontSize: '15px', color: 'white' }}>{lang === 'en' ? current.precipitation : current.precipitationTa}</strong>
+                      <small style={{ color: textMuted, display: 'block', textTransform: 'uppercase', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>{lang === 'en' ? 'Rain Chance' : 'மழை வாய்ப்பு'}</small>
+                      <strong style={{ fontSize: '15px', color: textDark }}>{lang === 'en' ? current.precipitation : current.precipitationTa}</strong>
                     </div>
                     <div>
-                      <small style={{ color: 'rgba(255, 255, 255, 0.4)', display: 'block', textTransform: 'uppercase', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>{lang === 'en' ? 'Dew Point' : 'பனி நிலை'}</small>
-                      <strong style={{ fontSize: '15px', color: 'white' }}>{lang === 'en' ? current.dewPoint : current.dewPointTa}</strong>
+                      <small style={{ color: textMuted, display: 'block', textTransform: 'uppercase', fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.5px' }}>{lang === 'en' ? 'Dew Point' : 'பனி நிலை'}</small>
+                      <strong style={{ fontSize: '15px', color: textDark }}>{lang === 'en' ? current.dewPoint : current.dewPointTa}</strong>
                     </div>
                   </div>
 
                   {/* Descriptive summary block */}
-                  <div style={{ marginTop: '24px', padding: '16px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '8px', borderLeft: '3px solid var(--primary)', fontSize: '13px', lineHeight: '1.6', color: 'rgba(255,255,255,0.8)' }}>
+                  <div style={{ marginTop: '24px', padding: '16px', background: isDark ? 'rgba(255, 255, 255, 0.02)' : '#f8fafc', borderRadius: '8px', borderLeft: '3px solid var(--primary)', fontSize: '13px', lineHeight: '1.6', color: textDark }}>
                     <strong>{lang === 'en' ? 'Today\'s Outlook: ' : 'இன்றைய வானிலை குறிப்பு: '}</strong>
                     {lang === 'en' ? current.forecastSummaryEn : current.forecastSummaryTa}
                   </div>
@@ -445,16 +555,16 @@ const Weather = () => {
               </div>
 
               {/* 7 DAY FORECAST */}
-              <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '30px', borderRadius: '12px', backdropFilter: 'blur(20px)' }}>
-                <h3 style={{ margin: '0 0 20px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '12px', fontSize: '18px', fontWeight: 800, color: 'white' }}>
+              <div style={{ background: cardBg, border: '1px solid ' + cardBorder, padding: '30px', borderRadius: '12px', backdropFilter: 'blur(20px)' }}>
+                <h3 style={{ margin: '0 0 20px 0', borderBottom: '1px solid ' + cardBorder, paddingBottom: '12px', fontSize: '18px', fontWeight: 800, color: textDark }}>
                   {lang === 'en' ? '7-Day Outlook' : '7-நாள் வானிலை முன்னறிவிப்பு'}
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {current.forecast.map((fc, i) => (
-                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 2fr 1fr', alignItems: 'center', padding: '12px 20px', background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255, 255, 255, 0.04)', borderRadius: '8px', fontSize: '14px' }}>
-                      <span style={{ fontWeight: '700', color: 'white' }}>{lang === 'en' ? fc.day : fc.dayTa}</span>
+                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 2fr 1fr', alignItems: 'center', padding: '12px 20px', background: isDark ? 'rgba(255, 255, 255, 0.01)' : '#f1f5f9', border: '1px solid ' + cardBorder, borderRadius: '8px', fontSize: '14px' }}>
+                      <span style={{ fontWeight: '700', color: textDark }}>{lang === 'en' ? fc.day : fc.dayTa}</span>
                       <span style={{ fontSize: '20px', textAlign: 'center' }}>{fc.icon}</span>
-                      <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: '600' }}>{lang === 'en' ? fc.desc : fc.descTa}</span>
+                      <span style={{ color: textMuted, fontWeight: '600' }}>{lang === 'en' ? fc.desc : fc.descTa}</span>
                       <span style={{ fontWeight: '800', color: 'var(--primary)', textAlign: 'right', fontSize: '15px' }}>{fc.temp}</span>
                     </div>
                   ))}
@@ -478,7 +588,7 @@ const Weather = () => {
             <span>{lang === 'en' ? 'Weather' : 'வானிலை'}</span>
           </div>
 
-          <h2 style={{ fontSize: '20px', fontWeight: '800', color: 'white', margin: '0 0 2px 0' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: '800', color: textDark, margin: '0 0 2px 0' }}>
             {lang === 'en' ? 'Local Weather Forecast' : 'தமிழக மாவட்ட வானிலை நிலவரம்'}
           </h2>
 
@@ -492,9 +602,9 @@ const Weather = () => {
                   style={{
                     padding: '6px 12px',
                     borderRadius: '6px',
-                    border: '1px solid ' + (selectedCity === city ? 'var(--primary)' : 'rgba(255, 255, 255, 0.08)'),
+                    border: '1px solid ' + (selectedCity === city ? 'var(--primary)' : cardBorder),
                     background: selectedCity === city ? 'rgba(179, 115, 42, 0.2)' : 'rgba(255, 255, 255, 0.02)',
-                    color: selectedCity === city ? 'white' : 'rgba(255, 255, 255, 0.7)',
+                    color: selectedCity === city ? 'white' : textDark,
                     fontWeight: '700',
                     fontSize: '12px',
                     cursor: 'pointer',
@@ -509,8 +619,8 @@ const Weather = () => {
 
           {/* MAIN WEATHER CARD - MINIMIZED SIZE */}
           <div style={{
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            background: cardBg,
+            border: '1px solid ' + cardBorder,
             padding: '16px',
             borderRadius: '12px',
             boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)'
@@ -520,7 +630,7 @@ const Weather = () => {
               margin: '0 0 10px 0',
               fontSize: '15px',
               fontWeight: '800',
-              color: '#ffffff',
+              color: textDark,
               display: 'flex',
               alignItems: 'center',
               gap: '6px'
@@ -552,13 +662,13 @@ const Weather = () => {
                 gap: '2px',
                 textAlign: 'left'
               }}>
-                <span style={{ fontSize: '13px', fontWeight: '800', color: '#ffffff' }}>
+                <span style={{ fontSize: '13px', fontWeight: '800', color: textDark }}>
                   {lang === 'en' ? current.condition : current.conditionTa}
                 </span>
-                <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)', fontWeight: '500' }}>
+                <span style={{ fontSize: '11px', color: textMuted, fontWeight: '500' }}>
                   {lang === 'en' ? `Humidity: ${current.humidity}` : `ஈரப்பதம்: ${current.humidity}`}
                 </span>
-                <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)', fontWeight: '500' }}>
+                <span style={{ fontSize: '11px', color: textMuted, fontWeight: '500' }}>
                   {lang === 'en' ? `Wind: ${current.wind}` : `காற்று: ${current.wind}`}
                 </span>
               </div>
@@ -570,33 +680,33 @@ const Weather = () => {
               gridTemplateColumns: 'repeat(2, 1fr)', 
               gap: '6px 12px', 
               marginTop: '12px', 
-              background: 'rgba(255, 255, 255, 0.01)', 
+              background: isDark ? 'rgba(255, 255, 255, 0.01)' : '#f1f5f9', 
               padding: '10px 12px', 
               borderRadius: '8px', 
               border: '1px solid rgba(255, 255, 255, 0.03)' 
             }}>
-              <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)', display: 'flex', gap: '4px' }}>
-                <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>{lang === 'en' ? 'UV Index:' : 'யுவி:'}</span>
+              <div style={{ fontSize: '11px', color: textMuted, display: 'flex', gap: '4px' }}>
+                <span style={{ color: textMuted }}>{lang === 'en' ? 'UV Index:' : 'யுவி:'}</span>
                 <strong>{current.uv}</strong>
               </div>
-              <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)', display: 'flex', gap: '4px' }}>
-                <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>{lang === 'en' ? 'Air Quality:' : 'காற்று தரம்:'}</span>
+              <div style={{ fontSize: '11px', color: textMuted, display: 'flex', gap: '4px' }}>
+                <span style={{ color: textMuted }}>{lang === 'en' ? 'Air Quality:' : 'காற்று தரம்:'}</span>
                 <strong>{lang === 'en' ? current.aqi : current.aqiTa}</strong>
               </div>
-              <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)', display: 'flex', gap: '4px' }}>
-                <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>{lang === 'en' ? 'Rain Chance:' : 'மழை வாய்ப்பு:'}</span>
+              <div style={{ fontSize: '11px', color: textMuted, display: 'flex', gap: '4px' }}>
+                <span style={{ color: textMuted }}>{lang === 'en' ? 'Rain Chance:' : 'மழை வாய்ப்பு:'}</span>
                 <strong>{lang === 'en' ? current.precipitation : current.precipitationTa}</strong>
               </div>
-              <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)', display: 'flex', gap: '4px' }}>
-                <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>{lang === 'en' ? 'Visibility:' : 'பார்வைதிறன்:'}</span>
+              <div style={{ fontSize: '11px', color: textMuted, display: 'flex', gap: '4px' }}>
+                <span style={{ color: textMuted }}>{lang === 'en' ? 'Visibility:' : 'பார்வைதிறன்:'}</span>
                 <strong>{lang === 'en' ? current.visibility : current.visibilityTa}</strong>
               </div>
-              <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)', display: 'flex', gap: '4px' }}>
-                <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>{lang === 'en' ? 'Sunrise:' : 'சூரிய உதயம்:'}</span>
+              <div style={{ fontSize: '11px', color: textMuted, display: 'flex', gap: '4px' }}>
+                <span style={{ color: textMuted }}>{lang === 'en' ? 'Sunrise:' : 'சூரிய உதயம்:'}</span>
                 <strong>{current.sunrise}</strong>
               </div>
-              <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)', display: 'flex', gap: '4px' }}>
-                <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>{lang === 'en' ? 'Sunset:' : 'மறைவு:'}</span>
+              <div style={{ fontSize: '11px', color: textMuted, display: 'flex', gap: '4px' }}>
+                <span style={{ color: textMuted }}>{lang === 'en' ? 'Sunset:' : 'மறைவு:'}</span>
                 <strong>{current.sunset}</strong>
               </div>
             </div>
@@ -610,14 +720,14 @@ const Weather = () => {
               borderLeft: '2px solid var(--primary, #B3732A)', 
               fontSize: '11px', 
               lineHeight: '1.4', 
-              color: 'rgba(255,255,255,0.8)',
+              color: textDark,
               textAlign: 'left'
             }}>
               {lang === 'en' ? current.forecastSummaryEn : current.forecastSummaryTa}
             </div>
 
             {/* Divider Line */}
-            <hr style={{ border: 'none', borderTop: '1px solid rgba(255, 255, 255, 0.1)', margin: '12px 0' }} />
+            <hr style={{ border: 'none', borderTop: '1px solid ' + cardBorder, margin: '12px 0' }} />
 
             {/* Mon, Tue, Wed 3-Day Forecast side-by-side */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
@@ -625,8 +735,8 @@ const Weather = () => {
                 <div 
                   key={i} 
                   style={{
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid rgba(255, 255, 255, 0.04)',
+                    background: isDark ? 'rgba(255, 255, 255, 0.02)' : '#f8fafc',
+                    border: '1px solid ' + cardBorder,
                     padding: '8px 4px',
                     borderRadius: '8px',
                     display: 'flex',
@@ -635,11 +745,11 @@ const Weather = () => {
                     gap: '4px'
                   }}
                 >
-                  <span style={{ fontSize: '11px', fontWeight: '700', color: 'rgba(255, 255, 255, 0.7)' }}>
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: textMuted }}>
                     {lang === 'en' ? fc.day : (fc.day === 'Mon' ? 'தி' : fc.day === 'Tue' ? 'செ' : 'பு')}
                   </span>
                   <span style={{ fontSize: '16px' }}>{fc.icon}</span>
-                  <span style={{ fontSize: '12px', fontWeight: '800', color: '#ffffff' }}>{fc.temp}</span>
+                  <span style={{ fontSize: '12px', fontWeight: '800', color: textDark }}>{fc.temp}</span>
                 </div>
               ))}
             </div>
@@ -648,8 +758,8 @@ const Weather = () => {
 
           {/* DYNAMIC WEATHER ADVISORY & WARNINGS */}
           <div style={{
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            background: cardBg,
+            border: '1px solid ' + cardBorder,
             padding: '16px',
             borderRadius: '12px',
             marginTop: '20px',
@@ -659,7 +769,7 @@ const Weather = () => {
               margin: '0 0 12px 0',
               fontSize: '15px',
               fontWeight: '800',
-              color: '#ffffff',
+              color: textDark,
               display: 'flex',
               alignItems: 'center',
               gap: '6px'
@@ -668,10 +778,10 @@ const Weather = () => {
               <span>{lang === 'en' ? 'Weather Safety Advisory' : 'வானிலை பாதுகாப்பு எச்சரிக்கை'}</span>
             </h3>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12px', color: textMuted }}>
               {activeAdvisories.map((adv, idx) => (
                 <div key={idx} style={{ borderLeft: `2px solid ${adv.color}`, paddingLeft: '8px' }}>
-                  <strong style={{ color: 'white', display: 'block', marginBottom: '2px' }}>
+                  <strong style={{ color: textDark, display: 'block', marginBottom: '2px' }}>
                     {lang === 'en' ? adv.titleEn : adv.titleTa}
                   </strong>
                   {lang === 'en' ? adv.textEn : adv.textTa}

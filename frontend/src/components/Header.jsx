@@ -83,26 +83,117 @@ const Header = () => {
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [showUserDropdown]);
 
+
+
   const regionalPaths = ['/directory', '/wishes', '/obituaries', '/jobs', '/classifieds', '/business-studies'];
   const isRegionalPage = regionalPaths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
 
   const [timeStr, setTimeStr] = useState('');
   const [district, setDistrict] = useState('சென்னை');
   const [weatherTemp, setWeatherTemp] = useState('32°C');
+
+  useEffect(() => {
+    // Fetch live weather for default district (Chennai) on load
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=13.0827&longitude=80.2707&current=temperature_2m`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.current) {
+          setWeatherTemp(`${Math.round(data.current.temperature_2m)}°C`);
+        }
+      })
+      .catch(err => console.warn("Failed to fetch default temp", err));
+  }, []);
   const [showDistrictDropdown, setShowDistrictDropdown] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [navCategories, setNavCategories] = useState([]);
+  const [showHeaderSubcatDropdown, setShowHeaderSubcatDropdown] = useState(false);
   const [districtsList, setDistrictsList] = useState([]);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [dropdownTimer, setDropdownTimer] = useState(null);
   const [mobileExpandedCat, setMobileExpandedCat] = useState(null);
 
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest('.header-subcat-dropdown')) {
+        setShowHeaderSubcatDropdown(false);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, []);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest('.nav-item-wrapper')) {
+        setActiveDropdown(null);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, []);
+
+  const fallbackSubcats = {
+    politics: {
+      ta: ['அனைத்தும்', 'மாநிலம்', 'தேசியம்', 'சர்வதேசம்', 'அரசு கொள்கைகள்'],
+      en: ['All', 'State', 'National', 'International', 'Governance']
+    },
+    business: {
+      ta: ['அனைத்தும்', 'சந்தை', 'நிறுவனங்கள்', 'முதலீடு', 'ஸ்டார்ட்அப்'],
+      en: ['All', 'Markets', 'Companies', 'Investment', 'Startups']
+    },
+    sports: {
+      ta: ['அனைத்தும்', 'கிரிக்கெட்', 'கால்பந்து', 'டென்னிஸ்', 'உள்ளூர்'],
+      en: ['All', 'Cricket', 'Football', 'Tennis', 'Local Sports']
+    },
+    cinema: {
+      ta: ['அனைத்தும்', 'கோலிவுட்', 'பாலிவுட்', 'விமர்சனங்கள்', 'இசை'],
+      en: ['All', 'Kollywood', 'Bollywood', 'Reviews', 'Music']
+    },
+    tech: {
+      ta: ['அனைத்தும்', 'ஸ்மார்ட்போன்', 'மென்பொருள்', 'AI', 'விண்வெளி'],
+      en: ['All', 'Smartphones', 'Software', 'AI', 'Space']
+    },
+    international: {
+      ta: ['அனைத்தும்', 'தேசியம்', 'சர்வதேசம்', 'உலக செய்திகள்'],
+      en: ['All', 'National', 'International', 'World News']
+    },
+    world: {
+      ta: ['அனைத்தும்', 'தேசியம்', 'சர்வதேசம்', 'உலக செய்திகள்'],
+      en: ['All', 'National', 'International', 'World News']
+    }
+  };
+
+  const matches = location.pathname.match(/\/category\/([^/]+)/);
+  const activeCategorySlug = matches ? matches[1] : null;
+  const isCategoryPage = !!activeCategorySlug;
+
+  const activeCat = navCategories.find(c => c.slug === activeCategorySlug);
+  const resolvedSubcategories = activeCat
+    ? (lang === 'en'
+        ? ['All', ...activeCat.subcategories.map(s => getSubcatEn(s))]
+        : ['அனைத்தும்', ...activeCat.subcategories.map(s => s.nameTa)])
+    : (fallbackSubcats[activeCategorySlug]
+        ? (lang === 'en' ? fallbackSubcats[activeCategorySlug].en : fallbackSubcats[activeCategorySlug].ta)
+        : []);
+
+  const searchParams = new URLSearchParams(location.search);
+  const selectedSubcat = searchParams.get('subcat') || (lang === 'en' ? 'All' : 'அனைத்தும்');
+
+  const handleSubcatSelect = (subName) => {
+    if (subName === 'All' || subName === 'அனைத்தும்') {
+      navigate(`/category/${activeCategorySlug}`);
+    } else {
+      navigate(`/category/${activeCategorySlug}?subcat=${subName}`);
+    }
+    setShowHeaderSubcatDropdown(false);
+  };
+
   const getDynamicNavItems = () => {
     let dynamicItems = [];
     if (navCategories && navCategories.length > 0) {
-      dynamicItems = navCategories.map(cat => {
+      const dbItems = navCategories.map(cat => {
         let path = `/category/${cat.slug}`;
         if (cat.slug === 'web-stories') path = '/web-stories';
         else if (cat.slug === 'video') path = '/videos';
@@ -129,16 +220,75 @@ const Header = () => {
 
         return {
           id: cat.id,
+          slug: cat.slug,
           path,
           label: labelVal,
-          subcategories: cat.subcategories
+          subcategories: cat.subcategories || []
         };
       });
-      // Prepend Home category
-      dynamicItems.unshift({
+
+      const findDbItem = (slug) => dbItems.find(item => item.slug === slug);
+
+      // Home
+      dynamicItems.push({
         id: 'home',
         path: '/',
         label: lang === 'en' ? 'Home' : 'முகப்பு',
+        subcategories: []
+      });
+
+      // Politics
+      const politics = findDbItem('politics');
+      dynamicItems.push(politics || { id: 'politics', path: '/category/politics', label: lang === 'en' ? 'Politics' : 'அரசியல்', subcategories: [] });
+
+      // Business
+      const business = findDbItem('business');
+      dynamicItems.push(business || { id: 'business', path: '/category/business', label: lang === 'en' ? 'Business' : 'வணிகம்', subcategories: [] });
+
+      // Sports
+      const sports = findDbItem('sports');
+      dynamicItems.push(sports || { id: 'sports', path: '/category/sports', label: lang === 'en' ? 'Sports' : 'விளையாட்டு', subcategories: [] });
+
+      // Cinema
+      const cinema = findDbItem('cinema');
+      dynamicItems.push(cinema || { id: 'cinema', path: '/category/cinema', label: lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு', subcategories: [] });
+
+      // Technology
+      const tech = findDbItem('tech') || findDbItem('technology');
+      dynamicItems.push(tech || { id: 'tech', path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்', subcategories: [] });
+
+      // Regional (No dropdown chevron)
+      const regional = findDbItem('regional');
+      dynamicItems.push(regional || {
+        id: 'regional',
+        path: '/directory',
+        label: lang === 'en' ? 'Regional' : 'மாநிலம்',
+        subcategories: []
+      });
+
+      // International
+      const international = findDbItem('international');
+      dynamicItems.push(international || { id: 'international', path: '/category/international', label: lang === 'en' ? 'International' : 'சர்வதேசம்', subcategories: [] });
+
+      // Videos (with dropdown chevron)
+      const videos = findDbItem('video') || findDbItem('videos');
+      dynamicItems.push(videos || {
+        id: 'videos',
+        path: '/videos',
+        label: lang === 'en' ? 'Videos' : 'வீடியோ',
+        subcategories: [
+          { id: 'v-state', slug: 'v-state', name: 'State', nameTa: 'மாநிலம்' },
+          { id: 'v-national', slug: 'v-national', name: 'National', nameTa: 'தேசியம்' },
+          { id: 'v-cinema', slug: 'v-cinema', name: 'Cinema', nameTa: 'சினிமா' }
+        ]
+      });
+
+      // Web Stories (No dropdown chevron)
+      const webStories = findDbItem('web-stories');
+      dynamicItems.push(webStories || {
+        id: 'web-stories',
+        path: '/web-stories',
+        label: lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்',
         subcategories: []
       });
     }
@@ -155,14 +305,18 @@ const Header = () => {
         ]
       : (dynamicItems.length > 0 ? dynamicItems : [
           { path: '/', label: lang === 'en' ? 'Home' : 'முகப்பு', subcategories: [] },
-          { path: '/category/politics', label: lang === 'en' ? 'Politics' : 'அரசியல்', subcategories: [] },
-          { path: '/category/business', label: lang === 'en' ? 'Business' : 'வணிகம்', subcategories: [] },
-          { path: '/category/sports', label: lang === 'en' ? 'Sports' : 'விளையாட்டு', subcategories: [] },
-          { path: '/category/cinema', label: lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு', subcategories: [] },
-          { path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்', subcategories: [] },
+          { path: '/category/politics', label: lang === 'en' ? 'Politics' : 'அரசியல்', subcategories: [ { id: 'fp-1', slug: 'state', name: 'State', nameTa: 'மாநிலம்' } ] },
+          { path: '/category/business', label: lang === 'en' ? 'Business' : 'வணிகம்', subcategories: [ { id: 'fb-1', slug: 'markets', name: 'Markets', nameTa: 'சந்தை' } ] },
+          { path: '/category/sports', label: lang === 'en' ? 'Sports' : 'விளையாட்டு', subcategories: [ { id: 'fs-1', slug: 'cricket', name: 'Cricket', nameTa: 'கிரிக்கெட்' } ] },
+          { path: '/category/cinema', label: lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு', subcategories: [ { id: 'fc-1', slug: 'kollywood', name: 'Kollywood', nameTa: 'கோலிவுட்' } ] },
+          { path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்', subcategories: [ { id: 'ft-1', slug: 'smartphones', name: 'Smartphones', nameTa: 'ஸ்மார்ட் போன்' } ] },
           { path: '/directory', label: lang === 'en' ? 'Regional' : 'மாநிலம்', subcategories: [] },
-          { path: '/category/international', label: lang === 'en' ? 'International' : 'சர்வதேசம்', subcategories: [] },
-          { path: '/videos', label: lang === 'en' ? 'Video' : 'வீடியோ', subcategories: [] },
+          { path: '/category/international', label: lang === 'en' ? 'International' : 'சர்வதேசம்', subcategories: [ { id: 'fi-1', slug: 'world-news', name: 'World News', nameTa: 'உலக செய்திகள்' } ] },
+          { path: '/videos', label: lang === 'en' ? 'Video' : 'வீடியோ', subcategories: [
+            { id: 'v-state', slug: 'v-state', name: 'State', nameTa: 'மாநிலம்' },
+            { id: 'v-national', slug: 'v-national', name: 'National', nameTa: 'தேசியம்' },
+            { id: 'v-cinema', slug: 'v-cinema', name: 'Cinema', nameTa: 'சினிமா' }
+          ] },
           { path: '/web-stories', label: lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்', subcategories: [] }
         ]);
   };
@@ -236,6 +390,14 @@ const Header = () => {
         console.warn("Header normal search failed to load articles", err);
         setAllArticles(fallbackArticles);
       });
+
+    fetchApi('/categories/nav')
+      .then(data => {
+        if (Array.isArray(data)) {
+          setNavCategories(data);
+        }
+      })
+      .catch(err => console.warn("Header failed to load categories", err));
 
     fetchApi('/videos')
       .then(data => {
@@ -700,35 +862,14 @@ const Header = () => {
       }}>
         {navItems.map((item, idx) => {
           const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
-          
-          const handleMouseEnter = () => {
-            if (item.subcategories && item.subcategories.length > 0) {
-              if (dropdownTimer) clearTimeout(dropdownTimer);
-              setActiveDropdown(item.id);
-            } else {
-              setActiveDropdown(null);
-            }
-          };
-
-          const handleMouseLeave = () => {
-            if (item.subcategories && item.subcategories.length > 0) {
-              const timer = setTimeout(() => {
-                setActiveDropdown(null);
-              }, 150);
-              setDropdownTimer(timer);
-            }
-          };
 
           const handleLinkClick = (e) => {
             onLinkClick();
             if (item.subcategories && item.subcategories.length > 0) {
-              if (window.innerWidth <= 768) {
-                if (activeDropdown !== item.id) {
-                  e.preventDefault();
-                  setActiveDropdown(item.id);
-                } else {
-                  setActiveDropdown(null);
-                }
+              if (isActive) {
+                // If already active, toggle dropdown menu
+                e.preventDefault();
+                setActiveDropdown(activeDropdown === item.id ? null : item.id);
               } else {
                 setActiveDropdown(null);
               }
@@ -741,19 +882,19 @@ const Header = () => {
             <div
               key={idx}
               className="nav-item-wrapper"
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
               style={{ position: 'relative', display: 'inline-block' }}
             >
               <Link
                 to={item.path}
                 onClick={handleLinkClick}
                 style={{
-                  color: isActive ? 'var(--primary, #B3732A)' : '#FFFFFF',
-                  opacity: isActive ? '1' : '0.9',
-                  background: isActive ? '#FAF4EB' : 'transparent',
-                  padding: '6px 14px',
-                  borderRadius: '20px',
+                  color: isActive 
+                    ? (theme === 'dark' ? '#FFFFFF' : '#000000') 
+                    : (theme === 'dark' ? '#94A3B8' : '#71717A'),
+                  background: 'transparent',
+                  padding: '8px 12px 6px 12px',
+                  borderRadius: '0px',
+                  borderBottom: isActive ? '3px solid var(--primary, #B3732A)' : '3px solid transparent',
                   fontSize: '13px',
                   fontWeight: '700',
                   textDecoration: 'none',
@@ -764,13 +905,28 @@ const Header = () => {
                 }}
               >
                 {item.label}
-                {item.subcategories && item.subcategories.length > 0 && (
-                  <i className="fas fa-chevron-down" style={{ fontSize: '8px', marginLeft: '6px', opacity: 0.7 }}></i>
+                {item.subcategories && item.subcategories.length > 0 && item.path !== '/directory' && (
+                  <span
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setActiveDropdown(activeDropdown === item.id ? null : item.id);
+                    }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '2px',
+                      marginLeft: '3px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <i className="fas fa-chevron-down" style={{ fontSize: '7px', opacity: 0.7 }}></i>
+                  </span>
                 )}
               </Link>
 
               {/* Subcategories Dropdown directly below this link */}
-              {activeDropdown === item.id && item.subcategories && item.subcategories.length > 0 && (
+              {activeDropdown === item.id && item.subcategories && item.subcategories.length > 0 && item.path !== '/directory' && (
                 <div 
                   className="category-dropdown-menu"
                   style={{
@@ -842,18 +998,33 @@ const Header = () => {
                       color: var(--primary, #B3732A);
                     }
                   `}</style>
-                  {item.subcategories.map(sub => (
-                    <div key={sub.id} className="dropdown-sub-container">
-                      <Link 
-                        to={`/category/${sub.slug}`}
-                        onClick={() => setActiveDropdown(null)}
-                        className="dropdown-sub-link"
-                      >
-                        <span>{lang === 'en' ? getSubcatEn(sub) : sub.nameTa}</span>
-                        {sub.subcategories && sub.subcategories.length > 0 && (
-                          <i className="fas fa-chevron-right" style={{ fontSize: '9px', opacity: 0.6 }}></i>
-                        )}
-                      </Link>
+                  {/* Prepend 'All' option */}
+                  <div className="dropdown-sub-container">
+                    <Link 
+                      to={item.path}
+                      onClick={() => setActiveDropdown(null)}
+                      className="dropdown-sub-link"
+                      style={{ fontWeight: '700', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}
+                    >
+                      <span>{lang === 'en' ? 'All' : 'அனைத்தும்'}</span>
+                    </Link>
+                  </div>
+
+                  {item.subcategories.map(sub => {
+                    const subcatName = lang === 'en' ? getSubcatEn(sub) : sub.nameTa;
+                    const catSlug = item.path.split('/category/')[1];
+                    return (
+                      <div key={sub.id} className="dropdown-sub-container">
+                        <Link 
+                          to={`/category/${catSlug}?subcat=${subcatName}`}
+                          onClick={() => setActiveDropdown(null)}
+                          className="dropdown-sub-link"
+                        >
+                          <span>{subcatName}</span>
+                          {sub.subcategories && sub.subcategories.length > 0 && (
+                            <i className="fas fa-chevron-right" style={{ fontSize: '9px', opacity: 0.6 }}></i>
+                          )}
+                        </Link>
 
                       {/* Nested Sub-dropdown Overlay */}
                       {sub.subcategories && sub.subcategories.length > 0 && (
@@ -871,7 +1042,8 @@ const Header = () => {
                         </div>
                       )}
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               )}
             </div>
@@ -888,7 +1060,7 @@ const Header = () => {
       <ul style={{ display: 'flex', flexDirection: 'column', gap: '15px', padding: 0, listStyle: 'none', margin: 0 }}>
         {navItems.map((item, idx) => {
           const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
-          const hasSubs = item.subcategories && item.subcategories.length > 0;
+          const hasSubs = item.subcategories && item.subcategories.length > 0 && item.path !== '/directory';
           const isExpanded = mobileExpandedCat === item.id;
 
           const toggleExpand = (e) => {
@@ -1054,6 +1226,37 @@ const Header = () => {
             >
               <i className="fas fa-search"></i>
             </button>
+            <button 
+              onClick={() => setLang(lang === 'en' ? 'ta' : 'en')}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', display: 'inline-flex', alignItems: 'center' }}
+              title={lang === 'en' ? 'Switch to Tamil' : 'தமிழுக்கு மாற்றவும்'}
+              aria-label="Toggle Language"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
+                {/* Top Left Circle */}
+                <circle cx="9.5" cy="9.5" r="6.5" fill="#ffffff" stroke="#ffffff" strokeWidth="1"/>
+                <text x="9.5" y="12.5" fontSize="9.5" fontFamily="Inter, system-ui, sans-serif" fontWeight="800" fill="#000000" textAnchor="middle">A</text>
+                
+                {/* Bottom Right Circle */}
+                <circle cx="15.5" cy="15.5" r="6.5" fill="#000000" stroke="#ffffff" strokeWidth="1"/>
+                <text x="15.5" y="18.5" fontSize="8.5" fontFamily="Inter, system-ui, sans-serif" fontWeight="800" fill="#ffffff" textAnchor="middle">அ</text>
+
+                {/* Bottom Arrow */}
+                <path d="M 8 14.5 C 8 17.5, 10 18.5, 12 17.5" stroke="#ffffff" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+                <path d="M 10.5 18.5 L 12.5 17.5 L 12 15.5" stroke="#ffffff" strokeWidth="1.2" fill="none" strokeLinejoin="round"/>
+
+                {/* Top Arrow */}
+                <path d="M 16 9.5 C 16 6.5, 14 5.5, 12 6.5" stroke="#ffffff" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+                <path d="M 13.5 5.5 L 11.5 6.5 L 12 8.5" stroke="#ffffff" strokeWidth="1.2" fill="none" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button 
+              onClick={toggleTheme}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#ffffff', padding: '4px', display: 'inline-flex', alignItems: 'center' }}
+              aria-label="Toggle Theme"
+            >
+              <i className={theme === 'light' ? 'fas fa-moon' : 'fas fa-sun'} style={{ color: '#ffffff' }}></i>
+            </button>
             {renderLiveTvBtn()}
             {renderProfileIcon()}
           </div>
@@ -1199,14 +1402,26 @@ const Header = () => {
             padding: 4px 6px 1px 6px !important;
           }
         }
+         @media (max-width: 768px) {
+          .category-dropdown-menu {
+            left: 0 !important;
+            transform: none !important;
+            min-width: 160px !important;
+          }
+          .nav-item-wrapper:nth-last-child(-n+3) .category-dropdown-menu {
+            left: auto !important;
+            right: 0 !important;
+          }
+        }
       `}</style>
       <nav 
         className={`main-nav main-nav-desktop-overflow ${isRegionalPage ? 'regional-theme' : ''}`} 
         style={{ 
-          overflowX: 'auto', 
+          overflowX: activeDropdown ? 'visible' : 'auto', 
           whiteSpace: 'nowrap', 
-          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-          background: '#000000',
+          borderTop: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #E5E7EB',
+          borderBottom: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #E5E7EB',
+          background: theme === 'dark' ? '#000000' : '#FFFFFF',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none'
         }}

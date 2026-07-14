@@ -144,7 +144,7 @@ const Home = () => {
     fetchApi('/articles')
       .then(data => {
         const list = Array.isArray(data) ? data : [];
-        setArticles([...list, ...prefixedFallbackArticles]);
+        setArticles(list.length > 0 ? list : prefixedFallbackArticles);
       })
       .catch(err => {
         console.warn("Could not load articles from API, using fallback", err);

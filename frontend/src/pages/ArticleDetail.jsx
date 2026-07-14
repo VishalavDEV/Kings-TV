@@ -12,6 +12,7 @@ const ArticleDetail = () => {
   const [comments, setComments] = useState([]);
   const [related, setRelated] = useState([]);
   const [trending, setTrending] = useState([]);
+  const [showAllComments, setShowAllComments] = useState(false);
 
   // Form states
   const [commentor, setCommentor] = useState('');
@@ -745,44 +746,49 @@ const ArticleDetail = () => {
             <h4 style={{ fontSize: '14px', fontWeight: 800, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-dark)' }}>
               {lang === 'en' ? 'Share this news' : 'இந்த செய்தியைப் பகிர்க'}
             </h4>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <a 
                 href={`https://api.whatsapp.com/send?text=${encodeURIComponent(window.location.href)}`} 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: '#25D366', color: '#FFF', borderRadius: '6px', textDecoration: 'none', fontWeight: 700, fontSize: '12px' }}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', background: '#25D366', color: '#FFF', borderRadius: '50%', textDecoration: 'none', fontSize: '18px' }}
+                title="WhatsApp"
               >
-                <i className="fab fa-whatsapp"></i> WhatsApp
+                <i className="fab fa-whatsapp"></i>
               </a>
               <a 
                 href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: '#1877F2', color: '#FFF', borderRadius: '6px', textDecoration: 'none', fontWeight: 700, fontSize: '12px' }}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', background: '#1877F2', color: '#FFF', borderRadius: '50%', textDecoration: 'none', fontSize: '18px' }}
+                title="Facebook"
               >
-                <i className="fab fa-facebook-f"></i> Facebook
+                <i className="fab fa-facebook-f"></i>
               </a>
               <a 
                 href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}`} 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: '#000000', color: '#FFF', borderRadius: '6px', textDecoration: 'none', fontWeight: 700, fontSize: '12px' }}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', background: '#000000', color: '#FFF', borderRadius: '50%', textDecoration: 'none', fontSize: '18px' }}
+                title="X"
               >
-                <i className="fab fa-twitter"></i> X
+                <i className="fab fa-twitter"></i>
               </a>
               <a 
                 href={`https://telegram.me/share/url?url=${encodeURIComponent(window.location.href)}`} 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: '#0088cc', color: '#FFF', borderRadius: '6px', textDecoration: 'none', fontWeight: 700, fontSize: '12px' }}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', background: '#0088cc', color: '#FFF', borderRadius: '50%', textDecoration: 'none', fontSize: '18px' }}
+                title="Telegram"
               >
-                <i className="fab fa-telegram-plane"></i> Telegram
+                <i className="fab fa-telegram-plane"></i>
               </a>
               <button 
                 onClick={handleCopyLink}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: '#64748B', color: '#FFF', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '12px' }}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', background: '#64748B', color: '#FFF', borderRadius: '50%', border: 'none', cursor: 'pointer', fontSize: '18px' }}
+                title={lang === 'en' ? 'Copy Link' : 'நகலெடுக்க'}
               >
-                <i className="fas fa-link"></i> {lang === 'en' ? 'Copy Link' : 'நகலெடுக்க'}
+                <i className="fas fa-link"></i>
               </button>
             </div>
           </div>
@@ -805,7 +811,7 @@ const ArticleDetail = () => {
                   {lang === 'en' ? 'No comments yet. Be the first to comment!' : 'கருத்துகள் ஏதும் இல்லை. முதல் நபராக கருத்து தெரிவிக்கவும்!'}
                 </div>
               ) : (
-                getCommentsList().map((c, i) => (
+                (showAllComments ? getCommentsList() : getCommentsList().slice(0, 3)).map((c, i) => (
                   <div className="comment-item" key={c.id || i} style={{ display: 'flex', gap: '15px', background: 'var(--bg-light)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '16px' }}>
                     <div className="comment-avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>
                       {(c.commentorName || 'A').charAt(0)}
@@ -823,6 +829,29 @@ const ArticleDetail = () => {
                 ))
               )}
             </div>
+
+            {getCommentsList().length > 3 && (
+              <button 
+                onClick={() => setShowAllComments(!showAllComments)}
+                style={{
+                  display: 'block',
+                  margin: '-8px auto 24px auto',
+                  padding: '8px 16px',
+                  background: 'transparent',
+                  border: '1px solid var(--primary)',
+                  color: 'var(--primary)',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '700',
+                  fontSize: '13px',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {showAllComments 
+                  ? (lang === 'en' ? 'Show Less Comments' : 'குறைவான கருத்துகளைக் காட்டு') 
+                  : (lang === 'en' ? 'Show More Comments' : 'மேலும் கருத்துகளைக் காட்டு')}
+              </button>
+            )}
 
             <div className="comment-form-container" style={{ borderTop: comments.length > 0 ? '1px solid var(--border-color)' : 'none', paddingTop: comments.length > 0 ? '24px' : '0' }}>
               <h4 style={{ fontSize: '14px', fontWeight: 800, marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
