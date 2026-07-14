@@ -69,6 +69,20 @@ const Category = () => {
   const [selectedSubcat, setSelectedSubcat] = useState('அனைத்தும்');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [navCategories, setNavCategories] = useState([]);
+  const [subcatOpen, setSubcatOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest('.custom-dropdown')) {
+        setSubcatOpen(false);
+        setFilterOpen(false);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, []);
+
 
   useEffect(() => {
     fetchApi('/categories/nav')
@@ -444,7 +458,7 @@ const Category = () => {
             imageUrl: item.imageUrl,
             gradient: 'linear-gradient(135deg, #1E40AF, #3B82F6)'
           }));
-          setArticles([...formatted, ...fallbackArticles]);
+          setArticles(formatted.length > 0 ? formatted : fallbackArticles);
         } else {
           setArticles(fallbackArticles);
         }
@@ -516,48 +530,7 @@ const Category = () => {
 
           <h1>{lang === 'en' ? currentCat.titleEn : currentCat.titleTa}</h1>
 
-          <div className="category-tabs-container">
-            {/* Subcategory pills */}
-            <div className="subcategory-tabs">
-              {subcategories.map((sub, idx) => (
-                <button
-                  key={idx}
-                  className={`subcategory-tab ${selectedSubcat === sub ? 'active' : ''}`}
-                  onClick={() => setSelectedSubcat(sub)}
-                >
-                  {sub}
-                </button>
-              ))}
-            </div>
 
-            {/* Filter controls */}
-            <div className="category-filters">
-              <button 
-                className={`category-filter-btn ${selectedFilter === 'all' ? 'active' : ''}`}
-                onClick={() => setSelectedFilter('all')}
-              >
-                {lang === 'en' ? 'All' : 'அனைத்தும்'}
-              </button>
-              <button 
-                className={`category-filter-btn ${selectedFilter === 'featured' ? 'active' : ''}`}
-                onClick={() => setSelectedFilter('featured')}
-              >
-                {lang === 'en' ? 'Featured' : 'முக்கிய செய்திகள்'}
-              </button>
-              <button 
-                className={`category-filter-btn ${selectedFilter === 'analysis' ? 'active' : ''}`}
-                onClick={() => setSelectedFilter('analysis')}
-              >
-                {lang === 'en' ? 'Analysis' : 'ஆய்வுகள்'}
-              </button>
-              <button 
-                className={`category-filter-btn ${selectedFilter === 'opinion' ? 'active' : ''}`}
-                onClick={() => setSelectedFilter('opinion')}
-              >
-                {lang === 'en' ? 'Opinions' : 'கருத்துக்கள்'}
-              </button>
-            </div>
-          </div>
         </div>
       </div>
 

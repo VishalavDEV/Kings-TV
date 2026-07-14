@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
+import { fetchApi } from '../utils/api';
 import './WebStories.css';
 
 const WebStories = () => {
@@ -10,10 +11,43 @@ const WebStories = () => {
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [stories, setStories] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Scroll to top on load
   useEffect(() => {
-    window.scrollTo(0, 0);
+    fetchApi('/web-stories/getAllWeb')
+      .then(data => {
+        const contentList = data && data.content ? data.content : (Array.isArray(data) ? data : []);
+        if (contentList.length > 0) {
+          const formatted = contentList.map(story => {
+            let slides = [];
+            try {
+              slides = story.slidesJson ? JSON.parse(story.slidesJson) : [];
+            } catch(e) {
+              console.warn("Failed to parse slides JSON", e);
+            }
+            return {
+              id: story.id,
+              cat: story.cat || 'general',
+              badge: story.badge || 'NEW',
+              titleTa: story.titleTa,
+              titleEn: story.titleEn || story.titleTa,
+              views: story.viewsCount > 1000 ? `${(story.viewsCount/1000).toFixed(1)}K` : `${story.viewsCount}`,
+              gradient: story.backgroundGradient || 'linear-gradient(135deg, #1E40AF, #3B82F6)',
+              slides: slides
+            };
+          });
+          setStories(formatted);
+        } else {
+          setStories(storiesList);
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.warn("Could not fetch stories from database, using fallback", err);
+        setStories(storiesList);
+        setLoading(false);
+      });
   }, []);
 
   const storiesList = [
@@ -525,8 +559,8 @@ const WebStories = () => {
   };
 
   const filteredStories = activeTab === 'all'
-    ? storiesList
-    : storiesList.filter(story => story.cat === activeTab);
+    ? stories
+    : stories.filter(story => story.cat === activeTab);
 
   // Handle open viewer
   const handleOpenViewer = (story, listIndex) => {
