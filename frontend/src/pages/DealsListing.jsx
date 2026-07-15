@@ -174,17 +174,10 @@ const DealsListing = () => {
   ];
 
   return (
-    <div className={`p-4 md:p-8 min-h-screen ${theme === 'dark' ? 'bg-[#0b0f19] text-white' : 'bg-gray-50 text-gray-900'}`}>
+    <div className="deals-main-dashboard">
       
-      {/* Search Header Banner */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold flex items-center gap-2">
-            <i className="fas fa-tags text-red-500"></i>
-            {lang === 'en' ? 'Hot Deals & Offers' : 'சிறப்பு சலுகைகள்'}
-          </h1>
-          <p className="text-xs text-gray-500 mt-1">Grab the best discount coupons from verified local businesses</p>
-        </div>
+      {/* Search Header actions only */}
+      <div className="flex justify-end mb-6">
         <button 
           onClick={() => setShowCreateModal(true)}
           className="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs transition"

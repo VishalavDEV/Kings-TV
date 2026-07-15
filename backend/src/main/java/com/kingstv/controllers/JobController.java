@@ -1,43 +1,133 @@
 package com.kingstv.controllers;
 
-import com.kingstv.models.JobPosting;
-import com.kingstv.models.JobApplication;
-import com.kingstv.repository.JobRepository;
-import com.kingstv.repository.JobApplicationRepository;
+import com.kingstv.models.*;
+import com.kingstv.services.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
-import com.kingstv.repository.SpecificationBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDateTime;
+import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1/jobs")
+@RequestMapping({"/api/jobs", "/api/v1/jobs"})
 public class JobController {
 
     @Autowired
-    private JobRepository jobRepository;
+    private JobService jobService;
 
-    @Autowired
-    private JobApplicationRepository jobApplicationRepository;
-
-    // --- KEEP Existing Front-End Endpoint Map ---
     @GetMapping
-    public List<JobPosting> getJobs() {
-        return jobRepository.findAll();
+    public ResponseEntity<?> getJobs(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long companyId,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String employmentType,
+            @RequestParam(required = false) String workMode,
+            @RequestParam(required = false) Long districtId,
+            @RequestParam(required = false) Integer expMin,
+            @RequestParam(required = false) Integer expMax,
+            @RequestParam(required = false) Double salMin,
+            @RequestParam(required = false) Double salMax,
+            @RequestParam(required = false) String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        
+        Page<JobPosting> jobs = jobService.getJobs(
+            search, companyId, categoryId, employmentType, workMode, districtId,
+            expMin, expMax, salMin, salMax, sort, PageRequest.of(page, size)
+        );
+        return ResponseEntity.ok(jobs.getContent());
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<?> searchJobs(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        Page<JobPosting> jobs = jobService.getJobs(query, null, null, null, null, null, null, null, null, null, "newest", PageRequest.of(page, size));
+        return ResponseEntity.ok(jobs.getContent());
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<?> filterJobs(
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Long districtId,
+            @RequestParam(required = false) String employmentType,
+            @RequestParam(required = false) String workMode,
+            @RequestParam(required = false) String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        Page<JobPosting> jobs = jobService.getJobs(null, null, categoryId, employmentType, workMode, districtId, null, null, null, null, sort, PageRequest.of(page, size));
+        return ResponseEntity.ok(jobs.getContent());
+    }
+
+    @GetMapping("/featured")
+    public ResponseEntity<?> getFeatured(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        // featured filter logic
+        Page<JobPosting> jobs = jobService.getJobs(null, null, null, null, null, null, null, null, null, null, "newest", PageRequest.of(page, size));
+        return ResponseEntity.ok(jobs.getContent());
+    }
+
+    @GetMapping("/latest")
+    public ResponseEntity<?> getLatest(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        Page<JobPosting> jobs = jobService.getJobs(null, null, null, null, null, null, null, null, null, null, "newest", PageRequest.of(page, size));
+        return ResponseEntity.ok(jobs.getContent());
+    }
+
+    @GetMapping("/recommended")
+    public ResponseEntity<?> getRecommended(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        Page<JobPosting> jobs = jobService.getJobs(null, null, null, null, null, null, null, null, null, null, "newest", PageRequest.of(page, size));
+        return ResponseEntity.ok(jobs.getContent());
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<?> getCategories() {
+        return ResponseEntity.ok(jobService.getCategories());
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "File is empty"));
+        }
+        try {
+            Path uploadPath = Paths.get("uploads/jobs");
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+            String fileName = "job_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            Path filePath = uploadPath.resolve(fileName);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            return ResponseEntity.ok(Map.of("url", "/uploads/jobs/" + fileName));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to upload file: " + e.getMessage()));
+        }
+    }
+
+    // Wildcard path mappings at the very bottom
     @GetMapping("/{id}")
     public ResponseEntity<?> getJobById(@PathVariable Long id) {
-        Optional<JobPosting> jobOpt = jobRepository.findById(id);
+        Optional<JobPosting> jobOpt = jobService.getJobById(id);
         if (jobOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Job posting not found"));
         }
@@ -46,113 +136,88 @@ public class JobController {
 
     @PostMapping
     public ResponseEntity<?> createJob(@RequestBody JobPosting job) {
-        if (job.getTitle() == null || job.getCompanyName() == null || job.getCategory() == null || job.getLocation() == null || job.getSalaryRange() == null || job.getDescription() == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Required fields are missing"));
+        if (job.getTitle() == null || job.getDescription() == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Title and description are required."));
         }
-        if (job.getCreatedAt() == null) {
-            job.setCreatedAt(LocalDateTime.now());
-        }
-        JobPosting saved = jobRepository.save(job);
+        JobPosting saved = jobService.createJob(job);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    @PostMapping("/{jobId}/apply")
-    public ResponseEntity<?> applyToJob(@PathVariable Long jobId, @RequestBody JobApplication application) {
-        Optional<JobPosting> jobOpt = jobRepository.findById(jobId);
-        if (jobOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Job posting not found"));
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateJob(@PathVariable Long id, @RequestBody JobPosting job) {
+        try {
+            JobPosting updated = jobService.updateJob(id, job);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
         }
-        if (application.getApplicantName() == null || application.getApplicantPhone() == null || application.getExperience() == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "name, phone and experience are required"));
-        }
-        application.setJobId(jobId);
-        application.setAppliedAt(LocalDateTime.now());
-        JobApplication saved = jobApplicationRepository.save(application);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
-    }
-
-    // --- NEW Standardized API Standard Endpoints ---
-    @GetMapping("/getAll")
-    public Page<JobPosting> getAll(
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
-        
-        Sort sort = Sort.by(direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
-        Specification<JobPosting> spec = SpecificationBuilder.build(search, status, null, null);
-        return jobRepository.findAll(spec, pageable);
-    }
-
-    @GetMapping("/getAllWeb")
-    public Page<JobPosting> getAllWeb(
-            @RequestParam(required = false) String search,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
-        
-        return getAll(search, "active", page, size, sortBy, direction);
-    }
-
-    @PostMapping("/saveUpdate")
-    public ResponseEntity<?> save(@RequestBody JobPosting entity) {
-        return createJob(entity);
-    }
-
-    @PutMapping("/saveUpdate")
-    public ResponseEntity<?> update(@RequestBody JobPosting entity) {
-        if (entity.getId() == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Id is required for update"));
-        }
-        Optional<JobPosting> jobOpt = jobRepository.findById(entity.getId());
-        if (jobOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Job posting not found"));
-        }
-        JobPosting job = jobOpt.get();
-        job.setTitle(entity.getTitle());
-        job.setCompanyName(entity.getCompanyName());
-        job.setCategory(entity.getCategory());
-        job.setLocation(entity.getLocation());
-        job.setSalaryRange(entity.getSalaryRange());
-        job.setEmploymentType(entity.getEmploymentType());
-        job.setDescription(entity.getDescription());
-        job.setStatus(entity.getStatus());
-        
-        JobPosting updated = jobRepository.save(job);
-        return ResponseEntity.ok(updated);
-    }
-
-    @PatchMapping("/changeStatus")
-    public ResponseEntity<?> changeStatus(@RequestBody Map<String, Object> request) {
-        if (!request.containsKey("id") || !request.containsKey("status")) {
-            return ResponseEntity.badRequest().body(Map.of("message", "id and status are required"));
-        }
-        Long id = Long.valueOf(request.get("id").toString());
-        String status = request.get("status").toString();
-        
-        Optional<JobPosting> opt = jobRepository.findById(id);
-        if (opt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Job posting not found"));
-        }
-        JobPosting existing = opt.get();
-        existing.setStatus(status);
-        jobRepository.save(existing);
-        return ResponseEntity.ok(Map.of("message", "Status updated successfully", "id", id, "status", status));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteJob(@PathVariable Long id) {
-        Optional<JobPosting> jobOpt = jobRepository.findById(id);
-        if (jobOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Job posting not found"));
+        try {
+            jobService.deleteJob(id);
+            return ResponseEntity.ok(Map.of("message", "Job deleted successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
         }
-        JobPosting existing = jobOpt.get();
-        existing.setStatus("deleted"); // Soft delete
-        jobRepository.save(existing);
-        return ResponseEntity.ok(Map.of("message", "Job soft-deleted successfully"));
+    }
+
+    @PostMapping("/{id}/apply")
+    public ResponseEntity<?> applyToJob(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long candidateId,
+            @RequestParam(required = false) Long resumeId,
+            @RequestParam String applicantName,
+            @RequestParam String applicantPhone,
+            @RequestParam String experience,
+            @RequestParam(required = false) String summary) {
+        try {
+            JobApplication app = jobService.applyToJob(id, candidateId, resumeId, applicantName, applicantPhone, experience, summary);
+            return ResponseEntity.ok(app);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/save")
+    public ResponseEntity<?> saveJob(@PathVariable Long id, @RequestParam Long candidateId) {
+        try {
+            SavedJob sj = jobService.saveJob(id, candidateId);
+            return ResponseEntity.ok(sj);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{id}/save")
+    public ResponseEntity<?> unsaveJob(@PathVariable Long id, @RequestParam Long candidateId) {
+        try {
+            jobService.unsaveJob(id, candidateId);
+            return ResponseEntity.ok(Map.of("message", "Job unsaved successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/share")
+    public ResponseEntity<?> shareJob(@PathVariable Long id, @RequestParam String platform) {
+        jobService.logShare(id, platform);
+        return ResponseEntity.ok(Map.of("message", "Share logged successfully"));
+    }
+
+    @PostMapping("/{id}/report")
+    public ResponseEntity<?> reportJob(
+            @PathVariable Long id,
+            @RequestParam String reporterName,
+            @RequestParam String reason) {
+        jobService.logReport(id, reporterName, reason);
+        return ResponseEntity.ok(Map.of("message", "Report logged successfully"));
+    }
+
+    @PostMapping("/{id}/view")
+    public ResponseEntity<?> logView(@PathVariable Long id, HttpServletRequest request) {
+        jobService.logView(id, request.getRemoteAddr(), request.getHeader("User-Agent"));
+        return ResponseEntity.ok(Map.of("message", "View logged successfully"));
     }
 }

@@ -1,0 +1,367 @@
+/* ==========================================================================
+   EXACT UI RFQ MARKETPLACE STYLING (RfqMarketplace.css)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+.rfq-module-container {
+  font-family: 'Inter', sans-serif !important;
+  color: #1e293b !important;
+}
+
+/* Sidebar & Main Grid Layout */
+.rfq-layout-grid {
+  display: grid !important;
+  grid-template-columns: 240px 1fr !important;
+  gap: 24px !important;
+}
+
+@media (max-width: 900px) {
+  .rfq-layout-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Three Column Content Grid inside Main Section */
+.rfq-content-columns-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 280px !important;
+  gap: 20px !important;
+}
+
+@media (max-width: 1100px) {
+  .rfq-content-columns-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Sidebar Navigation menu */
+.rfq-sidebar-nav {
+  background: #0f172a !important;
+  border-radius: 20px !important;
+  padding: 24px 16px !important;
+  color: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.rfq-sidebar-menu-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 14px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #94a3b8 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.rfq-sidebar-menu-item:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #ffffff !important;
+}
+
+.rfq-sidebar-menu-item.active {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+  color: #ffffff !important;
+}
+
+.rfq-sidebar-menu-item-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.rfq-sidebar-menu-item-left i {
+  width: 16px !important;
+  text-align: center !important;
+}
+
+.rfq-sidebar-badge {
+  font-size: 8.5px !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-weight: 850 !important;
+}
+
+.rfq-sidebar-badge.purple {
+  background: #6366f1 !important;
+  color: #ffffff !important;
+}
+
+.rfq-sidebar-badge.green {
+  background: #10b981 !important;
+  color: #ffffff !important;
+}
+
+/* Dark Blue RFQ Hero Banner */
+.rfq-hero-banner {
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%) !important;
+  border-radius: 16px !important;
+  padding: 30px !important;
+  color: #ffffff !important;
+  position: relative !important;
+  overflow: hidden !important;
+  margin-bottom: 24px !important;
+}
+
+.rfq-hero-left {
+  flex: 1.2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  z-index: 10 !important;
+}
+
+.rfq-hero-title {
+  font-size: 26px !important;
+  font-weight: 800 !important;
+  margin: 0 !important;
+}
+
+.rfq-hero-subtitle {
+  font-size: 13.5px !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  line-height: 1.4 !important;
+}
+
+.rfq-hero-pills {
+  display: flex !important;
+  gap: 14px !important;
+  flex-wrap: wrap !important;
+  margin-top: 10px !important;
+}
+
+.rfq-hero-pill-badge {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 11px !important;
+  color: #cbd5e1 !important;
+}
+
+.rfq-hero-pill-badge i {
+  color: #34d399 !important;
+}
+
+/* Quote Graphic Illustration overlay */
+.rfq-hero-graphic-wrap {
+  position: absolute !important;
+  right: 40px !important;
+  top: 20px !important;
+  bottom: 20px !important;
+  width: 260px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.rfq-hero-graphic-card {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  font-size: 10.5px !important;
+  color: #ffffff !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.rfq-hero-graphic-card.best {
+  background: #ffffff !important;
+  border-color: #6366f1 !important;
+  color: #1e293b !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3) !important;
+}
+
+@media (max-width: 900px) {
+  .rfq-hero-graphic-wrap {
+    display: none !important;
+  }
+}
+
+/* Quick Categories button cards below Hero */
+.rfq-quick-cats-cards-row {
+  display: flex !important;
+  gap: 12px !important;
+  overflow-x: auto !important;
+  padding: 8px 0 !important;
+  margin-bottom: 20px !important;
+}
+
+.rfq-quick-cat-card-btn {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  padding: 10px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  text-align: left !important;
+}
+
+.rfq-quick-cat-card-btn.active {
+  border-color: #6366f1 !important;
+  background: #eef2ff !important;
+}
+
+.rfq-quick-cat-card-icon-box {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+  background: #f1f5f9 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #6366f1 !important;
+}
+
+.rfq-quick-cat-card-name {
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  color: #1e293b !important;
+}
+
+.rfq-quick-cat-card-count {
+  font-size: 10px !important;
+  color: #64748b !important;
+  margin-top: 2px !important;
+}
+
+/* RFQ Listing Row Card */
+.rfq-listing-row-card {
+  background: #ffffff !important;
+  border: 1.5px solid #f1f5f9 !important;
+  border-radius: 14px !important;
+  padding: 18px 24px !important;
+  display: flex !important;
+  gap: 20px !important;
+  margin-bottom: 14px !important;
+  cursor: pointer !important;
+}
+
+.rfq-listing-row-card:hover {
+  border-color: #cbd5e1 !important;
+}
+
+.rfq-listing-row-img {
+  width: 90px !important;
+  height: 90px !important;
+  border-radius: 8px !important;
+  background-size: cover !important;
+  background-position: center !important;
+}
+
+.rfq-listing-row-details {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.rfq-listing-row-header-badge {
+  font-size: 8.5px !important;
+  font-weight: 850 !important;
+  padding: 2px 8px !important;
+  border-radius: 4px !important;
+  align-self: flex-start !important;
+  text-transform: uppercase !important;
+}
+
+.rfq-listing-row-header-badge.printing {
+  background: #fee2e2 !important;
+  color: #ef4444 !important;
+}
+
+.rfq-listing-row-header-badge.interior {
+  background: #e0f2fe !important;
+  color: #0369a1 !important;
+}
+
+.rfq-listing-row-header-badge.services {
+  background: #d1fae5 !important;
+  color: #065f46 !important;
+}
+
+.rfq-listing-row-title {
+  font-size: 14.5px !important;
+  font-weight: 800 !important;
+  color: #1e293b !important;
+  margin: 6px 0 2px 0 !important;
+}
+
+.rfq-listing-row-desc {
+  font-size: 12.5px !important;
+  color: #64748b !important;
+  margin: 0 0 10px 0 !important;
+  line-height: 1.4 !important;
+}
+
+.rfq-listing-row-tags {
+  display: flex !important;
+  gap: 16px !important;
+  font-size: 11.5px !important;
+  color: #64748b !important;
+}
+
+.rfq-listing-row-tags span {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+/* Quick Actions Right Columns cards */
+.rfq-quick-action-link-card {
+  padding: 16px !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+}
+
+.rfq-quick-action-link-card.primary {
+  background: #6366f1 !important;
+  color: #ffffff !important;
+}
+
+.rfq-quick-action-link-card.secondary {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+/* RFQ Stats grid widgets */
+.rfq-stats-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 12px !important;
+  margin-top: 10px !important;
+}
+
+.rfq-stat-badge-box {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  padding: 10px !important;
+}
+
+.rfq-stat-badge-num {
+  font-size: 18px !important;
+  font-weight: 850 !important;
+  color: #6366f1 !important;
+}
+
+.rfq-stat-badge-lbl {
+  font-size: 9.5px !important;
+  color: #64748b !important;
+  margin-top: 2px !important;
+}

@@ -43,7 +43,16 @@ public class DataInitializer {
     private WishRepository wishRepository;
 
     @Autowired
+    private WishCategoryRepository wishCategoryRepository;
+
+    @Autowired
     private WebStoryRepository webStoryRepository;
+
+    @Autowired
+    private NfcCardRepository nfcCardRepository;
+
+    @Autowired
+    private NfcTapHistoryRepository nfcTapHistoryRepository;
 
     @EventListener(ApplicationReadyEvent.class)
     public void initDatabase() {
@@ -51,6 +60,8 @@ public class DataInitializer {
 
         // Clean up legacy records to force correct UTF-8 re-seeding
         try {
+            nfcTapHistoryRepository.deleteAll();
+            nfcCardRepository.deleteAll();
             webStoryRepository.deleteAll();
             wishRepository.deleteAll();
             directoryRepository.deleteAll();
@@ -195,8 +206,28 @@ public class DataInitializer {
 
         // 9. Seed Directory Listings
         System.out.println("Seeding Directory Listings...");
-        seedDirectory("அபிராமி பல்பொருள் அங்காடி", "Retail / Grocery", "மயிலாப்பூர், சென்னை", "கபாலீஸ்வரர் கோவில் தெரு", "09:00 AM - 10:00 PM", "044-24951234");
-        seedDirectory("ஸ்ரீ பாலாஜி டென்டல் கிளினிக்", "Healthcare / Dental", "காந்திபுரம், கோயம்புத்தூர்", "நூறடி சாலை, காந்திபுரம்", "10:00 AM - 08:30 PM", "0422-2521234");
+        DirectoryListing kingCafe = seedDirectory("King Cafe", "Cafe / Restaurant", "Anna Nagar, Chennai", "5th Avenue, Anna Nagar", "08:00 AM - 11:00 PM", "9876543210");
+        DirectoryListing abirami = seedDirectory("அபிராமி பல்பொருள் அங்காடி", "Retail / Grocery", "மயிலாப்பூர், சென்னை", "கபாலீஸ்வரர் கோவில் தெரு", "09:00 AM - 10:00 PM", "044-24951234");
+        DirectoryListing dental = seedDirectory("ஸ்ரீ பாலாஜி டென்டல் கிளினிக்", "Healthcare / Dental", "காந்திபுரம், கோயம்புத்தூர்", "நூறடி சாலை, காந்திபுரம்", "10:00 AM - 08:30 PM", "0422-2521234");
+
+        // Seed NFC Card for King Cafe (first item with ID 1)
+        NfcCard card = new NfcCard();
+        card.setListingId(kingCafe.getId());
+        card.setShortCode("KCARD-10024");
+        card.setLinkType("payment");
+        card.setUpiId("kingcafe@upi");
+        card.setUpiName("King Cafe");
+        card.setIsPaymentEnabled(true);
+        card.setCardStatus("activated");
+        card.setOtpHash("1234");
+        card.setTrackingNumber("TRK-987654321");
+        NfcCard savedCard = nfcCardRepository.save(card);
+        
+        // Seed Tap History for King Cafe
+        seedTap(savedCard.getId(), "payment", 250.00, "success", "Hari Prakash", "Anna Nagar, Chennai", LocalDateTime.now().minusHours(2));
+        seedTap(savedCard.getId(), "profile", 0.0, "success", "Unknown", "T. Nagar, Chennai", LocalDateTime.now().minusHours(3));
+        seedTap(savedCard.getId(), "payment", 1120.00, "success", "Priya Sharma", "Anna Nagar, Chennai", LocalDateTime.now().minusDays(1));
+        seedTap(savedCard.getId(), "payment", 560.00, "success", "Vignesh R", "Anna Nagar, Chennai", LocalDateTime.now().minusDays(1));
 
         // 10. Seed Wishes
         System.out.println("Seeding Wishes...");
@@ -325,7 +356,7 @@ public class DataInitializer {
         jobRepository.save(job);
     }
 
-    private void seedDirectory(String name, String cat, String locality, String street, String hours, String phone) {
+    private DirectoryListing seedDirectory(String name, String cat, String locality, String street, String hours, String phone) {
         DirectoryListing business = new DirectoryListing();
         business.setBusinessName(name);
         business.setCategory(cat);
@@ -334,13 +365,29 @@ public class DataInitializer {
         business.setWorkingHours(hours);
         business.setPhoneNumber(phone);
         business.setStatus("active");
-        directoryRepository.save(business);
+        return directoryRepository.save(business);
     }
 
-    private void seedWish(String recipient, String cat, String message, String sender) {
+    private void seedTap(Long cardId, String type, Double amount, String status, String customer, String city, LocalDateTime time) {
+        NfcTapHistory tap = new NfcTapHistory();
+        tap.setCardId(cardId);
+        tap.setTapType(type);
+        tap.setAmount(amount);
+        tap.setStatus(status);
+        tap.setCustomerName(customer);
+        tap.setLocationCity(city);
+        tap.setTappedAt(time);
+        nfcTapHistoryRepository.save(tap);
+    }
+
+    private void seedWish(String recipient, String catSlug, String message, String sender) {
         Wish wish = new Wish();
         wish.setRecipientName(recipient);
-        wish.setCategory(cat);
+        
+        WishCategory category = wishCategoryRepository.findBySlug(catSlug)
+            .orElseGet(() -> wishCategoryRepository.findBySlug("general").orElse(null));
+        wish.setCategory(category);
+        
         wish.setMessage(message);
         wish.setSenderName(sender);
         wish.setStatus("published");
