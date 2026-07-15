@@ -273,44 +273,23 @@ const Header = () => {
       const tech = findDbItem('tech') || findDbItem('technology');
       dynamicItems.push(tech || { id: 'tech', path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்', subcategories: [] });
 
-      // Deals (No dropdown chevron)
-      dynamicItems.push({
-        id: 'deals',
-        path: '/deals',
-        label: lang === 'en' ? 'Deals' : 'சலுகைகள்',
-        subcategories: []
-      });
-
-      // RFQ (No dropdown chevron)
-      dynamicItems.push({
-        id: 'rfq',
-        path: '/rfq',
-        label: lang === 'en' ? 'RFQ' : 'கோரிக்கைகள்',
-        subcategories: []
-      });
-
-      // NFC Card (No dropdown chevron)
-      dynamicItems.push({
-        id: 'nfc',
-        path: '/nfc',
-        label: lang === 'en' ? 'NFC Card' : 'என்எஃப்சி கார்டு',
-        subcategories: []
-      });
-
-      // Regional (with dropdown chevron)
+      // Regional / Local Directory (with dropdown chevron containing all items)
       const regional = findDbItem('regional');
       const regionalSubcategories = [
         { id: 'reg-dir', slug: 'directory', path: '/directory', name: 'Local Directory', nameTa: 'நம்ம ஊர்' },
+        { id: 'reg-deals', slug: 'deals', path: '/deals', name: 'Deals', nameTa: 'சலுகைகள்' },
+        { id: 'reg-rfq', slug: 'rfq', path: '/rfq', name: 'RFQ', nameTa: 'கோரிக்கைகள்' },
+        { id: 'reg-nfc', slug: 'nfc', path: '/nfc', name: 'NFC Card', nameTa: 'என்எஃப்சி கார்டு' },
         { id: 'reg-wishes', slug: 'wishes', path: '/wishes', name: 'Wishes', nameTa: 'வாழ்த்து' },
         { id: 'reg-obituaries', slug: 'obituaries', path: '/obituaries', name: 'Obituaries', nameTa: 'இரங்கல்' },
         { id: 'reg-business', slug: 'business-studies', path: '/business-studies', name: 'Business', nameTa: 'வணிகம்' },
         { id: 'reg-jobs', slug: 'jobs', path: '/jobs', name: 'Jobs', nameTa: 'வேலை' },
         { id: 'reg-classifieds', slug: 'classifieds', path: '/classifieds', name: 'Classifieds', nameTa: 'தள்ளுபடி' }
       ];
-      dynamicItems.push(regional ? { ...regional, subcategories: regionalSubcategories } : {
+      dynamicItems.push(regional ? { ...regional, label: lang === 'en' ? 'Local Directory' : 'நம்ம ஊர்', subcategories: regionalSubcategories } : {
         id: 'regional',
         path: '/directory',
-        label: lang === 'en' ? 'Regional' : 'மாநிலம்',
+        label: lang === 'en' ? 'Local Directory' : 'நம்ம ஊர்',
         subcategories: regionalSubcategories
       });
 
@@ -348,15 +327,15 @@ const Header = () => {
           { path: '/category/sports', label: lang === 'en' ? 'Sports' : 'விளையாட்டு', subcategories: [ { id: 'fs-1', slug: 'cricket', name: 'Cricket', nameTa: 'கிரிக்கெட்' } ] },
           { path: '/category/cinema', label: lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு', subcategories: [ { id: 'fc-1', slug: 'kollywood', name: 'Kollywood', nameTa: 'கோலிவுட்' } ] },
           { path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்', subcategories: [ { id: 'ft-1', slug: 'smartphones', name: 'Smartphones', nameTa: 'ஸ்மார்ட் போன்' } ] },
-          { path: '/deals', label: lang === 'en' ? 'Deals' : 'சலுகைகள்', subcategories: [] },
-          { path: '/rfq', label: lang === 'en' ? 'RFQ' : 'கோரிக்கைகள்', subcategories: [] },
-          { path: '/nfc', label: lang === 'en' ? 'NFC Card' : 'என்எஃப்சி கார்டு', subcategories: [] },
           { 
             id: 'regional',
             path: '/directory', 
-            label: lang === 'en' ? 'Regional' : 'மாநிலம்', 
+            label: lang === 'en' ? 'Local Directory' : 'நம்ம ஊர்', 
             subcategories: [
               { id: 'reg-dir', slug: 'directory', path: '/directory', name: 'Local Directory', nameTa: 'நம்ம ஊர்' },
+              { id: 'reg-deals', slug: 'deals', path: '/deals', name: 'Deals', nameTa: 'சலுகைகள்' },
+              { id: 'reg-rfq', slug: 'rfq', path: '/rfq', name: 'RFQ', nameTa: 'கோரிக்கைகள்' },
+              { id: 'reg-nfc', slug: 'nfc', path: '/nfc', name: 'NFC Card', nameTa: 'என்எஃப்சி கார்டு' },
               { id: 'reg-wishes', slug: 'wishes', path: '/wishes', name: 'Wishes', nameTa: 'வாழ்த்து' },
               { id: 'reg-obituaries', slug: 'obituaries', path: '/obituaries', name: 'Obituaries', nameTa: 'இரங்கல்' },
               { id: 'reg-business', slug: 'business-studies', path: '/business-studies', name: 'Business', nameTa: 'வணிகம்' },

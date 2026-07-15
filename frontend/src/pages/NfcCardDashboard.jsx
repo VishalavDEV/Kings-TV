@@ -76,7 +76,22 @@ const NfcCardDashboard = () => {
   };
 
   useEffect(() => {
-    loadData();
+    fetchApi('/directory')
+      .then(listings => {
+        if (Array.isArray(listings) && listings.length > 0) {
+          const kingCafe = listings.find(item => item.businessName === 'King Cafe') || listings[0];
+          setMerchantBizId(kingCafe.id);
+        }
+      })
+      .catch(() => {
+        setMerchantBizId(1);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (merchantBizId) {
+      loadData();
+    }
   }, [merchantBizId]);
 
   const handleUpdateUpi = (e) => {
@@ -207,27 +222,16 @@ const NfcCardDashboard = () => {
   const currentStepIdx = statusSteps.indexOf((card.cardStatus || 'requested').toLowerCase());
 
   return (
-    <div className={`p-4 md:p-8 min-h-screen ${theme === 'dark' ? 'bg-[#0b0f19] text-white' : 'bg-gray-50 text-gray-900'}`}>
+    <div className="nfc-main-dashboard">
       
-      {/* 1. HEADER */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold flex items-center gap-2">
-            <i className="fas fa-microchip text-red-500 text-2xl"></i>
-            {lang === 'en' ? 'NFC Business Card' : 'என்எஃப்சி வணிக அட்டை'}
-          </h1>
-          <p className="text-xs text-gray-500 mt-1">
-            {lang === 'en' ? 'Manage your NFC card and tap-to-pay profile' : 'உங்கள் என்எஃப்சி கார்டு மற்றும் பணம் செலுத்தும் சுயவிவரத்தை நிர்வகிக்கவும்'}
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <button 
-            onClick={() => setShowRequestModal(true)}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs flex items-center gap-2 transition"
-          >
-            <i className="fas fa-plus"></i> Request New Card
-          </button>
-        </div>
+      {/* 1. HEADER ACTIONS ONLY */}
+      <div className="flex justify-end mb-6">
+        <button 
+          onClick={() => setShowRequestModal(true)}
+          className="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs flex items-center gap-2 transition"
+        >
+          <i className="fas fa-plus"></i> Request New Card
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">

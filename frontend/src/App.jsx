@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Customizer from './components/Customizer';
@@ -8,6 +8,7 @@ import SplashScreen from './components/SplashScreen';
 import MobileBottomNav from './components/MobileBottomNav';
 import ScrollToTop from './components/ScrollToTop';
 import { AuthProvider } from './context/AuthContext';
+import DashboardLayout from './components/DashboardLayout';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -36,63 +37,81 @@ import Advertise from './pages/Advertise';
 import LiveTv from './pages/LiveTv';
 import Weather from './pages/Weather';
 
-function App() {
+function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
+  const location = useLocation();
 
+  const isDashboardRoute = ['/nfc', '/deals', '/rfq'].includes(location.pathname);
+
+  if (isDashboardRoute) {
+    return (
+      <DashboardLayout>
+        <Routes>
+          <Route path="/nfc" element={<NfcCardDashboard />} />
+          <Route path="/deals" element={<DealsListing />} />
+          <Route path="/rfq" element={<RfqMarketplace />} />
+        </Routes>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <div className="app-container">
+      {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
+      <Header />
+      
+      <main className="main-content">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/index.html" element={<Navigate to="/" replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/login.html" element={<Navigate to="/login" replace />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/directory" element={<BizDirectoryMain />} />
+          <Route path="/directory.html" element={<Navigate to="/directory" replace />} />
+          <Route path="/classifieds" element={<Classifieds />} />
+          <Route path="/classifieds.html" element={<Navigate to="/classifieds" replace />} />
+          <Route path="/wishes" element={<Wishes />} />
+          <Route path="/wishes.html" element={<Navigate to="/wishes" replace />} />
+          <Route path="/obituaries" element={<Obituaries />} />
+          <Route path="/obituaries.html" element={<Navigate to="/obituaries" replace />} />
+          <Route path="/jobs" element={<Jobs />} />
+          <Route path="/jobs.html" element={<Navigate to="/jobs" replace />} />
+          <Route path="/business-studies" element={<BusinessStudies />} />
+          <Route path="/business-studies.html" element={<Navigate to="/business-studies" replace />} />
+          <Route path="/category/:slug" element={<Category />} />
+          <Route path="/category.html" element={<Category />} />
+          <Route path="/videos" element={<Videos />} />
+          <Route path="/web-stories" element={<WebStories />} />
+          <Route path="/article/:id" element={<ArticleDetail />} />
+          <Route path="/article" element={<Navigate to="/" replace />} />
+          <Route path="/news/:id" element={<ArticleDetail />} />
+          <Route path="/about-us" element={<AboutUs />} />
+          <Route path="/contact" element={<ContactUs />} />
+          <Route path="/advertise" element={<Advertise />} />
+          <Route path="/live-tv" element={<LiveTv />} />
+          <Route path="/weather" element={<Weather />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-use" element={<TermsOfUse />} />
+        </Routes>
+      </main>
+
+      <Footer />
+      <MobileBottomNav />
+      <Customizer />
+      <AiAssistant />
+      <ScrollToTop />
+    </div>
+  );
+}
+
+function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="app-container">
-          {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
-          <Header />
-          
-          <main className="main-content">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/index.html" element={<Navigate to="/" replace />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/login.html" element={<Navigate to="/login" replace />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/directory" element={<BizDirectoryMain />} />
-              <Route path="/nfc" element={<NfcCardDashboard />} />
-              <Route path="/deals" element={<DealsListing />} />
-              <Route path="/rfq" element={<RfqMarketplace />} />
-              <Route path="/directory.html" element={<Navigate to="/directory" replace />} />
-              <Route path="/classifieds" element={<Classifieds />} />
-              <Route path="/classifieds.html" element={<Navigate to="/classifieds" replace />} />
-              <Route path="/wishes" element={<Wishes />} />
-              <Route path="/wishes.html" element={<Navigate to="/wishes" replace />} />
-              <Route path="/obituaries" element={<Obituaries />} />
-              <Route path="/obituaries.html" element={<Navigate to="/obituaries" replace />} />
-              <Route path="/jobs" element={<Jobs />} />
-              <Route path="/jobs.html" element={<Navigate to="/jobs" replace />} />
-              <Route path="/business-studies" element={<BusinessStudies />} />
-              <Route path="/business-studies.html" element={<Navigate to="/business-studies" replace />} />
-              <Route path="/category/:slug" element={<Category />} />
-              <Route path="/category.html" element={<Category />} />
-              <Route path="/videos" element={<Videos />} />
-              <Route path="/web-stories" element={<WebStories />} />
-              <Route path="/article/:id" element={<ArticleDetail />} />
-              <Route path="/article" element={<Navigate to="/" replace />} />
-              <Route path="/news/:id" element={<ArticleDetail />} />
-              <Route path="/about-us" element={<AboutUs />} />
-              <Route path="/contact" element={<ContactUs />} />
-              <Route path="/advertise" element={<Advertise />} />
-              <Route path="/live-tv" element={<LiveTv />} />
-              <Route path="/weather" element={<Weather />} />
-              <Route path="/careers" element={<Careers />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/terms-of-use" element={<TermsOfUse />} />
-            </Routes>
-          </main>
-
-          <Footer />
-          <MobileBottomNav />
-          <Customizer />
-          <AiAssistant />
-          <ScrollToTop />
-        </div>
+        <AppContent />
       </Router>
     </AuthProvider>
   );

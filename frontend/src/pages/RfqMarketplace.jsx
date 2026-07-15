@@ -203,7 +203,7 @@ const RfqMarketplace = () => {
   ];
 
   return (
-    <div className={`p-4 md:p-8 min-h-screen ${theme === 'dark' ? 'bg-[#0b0f19] text-white' : 'bg-gray-50 text-gray-900'}`}>
+    <div className="rfq-main-dashboard">
       
       {/* 1. HEADER BANNER */}
       <div className="relative rounded-3xl overflow-hidden p-6 md:p-8 mb-8 bg-gradient-to-r from-violet-600 to-indigo-600 text-white flex flex-col md:flex-row justify-between items-center gap-6 shadow-xl">
