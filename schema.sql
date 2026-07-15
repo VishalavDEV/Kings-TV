@@ -525,3 +525,179 @@ CREATE TABLE obituary_frame_template (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_deleted INT default 0,
 );
+
+
+CREATE TABLE job (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employer_user_id BIGINT NOT NULL,
+    company_name VARCHAR(200) NOT NULL,
+    company_logo VARCHAR(500),
+    job_title VARCHAR(200) NOT NULL,
+    category_id INT NOT NULL,
+    sub_category_id INT,
+    job_type ENUM(
+        'FULL_TIME',
+        'PART_TIME',
+        'CONTRACT',
+        'INTERNSHIP',
+        'WORK_FROM_HOME'
+    ) NOT NULL,
+    experience_required ENUM(
+        'FRESHER',
+        '1_3_YEARS',
+        '3_5_YEARS',
+        '5_PLUS_YEARS'
+    ) NOT NULL,
+    education_required ENUM(
+        'ANY',
+        '10TH',
+        '12TH',
+        'DIPLOMA',
+        'GRADUATE',
+        'POST_GRADUATE'
+    ) NOT NULL,
+    salary_min DECIMAL(12,2),
+    salary_max DECIMAL(12,2),
+    salary_type ENUM(
+        'MONTHLY',
+        'ANNUAL'
+    ) NOT NULL,
+    is_salary_negotiable BOOLEAN DEFAULT FALSE,
+    openings INT NOT NULL DEFAULT 1,
+    state_id INT NOT NULL,
+    district_id INT NOT NULL,
+    taluk_id INT,
+    village_id INT,
+    pincode VARCHAR(10),
+    is_remote BOOLEAN DEFAULT FALSE,
+    description TEXT NOT NULL,
+    responsibilities TEXT,
+    application_deadline DATE,
+    apply_mode ENUM(
+        'PORTAL',
+        'CALL_HR',
+        'WHATSAPP'
+    ) NOT NULL,
+    hr_contact_phone VARCHAR(20),
+    hr_email VARCHAR(150),
+    is_verified_employer BOOLEAN DEFAULT FALSE,
+    is_featured BOOLEAN DEFAULT FALSE,
+    status ENUM(
+        'ACTIVE',
+        'CLOSED',
+        'EXPIRED',
+        'REJECTED'
+    ) DEFAULT 'ACTIVE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+    is_deleted INT default 0,
+    INDEX idx_location(state_id,district_id,taluk_id),
+    INDEX idx_category(category_id),
+    INDEX idx_status(status),
+    INDEX idx_deadline(application_deadline)
+);
+
+
+CREATE TABLE job_skill (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    job_id INT NOT NULL,
+    skill_name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+    is_deleted INT default 0,
+    FOREIGN KEY(job_id)
+        REFERENCES job(job_id)
+        ON DELETE CASCADE,
+    INDEX idx_skill(skill_name)
+);
+
+CREATE TABLE job_seeker (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNIQUE NOT NULL,
+    full_name VARCHAR(150) NOT NULL,
+    photo_url VARCHAR(500),
+    phone VARCHAR(20) NOT NULL,
+    email VARCHAR(150),
+    phone_verified BOOLEAN DEFAULT FALSE,
+    dob DATE,
+    age INT,
+    gender ENUM(
+        'MALE',
+        'FEMALE',
+        'OTHER'
+    ),
+    state_id INT,
+    district_id INT,
+    taluk_id INT,
+    village_id INT,
+    willing_to_relocate BOOLEAN DEFAULT FALSE,
+    highest_qualification ENUM(
+        'ANY',
+        '10TH',
+        '12TH',
+        'DIPLOMA',
+        'GRADUATE',
+        'POST_GRADUATE'
+    ),
+    experience_years DECIMAL(4,1),
+    expected_salary DECIMAL(12,2),
+    preferred_job_type ENUM(
+        'FULL_TIME',
+        'PART_TIME',
+        'CONTRACT',
+        'INTERNSHIP',
+        'WORK_FROM_HOME'
+    ),
+    availability ENUM(
+        'IMMEDIATE',
+        '15_DAYS',
+        '1_MONTH',
+        'NOTICE_PERIOD'
+    ),
+    resume_file VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+    is_deleted INT default 0,
+);
+
+CREATE TABLE job_seeker_skill (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    seeker_id INT NOT NULL,
+    skill_name VARCHAR(100) NOT NULL,
+    FOREIGN KEY(seeker_id)
+        REFERENCES job_seeker(seeker_id)
+        ON DELETE CASCADE,
+    INDEX idx_skill(skill_name)
+);
+
+CREATE TABLE job_application (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    job_id INT NOT NULL,
+    seeker_id INT NOT NULL,
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM(
+        'APPLIED',
+        'VIEWED',
+        'SHORTLISTED',
+        'REJECTED',
+        'HIRED'
+    ) DEFAULT 'APPLIED',
+    cover_note TEXT,
+    resume_snapshot VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY(job_id)
+        REFERENCES job(job_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY(seeker_id)
+        REFERENCES job_seeker(seeker_id)
+        ON DELETE CASCADE,
+    UNIQUE KEY uk_job_application(job_id,seeker_id),
+    INDEX idx_status(status),
+    INDEX idx_job(job_id),
+    INDEX idx_seeker(seeker_id)
+);
