@@ -400,3 +400,128 @@ CREATE TABLE IF NOT EXISTS `recommendations` (
     UNIQUE KEY `uk_user_rec_item` (`user_id`, `video_id`, `article_id`),
     INDEX `idx_rec_user_score` (`user_id`, `score` DESC)
 ) ENGINE=InnoDB COMMENT='Algorithmic recommended feeds computed per subscriber';
+
+
+CREATE TABLE IF NOT EXISTS obituary (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    deceased_name VARCHAR(200) NOT NULL,
+    photo_url VARCHAR(500) NOT NULL,
+    age TINYINT UNSIGNED NULL,
+    gender ENUM('MALE','FEMALE','OTHER') NULL,
+    date_of_birth DATE NULL,
+    date_of_passing DATE NOT NULL,
+    state_id INT NOT NULL,
+    district_id INT NOT NULL,
+    taluk_id INT NULL,
+    village_id INT NULL,
+    pincode VARCHAR(10) NULL,
+    latitude DECIMAL(10,8) NULL,
+    longitude DECIMAL(11,8) NULL,
+    religion_id INT NULL,
+    community_id INT NULL,
+    funeral_datetime DATETIME NOT NULL,
+    funeral_venue_address TEXT NOT NULL,
+    funeral_map_url VARCHAR(500) NULL,
+    family_contact_name VARCHAR(150) NOT NULL,
+    family_contact_phone VARCHAR(20) NOT NULL,
+    phone_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    poster_relationship ENUM('SELF','SPOUSE','SON','DAUGHTER','FATHER','MOTHER','BROTHER','SISTER','GRANDCHILD','RELATIVE','FRIEND','NEIGHBOUR','OTHER') NOT NULL,
+    biography_tribute TEXT NOT NULL,
+    frame_template_id INT NOT NULL,
+    tribute_count INT NOT NULL DEFAULT 0,
+    report_count INT NOT NULL DEFAULT 0,
+    status ENUM('PENDING','PUBLISHED','ARCHIVED','REJECTED') NOT NULL DEFAULT 'PENDING',
+    created_by BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+    is_deleted INT default 0,
+    INDEX idx_location(state_id,district_id,taluk_id,village_id),
+    INDEX idx_status(status),
+    INDEX idx_passing(date_of_passing),
+    INDEX idx_funeral(funeral_datetime),
+);
+
+CREATE TABLE IF NOT EXISTS obituary_gallery (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    obituary_id INT NOT NULL,
+    image_url VARCHAR(500) NOT NULL,
+    display_order TINYINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_deleted INT default 0,
+    CONSTRAINT fk_obituary_gallery
+        FOREIGN KEY (obituary_id)
+        REFERENCES obituary(obituary_id)
+        ON DELETE CASCADE,
+    UNIQUE KEY uk_obituary_photo(obituary_id,display_order)
+);
+
+CREATE TABLE IF NOT EXISTS obituary_tribute (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    obituary_id INT NOT NULL,
+    user_id BIGINT NULL,
+    device_id VARCHAR(255) NULL,
+    ip_address VARCHAR(45) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_deleted INT default 0,
+    CONSTRAINT fk_tribute_obituary
+        FOREIGN KEY (obituary_id)
+        REFERENCES obituary(obituary_id)
+        ON DELETE CASCADE,
+    UNIQUE KEY uk_user(obituary_id,user_id),
+    UNIQUE KEY uk_device(obituary_id,device_id)
+);
+
+CREATE TABLE obituary_report (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    obituary_id INT NOT NULL,
+    reported_by BIGINT NULL,
+    reason ENUM(
+        'SPAM',
+        'FAKE',
+        'WRONG_INFORMATION',
+        'OFFENSIVE',
+        'COPYRIGHT',
+        'OTHER'
+    ) NOT NULL,
+    remarks TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_deleted INT default 0,
+    CONSTRAINT fk_report_obituary
+        FOREIGN KEY (obituary_id)
+        REFERENCES obituary(obituary_id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE obituary_guestbook (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    obituary_id INT NOT NULL,
+    guest_name VARCHAR(150) NOT NULL,
+    guest_phone VARCHAR(20) NULL,
+    message TEXT NOT NULL,
+    is_approved BOOLEAN DEFAULT FALSE,
+    status ENUM(
+        'PENDING',
+        'APPROVED',
+        'REJECTED'
+    ) DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_guestbook_obituary
+        FOREIGN KEY (obituary_id)
+        REFERENCES obituary(obituary_id)
+        ON DELETE CASCADE,
+    is_deleted INT default 0,
+    INDEX idx_obituary(obituary_id),
+    INDEX idx_status(status)
+);
+
+CREATE TABLE obituary_frame_template (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    template_name VARCHAR(100) NOT NULL,
+    preview_image VARCHAR(500),
+    frame_image VARCHAR(500),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_deleted INT default 0,
+);
