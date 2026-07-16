@@ -49,6 +49,7 @@ public class DataInitializer {
     @Autowired
     private WebStoryRepository webStoryRepository;
 
+    @Autowired
     private RoleRepository roleRepository;
 
     @Autowired
