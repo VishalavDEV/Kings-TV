@@ -68,7 +68,8 @@ public class SecurityConfig {
                     "/robots.txt", "/sitemap.xml", "/rss.xml", "/news/**",
                     "/api/v1/public/**",
                     "/ws/**",
-                    "/error"
+                    "/error",
+                    "/"
                 ).permitAll()
                 // Admin portal endpoints require authentication
                 .requestMatchers("/api/v1/admin/**").authenticated()
