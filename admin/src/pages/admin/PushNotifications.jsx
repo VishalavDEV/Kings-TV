@@ -1,0 +1,94 @@
+import React, { useState } from 'react';
+import api from '../../api';
+import { Send, Bell, Users, Map } from 'lucide-react';
+
+const PushNotifications = () => {
+  const [formData, setFormData] = useState({
+    title: '',
+    message: '',
+    url: '',
+    targetSegment: 'GLOBAL'
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if(!window.confirm("Send this push notification? This action cannot be undone.")) return;
+    
+    setLoading(true);
+    try {
+      await api.post('/admin/push-notifications', formData);
+      alert("Notification broadcasted successfully!");
+      setFormData({ title: '', message: '', url: '', targetSegment: 'GLOBAL' });
+    } catch (error) {
+      alert("Failed to send notification.");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="animate-fade-in" style={{ maxWidth: '700px', margin: '0 auto' }}>
+      <div style={{ marginBottom: '2rem' }}>
+        <h1>Push Notification Composer</h1>
+        <p className="text-secondary">Send instant web push alerts to readers globally or by segment.</p>
+      </div>
+
+      <form className="glass-panel" style={{ padding: '2rem' }} onSubmit={handleSend}>
+        <div className="form-group">
+          <label className="form-label">Notification Title</label>
+          <input 
+            type="text" name="title" className="form-control" 
+            value={formData.title} onChange={handleChange} required
+            placeholder="Breaking News"
+            maxLength={50}
+          />
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Message Body</label>
+          <textarea 
+            name="message" className="form-control" rows="3"
+            value={formData.message} onChange={handleChange} required
+            placeholder="A short description of the news..."
+            maxLength={150}
+          />
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Click URL (Optional)</label>
+          <input 
+            type="url" name="url" className="form-control" 
+            value={formData.url} onChange={handleChange} 
+            placeholder="https://king24x7.com/news/123"
+          />
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Target Audience Segment</label>
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-secondary)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', cursor: 'pointer', flex: 1 }}>
+              <input type="radio" name="targetSegment" value="GLOBAL" checked={formData.targetSegment === 'GLOBAL'} onChange={handleChange} />
+              <Bell size={16} color="var(--primary)" /> Global
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-secondary)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', cursor: 'pointer', flex: 1 }}>
+              <input type="radio" name="targetSegment" value="SUBSCRIBERS" checked={formData.targetSegment === 'SUBSCRIBERS'} onChange={handleChange} />
+              <Users size={16} color="var(--success)" /> Subscribers
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-secondary)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', cursor: 'pointer', flex: 1 }}>
+              <input type="radio" name="targetSegment" value="LOCALIZED" checked={formData.targetSegment === 'LOCALIZED'} onChange={handleChange} />
+              <Map size={16} color="var(--warning)" /> By District
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1.5rem', padding: '1rem' }} disabled={loading}>
+          <Send size={18} /> {loading ? 'Sending...' : 'Broadcast Notification'}
+        </button>
+      </form>
+    </div>
+  );
+};
+
+export default PushNotifications;

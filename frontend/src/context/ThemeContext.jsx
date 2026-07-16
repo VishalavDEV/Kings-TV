@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { fetchApi } from '../utils/api';
 
 export const ThemeContext = createContext();
 
@@ -24,6 +25,21 @@ export const ThemeProvider = ({ children }) => {
       };
     }
   });
+
+  useEffect(() => {
+    // Fetch live layout config from backend API
+    fetchApi('/public/layout/web')
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const apiSections = {};
+          data.forEach(item => {
+            apiSections[item.sectionKey] = item.isVisible;
+          });
+          setSections(prev => ({ ...prev, ...apiSections }));
+        }
+      })
+      .catch(err => console.warn("Failed to fetch layout config", err));
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);

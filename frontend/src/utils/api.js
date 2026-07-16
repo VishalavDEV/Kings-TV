@@ -1,4 +1,12 @@
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api/v1';
+const SERVER_BASE = import.meta.env.VITE_SERVER_BASE || 'http://localhost:8080';
+const API_BASE = import.meta.env.VITE_API_BASE || `${SERVER_BASE}/api/v1`;
+
+export const getImageUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  if (path.startsWith('/uploads')) return `${SERVER_BASE}${path}`;
+  return path;
+};
 
 const translateVideo = (vid, lang) => {
   if (!vid) return vid;

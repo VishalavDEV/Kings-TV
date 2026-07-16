@@ -60,8 +60,12 @@ public class SecurityConfig {
                     "/api/v1/rfq", "/api/v1/rfq/**",
                     "/api/v1/nfc/stats", "/api/v1/nfc/taps",
                     "/robots.txt", "/sitemap.xml", "/rss.xml", "/news/**",
+                    "/api/v1/public/**",
+                    "/ws/**",
                     "/error"
                 ).permitAll()
+                // Admin portal endpoints require authentication
+                .requestMatchers("/api/v1/admin/**").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -72,7 +76,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("*"));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

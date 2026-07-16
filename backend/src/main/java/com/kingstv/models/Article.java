@@ -75,6 +75,16 @@ public class Article {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    // --- GPS Location Visibility ---
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
+    @Column(name = "visibility_radius_km")
+    private Double visibilityRadiusKm;
+
     @Transient
     private String structuredDataJson;
 
@@ -129,6 +139,14 @@ public class Article {
     public void setSeoStatus(String seoStatus) { this.seoStatus = seoStatus; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
+    public Double getVisibilityRadiusKm() { return visibilityRadiusKm; }
+    public void setVisibilityRadiusKm(Double visibilityRadiusKm) { this.visibilityRadiusKm = visibilityRadiusKm; }
+
     public String getStructuredDataJson() { return structuredDataJson; }
     public void setStructuredDataJson(String structuredDataJson) { this.structuredDataJson = structuredDataJson; }
 }

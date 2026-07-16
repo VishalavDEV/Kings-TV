@@ -7,9 +7,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 @Component
@@ -35,6 +33,17 @@ public class JwtUtil {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
         claims.put("userId", userId);
+        return createToken(claims, username);
+    }
+
+    /**
+     * Enhanced token generation with permissions list for RBAC enforcement.
+     */
+    public String generateToken(String username, String role, Long userId, List<String> permissions) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role);
+        claims.put("userId", userId);
+        claims.put("permissions", permissions);
         return createToken(claims, username);
     }
 
@@ -64,6 +73,25 @@ public class JwtUtil {
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> extractPermissions(String token) {
+        Claims claims = extractAllClaims(token);
+        Object perms = claims.get("permissions");
+        if (perms instanceof List) {
+            return (List<String>) perms;
+        }
+        return List.of();
+    }
+
+    public Long extractUserId(String token) {
+        Claims claims = extractAllClaims(token);
+        Object userId = claims.get("userId");
+        if (userId instanceof Number) {
+            return ((Number) userId).longValue();
+        }
+        return null;
     }
 
     private Claims extractAllClaims(String token) {

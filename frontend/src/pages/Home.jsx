@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
 import { ThemeContext } from '../context/ThemeContext';
-import { fetchApi } from '../utils/api';
+import { fetchApi, getImageUrl } from '../utils/api';
 
 const Home = () => {
   const { lang, t } = useContext(LanguageContext);
@@ -34,121 +34,27 @@ const Home = () => {
     return categories[categoryId] || { slug: 'politics', en: 'Politics', ta: 'அரசியல்' };
   };
 
-  const fallbackArticles = [
-    {
-      id: 1,
-      categoryId: 1,
-      titleTa: "தமிழக சட்டப்பேரவையில் புதிய மசோதா தாக்கல் - எதிர்க்கட்சிகள் எதிர்ப்பு",
-      titleEn: "New bill tabled in TN assembly - opposition registers strong protest",
-      shortDescTa: "சட்டப்பேரவையில் இன்று தாக்கல் செய்யப்பட்ட புதிய மசோதாவுக்கு எதிர்க்கட்சிகள் கடும் எதிர்ப்பு தெரிவித்துள்ளனர். இந்த மசோதா மக்கள் நலனுக்கு பாதகமானது என கூறியுள்ளனர்.",
-      shortDescEn: "Opposition parties voiced strong protests against the new bill tabled in the assembly today, calling it detrimental to public welfare.",
-      imageUrl: "https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=600&auto=format&fit=crop&q=60",
-      viewsCount: 4500,
-      publishedAt: new Date().toISOString()
-    },
-    {
-      id: 2,
-      categoryId: 3,
-      titleTa: "இந்திய கிரிக்கெட் அணி ஆஸ்திரேலியாவை வீழ்த்தியது - 3-0 அபாரம்",
-      titleEn: "Indian cricket team beats Australia 3-0 in T20 series",
-      shortDescTa: "ஆஸ்திரேலியாவுக்கு எதிரான டி20 தொடரை 3-0 என்ற கணக்கில் இந்திய அணி முழுமையாக வென்றது. விராட் கோலி அபார ஆட்டம்.",
-      shortDescEn: "India clean sweeps T20 series against Australia 3-0. Virat Kohli shines with a brilliant match-winning performance.",
-      imageUrl: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=600&auto=format&fit=crop&q=60",
-      viewsCount: 18200,
-      publishedAt: new Date().toISOString()
-    },
-    {
-      id: 3,
-      categoryId: 2,
-      titleTa: "பங்குச் சந்தை புதிய உச்சம் - முதலீட்டாளர்களுக்கு வார இறுதி பரிசு",
-      titleEn: "Share market reaches new peak - weekend gift for investors",
-      shortDescTa: "சென்செக்ஸ் 82,000 புள்ளிகளை தாண்டி புதிய சாதனை படைத்தது. ஐடி, பேங்கிங் பங்குகள் முன்னணி.",
-      shortDescEn: "Sensex creates new record by crossing 82,000 points. IT and Banking sectors lead the gainers list.",
-      imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&auto=format&fit=crop&q=60",
-      viewsCount: 7800,
-      publishedAt: new Date().toISOString()
-    },
-    {
-      id: 4,
-      categoryId: 5,
-      titleTa: "செயற்கை நுண்ணறிவில் தமிழக இளைஞர்கள் சாதனை - சர்வதேச அங்கீகாரம்",
-      titleEn: "Tamil Nadu youth excel in AI research - receive international awards",
-      shortDescTa: "செயற்கை நுண்ணறிவில் தமிழக இளைஞர்கள் செய்த புதிய கண்டுபிடிப்புகளுக்கு சர்வதேச அறிவியல் சபை விருது வழங்கி கௌரவித்துள்ளது.",
-      shortDescEn: "International science council honors youth from Tamil Nadu for their ground-breaking developments in AI.",
-      imageUrl: "https://images.unsplash.com/photo-1677442136019-21780efad99a?w=600&auto=format&fit=crop&q=60",
-      viewsCount: 6100,
-      publishedAt: new Date().toISOString()
-    },
-    {
-      id: 5,
-      categoryId: 4,
-      titleTa: "தளபதி விஜய்யின் அடுத்த படம் குறித்த முக்கிய அறிவிப்பு வெளியானது",
-      titleEn: "Major update released on Thalapathy Vijay's upcoming movie",
-      shortDescTa: "இயக்குனர் வெங்கட் பிரபு இயக்கத்தில் விஜய் நடிக்கும் 69-வது படம் குறித்த அதிகாரப்பூர்வ தகவல் வெளியாகியுள்ளது.",
-      shortDescEn: "Official details and title launch info released for Vijay's 69th film directed by Venkat Prabhu.",
-      imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&auto=format&fit=crop&q=60",
-      viewsCount: 32500,
-      publishedAt: new Date().toISOString()
-    },
-    {
-      id: 6,
-      categoryId: 6,
-      titleTa: "நெல் கொள்முதல் விலை உயர்வு - விவசாயிகள் சங்கம் வரவேற்பு",
-      titleEn: "Paddy procurement price increased - farmers association welcomes move",
-      shortDescTa: "நெல்லுக்கான குறைந்தபட்ச ஆதரவு விலையை மத்திய அரசு உயர்த்தியுள்ள நிலையில் விவசாயிகள் மகிழ்ச்சி தெரிவித்துள்ளனர்.",
-      shortDescEn: "Farmers express joy as central government increases the minimum support price (MSP) for paddy procurement.",
-      imageUrl: "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=600&auto=format&fit=crop&q=60",
-      viewsCount: 5300,
-      publishedAt: new Date().toISOString()
-    }
-  ];
-
-  const fallbackVideos = [
-    { id: 1, title: "தமிழக பட்ஜெட் 2026 - முக்கிய அம்சங்கள் விளக்கம்", viewsCount: 45000, duration: "4:32", color: "linear-gradient(135deg, #1E40AF, #3B82F6)" },
-    { id: 2, title: "கிரிக்கெட் போட்டி சிறப்பம்சங்கள் - இந்தியா vs ஆஸ்திரேலியா", viewsCount: 18200, duration: "2:18", color: "linear-gradient(135deg, #DC2626, #F97316)" },
-    { id: 3, title: "விவசாயிகளுக்கான புதிய திட்டங்கள் - நேரடி அறிக்கை", viewsCount: 8500, duration: "6:45", color: "linear-gradient(135deg, #16A34A, #4ADE80)" },
-    { id: 4, title: "பங்குச் சந்தை ஆய்வு - நிபுணர்களின் முக்கிய ஆலோசனை", viewsCount: 12100, duration: "8:10", color: "linear-gradient(135deg, #059669, #22C55E)" }
-  ];
-
   const storiesList = [
     { id: 1, titleTa: "உலக கோப்பை கிரிக்கெட் 2027 அட்டவணை", titleEn: "World Cup Cricket 2027 Schedule", cat: "sports", badge: "NEW", views: "12.4K", gradient: "linear-gradient(135deg, #667eea, #764ba2)" },
     { id: 2, titleTa: "ரஜினி அடுத்த படம் - முதல் பார்வை", titleEn: "Rajini next movie first look out", cat: "cinema", badge: "HOT", views: "18.2K", gradient: "linear-gradient(135deg, #D946EF, #EC4899)" },
-    { id: 3, titleTa: "பாராளுமன்ற தேர்தல் 2029 - முன்னோட்டம்", titleEn: "General Election 2029 - Preview", cat: "politics", badge: "TREND", views: "9.5K", gradient: "linear-gradient(135deg, #1E40AF, #3B82F6)" },
-    { id: 4, titleTa: "AI மூலம் மருத்துவ துறையில் புரட்சி", titleEn: "Revolution in healthcare using AI", cat: "tech", badge: "NEW", views: "15K", gradient: "linear-gradient(135deg, #7C3AED, #A855F7)" },
-    { id: 5, titleTa: "கரிம வேளாண்மை - விவசாயிகள் வருமானம்", titleEn: "Organic farming boost to farmers income", cat: "agri", badge: "NEW", views: "8.4K", gradient: "linear-gradient(135deg, #16A34A, #4ADE80)" },
-    { id: 6, titleTa: "புதிய முதலீட்டு வாய்ப்பப்புகள் 2026", titleEn: "New Investment avenues in 2026", cat: "business", badge: "TREND", views: "11.2K", gradient: "linear-gradient(135deg, #059669, #22C55E)" }
+    { id: 3, titleTa: "பாராளுமன்ற தேர்தல் 2029 - முன்னோட்டம்", titleEn: "General Election 2029 - Preview", cat: "politics", badge: "TREND", views: "9.5K", gradient: "linear-gradient(135deg, #1E40AF, #3B82F6)" }
   ];
 
   const mockTickers = [
-    lang === 'en' ? "Paddy procurement price increased - farmers express delight!" : "🌾 நெல் கொள்முதல் விலை உயர்வு - விவசாயிகள் மகிழ்ச்சி",
-    lang === 'en' ? "Vijay 69th movie announcement sends fans into celebration mode!" : "🎬 விஜய் 69-வது படம் அறிவிப்பு - ரசிகர்கள் கொண்டாட்டம்",
-    lang === 'en' ? "Class 12 board results to be declared soon - education department updates." : "📚 +2 தேர்வு முடிவுகள் விரைவில் - கல்வித்துறை தகவல்",
-    lang === 'en' ? "Electricity tariff hike in Chennai creates public concern." : "⚡ சென்னையில் மின் கட்டணம் உயர்வு - நுகர்வோர் அதிருப்தி",
-    lang === 'en' ? "New Vande Bharat rail service introduced by Southern Railway." : "🚆 புதிய வந்தே பாரத் ரயில் சேவை அறிமுகம் - தெற்கு ரயில்வே",
-    lang === 'en' ? "Heavy rain alert issued for tomorrow in Tamil Nadu." : "🔴 தமிழகத்தில் நாளை முதல் கனமழை எச்சரிக்கை - வானிலை மையம்"
+    lang === 'en' ? "Welcome to Kings 24x7 News!" : "கிங்ஸ் 24x7 செய்திகளுக்கு வரவேற்கிறோம்!"
   ];
 
-  const prefixedFallbackArticles = fallbackArticles.map(art => ({ ...art, id: `demo-${art.id}` }));
-  const prefixedFallbackVideos = fallbackVideos.map(vid => {
-    let titleVal = vid.title;
-    if (lang === 'en') {
-      if (vid.title.includes('பட்ஜெட்')) titleVal = 'Tamil Nadu Budget 2026 - Key Highlights Explained';
-      else if (vid.title.includes('கிரிக்கெட்')) titleVal = 'Cricket Match Highlights - India vs Australia';
-      else if (vid.title.includes('விவசாயிகளுக்கான')) titleVal = 'New Schemes for Farmers - Ground Report';
-      else if (vid.title.includes('தொழில்நுட்ப')) titleVal = 'New Tech Innovations - Artificial Intelligence';
-    }
-    return { ...vid, title: titleVal, id: `demo-${vid.id}` };
-  });
+
 
   useEffect(() => {
     fetchApi('/articles')
       .then(data => {
         const list = Array.isArray(data) ? data : [];
-        setArticles(list.length > 0 ? list : prefixedFallbackArticles);
+        setArticles(list);
       })
       .catch(err => {
-        console.warn("Could not load articles from API, using fallback", err);
-        setArticles(prefixedFallbackArticles);
+        console.warn("Could not load articles from API", err);
+        setArticles([]);
       });
 
     fetchApi('/videos')
@@ -174,11 +80,11 @@ const Home = () => {
           }
           return { ...vid, title: titleVal };
         });
-        setVideos([...translated, ...prefixedFallbackVideos]);
+        setVideos(translated);
       })
       .catch(err => {
-        console.warn("Could not load videos from API, using fallback", err);
-        setVideos(prefixedFallbackVideos);
+        console.warn("Could not load videos from API", err);
+        setVideos([]);
       });
 
     fetchApi('/videos/live')
@@ -198,10 +104,10 @@ const Home = () => {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTickerIndex(prev => (prev + 1) % mockTickers.length);
+      setTickerIndex(prev => (prev + 1) % (mockTickers?.length || 1));
     }, slideSpeed * 1000);
     return () => clearInterval(timer);
-  }, [slideSpeed, mockTickers.length]);
+  }, [slideSpeed]);
 
   const handleSubmitReport = (e) => {
     e.preventDefault();
@@ -240,10 +146,10 @@ const Home = () => {
     });
   };
 
-  const featured = articles[0] || prefixedFallbackArticles[0];
-  const featuredCat = getCategoryDetails(featured.categoryId);
-  const sideArticles = articles.slice(1, 4).length > 0 ? articles.slice(1, 4) : prefixedFallbackArticles.slice(1, 4);
-  const latestGrid = articles.slice(0, 6).length > 0 ? articles.slice(0, 6) : prefixedFallbackArticles.slice(0, 6);
+  const featured = articles.length > 0 ? articles[0] : null;
+  const featuredCat = featured ? getCategoryDetails(featured.categoryId) : null;
+  const sideArticles = articles.slice(1, 4);
+  const latestGrid = articles.slice(0, 6);
 
   const gradients = [
     "linear-gradient(135deg, #1E40AF, #3B82F6)",
@@ -279,7 +185,7 @@ const Home = () => {
       </div>
 
       {/* HERO SECTION */}
-      {sections.hero !== false && (
+      {sections.hero !== false && featured && (
         <section className="hero-section" id="section-hero">
           <div className="container">
             <div className="hero-grid">
@@ -287,7 +193,7 @@ const Home = () => {
                 <div 
                   className="card-img" 
                   style={{ 
-                    background: featured.imageUrl ? `url(${featured.imageUrl}) center/cover` : 'linear-gradient(135deg, #1E40AF, #3B82F6)' 
+                    background: featured.imageUrl ? `url(${getImageUrl(featured.imageUrl)}) center/cover` : 'linear-gradient(135deg, #1E40AF, #3B82F6)' 
                   }}
                 ></div>
                 <div className="card-overlay">
@@ -330,7 +236,7 @@ const Home = () => {
                       <div 
                         className="thumb" 
                         style={{ 
-                          background: art.imageUrl ? `url(${art.imageUrl}) center/cover` : gradients[(idx + 1) % gradients.length] 
+                          background: art.imageUrl ? `url(${getImageUrl(art.imageUrl)}) center/cover` : gradients[(idx + 1) % gradients.length] 
                         }}
                       ></div>
                     </div>
@@ -388,14 +294,20 @@ const Home = () => {
               <a href="#" className="view-all">{lang === 'en' ? 'View All' : 'அனைத்தும் காண'} <i className="fas fa-arrow-right"></i></a>
             </div>
             <div className="news-grid-3" id="newsGrid">
-              {latestGrid.map((art, idx) => {
+              {latestGrid.length === 0 ? (
+                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#64748B' }}>
+                  <i className="fas fa-inbox fa-3x" style={{ marginBottom: '15px', opacity: 0.5 }}></i>
+                  <h3>{lang === 'en' ? 'No news published yet' : 'இன்னும் செய்திகள் வெளியிடப்படவில்லை'}</h3>
+                  <p>{lang === 'en' ? 'Check back later for updates.' : 'சற்று நேரம் கழித்து மீண்டும் பார்க்கவும்.'}</p>
+                </div>
+              ) : latestGrid.map((art, idx) => {
                 const gridCat = getCategoryDetails(art.categoryId);
                 return (
                   <div className={`news-card theme-${gridCat.slug}`} key={art.id || art.article_id}>
                     <div 
                       className="card-img" 
                       style={{ 
-                        background: art.imageUrl ? `url(${art.imageUrl}) center/cover` : gradients[idx % gradients.length] 
+                        background: art.imageUrl ? `url(${getImageUrl(art.imageUrl)}) center/cover` : gradients[idx % gradients.length] 
                       }}
                     >
                       <span className="cat-badge" style={{ background: 'var(--category-color, var(--primary))' }}>
@@ -437,11 +349,16 @@ const Home = () => {
                 <button className="video-cat-btn">{lang === 'en' ? 'Agriculture' : 'விவசாயம்'}</button>
               </div>
               <div className="video-grid-4">
-                {videos.slice(0, 4).map((vid, idx) => (
+                {videos.length === 0 ? (
+                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#64748B' }}>
+                    <i className="fas fa-video-slash fa-3x" style={{ marginBottom: '15px', opacity: 0.5 }}></i>
+                    <h3>{lang === 'en' ? 'No videos published yet' : 'இன்னும் வீடியோக்கள் வெளியிடப்படவில்லை'}</h3>
+                  </div>
+                ) : videos.slice(0, 4).map((vid, idx) => (
                   <div className="video-card" key={vid.id || vid.videoId || idx}>
                     <div className="thumb-area">
                       {vid.thumbnailUrl ? (
-                        <img src={vid.thumbnailUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={vid.title} />
+                        <img src={getImageUrl(vid.thumbnailUrl)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={vid.title} />
                       ) : (
                         <div style={{ background: gradients[idx % gradients.length], width: '100%', height: '100%' }}></div>
                       )}

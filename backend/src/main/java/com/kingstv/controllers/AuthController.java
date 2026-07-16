@@ -36,6 +36,9 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private com.kingstv.repository.RoleRepository roleRepository;
+
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
 
     private String createRefreshToken(User user) {
@@ -48,6 +51,14 @@ public class AuthController {
         refreshToken.setExpiryDate(LocalDateTime.now().plusDays(7));
         refreshTokenRepository.save(refreshToken);
         return refreshToken.getToken();
+    }
+
+    private List<String> getUserPermissions(User user) {
+        return roleRepository.findByName(user.getRole())
+                .map(role -> role.getPermissions().stream()
+                        .map(com.kingstv.models.Permission::getName)
+                        .collect(java.util.stream.Collectors.toList()))
+                .orElse(Collections.emptyList());
     }
 
     @PostMapping("/register")
@@ -76,7 +87,7 @@ public class AuthController {
         user.setFullName(fullName);
         user.setEmail(email.toLowerCase());
         user.setPassword(passwordEncoder.encode(password));
-        user.setRole("user");
+        user.setRole("READER"); // seed as READER by default
         user.setProvider("LOCAL");
         user.setIsVerified(false);
         user.setIsActive(true);
@@ -84,7 +95,7 @@ public class AuthController {
 
         User savedUser = userRepository.save(user);
 
-        String accessToken = jwtUtil.generateToken(savedUser.getEmail(), savedUser.getRole(), savedUser.getId());
+        String accessToken = jwtUtil.generateToken(savedUser.getEmail(), savedUser.getRole(), savedUser.getId(), getUserPermissions(savedUser));
         String refreshToken = createRefreshToken(savedUser);
 
         Map<String, Object> response = new HashMap<>();
@@ -131,7 +142,7 @@ public class AuthController {
         user.setLastLogin(LocalDateTime.now());
         User savedUser = userRepository.save(user);
 
-        String accessToken = jwtUtil.generateToken(savedUser.getEmail(), savedUser.getRole(), savedUser.getId());
+        String accessToken = jwtUtil.generateToken(savedUser.getEmail(), savedUser.getRole(), savedUser.getId(), getUserPermissions(savedUser));
         String refreshToken = createRefreshToken(savedUser);
 
         Map<String, Object> response = new HashMap<>();
@@ -175,7 +186,7 @@ public class AuthController {
         }
 
         User user = tokenOpt.get().getUser();
-        String newAccessToken = jwtUtil.generateToken(user.getEmail(), user.getRole(), user.getId());
+        String newAccessToken = jwtUtil.generateToken(user.getEmail(), user.getRole(), user.getId(), getUserPermissions(user));
         return ResponseEntity.ok(Map.of("accessToken", newAccessToken, "refreshToken", tokenVal));
     }
 
@@ -204,14 +215,14 @@ public class AuthController {
             user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
             user.setProvider(provider);
             user.setProfileImage(profileImage != null ? profileImage : "");
-            user.setRole("user");
+            user.setRole("READER");
             user.setIsVerified(true);
             user.setIsActive(true);
             user.setLastLogin(LocalDateTime.now());
             user = userRepository.save(user);
         }
 
-        String accessToken = jwtUtil.generateToken(user.getEmail(), user.getRole(), user.getId());
+        String accessToken = jwtUtil.generateToken(user.getEmail(), user.getRole(), user.getId(), getUserPermissions(user));
         String refreshToken = createRefreshToken(user);
 
         Map<String, Object> response = new HashMap<>();

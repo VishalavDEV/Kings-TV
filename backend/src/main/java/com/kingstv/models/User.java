@@ -27,7 +27,22 @@ public class User {
     private String profileImage;
 
     @Column(nullable = false)
-    private String role = "user";
+    private String role = "READER";
+
+    @Column(name = "phone_number", length = 20)
+    private String phoneNumber;
+
+    @Column(name = "website_url", length = 255)
+    private String websiteUrl;
+
+    @Column(name = "firebase_uid", length = 128)
+    private String firebaseUid;
+
+    @Column(name = "location", length = 200)
+    private String location;
+
+    @Column(name = "interests", columnDefinition = "TEXT")
+    private String interests;
 
     @Column(name = "is_verified")
     private Boolean isVerified = false;
@@ -64,6 +79,21 @@ public class User {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+
+    public String getWebsiteUrl() { return websiteUrl; }
+    public void setWebsiteUrl(String websiteUrl) { this.websiteUrl = websiteUrl; }
+
+    public String getFirebaseUid() { return firebaseUid; }
+    public void setFirebaseUid(String firebaseUid) { this.firebaseUid = firebaseUid; }
+
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+
+    public String getInterests() { return interests; }
+    public void setInterests(String interests) { this.interests = interests; }
 
     public Boolean getIsVerified() { return isVerified; }
     public void setIsVerified(Boolean isVerified) { this.isVerified = isVerified; }

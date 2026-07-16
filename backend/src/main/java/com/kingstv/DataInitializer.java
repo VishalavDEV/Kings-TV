@@ -8,6 +8,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.*;
 
 @Component
 public class DataInitializer {
@@ -45,6 +46,27 @@ public class DataInitializer {
     @Autowired
     private WebStoryRepository webStoryRepository;
 
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private PermissionRepository permissionRepository;
+
+    @Autowired
+    private SystemConfigRepository systemConfigRepository;
+
+    @Autowired
+    private ProfanityWordRepository profanityWordRepository;
+
+    @Autowired
+    private HomeLayoutConfigRepository homeLayoutConfigRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @EventListener(ApplicationReadyEvent.class)
     public void initDatabase() {
         System.out.println("Starting Database Seeding...");
@@ -62,6 +84,22 @@ public class DataInitializer {
             districtRepository.deleteAll();
             subCategoryRepository.deleteAll();
             categoryRepository.deleteAll();
+            
+            // Clean up admin tables
+            homeLayoutConfigRepository.deleteAll();
+            profanityWordRepository.deleteAll();
+            systemConfigRepository.deleteAll();
+            userRepository.deleteAll();
+            
+            // Clear associations before deleting to avoid FK constraint errors
+            roleRepository.findAll().forEach(role -> {
+                role.getPermissions().clear();
+                roleRepository.save(role);
+            });
+            
+            roleRepository.deleteAll();
+            permissionRepository.deleteAll();
+            
             System.out.println("Old seeded records cleaned successfully.");
         } catch(Exception e) {
             System.err.println("Clean up failed: " + e.getMessage());
@@ -219,7 +257,172 @@ public class DataInitializer {
                 "]";
         seedWebStory(cinemaCat, "விஜய்யின் கடைசி படம்: என்ன எதிர்பார்ப்பு?", "Vijay final movie: What can we expect?", "cinema", "HOT", "linear-gradient(135deg, #E91E63, #9C27B0)", slidesJson2);
 
+        // 12. Seed Roles and Permissions
+        System.out.println("Seeding Roles and Permissions...");
+        
+        // Define all permissions
+        List<Permission> permissionsList = Arrays.asList(
+            new Permission(Permission.USER_CREATE, "Create user accounts", "User Management"),
+            new Permission(Permission.USER_READ, "View user accounts", "User Management"),
+            new Permission(Permission.USER_UPDATE, "Update user accounts", "User Management"),
+            new Permission(Permission.USER_DELETE, "Delete user accounts", "User Management"),
+            new Permission(Permission.USER_SUSPEND, "Suspend user accounts", "User Management"),
+            new Permission(Permission.ARTICLE_CREATE, "Create articles", "Content"),
+            new Permission(Permission.ARTICLE_READ, "Read articles", "Content"),
+            new Permission(Permission.ARTICLE_UPDATE, "Update articles", "Content"),
+            new Permission(Permission.ARTICLE_DELETE, "Delete articles", "Content"),
+            new Permission(Permission.ARTICLE_PUBLISH, "Publish articles", "Content"),
+            new Permission(Permission.ARTICLE_REVIEW, "Review articles", "Content"),
+            new Permission(Permission.AUDIT_VIEW, "View system audit logs", "System"),
+            new Permission(Permission.CONFIG_READ, "Read system settings", "System"),
+            new Permission(Permission.CONFIG_WRITE, "Write system settings", "System"),
+            new Permission(Permission.PROFANITY_MANAGE, "Manage profanity dictionary", "Profanity"),
+            new Permission(Permission.PROFANITY_VIEW_REPORTS, "View profanity reports", "Profanity"),
+            new Permission(Permission.HOME_LAYOUT_MANAGE, "Manage home screen layout", "Layout"),
+            new Permission(Permission.HOME_LAYOUT_DELEGATED, "Manage delegated home screen layout", "Layout"),
+            new Permission(Permission.PUSH_NOTIFICATION_SEND, "Send push notifications", "Marketing"),
+            new Permission(Permission.SEO_CONFIG_MANAGE, "Manage SEO settings", "SEO"),
+            new Permission(Permission.TAXONOMY_MANAGE, "Manage categories and districts", "Taxonomy"),
+            new Permission(Permission.SURVEY_MANAGE, "Manage surveys and polls", "Survey"),
+            new Permission(Permission.WEBSTORE_MANAGE, "Manage webstore products", "Webstore"),
+            new Permission(Permission.FONT_MANAGE, "Manage system typography", "System"),
+            new Permission(Permission.SITEMAP_MANAGE, "Manage sitemaps", "SEO"),
+            new Permission(Permission.MOBILE_APP_LAYOUT_MANAGE, "Manage mobile app layouts", "Layout"),
+            new Permission(Permission.JOURNALIST_CREATE, "Create mobile journalists", "District Admin"),
+            new Permission(Permission.JOURNALIST_UPDATE, "Update mobile journalists", "District Admin"),
+            new Permission(Permission.JOURNALIST_SUSPEND, "Suspend mobile journalists", "District Admin"),
+            new Permission(Permission.CONTENT_REVIEW, "Review editorial content", "Chief Editor"),
+            new Permission(Permission.UGC_REVIEW, "Review user generated content", "Chief Editor"),
+            new Permission(Permission.ANALYTICS_VIEW, "View dashboard reports", "Analytics"),
+            new Permission(Permission.AI_REWRITER_USE, "Use AI assistant rewriter", "Content")
+        );
+        
+        Map<String, Permission> savedPerms = new HashMap<>();
+        for (Permission p : permissionsList) {
+            Optional<Permission> existing = permissionRepository.findByName(p.getName());
+            savedPerms.put(p.getName(), existing.orElseGet(() -> permissionRepository.save(p)));
+        }
+
+        // Create Roles
+        Role superAdmin = roleRepository.findByName(Role.SUPER_ADMIN).orElseGet(() -> roleRepository.save(new Role(Role.SUPER_ADMIN, "Super Administrator with full bypass access")));
+        Role chiefEditor = roleRepository.findByName(Role.CHIEF_EDITOR).orElseGet(() -> roleRepository.save(new Role(Role.CHIEF_EDITOR, "Chief Editor managing content publish flows")));
+        Role districtAdmin = roleRepository.findByName(Role.DISTRICT_ADMIN).orElseGet(() -> roleRepository.save(new Role(Role.DISTRICT_ADMIN, "District Admin managing local journalists")));
+        Role mobileJournalist = roleRepository.findByName(Role.MOBILE_JOURNALIST).orElseGet(() -> roleRepository.save(new Role(Role.MOBILE_JOURNALIST, "Field Mobile Journalist submitting posts")));
+        Role institutionLogin = roleRepository.findByName(Role.INSTITUTION_LOGIN).orElseGet(() -> roleRepository.save(new Role(Role.INSTITUTION_LOGIN, "Institutional publisher account")));
+        Role reader = roleRepository.findByName(Role.READER).orElseGet(() -> roleRepository.save(new Role(Role.READER, "Standard public/reader account")));
+
+        // Assign Permissions to Chief Editor
+        chiefEditor.getPermissions().addAll(Arrays.asList(
+            savedPerms.get(Permission.USER_CREATE), savedPerms.get(Permission.USER_READ), savedPerms.get(Permission.USER_UPDATE),
+            savedPerms.get(Permission.ARTICLE_CREATE), savedPerms.get(Permission.ARTICLE_READ), savedPerms.get(Permission.ARTICLE_UPDATE),
+            savedPerms.get(Permission.ARTICLE_REVIEW), savedPerms.get(Permission.ARTICLE_PUBLISH), savedPerms.get(Permission.CONTENT_REVIEW),
+            savedPerms.get(Permission.UGC_REVIEW), savedPerms.get(Permission.PROFANITY_VIEW_REPORTS), savedPerms.get(Permission.HOME_LAYOUT_DELEGATED),
+            savedPerms.get(Permission.ANALYTICS_VIEW), savedPerms.get(Permission.AI_REWRITER_USE)
+        ));
+        roleRepository.save(chiefEditor);
+
+        // Assign Permissions to District Admin
+        districtAdmin.getPermissions().addAll(Arrays.asList(
+            savedPerms.get(Permission.JOURNALIST_CREATE), savedPerms.get(Permission.JOURNALIST_UPDATE), savedPerms.get(Permission.JOURNALIST_SUSPEND),
+            savedPerms.get(Permission.USER_READ), savedPerms.get(Permission.ARTICLE_READ), savedPerms.get(Permission.ANALYTICS_VIEW)
+        ));
+        roleRepository.save(districtAdmin);
+
+        // Assign Permissions to Mobile Journalist
+        mobileJournalist.getPermissions().addAll(Arrays.asList(
+            savedPerms.get(Permission.ARTICLE_CREATE), savedPerms.get(Permission.ARTICLE_READ), savedPerms.get(Permission.ARTICLE_UPDATE),
+            savedPerms.get(Permission.AI_REWRITER_USE)
+        ));
+        roleRepository.save(mobileJournalist);
+
+        // Assign Permissions to Institution Login
+        institutionLogin.getPermissions().addAll(Arrays.asList(
+            savedPerms.get(Permission.ARTICLE_CREATE), savedPerms.get(Permission.ARTICLE_READ), savedPerms.get(Permission.ARTICLE_UPDATE),
+            savedPerms.get(Permission.AI_REWRITER_USE)
+        ));
+        roleRepository.save(institutionLogin);
+
+        // Assign Permissions to Reader
+        reader.getPermissions().addAll(Arrays.asList(
+            savedPerms.get(Permission.ARTICLE_READ)
+        ));
+        roleRepository.save(reader);
+
+        // 13. Seed Users with precise role designations
+        System.out.println("Seeding User Accounts...");
+        seedUser("Super Admin", "admin@king24x7.com", "admin123", Role.SUPER_ADMIN);
+        seedUser("Chief Editor", "editor@king24x7.com", "editor123", Role.CHIEF_EDITOR);
+        seedUser("District Admin Coimbatore", "district@king24x7.com", "district123", Role.DISTRICT_ADMIN);
+        seedUser("Mobile Journalist", "reporter@king24x7.com", "reporter123", Role.MOBILE_JOURNALIST);
+        seedUser("Government Institution", "vendor@king24x7.com", "vendor123", Role.INSTITUTION_LOGIN);
+        seedUser("Public Reader", "user@king24x7.com", "user123", Role.READER);
+
+        // 14. Seed System Configurations
+        System.out.println("Seeding System Configs...");
+        seedSystemConfig(SystemConfig.GPS_NEWS_RADIUS_KM, "15.0", "gps", "GPS news radius in km");
+        seedSystemConfig(SystemConfig.VIDEO_MAX_DURATION_SECONDS, "55", "video", "Maximum video duration in seconds");
+        seedSystemConfig(SystemConfig.PWA_NAME, "KING24X7 News", "pwa", "PWA full application name");
+        seedSystemConfig(SystemConfig.PWA_SHORT_NAME, "KING24X7", "pwa", "PWA short application name");
+        seedSystemConfig(SystemConfig.PWA_THEME_COLOR, "#1e3a8a", "pwa", "PWA theme brand color");
+        seedSystemConfig(SystemConfig.PWA_BACKGROUND_COLOR, "#ffffff", "pwa", "PWA background color");
+
+        // 15. Seed Profanity Words
+        System.out.println("Seeding Profanity Words...");
+        seedProfanity("abuse");
+        seedProfanity("spam");
+        seedProfanity("offensive");
+
+        // 16. Seed Default Layouts
+        System.out.println("Seeding Web and Mobile Home Layout Sections...");
+        seedLayoutSection("hero", "Breaking News Hero", 1, "WEB");
+        seedLayoutSection("district_news", "District Local Bulletins", 2, "WEB");
+        seedLayoutSection("live_tv", "Live TV Feed", 3, "WEB");
+        seedLayoutSection("sports", "Sports Updates", 4, "WEB");
+        
+        seedLayoutSection("mobile_hero", "Trending Stories Feed", 1, "MOBILE");
+        seedLayoutSection("mobile_live_tv", "Live Broadcast", 2, "MOBILE");
+
         System.out.println("Database Seeding Check Complete!");
+    }
+
+    private void seedUser(String name, String email, String password, String role) {
+        Optional<User> existing = userRepository.findByEmail(email);
+        User u = existing.orElse(new User());
+        u.setFullName(name);
+        u.setEmail(email);
+        u.setPassword(passwordEncoder.encode(password));
+        u.setRole(role);
+        u.setProvider("LOCAL");
+        u.setIsVerified(true);
+        u.setIsActive(true);
+        userRepository.save(u);
+    }
+
+    private void seedSystemConfig(String key, String val, String group, String desc) {
+        SystemConfig sc = new SystemConfig();
+        sc.setConfigKey(key);
+        sc.setConfigValue(val);
+        sc.setConfigGroup(group);
+        sc.setDescription(desc);
+        sc.setIsEncrypted(false);
+        systemConfigRepository.save(sc);
+    }
+
+    private void seedProfanity(String term) {
+        ProfanityWord w = new ProfanityWord();
+        w.setTerm(term);
+        w.setLanguage("ALL");
+        profanityWordRepository.save(w);
+    }
+
+    private void seedLayoutSection(String key, String label, int order, String type) {
+        HomeLayoutConfig l = new HomeLayoutConfig();
+        l.setSectionKey(key);
+        l.setSectionLabel(label);
+        l.setDisplayOrder(order);
+        l.setIsVisible(true);
+        l.setLayoutType(type);
+        homeLayoutConfigRepository.save(l);
     }
 
     private Category seedCategory(String name, String nameTa, String slug, int order, String icon) {
