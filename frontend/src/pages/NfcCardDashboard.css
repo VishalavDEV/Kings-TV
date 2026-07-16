@@ -1,0 +1,368 @@
+/* ==========================================================================
+   EXACT UI NFC CARD DASHBOARD STYLING (NfcCardDashboard.css)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+.nfc-module-container {
+  font-family: 'Inter', sans-serif !important;
+  color: #1e293b !important;
+}
+
+/* Two Column Sidebar layout */
+.nfc-layout-grid {
+  display: grid !important;
+  grid-template-columns: 240px 1fr !important;
+  gap: 30px !important;
+}
+
+@media (max-width: 900px) {
+  .nfc-layout-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Left Sidebar Menu List */
+.nfc-sidebar-nav {
+  background: #0f172a !important;
+  border-radius: 20px !important;
+  padding: 24px 16px !important;
+  color: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.nfc-sidebar-profile-box {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  padding-bottom: 20px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  margin-bottom: 20px !important;
+}
+
+.nfc-sidebar-profile-avatar {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50% !important;
+  background: #f8fafc !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: bold !important;
+  color: #1e293b !important;
+  font-size: 24px !important;
+  border: 2px solid #e2e8f0 !important;
+}
+
+.nfc-sidebar-profile-name {
+  font-size: 13.5px !important;
+  font-weight: 800 !important;
+  margin-top: 8px !important;
+}
+
+.nfc-sidebar-profile-verified {
+  font-size: 9px !important;
+  background: #d1fae5 !important;
+  color: #065f46 !important;
+  padding: 2px 8px !important;
+  border-radius: 30px !important;
+  font-weight: 800 !important;
+  margin-top: 4px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.nfc-sidebar-menu-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 14px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #94a3b8 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.nfc-sidebar-menu-item:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #ffffff !important;
+}
+
+.nfc-sidebar-menu-item.active {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+  color: #ffffff !important;
+}
+
+.nfc-sidebar-menu-item-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.nfc-sidebar-menu-item-left i {
+  width: 16px !important;
+  text-align: center !important;
+}
+
+.nfc-sidebar-badge {
+  font-size: 8.5px !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-weight: 850 !important;
+}
+
+.nfc-sidebar-badge.purple {
+  background: #6366f1 !important;
+  color: #ffffff !important;
+}
+
+.nfc-sidebar-badge.green {
+  background: #10b981 !important;
+  color: #ffffff !important;
+}
+
+.nfc-sidebar-badge.blue {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+/* Premium Upgrade Callout Box */
+.nfc-sidebar-upgrade-box {
+  background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 14px !important;
+  padding: 16px !important;
+  margin-top: auto !important;
+  text-align: center !important;
+}
+
+/* Black NFC Card Mockup Card */
+.nfc-card-mockup-wrap {
+  background: linear-gradient(135deg, #090d16 0%, #111827 100%) !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+  padding: 24px !important;
+  position: relative !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+  height: 200px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+}
+
+.nfc-card-logo-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.nfc-card-logo-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.nfc-card-logo-left i {
+  color: #fbbf24 !important;
+  font-size: 20px !important;
+}
+
+.nfc-card-logo-text {
+  font-weight: 850 !important;
+  font-size: 14px !important;
+  letter-spacing: 1.5px !important;
+}
+
+/* Horizontal Timeline Dispatch */
+.nfc-timeline-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  position: relative !important;
+}
+
+.nfc-timeline-line {
+  position: absolute !important;
+  left: 20px !important;
+  right: 20px !important;
+  height: 2px !important;
+  background: #e2e8f0 !important;
+  top: 16px !important;
+  z-index: 1 !important;
+}
+
+.nfc-timeline-step-node {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 6px !important;
+  z-index: 10 !important;
+}
+
+.nfc-timeline-circle {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  border: 2px solid #cbd5e1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px !important;
+  color: #64748b !important;
+}
+
+.nfc-timeline-circle.active {
+  background: #10b981 !important;
+  border-color: #10b981 !important;
+  color: #ffffff !important;
+}
+
+.nfc-timeline-lbl {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: #475569 !important;
+}
+
+.nfc-timeline-date {
+  font-size: 8.5px !important;
+  color: #94a3b8 !important;
+}
+
+/* Metrics widgets summary grid */
+.nfc-metrics-summary-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 16px !important;
+  margin-bottom: 24px !important;
+}
+
+@media (max-width: 768px) {
+  .nfc-metrics-summary-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+.nfc-metric-card-box {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  padding: 16px !important;
+}
+
+.nfc-metric-card-box-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #64748b !important;
+}
+
+.nfc-metric-card-box-header i {
+  color: #6366f1 !important;
+}
+
+.nfc-metric-card-box-num {
+  font-size: 22px !important;
+  font-weight: 850 !important;
+  color: #1e293b !important;
+  margin-top: 8px !important;
+}
+
+.nfc-metric-card-box-trend {
+  font-size: 9.5px !important;
+  color: #10b981 !important;
+  font-weight: 700 !important;
+  margin-top: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+/* ==========================================================================
+   PREMIUM GLASSMORPHISM & METALLIC SHINE VISUAL EXTENSIONS
+   ========================================================================== */
+
+.premium-nfc-card {
+  position: relative;
+  transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s ease !important;
+}
+
+.premium-nfc-card:hover {
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+}
+
+.premium-nfc-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.05) 30%,
+    rgba(255, 255, 255, 0.25) 45%,
+    rgba(255, 255, 255, 0.05) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+  transition: 0.85s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.premium-nfc-card:hover::before {
+  left: 150%;
+}
+
+/* Timeline step pulse effect */
+.timeline-pulse {
+  position: relative;
+  z-index: 10;
+}
+
+.timeline-pulse::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid #6366f1;
+  top: -2px;
+  left: -2px;
+  animation: pulse-ring 1.8s cubic-bezier(0.215, 0.610, 0.355, 1) infinite;
+  z-index: -1;
+  box-sizing: content-box;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.9);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* Premium table row highlights */
+.premium-table-row {
+  transition: all 0.2s ease-in-out !important;
+}
+
+.premium-table-row:hover {
+  background-color: rgba(99, 102, 241, 0.04) !important;
+}
+

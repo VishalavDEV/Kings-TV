@@ -7,8 +7,36 @@ const DealsListing = () => {
   const { lang } = useContext(LanguageContext);
   const { theme } = useContext(ThemeContext);
 
+  // Mockup deals catalog matching mockup image exactly
+  const defaultDeals = [
+    {
+      deal: { id: 1, title: "20% Off on All Footwear", category: "Fashion", discountType: "percentage", discountValue: 20.0, originalPrice: 1999.0, discountedPrice: 1599.0, validUntil: "2026-05-25T23:59:59", couponCode: "SHOE20", bannerUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400", usageLimit: 100, isFeatured: false, status: "approved" },
+      merchant: { businessName: "StepUp Shoes", addressLocality: "Anna Nagar, Chennai" }
+    },
+    {
+      deal: { id: 2, title: "Buy 1 Get 1 Free on Pizzas", category: "Food & Beverages", discountType: "bogo", discountValue: 100.0, originalPrice: 600.0, discountedPrice: 300.0, validUntil: "2026-05-20T23:59:59", couponCode: "PIZZABOGO", bannerUrl: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400", usageLimit: 50, isFeatured: false, status: "approved" },
+      merchant: { businessName: "Hot Bites Pizza", addressLocality: "T. Nagar, Chennai" }
+    },
+    {
+      deal: { id: 3, title: "Flat ₹500 Off on Spa Services", category: "Health & Wellness", discountType: "flat", discountValue: 500.0, originalPrice: 2000.0, discountedPrice: 1500.0, validUntil: "2026-05-18T23:59:59", couponCode: "SPA500", bannerUrl: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400", usageLimit: 75, isFeatured: true, status: "approved" },
+      merchant: { businessName: "Bliss Spa & Salon", addressLocality: "Velachery, Chennai" }
+    },
+    {
+      deal: { id: 4, title: "15% Off on Sports Shoes", category: "Sports", discountType: "percentage", discountValue: 15.0, originalPrice: 2499.0, discountedPrice: 2124.0, validUntil: "2026-05-30T23:59:59", couponCode: "SPORT15", bannerUrl: "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=400", usageLimit: 80, isFeatured: false, status: "approved" },
+      merchant: { businessName: "Sportify World", addressLocality: "Adyar, Chennai" }
+    },
+    {
+      deal: { id: 5, title: "Burger + Fries + Coke @ 249", category: "Food & Beverages", discountType: "combo", discountValue: 150.0, originalPrice: 399.0, discountedPrice: 249.0, validUntil: "2026-05-22T23:59:59", couponCode: "BURGER249", bannerUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400", usageLimit: 150, isFeatured: false, status: "approved" },
+      merchant: { businessName: "Crunchy Burgers", addressLocality: "Porur, Chennai" }
+    },
+    {
+      deal: { id: 6, title: "25% Off on Car Wash", category: "Automotive", discountType: "percentage", discountValue: 25.0, originalPrice: 800.0, discountedPrice: 600.0, validUntil: "2026-05-28T23:59:59", couponCode: "WASH25", bannerUrl: "https://images.unsplash.com/photo-1607860108855-64acf2078ed9?w=400", usageLimit: 120, isFeatured: false, status: "approved" },
+      merchant: { businessName: "Sparkle Car Care", addressLocality: "Ambattur, Chennai" }
+    }
+  ];
+
   // Deals List States
-  const [deals, setDeals] = useState([]);
+  const [deals, setDeals] = useState(defaultDeals);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -40,10 +68,10 @@ const DealsListing = () => {
     setLoading(true);
     fetchApi('/deals/public')
       .then(res => {
-        if (res && res.content) {
+        if (res && res.content && res.content.length > 0) {
           setDeals(res.content);
         } else {
-          setDeals([]);
+          setDeals(defaultDeals);
         }
         setLoading(false);
       })
@@ -51,29 +79,18 @@ const DealsListing = () => {
         console.error("Error fetching deals", err);
         setError("Showing simulated deals catalog.");
         setLoading(false);
-        setDeals([
-          {
-            deal: { id: 1, title: "20% Off on All Footwear", category: "Fashion", discountType: "percentage", discountValue: 20.0, originalPrice: 1999.0, discountedPrice: 1599.0, validUntil: "2026-05-25T23:59:59", couponCode: "SHOE20", bannerUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400", usageLimit: 100, isFeatured: false, status: "approved" },
-            merchant: { businessName: "StepUp Shoes", addressLocality: "Anna Nagar, Chennai" }
-          },
-          {
-            deal: { id: 2, title: "Buy 1 Get 1 Free on Pizzas", category: "Food & Beverages", discountType: "bogo", discountValue: 100.0, originalPrice: 600.0, discountedPrice: 300.0, validUntil: "2026-05-20T23:59:59", couponCode: "PIZZABOGO", bannerUrl: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400", usageLimit: 50, isFeatured: false, status: "approved" },
-            merchant: { businessName: "Hot Bites Pizza", addressLocality: "T. Nagar, Chennai" }
-          },
-          {
-            deal: { id: 3, title: "Flat ₹500 Off on Spa Services", category: "Health & Wellness", discountType: "flat", discountValue: 500.0, originalPrice: 2000.0, discountedPrice: 1500.0, validUntil: "2026-05-18T23:59:59", couponCode: "SPA500", bannerUrl: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400", usageLimit: 75, isFeatured: true, status: "approved" },
-            merchant: { businessName: "Bliss Spa & Salon", addressLocality: "Velachery, Chennai" }
-          },
-          {
-            deal: { id: 4, title: "25% Off on Car Wash", category: "Automotive", discountType: "percentage", discountValue: 25.0, originalPrice: 800.0, discountedPrice: 600.0, validUntil: "2026-05-28T23:59:59", couponCode: "WASH25", bannerUrl: "https://images.unsplash.com/photo-1607860108855-64acf2078ed9?w=400", usageLimit: 120, isFeatured: false, status: "approved" },
-            merchant: { businessName: "Sparkle Car Care", addressLocality: "Ambattur, Chennai" }
-          }
-        ]);
+        setDeals(defaultDeals);
       });
   };
 
   useEffect(() => {
     loadData();
+
+    const handleSearch = (e) => {
+      setSearchQuery(e.detail || '');
+    };
+    window.addEventListener('db-search', handleSearch);
+    return () => window.removeEventListener('db-search', handleSearch);
   }, []);
 
   const handleRedeem = (dealId) => {
@@ -153,6 +170,13 @@ const DealsListing = () => {
       });
   };
 
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('all');
+    setDiscountType('all');
+    setPriceRange(50000);
+  };
+
   const filteredDeals = deals.filter(item => {
     const d = item.deal;
     const matchesSearch = d.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -172,191 +196,454 @@ const DealsListing = () => {
     { name: 'Beauty & Salon', count: 3 },
     { name: 'Sports', count: 2 }
   ];
-
   return (
-    <div className={`p-4 md:p-8 min-h-screen ${theme === 'dark' ? 'bg-[#0b0f19] text-white' : 'bg-gray-50 text-gray-900'}`}>
+    <div className="container mx-auto px-4 py-8 deals-main-dashboard text-slate-800 dark:text-slate-100" style={{ paddingBottom: '60px' }}>
       
-      {/* Search Header Banner */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold flex items-center gap-2">
-            <i className="fas fa-tags text-red-500"></i>
-            {lang === 'en' ? 'Hot Deals & Offers' : 'சிறப்பு சலுகைகள்'}
-          </h1>
-          <p className="text-xs text-gray-500 mt-1">Grab the best discount coupons from verified local businesses</p>
-        </div>
-        <button 
-          onClick={() => setShowCreateModal(true)}
-          className="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs transition"
-        >
-          Create New Deal
-        </button>
-      </div>
-
-      <div className="flex flex-col lg:flex-row gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         
-        {/* SIDEBAR FILTERS (Column 1) */}
-        <div className="w-full lg:w-72 flex-shrink-0 space-y-6">
-          <div className={`p-6 rounded-2xl border ${theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-200'}`}>
-            <h3 className="font-bold text-sm mb-4">Filter Deals</h3>
-            
-            {/* Search Input */}
-            <div className="relative mb-6 text-xs text-gray-800">
-              <input 
-                type="text" 
-                placeholder="Search deals..." 
-                className="w-full bg-gray-50 border border-gray-300 p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-500"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+        {/* COLUMN 1: Sidebar Filters */}
+        <div className="xl:col-span-1 flex flex-col gap-6">
+          <div className={`p-6 rounded-2xl border shadow-sm ${
+            theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-100'
+          }`}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-extrabold text-sm text-gray-800 dark:text-white">Filter Deals</h3>
+              <button 
+                type="button" 
+                onClick={handleResetFilters} 
+                className="text-xs text-[#6366f1] hover:underline font-bold bg-transparent border-0 cursor-pointer p-0"
+              >
+                Clear All
+              </button>
             </div>
 
-            {/* Category Filters */}
-            <div className="mb-6">
-              <h4 className="font-bold text-xs uppercase text-gray-400 mb-3">Categories</h4>
-              <div className="flex flex-col gap-2.5 text-xs">
-                <button 
-                  onClick={() => setSelectedCategory('all')} 
-                  className={`text-left ${selectedCategory === 'all' ? 'font-bold text-red-500' : 'text-gray-500'}`}
+            {/* Category Dropdown */}
+            <div className="mb-5 flex flex-col gap-1.5">
+              <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Category</label>
+              <div className="relative">
+                <select 
+                  value={selectedCategory} 
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className={`w-full p-2.5 rounded-xl border text-xs focus:outline-none appearance-none cursor-pointer ${
+                    theme === 'dark' ? 'bg-[#1f2937] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'
+                  }`}
                 >
-                  All Categories
-                </button>
-                {categories.map((c, idx) => (
-                  <button 
-                    key={idx} 
-                    onClick={() => setSelectedCategory(c.name)}
-                    className={`flex justify-between items-center text-left ${selectedCategory === c.name ? 'font-bold text-red-500' : 'text-gray-500'}`}
-                  >
-                    <span>{c.name}</span> <span className="font-normal opacity-60">({c.count})</span>
-                  </button>
-                ))}
+                  <option value="all">All Categories</option>
+                  {categories.map((c, idx) => (
+                    <option key={idx} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                  <i className="fas fa-chevron-down text-[9px]"></i>
+                </div>
+              </div>
+            </div>
+
+            {/* Location Dropdown */}
+            <div className="mb-5 flex flex-col gap-1.5">
+              <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Location</label>
+              <div className="relative">
+                <select 
+                  className={`w-full p-2.5 rounded-xl border text-xs focus:outline-none appearance-none cursor-pointer ${
+                    theme === 'dark' ? 'bg-[#1f2937] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'
+                  }`}
+                >
+                  <option>Current Location</option>
+                  <option>Chennai</option>
+                  <option>Coimbatore</option>
+                  <option>Madurai</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                  <i className="fas fa-chevron-down text-[9px]"></i>
+                </div>
+              </div>
+            </div>
+
+            {/* Distance Dropdown */}
+            <div className="mb-5">
+              <div className="relative">
+                <select 
+                  className={`w-full p-2.5 rounded-xl border text-xs focus:outline-none appearance-none cursor-pointer ${
+                    theme === 'dark' ? 'bg-[#1f2937] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'
+                  }`}
+                >
+                  <option>Within 10 km</option>
+                  <option>Within 20 km</option>
+                  <option>Within 50 km</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                  <i className="fas fa-chevron-down text-[9px]"></i>
+                </div>
               </div>
             </div>
 
             {/* Discount Type Checkboxes */}
-            <div className="mb-6 text-xs">
-              <h4 className="font-bold text-xs uppercase text-gray-400 mb-3">Discount Type</h4>
-              <div className="space-y-2">
-                {['percentage', 'flat', 'bogo', 'combo'].map(type => (
-                  <label key={type} className="flex items-center gap-2 cursor-pointer capitalize">
-                    <input 
-                      type="radio" 
-                      name="discountType" 
-                      className="accent-red-500"
-                      checked={discountType === type}
-                      onChange={() => setDiscountType(type)}
-                    />
-                    <span>{type === 'bogo' ? 'Buy One Get One' : type + ' off'}</span>
-                  </label>
-                ))}
-                <button onClick={() => setDiscountType('all')} className="text-red-500 font-bold text-[10px] mt-2 block hover:underline">Reset Types</button>
+            <div className="mb-6">
+              <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-3">Discount Type</label>
+              <div className="flex flex-col gap-3 text-xs text-gray-650 dark:text-gray-300">
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="w-4 h-4 rounded text-[#6366f1] border-gray-300 focus:ring-[#6366f1] cursor-pointer" 
+                    checked={discountType === 'percentage'} 
+                    onChange={() => setDiscountType(discountType === 'percentage' ? 'all' : 'percentage')} 
+                  />
+                  <span className="font-semibold">% Off</span>
+                </label>
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="w-4 h-4 rounded text-[#6366f1] border-gray-300 focus:ring-[#6366f1] cursor-pointer" 
+                    checked={discountType === 'flat'} 
+                    onChange={() => setDiscountType(discountType === 'flat' ? 'all' : 'flat')} 
+                  />
+                  <span className="font-semibold">Flat Amount Off</span>
+                </label>
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="w-4 h-4 rounded text-[#6366f1] border-gray-300 focus:ring-[#6366f1] cursor-pointer" 
+                    checked={discountType === 'bogo'} 
+                    onChange={() => setDiscountType(discountType === 'bogo' ? 'all' : 'bogo')} 
+                  />
+                  <span className="font-semibold">Buy One Get One</span>
+                </label>
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="w-4 h-4 rounded text-[#6366f1] border-gray-300 focus:ring-[#6366f1] cursor-pointer" 
+                    checked={discountType === 'combo'} 
+                    onChange={() => setDiscountType(discountType === 'combo' ? 'all' : 'combo')} 
+                  />
+                  <span className="font-semibold">Combo Offers</span>
+                </label>
               </div>
             </div>
 
-            {/* Price Slider */}
-            <div>
-              <h4 className="font-bold text-xs uppercase text-gray-400 mb-3">Price Limit</h4>
+            {/* Price Range Slider */}
+            <div className="mb-6 flex flex-col gap-1.5">
+              <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Price Range</label>
               <input 
                 type="range" 
                 min="0" 
                 max="50000" 
                 step="100"
-                className="w-full accent-red-500 cursor-pointer"
-                value={priceRange}
+                value={priceRange} 
                 onChange={(e) => setPriceRange(Number(e.target.value))}
+                className="w-full accent-[#6366f1] cursor-pointer h-1.5 bg-gray-200 rounded-lg appearance-none"
               />
-              <div className="flex justify-between text-[10px] text-gray-500 mt-1.5">
+              <div className="flex justify-between text-[10px] text-gray-400 font-bold mt-1">
                 <span>₹0</span>
-                <span>₹{priceRange.toLocaleString()}</span>
+                <span>₹{priceRange.toLocaleString()}+</span>
               </div>
             </div>
 
+            {/* Expiry Dropdown */}
+            <div className="mb-6 flex flex-col gap-1.5">
+              <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Expiry Date</label>
+              <div className="relative">
+                <select 
+                  className={`w-full p-2.5 rounded-xl border text-xs focus:outline-none appearance-none cursor-pointer ${
+                    theme === 'dark' ? 'bg-[#1f2937] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'
+                  }`}
+                >
+                  <option>Anytime</option>
+                  <option>Expiring Today</option>
+                  <option>Expiring This Week</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                  <i className="fas fa-chevron-down text-[9px]"></i>
+                </div>
+              </div>
+            </div>
+
+            {/* Apply Filters Button */}
+            <button className="w-full py-2.5 bg-[#6366f1] hover:bg-[#4f46e5] text-white text-xs font-bold rounded-xl transition shadow-sm border-0 cursor-pointer">
+              Apply Filters
+            </button>
           </div>
         </div>
 
-        {/* MAIN BODY (Column 2) */}
-        <div className="flex-1 space-y-8">
+        {/* COLUMN 2-3: Middle Content Column */}
+        <div className="xl:col-span-2 flex flex-col gap-6">
           
-          {/* Hero Banner with countdown */}
-          <div className="relative rounded-3xl overflow-hidden p-6 md:p-8 bg-gradient-to-r from-red-600 to-orange-500 text-white flex flex-col md:flex-row justify-between items-center gap-6 shadow-xl">
-            <div className="space-y-3 max-w-lg">
-              <span className="bg-white/20 backdrop-blur-md text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                Deal of the Day
+          {/* Purple Hero Banner */}
+          <div className="relative rounded-3xl overflow-hidden p-6 md:p-8 bg-gradient-to-r from-[#5c2d91] via-[#6d28d9] to-[#7c3aed] text-white flex justify-between items-center gap-6 shadow-xl min-h-[220px]">
+            {/* Confetti vector background */}
+            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+            
+            <div className="space-y-4 max-w-sm relative z-10">
+              <span className="bg-[#fbbf24] text-black text-[9px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5">
+                <i className="fas fa-fire"></i> Deal of the Day
               </span>
-              <h2 className="text-2xl md:text-3xl font-black">Up to 50% OFF on Fashion, Electronics &amp; More</h2>
-              <p className="text-xs opacity-90">Grab the best offers from verified local businesses in Anna Nagar.</p>
+              <h2 className="text-2xl md:text-3xl font-black leading-tight">Up to 50% OFF<br/><span className="text-[15px] font-bold opacity-90 leading-normal">On Fashion, Electronics &amp; More</span></h2>
+              <p className="text-[11px] opacity-80 leading-relaxed">Grab the best offers from verified local businesses</p>
               <button 
                 onClick={() => alert("Opening today's best deals list...")}
-                className="bg-white text-red-600 font-bold px-6 py-2.5 rounded-xl text-xs shadow-md transition transform hover:scale-105"
+                className="bg-white text-[#5c2d91] font-bold px-5 py-2.5 rounded-xl text-xs shadow-md transition transform hover:scale-105 border-0 cursor-pointer flex items-center gap-1.5"
               >
-                Explore Deals
+                Explore Deals <i className="fas fa-arrow-right text-[10px]"></i>
               </button>
             </div>
             
-            {/* Simulated countdown clock matching mockup */}
-            <div className="flex gap-3 text-center">
-              <div className="bg-black/20 backdrop-blur-md rounded-xl p-2.5 min-w-[56px]">
-                <h4 className="text-xl font-black">02</h4>
-                <p className="text-[9px] uppercase tracking-wider opacity-80">Days</p>
-              </div>
-              <div className="bg-black/20 backdrop-blur-md rounded-xl p-2.5 min-w-[56px]">
-                <h4 className="text-xl font-black">12</h4>
-                <p className="text-[9px] uppercase tracking-wider opacity-80">Hrs</p>
-              </div>
-              <div className="bg-black/20 backdrop-blur-md rounded-xl p-2.5 min-w-[56px]">
-                <h4 className="text-xl font-black">45</h4>
-                <p className="text-[9px] uppercase tracking-wider opacity-80">Mins</p>
-              </div>
-              <div className="bg-black/20 backdrop-blur-md rounded-xl p-2.5 min-w-[56px]">
-                <h4 className="text-xl font-black">36</h4>
-                <p className="text-[9px] uppercase tracking-wider opacity-80">Secs</p>
-              </div>
+            {/* Illustration on the right */}
+            <div className="hidden md:flex relative z-10 w-44 h-40 items-center justify-center">
+              <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-2xl">
+                <path d="M60,80 L140,80 L130,170 L70,170 Z" fill="#4f46e5" opacity="0.85" />
+                <path d="M80,80 C80,50 120,50 120,80" stroke="#fbcfe8" strokeWidth="4" fill="none" />
+                <rect x="110" y="120" width="50" height="50" rx="4" fill="#a78bfa" />
+                <rect x="106" y="130" width="58" height="10" fill="#c084fc" />
+                <path d="M135,120 L135,170 M110,145 L160,145" stroke="#ffffff" strokeWidth="3" />
+                <circle cx="130" cy="90" r="28" fill="#fbbf24" stroke="#ffffff" strokeWidth="3" />
+                <text x="130" y="87" fill="#000000" fontSize="13" fontWeight="900" textAnchor="middle">50%</text>
+                <text x="130" y="99" fill="#000000" fontSize="10" fontWeight="900" textAnchor="middle">OFF</text>
+              </svg>
             </div>
           </div>
 
-          {/* Deals Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {/* Filters Tab Row */}
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {['All Deals', 'Expiring Soon', 'Near Me', 'Saved Deals', 'Top Rated'].map((tab, idx) => (
+              <button 
+                key={idx}
+                className={`px-4 py-2.5 rounded-xl text-xs font-bold border transition whitespace-nowrap cursor-pointer ${
+                  tab === 'All Deals'
+                    ? 'bg-[#f5f3ff] border-[#ddd6fe]/60 text-[#7c3aed]'
+                    : 'bg-white border-gray-150 text-gray-605 hover:bg-gray-50'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Sort and count Row */}
+          <div className="flex justify-between items-center text-xs text-gray-400 font-bold my-1">
+            <span>Showing {filteredDeals.length} deals</span>
+            <div className="flex items-center gap-1.5">
+              <span>Sort by:</span>
+              <select className="bg-transparent border-0 font-extrabold text-gray-700 dark:text-gray-300 focus:outline-none cursor-pointer">
+                <option>Most Popular</option>
+                <option>Newest</option>
+                <option>Highest Discount</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Grid of Deals Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {filteredDeals.map(item => {
               const d = item.deal;
               const m = item.merchant || {};
+              const isBogo = d.discountType === 'bogo';
+              const isFlat = d.discountType === 'flat';
+              const isCombo = d.discountType === 'combo';
+              
+              // Badge color mapping
+              let badgeBg = 'bg-red-500';
+              let badgeText = `${Math.round(d.discountValue)}% OFF`;
+              if (isBogo) {
+                badgeBg = 'bg-green-600';
+                badgeText = 'BUY 1 GET 1';
+              } else if (isFlat) {
+                badgeBg = 'bg-purple-600';
+                badgeText = `₹${Math.round(d.discountValue)} OFF`;
+              } else if (isCombo) {
+                badgeBg = 'bg-orange-500';
+                badgeText = 'COMBO';
+              }
+
               return (
                 <div 
                   key={d.id}
                   onClick={() => setSelectedDeal(d)}
-                  className={`rounded-2xl overflow-hidden cursor-pointer border transition transform hover:-translate-y-1 hover:shadow-lg ${
-                    theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-200'
+                  className={`rounded-2xl border overflow-hidden transition shadow-sm hover:shadow-md cursor-pointer flex flex-col justify-between ${
+                    theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-100'
                   }`}
                 >
-                  <div className="h-44 bg-cover bg-center relative" style={{ backgroundImage: `url(${d.bannerUrl})` }}>
-                    <div className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">
-                      {d.discountType === 'percentage' ? `${d.discountValue}% OFF` : `₹${d.discountValue} OFF`}
-                    </div>
+                  <div className="h-36 bg-cover bg-center relative" style={{ backgroundImage: `url(${d.bannerUrl})` }}>
+                    <span className={`absolute top-3 left-3 text-white text-[9px] font-black px-2 py-0.5 rounded ${badgeBg}`}>
+                      {badgeText}
+                    </span>
+                    <button 
+                      type="button" 
+                      onClick={(e) => { e.stopPropagation(); alert("Saved to favorites!"); }}
+                      className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center text-gray-400 hover:text-red-500 border-0 cursor-pointer"
+                    >
+                      <i className="far fa-heart text-xs"></i>
+                    </button>
                   </div>
-                  <div className="p-4 flex flex-col justify-between h-48">
+                  <div className="p-4 flex flex-col justify-between flex-1">
                     <div>
-                      <span className="text-[9px] uppercase font-bold text-red-500">{d.category}</span>
-                      <h3 className="font-extrabold text-sm mt-1 leading-tight">{d.title}</h3>
-                      <p className="text-[11px] text-gray-500 font-semibold mt-1">{m.businessName}</p>
-                      <p className="text-[10px] text-gray-400 flex items-center gap-1 mt-1">
-                        <i className="fas fa-map-marker-alt"></i> {m.addressLocality}
+                      <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest block">{d.category}</span>
+                      <h4 className="font-extrabold text-xs text-gray-800 dark:text-white mt-1 leading-tight line-clamp-2 h-8">{d.title}</h4>
+                      <p className="text-[10px] text-gray-500 font-semibold mt-1.5">{m.businessName}</p>
+                      <p className="text-[9px] text-gray-400 mt-1 flex items-center gap-1">
+                        <i className="fas fa-map-marker-alt text-[#6366f1]"></i> {m.addressLocality}
                       </p>
                     </div>
                     
-                    <div className="border-t border-gray-800/10 pt-3 flex justify-between items-center text-xs mt-3">
-                      <div>
-                        <span className="font-black text-sm text-red-500">₹{d.discountedPrice || d.originalPrice}</span>
-                        {d.originalPrice && (
-                          <span className="text-[10px] line-through text-gray-400 ml-1.5">₹{d.originalPrice}</span>
-                        )}
-                      </div>
-                      <span className="text-[10px] text-gray-400 font-medium">
-                        Valid till {new Date(d.validUntil).toLocaleDateString()}
+                    <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100 dark:border-gray-800/10">
+                      <span className={`text-[9px] font-bold flex items-center gap-1 ${isBogo || isFlat ? 'text-green-600' : 'text-red-500'}`}>
+                        <i className="far fa-clock"></i> Valid till {new Date(d.validUntil).getDate()} {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][new Date(d.validUntil).getMonth()]} {new Date(d.validUntil).getFullYear()}
                       </span>
+                      <button 
+                        type="button" 
+                        onClick={(e) => { e.stopPropagation(); alert("Bookmarked deal!"); }}
+                        className="w-5 h-5 rounded bg-transparent hover:bg-gray-50 flex items-center justify-center text-gray-400 border-0 cursor-pointer p-0"
+                      >
+                        <i className="far fa-bookmark text-xs"></i>
+                      </button>
                     </div>
                   </div>
                 </div>
               );
             })}
+          </div>
+
+          {/* Load More Button */}
+          <button className="w-full py-3 bg-white hover:bg-gray-50 border border-gray-150 text-gray-600 font-bold text-xs rounded-2xl flex items-center justify-center gap-2 transition cursor-pointer shadow-sm">
+            Load More Deals <i className="fas fa-chevron-down text-[10px]"></i>
+          </button>
+
+        </div>
+
+        {/* COLUMN 4: Right Sidebar */}
+        <div className="xl:col-span-1 flex flex-col gap-6">
+          
+          {/* Featured Deal */}
+          <div className={`p-5 rounded-2xl border shadow-sm ${
+            theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-100'
+          }`}>
+            <div className="flex items-center gap-2 mb-4">
+              <i className="fas fa-fire text-orange-500"></i>
+              <h3 className="font-extrabold text-xs text-gray-400 uppercase tracking-wider">Featured Deal</h3>
+            </div>
+
+            {/* Countdown Clock */}
+            <div className="flex justify-between items-center gap-1.5 mb-4 text-center">
+              <div className="flex-1 bg-[#f5f3ff] dark:bg-purple-950/20 p-2 rounded-xl border border-purple-100/50 dark:border-purple-900/10">
+                <h4 className="text-sm font-black text-purple-650">02</h4>
+                <p className="text-[8px] text-purple-400 uppercase tracking-widest font-bold">Days</p>
+              </div>
+              <div className="flex-1 bg-[#f5f3ff] dark:bg-purple-950/20 p-2 rounded-xl border border-purple-100/50 dark:border-purple-900/10">
+                <h4 className="text-sm font-black text-purple-650">12</h4>
+                <p className="text-[8px] text-purple-400 uppercase tracking-widest font-bold">Hrs</p>
+              </div>
+              <div className="flex-1 bg-[#f5f3ff] dark:bg-purple-950/20 p-2 rounded-xl border border-purple-100/50 dark:border-purple-900/10">
+                <h4 className="text-sm font-black text-purple-650">45</h4>
+                <p className="text-[8px] text-purple-400 uppercase tracking-widest font-bold">Mins</p>
+              </div>
+              <div className="flex-1 bg-[#f5f3ff] dark:bg-purple-950/20 p-2 rounded-xl border border-purple-100/50 dark:border-purple-900/10">
+                <h4 className="text-sm font-black text-purple-650">36</h4>
+                <p className="text-[8px] text-purple-400 uppercase tracking-widest font-bold">Secs</p>
+              </div>
+            </div>
+
+            {/* Featured Deal Body info */}
+            <div className="rounded-xl overflow-hidden border border-gray-150 mb-4 cursor-pointer">
+              <div className="h-32 bg-cover bg-center relative" style={{ backgroundImage: `url(https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400)` }}>
+                <span className="absolute top-2 left-2 text-white bg-red-500 text-[8px] font-black px-1.5 py-0.5 rounded">
+                  30% OFF
+                </span>
+              </div>
+              <div className="p-3.5 space-y-2">
+                <span className="text-[8px] font-bold text-gray-400 uppercase">Restaurants</span>
+                <h4 className="font-extrabold text-xs leading-tight">30% Off on Family Dining</h4>
+                <p className="text-[10px] text-gray-505 font-semibold">The Grand Restaurant</p>
+                <p className="text-[9px] text-gray-450 flex items-center gap-1">
+                  <i className="fas fa-map-marker-alt text-[#6366f1]"></i> Nungambakkam, Chennai
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button 
+                type="button"
+                onClick={() => alert("Viewing featured family dining deal detail...")}
+                className="flex-1 py-2.5 bg-[#6366f1] hover:bg-[#4f46e5] text-white text-xs font-bold rounded-xl transition border-0 cursor-pointer"
+              >
+                View Deal
+              </button>
+              <button 
+                type="button"
+                onClick={() => alert("Added featured deal to wishlist!")}
+                className="w-10 h-10 rounded-xl border border-gray-150 flex items-center justify-center text-gray-400 hover:text-red-500 bg-transparent cursor-pointer"
+              >
+                <i className="far fa-heart"></i>
+              </button>
+            </div>
+          </div>
+
+          {/* Top Categories */}
+          <div className={`p-5 rounded-2xl border shadow-sm ${
+            theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-100'
+          }`}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-extrabold text-xs text-gray-400 uppercase tracking-wider">Top Categories</h3>
+              <a href="#" onClick={(e) => { e.preventDefault(); alert("Viewing all categories..."); }} className="text-xs text-[#6366f1] hover:underline font-bold">View All</a>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {categories.map((c, idx) => {
+                let iconClass = 'fas fa-utensils';
+                let iconBg = 'bg-orange-500/10 text-orange-500';
+                if (c.name === 'Fashion') {
+                  iconClass = 'fas fa-tshirt';
+                  iconBg = 'bg-blue-500/10 text-blue-500';
+                } else if (c.name === 'Health & Wellness') {
+                  iconClass = 'fas fa-heartbeat';
+                  iconBg = 'bg-red-500/10 text-red-500';
+                } else if (c.name === 'Automotive') {
+                  iconClass = 'fas fa-car';
+                  iconBg = 'bg-gray-500/10 text-gray-500';
+                } else if (c.name === 'Electronics') {
+                  iconClass = 'fas fa-laptop';
+                  iconBg = 'bg-purple-500/10 text-purple-500';
+                } else if (c.name === 'Home & Living') {
+                  iconClass = 'fas fa-couch';
+                  iconBg = 'bg-green-500/10 text-green-500';
+                } else if (c.name === 'Beauty & Salon') {
+                  iconClass = 'fas fa-spa';
+                  iconBg = 'bg-pink-500/10 text-pink-500';
+                } else if (c.name === 'Sports') {
+                  iconClass = 'fas fa-running';
+                  iconBg = 'bg-yellow-500/10 text-yellow-500';
+                }
+
+                return (
+                  <div key={idx} className="flex justify-between items-center text-xs">
+                    <div className="flex items-center gap-3">
+                      <span className={`w-7 h-7 rounded-lg flex items-center justify-center ${iconBg}`}>
+                        <i className={iconClass}></i>
+                      </span>
+                      <span className="font-semibold text-gray-700 dark:text-gray-300">{c.name}</span>
+                    </div>
+                    <span className="font-bold text-gray-400">{c.count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Are you a business? */}
+          <div className="p-5 rounded-2xl border shadow-sm bg-gradient-to-br from-[#e0e7ff] to-[#f5f3ff] dark:from-slate-900 dark:to-purple-950/20 border-indigo-100/50 flex items-center justify-between gap-4">
+            <div className="space-y-2">
+              <h4 className="font-extrabold text-xs text-indigo-950 dark:text-indigo-200">Are you a business?</h4>
+              <p className="text-[10px] text-indigo-750 dark:text-indigo-400 leading-normal">List your deals and reach thousands of customers</p>
+              <button 
+                type="button" 
+                onClick={() => setShowCreateModal(true)}
+                className="py-1.5 px-3 bg-white text-indigo-650 hover:bg-[#6366f1] hover:text-white border border-[#6366f1]/20 font-bold text-[10px] rounded-lg transition cursor-pointer shadow-sm"
+              >
+                Create a Deal
+              </button>
+            </div>
+            <div className="w-14 h-14 flex-shrink-0 text-indigo-500 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" className="w-full h-full" fill="currentColor">
+                <path d="M12 3L2 12h3v8h14v-8h3L12 3zm0 4.83l5 4.5V18H7v-5.67l5-4.5z"/>
+              </svg>
+            </div>
           </div>
 
         </div>

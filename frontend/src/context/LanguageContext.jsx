@@ -18,7 +18,7 @@ const translationMap = {
   "வணிகக் கதைகள்": "Business Studies",
   "தேடுதல்...": "Search...",
   "தேடு": "Search",
-  "நம்ம ஊர்": "Local Directory",
+  "நம்ம ஊர்": "Regional",
   "செய்திகள்": "News",
   "வாழ்த்து": "Wishes",
   "இரங்கல்": "Obituaries",

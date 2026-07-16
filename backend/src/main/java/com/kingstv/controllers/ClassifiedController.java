@@ -1,137 +1,225 @@
 package com.kingstv.controllers;
 
-import com.kingstv.models.ClassifiedListing;
-import com.kingstv.repository.ClassifiedRepository;
+import com.kingstv.models.*;
+import com.kingstv.services.ClassifiedService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
-import com.kingstv.repository.SpecificationBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.*;
 
 @RestController
-@RequestMapping("/api/v1/classifieds")
+@RequestMapping({"/api/classifieds", "/api/v1/classifieds"})
 public class ClassifiedController {
 
     @Autowired
-    private ClassifiedRepository classifiedRepository;
+    private ClassifiedService classifiedService;
 
-    // --- KEEP Existing Front-End Endpoint Map ---
     @GetMapping
-    public List<ClassifiedListing> getClassifieds() {
-        return classifiedRepository.findAll();
+    public ResponseEntity<?> getClassifieds(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Long subcategoryId,
+            @RequestParam(required = false) Long districtId,
+            @RequestParam(required = false) Double priceMin,
+            @RequestParam(required = false) Double priceMax,
+            @RequestParam(required = false) String condition,
+            @RequestParam(required = false) Boolean negotiable,
+            @RequestParam(required = false) String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        
+        Page<ClassifiedListing> ads = classifiedService.getClassifieds(
+            search, categoryId, subcategoryId, districtId, priceMin, priceMax, condition, negotiable, sort, PageRequest.of(page, size)
+        );
+        return ResponseEntity.ok(ads.getContent());
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<?> searchAds(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        Page<ClassifiedListing> ads = classifiedService.getClassifieds(query, null, null, null, null, null, null, null, "newest", PageRequest.of(page, size));
+        return ResponseEntity.ok(ads.getContent());
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<?> filterAds(
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Long subcategoryId,
+            @RequestParam(required = false) Long districtId,
+            @RequestParam(required = false) Double priceMin,
+            @RequestParam(required = false) Double priceMax,
+            @RequestParam(required = false) String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        Page<ClassifiedListing> ads = classifiedService.getClassifieds(null, categoryId, subcategoryId, districtId, priceMin, priceMax, null, null, sort, PageRequest.of(page, size));
+        return ResponseEntity.ok(ads.getContent());
+    }
+
+    @GetMapping("/featured")
+    public ResponseEntity<?> getFeatured(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        Page<ClassifiedListing> ads = classifiedService.getClassifieds(null, null, null, null, null, null, null, null, "newest", PageRequest.of(page, size));
+        return ResponseEntity.ok(ads.getContent());
+    }
+
+    @GetMapping("/latest")
+    public ResponseEntity<?> getLatest(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        Page<ClassifiedListing> ads = classifiedService.getClassifieds(null, null, null, null, null, null, null, null, "newest", PageRequest.of(page, size));
+        return ResponseEntity.ok(ads.getContent());
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<?> getCategories() {
+        return ResponseEntity.ok(classifiedService.getCategories());
+    }
+
+    @GetMapping("/subcategories")
+    public ResponseEntity<?> getSubcategories(@RequestParam Long categoryId) {
+        return ResponseEntity.ok(classifiedService.getSubcategories(categoryId));
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "File is empty"));
+        }
+        try {
+            Path uploadPath = Paths.get("uploads/classifieds");
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+            String fileName = "ad_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            Path filePath = uploadPath.resolve(fileName);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            return ResponseEntity.ok(Map.of("url", "/uploads/classifieds/" + fileName));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to upload file: " + e.getMessage()));
+        }
+    }
+
+    // Dynamic path variable mappings at the bottom
     @GetMapping("/{id}")
     public ResponseEntity<?> getClassifiedById(@PathVariable Long id) {
-        Optional<ClassifiedListing> adOpt = classifiedRepository.findById(id);
+        Optional<ClassifiedListing> adOpt = classifiedService.getClassifiedById(id);
         if (adOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Classified listing not found"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Listing not found"));
         }
-        return ResponseEntity.ok(adOpt.get());
+        
+        ClassifiedListing listing = adOpt.get();
+        List<ClassifiedImage> images = classifiedService.getImages(id);
+        
+        Map<String, Object> details = new HashMap<>();
+        details.put("listing", listing);
+        details.put("images", images);
+        
+        return ResponseEntity.ok(details);
     }
 
     @PostMapping
-    public ResponseEntity<?> createClassified(@RequestBody ClassifiedListing classified) {
-        if (classified.getTitle() == null || classified.getCategory() == null || classified.getPriceDetail() == null || classified.getLocation() == null || classified.getContactInfo() == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Required fields are missing"));
+    public ResponseEntity<?> createClassified(@RequestBody ClassifiedListing classified, @RequestParam(required = false) List<String> images) {
+        if (classified.getTitle() == null || classified.getDescription() == null || classified.getPrice() == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Title, description, and price are required."));
         }
-        if (classified.getCreatedAt() == null) {
-            classified.setCreatedAt(LocalDateTime.now());
-        }
-        ClassifiedListing saved = classifiedRepository.save(classified);
+        ClassifiedListing saved = classifiedService.createClassified(classified, images);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    // --- NEW Standardized API Standard Endpoints ---
-    @GetMapping("/getAll")
-    public Page<ClassifiedListing> getAll(
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
-        
-        Sort sort = Sort.by(direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
-        Specification<ClassifiedListing> spec = SpecificationBuilder.build(search, status, null, null);
-        return classifiedRepository.findAll(spec, pageable);
-    }
-
-    @GetMapping("/getAllWeb")
-    public Page<ClassifiedListing> getAllWeb(
-            @RequestParam(required = false) String search,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
-        
-        return getAll(search, "active", page, size, sortBy, direction);
-    }
-
-    @PostMapping("/saveUpdate")
-    public ResponseEntity<?> save(@RequestBody ClassifiedListing entity) {
-        return createClassified(entity);
-    }
-
-    @PutMapping("/saveUpdate")
-    public ResponseEntity<?> update(@RequestBody ClassifiedListing entity) {
-        if (entity.getId() == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Id is required for update"));
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateClassified(@PathVariable Long id, @RequestBody ClassifiedListing ad) {
+        try {
+            ClassifiedListing updated = classifiedService.updateClassified(id, ad);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
         }
-        Optional<ClassifiedListing> adOpt = classifiedRepository.findById(entity.getId());
-        if (adOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Classified listing not found"));
-        }
-        ClassifiedListing classified = adOpt.get();
-        classified.setTitle(entity.getTitle());
-        classified.setCategory(entity.getCategory());
-        classified.setPriceDetail(entity.getPriceDetail());
-        classified.setLocation(entity.getLocation());
-        classified.setContactInfo(entity.getContactInfo());
-        classified.setDescription(entity.getDescription());
-        classified.setStatus(entity.getStatus());
-        
-        ClassifiedListing updated = classifiedRepository.save(classified);
-        return ResponseEntity.ok(updated);
-    }
-
-    @PatchMapping("/changeStatus")
-    public ResponseEntity<?> changeStatus(@RequestBody Map<String, Object> request) {
-        if (!request.containsKey("id") || !request.containsKey("status")) {
-            return ResponseEntity.badRequest().body(Map.of("message", "id and status are required"));
-        }
-        Long id = Long.valueOf(request.get("id").toString());
-        String status = request.get("status").toString();
-        
-        Optional<ClassifiedListing> opt = classifiedRepository.findById(id);
-        if (opt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Classified listing not found"));
-        }
-        ClassifiedListing existing = opt.get();
-        existing.setStatus(status);
-        classifiedRepository.save(existing);
-        return ResponseEntity.ok(Map.of("message", "Status updated successfully", "id", id, "status", status));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteClassified(@PathVariable Long id) {
-        Optional<ClassifiedListing> adOpt = classifiedRepository.findById(id);
-        if (adOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Classified listing not found"));
+        try {
+            classifiedService.deleteClassified(id);
+            return ResponseEntity.ok(Map.of("message", "Listing deleted successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
         }
-        ClassifiedListing existing = adOpt.get();
-        existing.setStatus("deleted"); // Soft delete
-        classifiedRepository.save(existing);
-        return ResponseEntity.ok(Map.of("message", "Classified soft-deleted successfully"));
+    }
+
+    @PostMapping("/{id}/save")
+    public ResponseEntity<?> saveAd(@PathVariable Long id, @RequestParam Long userId) {
+        try {
+            ClassifiedFavourite fav = classifiedService.saveAd(id, userId);
+            return ResponseEntity.ok(fav);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{id}/save")
+    public ResponseEntity<?> unsaveAd(@PathVariable Long id, @RequestParam Long userId) {
+        try {
+            classifiedService.unsaveAd(id, userId);
+            return ResponseEntity.ok(Map.of("message", "Listing unsaved successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/share")
+    public ResponseEntity<?> shareAd(@PathVariable Long id, @RequestParam String platform) {
+        classifiedService.logShare(id, platform);
+        return ResponseEntity.ok(Map.of("message", "Share logged successfully"));
+    }
+
+    @PostMapping("/{id}/report")
+    public ResponseEntity<?> reportAd(
+            @PathVariable Long id,
+            @RequestParam String reporterName,
+            @RequestParam String reason) {
+        classifiedService.logReport(id, reporterName, reason);
+        return ResponseEntity.ok(Map.of("message", "Report logged successfully"));
+    }
+
+    @PostMapping("/{id}/view")
+    public ResponseEntity<?> logView(@PathVariable Long id, HttpServletRequest request) {
+        classifiedService.logView(id, request.getRemoteAddr(), request.getHeader("User-Agent"));
+        return ResponseEntity.ok(Map.of("message", "View logged successfully"));
+    }
+
+    @PostMapping("/{id}/renew")
+    public ResponseEntity<?> renewAd(@PathVariable Long id) {
+        try {
+            classifiedService.renewAd(id);
+            return ResponseEntity.ok(Map.of("message", "Listing renewed successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/boost")
+    public ResponseEntity<?> boostAd(@PathVariable Long id) {
+        try {
+            classifiedService.boostAd(id);
+            return ResponseEntity.ok(Map.of("message", "Listing boosted to featured successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        }
     }
 }

@@ -273,20 +273,31 @@ const Header = () => {
       const tech = findDbItem('tech') || findDbItem('technology');
       dynamicItems.push(tech || { id: 'tech', path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்', subcategories: [] });
 
-      // Regional (with dropdown chevron)
+      // Regional Directory (with dropdown chevron containing all items)
       const regional = findDbItem('regional');
       const regionalSubcategories = [
-        { id: 'reg-dir', slug: 'directory', path: '/directory', name: 'Local Directory', nameTa: 'நம்ம ஊர்' },
+        { 
+          id: 'reg-dir', 
+          slug: 'directory', 
+          path: '/directory', 
+          name: 'Local Business Directory', 
+          nameTa: 'நம்ம ஊர்',
+          subcategories: [
+            { id: 'reg-deals', slug: 'deals', path: '/deals', name: 'Deals', nameTa: 'சலுகைகள்' },
+            { id: 'reg-rfq', slug: 'rfq', path: '/rfq', name: 'RFQ', nameTa: 'கோரிக்கைகள்' },
+            { id: 'reg-nfc', slug: 'nfc', path: '/nfc', name: 'NFC Card', nameTa: 'என்எஃப்சி கார்டு' }
+          ]
+        },
         { id: 'reg-wishes', slug: 'wishes', path: '/wishes', name: 'Wishes', nameTa: 'வாழ்த்து' },
         { id: 'reg-obituaries', slug: 'obituaries', path: '/obituaries', name: 'Obituaries', nameTa: 'இரங்கல்' },
         { id: 'reg-business', slug: 'business-studies', path: '/business-studies', name: 'Business', nameTa: 'வணிகம்' },
         { id: 'reg-jobs', slug: 'jobs', path: '/jobs', name: 'Jobs', nameTa: 'வேலை' },
         { id: 'reg-classifieds', slug: 'classifieds', path: '/classifieds', name: 'Classifieds', nameTa: 'தள்ளுபடி' }
       ];
-      dynamicItems.push(regional ? { ...regional, subcategories: regionalSubcategories } : {
+      dynamicItems.push(regional ? { ...regional, label: lang === 'en' ? 'Regional' : 'நம்ம ஊர்', subcategories: regionalSubcategories } : {
         id: 'regional',
         path: '/directory',
-        label: lang === 'en' ? 'Regional' : 'மாநிலம்',
+        label: lang === 'en' ? 'Regional' : 'நம்ம ஊர்',
         subcategories: regionalSubcategories
       });
 
@@ -328,9 +339,20 @@ const Header = () => {
           { 
             id: 'regional',
             path: '/directory', 
-            label: lang === 'en' ? 'Regional' : 'மாநிலம்', 
+            label: lang === 'en' ? 'Regional' : 'நம்ம ஊர்', 
             subcategories: [
-              { id: 'reg-dir', slug: 'directory', path: '/directory', name: 'Local Directory', nameTa: 'நம்ம ஊர்' },
+              { 
+                id: 'reg-dir', 
+                slug: 'directory', 
+                path: '/directory', 
+                name: 'Local Business Directory', 
+                nameTa: 'நம்ம ஊர்',
+                subcategories: [
+                  { id: 'reg-deals', slug: 'deals', path: '/deals', name: 'Deals', nameTa: 'சலுகைகள்' },
+                  { id: 'reg-rfq', slug: 'rfq', path: '/rfq', name: 'RFQ', nameTa: 'கோரிக்கைகள்' },
+                  { id: 'reg-nfc', slug: 'nfc', path: '/nfc', name: 'NFC Card', nameTa: 'என்எஃப்சி கார்டு' }
+                ]
+              },
               { id: 'reg-wishes', slug: 'wishes', path: '/wishes', name: 'Wishes', nameTa: 'வாழ்த்து' },
               { id: 'reg-obituaries', slug: 'obituaries', path: '/obituaries', name: 'Obituaries', nameTa: 'இரங்கல்' },
               { id: 'reg-business', slug: 'business-studies', path: '/business-studies', name: 'Business', nameTa: 'வணிகம்' },
@@ -351,6 +373,14 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [allArticles, setAllArticles] = useState([]);
   const [allVideos, setAllVideos] = useState([]);
+  const [allBusinesses, setAllBusinesses] = useState([]);
+
+  const fallbackBusinesses = [
+    { id: 1, businessName: "AB's Restaurant", category: "Restaurant", addressLocality: "Anna Nagar, Chennai" },
+    { id: 2, businessName: "Sundaram Hospital", category: "Health & Medical", addressLocality: "T. Nagar, Chennai" },
+    { id: 3, businessName: "Headlines Salon", category: "Beauty & Salon", addressLocality: "Velachery, Chennai" },
+    { id: 4, businessName: "Gadget World", category: "Electronics", addressLocality: "Porur, Chennai" }
+  ];
 
   const fallbackArticles = [
     {
@@ -458,10 +488,23 @@ const Header = () => {
         });
         setAllVideos(translatedFallbackVideos);
       });
+
+    fetchApi('/directory')
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setAllBusinesses(data);
+        } else {
+          setAllBusinesses(fallbackBusinesses);
+        }
+      })
+      .catch(err => {
+        console.warn("Header normal search failed to load directory", err);
+        setAllBusinesses(fallbackBusinesses);
+      });
   }, [lang]);
 
   const getFilteredResults = () => {
-    if (!searchQuery.trim()) return { articles: [], videos: [] };
+    if (!searchQuery.trim()) return { articles: [], videos: [], businesses: [] };
     const query = searchQuery.toLowerCase().trim();
     
     const filteredArts = allArticles.filter(art => 
@@ -475,13 +518,20 @@ const Header = () => {
       (vid.title || '').toLowerCase().includes(query)
     );
 
+    const filteredBiz = allBusinesses.filter(b =>
+      (b.businessName || '').toLowerCase().includes(query) ||
+      (b.category || '').toLowerCase().includes(query) ||
+      (b.addressLocality || '').toLowerCase().includes(query)
+    );
+
     return {
       articles: filteredArts.slice(0, 5),
-      videos: filteredVids.slice(0, 3)
+      videos: filteredVids.slice(0, 3),
+      businesses: filteredBiz.slice(0, 4)
     };
   };
 
-  const { articles: searchArticles, videos: searchVideos } = getFilteredResults();
+  const { articles: searchArticles, videos: searchVideos, businesses: searchBusinesses } = getFilteredResults();
 
   useEffect(() => {
     const handleToggleDrawer = () => {
@@ -644,7 +694,6 @@ const Header = () => {
           background: '#FFFFFF',
           animation: 'live-dot-white-pulse 0.5s infinite alternate ease-in-out'
         }}></span>
-        <span style={{ letterSpacing: '0.5px' }}>{lang === 'en' ? 'LIVE' : 'லைவ்'}</span>
       </Link>
     </>
   );
@@ -1065,16 +1114,23 @@ const Header = () => {
                         {/* Nested Sub-dropdown Overlay */}
                         {sub.subcategories && sub.subcategories.length > 0 && (
                           <div className="nested-dropdown">
-                            {sub.subcategories.map(child => (
-                              <Link
-                                key={child.id}
-                                to={child.path || `/category/${child.slug}`}
-                                onClick={() => setActiveDropdown(null)}
-                                className="dropdown-nested-link"
-                              >
-                                {lang === 'en' ? getSubcatEn(child) : child.nameTa}
-                              </Link>
-                            ))}
+                            {sub.subcategories.map(child => {
+                              const isChildActive = location.pathname === child.path;
+                              return (
+                                <Link
+                                  key={child.id}
+                                  to={child.path || `/category/${child.slug}`}
+                                  onClick={() => setActiveDropdown(null)}
+                                  className={`dropdown-nested-link ${isChildActive ? 'active' : ''}`}
+                                  style={isChildActive ? {
+                                    background: theme === 'dark' ? '#334155' : '#EFF6FF',
+                                    color: 'var(--primary, #B3732A)'
+                                  } : {}}
+                                >
+                                  {lang === 'en' ? getSubcatEn(child) : child.nameTa}
+                                </Link>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
@@ -1157,24 +1213,27 @@ const Header = () => {
                       {/* Nested sub-subcategories (AI -> ChatGPT) */}
                       {sub.subcategories && sub.subcategories.length > 0 && (
                         <ul style={{ paddingLeft: '12px', listStyle: 'none', margin: '4px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {sub.subcategories.map(child => (
-                            <li key={child.id}>
-                              <Link
-                                to={`/category/${child.slug}`}
-                                onClick={onLinkClick}
-                                style={{
-                                  color: 'var(--text-muted)',
-                                  textDecoration: 'none',
-                                  fontSize: '12px',
-                                  fontWeight: '600',
-                                  display: 'block',
-                                  padding: '2px 0'
-                                }}
-                              >
-                                {lang === 'en' ? getSubcatEn(child) : child.nameTa}
-                              </Link>
-                            </li>
-                          ))}
+                          {sub.subcategories.map(child => {
+                            const isChildActive = location.pathname === child.path;
+                            return (
+                              <li key={child.id}>
+                                <Link
+                                  to={child.path || `/category/${child.slug}`}
+                                  onClick={onLinkClick}
+                                  style={{
+                                    color: isChildActive ? 'var(--primary, #B3732A)' : 'var(--text-muted, #71717A)',
+                                    textDecoration: 'none',
+                                    fontSize: '12px',
+                                    fontWeight: '600',
+                                    display: 'block',
+                                    padding: '2px 0'
+                                  }}
+                                >
+                                  {lang === 'en' ? getSubcatEn(child) : child.nameTa}
+                                </Link>
+                              </li>
+                            );
+                          })}
                         </ul>
                       )}
                     </li>
@@ -1314,12 +1373,48 @@ const Header = () => {
           overflowY: 'auto',
           padding: '12px 16px'
         }}>
-          {searchArticles.length === 0 && searchVideos.length === 0 ? (
+          {searchArticles.length === 0 && searchVideos.length === 0 && (!searchBusinesses || searchBusinesses.length === 0) ? (
             <div style={{ padding: '16px', textAlign: 'center', color: theme === 'dark' ? '#888888' : '#666666', fontSize: '14px' }}>
               {lang === 'en' ? 'No results found.' : 'தேடல் முடிவுகள் எதுவும் இல்லை.'}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {searchBusinesses && searchBusinesses.length > 0 && (
+                <div>
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                    {lang === 'en' ? 'Regional Directory' : 'வட்டார கோப்பகம்'}
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {searchBusinesses.map((biz) => (
+                      <Link
+                        key={biz.id}
+                        to="/directory"
+                        onClick={() => {
+                          setIsSearchOpen(false);
+                          setSearchQuery('');
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          textDecoration: 'none',
+                          color: theme === 'dark' ? '#ffffff' : '#1a1a1a',
+                          padding: '6px 8px',
+                          borderRadius: '6px',
+                          transition: 'background 0.2s',
+                          cursor: 'pointer'
+                        }}
+                        className="search-result-item"
+                      >
+                        <i className="fas fa-store" style={{ color: 'var(--primary, #B3732A)', flexShrink: 0 }}></i>
+                        <span style={{ fontSize: '13px', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {biz.businessName} - <span style={{ fontSize: '11px', color: '#888888' }}>{biz.category} ({biz.addressLocality})</span>
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
               {searchArticles.length > 0 && (
                 <div>
                   <h4 style={{ margin: '0 0 6px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>

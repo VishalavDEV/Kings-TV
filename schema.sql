@@ -403,3 +403,304 @@ CREATE TABLE IF NOT EXISTS `recommendations` (
     UNIQUE KEY `uk_user_rec_item` (`user_id`, `video_id`, `article_id`),
     INDEX `idx_rec_user_score` (`user_id`, `score` DESC)
 ) ENGINE=InnoDB COMMENT='Algorithmic recommended feeds computed per subscriber';
+
+
+CREATE TABLE IF NOT EXISTS obituary (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    deceased_name VARCHAR(200) NOT NULL,
+    photo_url VARCHAR(500) NOT NULL,
+    age TINYINT UNSIGNED NULL,
+    gender ENUM('MALE','FEMALE','OTHER') NULL,
+    date_of_birth DATE NULL,
+    date_of_passing DATE NOT NULL,
+    state_id INT NOT NULL,
+    district_id INT NOT NULL,
+    taluk_id INT NULL,
+    village_id INT NULL,
+    pincode VARCHAR(10) NULL,
+    latitude DECIMAL(10,8) NULL,
+    longitude DECIMAL(11,8) NULL,
+    religion_id INT NULL,
+    community_id INT NULL,
+    funeral_datetime DATETIME NOT NULL,
+    funeral_venue_address TEXT NOT NULL,
+    funeral_map_url VARCHAR(500) NULL,
+    family_contact_name VARCHAR(150) NOT NULL,
+    family_contact_phone VARCHAR(20) NOT NULL,
+    phone_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    poster_relationship ENUM('SELF','SPOUSE','SON','DAUGHTER','FATHER','MOTHER','BROTHER','SISTER','GRANDCHILD','RELATIVE','FRIEND','NEIGHBOUR','OTHER') NOT NULL,
+    biography_tribute TEXT NOT NULL,
+    frame_template_id INT NOT NULL,
+    tribute_count INT NOT NULL DEFAULT 0,
+    report_count INT NOT NULL DEFAULT 0,
+    status ENUM('PENDING','PUBLISHED','ARCHIVED','REJECTED') NOT NULL DEFAULT 'PENDING',
+    created_by BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+    is_deleted INT default 0,
+    INDEX idx_location(state_id,district_id,taluk_id,village_id),
+    INDEX idx_status(status),
+    INDEX idx_passing(date_of_passing),
+    INDEX idx_funeral(funeral_datetime),
+);
+
+CREATE TABLE IF NOT EXISTS obituary_gallery (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    obituary_id INT NOT NULL,
+    image_url VARCHAR(500) NOT NULL,
+    display_order TINYINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_deleted INT default 0,
+    CONSTRAINT fk_obituary_gallery
+        FOREIGN KEY (obituary_id)
+        REFERENCES obituary(obituary_id)
+        ON DELETE CASCADE,
+    UNIQUE KEY uk_obituary_photo(obituary_id,display_order)
+);
+
+CREATE TABLE IF NOT EXISTS obituary_tribute (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    obituary_id INT NOT NULL,
+    user_id BIGINT NULL,
+    device_id VARCHAR(255) NULL,
+    ip_address VARCHAR(45) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_deleted INT default 0,
+    CONSTRAINT fk_tribute_obituary
+        FOREIGN KEY (obituary_id)
+        REFERENCES obituary(obituary_id)
+        ON DELETE CASCADE,
+    UNIQUE KEY uk_user(obituary_id,user_id),
+    UNIQUE KEY uk_device(obituary_id,device_id)
+);
+
+CREATE TABLE obituary_report (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    obituary_id INT NOT NULL,
+    reported_by BIGINT NULL,
+    reason ENUM(
+        'SPAM',
+        'FAKE',
+        'WRONG_INFORMATION',
+        'OFFENSIVE',
+        'COPYRIGHT',
+        'OTHER'
+    ) NOT NULL,
+    remarks TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_deleted INT default 0,
+    CONSTRAINT fk_report_obituary
+        FOREIGN KEY (obituary_id)
+        REFERENCES obituary(obituary_id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE obituary_guestbook (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    obituary_id INT NOT NULL,
+    guest_name VARCHAR(150) NOT NULL,
+    guest_phone VARCHAR(20) NULL,
+    message TEXT NOT NULL,
+    is_approved BOOLEAN DEFAULT FALSE,
+    status ENUM(
+        'PENDING',
+        'APPROVED',
+        'REJECTED'
+    ) DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_guestbook_obituary
+        FOREIGN KEY (obituary_id)
+        REFERENCES obituary(obituary_id)
+        ON DELETE CASCADE,
+    is_deleted INT default 0,
+    INDEX idx_obituary(obituary_id),
+    INDEX idx_status(status)
+);
+
+CREATE TABLE obituary_frame_template (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    template_name VARCHAR(100) NOT NULL,
+    preview_image VARCHAR(500),
+    frame_image VARCHAR(500),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_deleted INT default 0,
+);
+
+
+CREATE TABLE job (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employer_user_id BIGINT NOT NULL,
+    company_name VARCHAR(200) NOT NULL,
+    company_logo VARCHAR(500),
+    job_title VARCHAR(200) NOT NULL,
+    category_id INT NOT NULL,
+    sub_category_id INT,
+    job_type ENUM(
+        'FULL_TIME',
+        'PART_TIME',
+        'CONTRACT',
+        'INTERNSHIP',
+        'WORK_FROM_HOME'
+    ) NOT NULL,
+    experience_required ENUM(
+        'FRESHER',
+        '1_3_YEARS',
+        '3_5_YEARS',
+        '5_PLUS_YEARS'
+    ) NOT NULL,
+    education_required ENUM(
+        'ANY',
+        '10TH',
+        '12TH',
+        'DIPLOMA',
+        'GRADUATE',
+        'POST_GRADUATE'
+    ) NOT NULL,
+    salary_min DECIMAL(12,2),
+    salary_max DECIMAL(12,2),
+    salary_type ENUM(
+        'MONTHLY',
+        'ANNUAL'
+    ) NOT NULL,
+    is_salary_negotiable BOOLEAN DEFAULT FALSE,
+    openings INT NOT NULL DEFAULT 1,
+    state_id INT NOT NULL,
+    district_id INT NOT NULL,
+    taluk_id INT,
+    village_id INT,
+    pincode VARCHAR(10),
+    is_remote BOOLEAN DEFAULT FALSE,
+    description TEXT NOT NULL,
+    responsibilities TEXT,
+    application_deadline DATE,
+    apply_mode ENUM(
+        'PORTAL',
+        'CALL_HR',
+        'WHATSAPP'
+    ) NOT NULL,
+    hr_contact_phone VARCHAR(20),
+    hr_email VARCHAR(150),
+    is_verified_employer BOOLEAN DEFAULT FALSE,
+    is_featured BOOLEAN DEFAULT FALSE,
+    status ENUM(
+        'ACTIVE',
+        'CLOSED',
+        'EXPIRED',
+        'REJECTED'
+    ) DEFAULT 'ACTIVE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+    is_deleted INT default 0,
+    INDEX idx_location(state_id,district_id,taluk_id),
+    INDEX idx_category(category_id),
+    INDEX idx_status(status),
+    INDEX idx_deadline(application_deadline)
+);
+
+
+CREATE TABLE job_skill (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    job_id INT NOT NULL,
+    skill_name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+    is_deleted INT default 0,
+    FOREIGN KEY(job_id)
+        REFERENCES job(job_id)
+        ON DELETE CASCADE,
+    INDEX idx_skill(skill_name)
+);
+
+CREATE TABLE job_seeker (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNIQUE NOT NULL,
+    full_name VARCHAR(150) NOT NULL,
+    photo_url VARCHAR(500),
+    phone VARCHAR(20) NOT NULL,
+    email VARCHAR(150),
+    phone_verified BOOLEAN DEFAULT FALSE,
+    dob DATE,
+    age INT,
+    gender ENUM(
+        'MALE',
+        'FEMALE',
+        'OTHER'
+    ),
+    state_id INT,
+    district_id INT,
+    taluk_id INT,
+    village_id INT,
+    willing_to_relocate BOOLEAN DEFAULT FALSE,
+    highest_qualification ENUM(
+        'ANY',
+        '10TH',
+        '12TH',
+        'DIPLOMA',
+        'GRADUATE',
+        'POST_GRADUATE'
+    ),
+    experience_years DECIMAL(4,1),
+    expected_salary DECIMAL(12,2),
+    preferred_job_type ENUM(
+        'FULL_TIME',
+        'PART_TIME',
+        'CONTRACT',
+        'INTERNSHIP',
+        'WORK_FROM_HOME'
+    ),
+    availability ENUM(
+        'IMMEDIATE',
+        '15_DAYS',
+        '1_MONTH',
+        'NOTICE_PERIOD'
+    ),
+    resume_file VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+    is_deleted INT default 0,
+);
+
+CREATE TABLE job_seeker_skill (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    seeker_id INT NOT NULL,
+    skill_name VARCHAR(100) NOT NULL,
+    FOREIGN KEY(seeker_id)
+        REFERENCES job_seeker(seeker_id)
+        ON DELETE CASCADE,
+    INDEX idx_skill(skill_name)
+);
+
+CREATE TABLE job_application (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    job_id INT NOT NULL,
+    seeker_id INT NOT NULL,
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM(
+        'APPLIED',
+        'VIEWED',
+        'SHORTLISTED',
+        'REJECTED',
+        'HIRED'
+    ) DEFAULT 'APPLIED',
+    cover_note TEXT,
+    resume_snapshot VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY(job_id)
+        REFERENCES job(job_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY(seeker_id)
+        REFERENCES job_seeker(seeker_id)
+        ON DELETE CASCADE,
+    UNIQUE KEY uk_job_application(job_id,seeker_id),
+    INDEX idx_status(status),
+    INDEX idx_job(job_id),
+    INDEX idx_seeker(seeker_id)
+);
