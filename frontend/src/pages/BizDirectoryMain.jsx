@@ -111,6 +111,51 @@ const BizDirectoryMain = () => {
       });
   };
 
+  const handleUploadPhoto = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const uploadRes = await fetchApi('/directory/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const imageUrl = uploadRes.url;
+
+      // Update the business coverUrl
+      const updatedBiz = {
+        ...selectedBiz,
+        coverUrl: imageUrl
+      };
+
+      // Call API to save this update
+      await fetchApi('/directory/saveUpdate', {
+        method: 'PUT',
+        body: JSON.stringify(updatedBiz)
+      });
+
+      // Update local states
+      setSelectedBiz(updatedBiz);
+      setBusinesses(prev => prev.map(b => b.id === selectedBiz.id ? updatedBiz : b));
+    } catch (err) {
+      console.warn("Failed to upload photo to server, using base64 preview", err);
+      // Fallback: use FileReader for local preview
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const updatedBiz = {
+          ...selectedBiz,
+          coverUrl: event.target.result
+        };
+        setSelectedBiz(updatedBiz);
+        setBusinesses(prev => prev.map(b => b.id === selectedBiz.id ? updatedBiz : b));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleCreateBusiness = (e) => {
     e.preventDefault();
     fetchApi('/directory', {
@@ -248,9 +293,6 @@ const BizDirectoryMain = () => {
       <section className="mb-12">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h2 style={{ fontSize: '18px', fontWeight: '850' }}>{lang === 'en' ? 'Browse Categories' : 'வகைகளை உலாவுக'}</h2>
-          <span style={{ fontSize: '12.5px', color: '#ef4444', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => setSelectedCategory('all')}>
-            {lang === 'en' ? 'View All Categories' : 'அனைத்து பிரிவுகள்'} &rarr;
-          </span>
         </div>
         
         <div className="biz-cat-grid">
@@ -353,22 +395,6 @@ const BizDirectoryMain = () => {
 
         {/* Right Column: Sidebar */}
         <div className="w-full lg:w-80 flex flex-col gap-6">
-          <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '16px', padding: '20px' }}>
-            <h3 style={{ fontSize: '14.5px', fontWeight: '850', color: '#1e293b', marginBottom: '12px' }}>
-              {lang === 'en' ? 'Why List Your Business?' : 'உங்கள் வணிகத்தை ஏன் இணைக்க வேண்டும்?'}
-            </h3>
-            <ul style={{ padding: 0, margin: '0 0 20px 0', listStyle: 'none', fontSize: '12px', color: '#64748b', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <li style={{ display: 'flex', gap: '8px' }}><i className="fas fa-check" style={{ color: '#10b981' }}></i> Get discovered by local customers</li>
-              <li style={{ display: 'flex', gap: '8px' }}><i className="fas fa-check" style={{ color: '#10b981' }}></i> Improve online presence & SEO</li>
-              <li style={{ display: 'flex', gap: '8px' }}><i className="fas fa-check" style={{ color: '#10b981' }}></i> Verified trust badge features</li>
-            </ul>
-            <button 
-              onClick={() => setShowAddModal(true)}
-              style={{ width: '100%', background: '#ef4444', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
-            >
-              + {lang === 'en' ? 'Register Business' : 'வணிகத்தைப் பதிவு செய்'}
-            </button>
-          </div>
 
           <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '16px', padding: '20px' }}>
             <h3 style={{ fontSize: '13.5px', fontWeight: '800', marginBottom: '12px' }}>Popular Locations</h3>
@@ -398,13 +424,26 @@ const BizDirectoryMain = () => {
             </div>
 
             <div className="modal-body" style={{ padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ height: '220px', borderRadius: '12px', backgroundSize: 'cover', backgroundPosition: 'center', backgroundImage: `url(${selectedBiz.coverUrl})` }}></div>
+              <div style={{ height: '220px', borderRadius: '12px', backgroundSize: 'cover', backgroundPosition: 'center', backgroundImage: `url(${selectedBiz.coverUrl || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600'})` }}></div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '12px', fontSize: '13px' }}>
-                <div><strong>Locality:</strong> {selectedBiz.addressLocality}</div>
-                <div><strong>Street:</strong> {selectedBiz.addressStreet}</div>
-                <div><strong>Timings:</strong> {selectedBiz.workingHours}</div>
-                <div><strong>Phone:</strong> {selectedBiz.phoneNumber}</div>
+              <div className="biz-details-info-map-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', background: '#f8fafc', padding: '16px', borderRadius: '12px', fontSize: '13px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'center' }}>
+                  <div><strong>Locality:</strong> {selectedBiz.addressLocality}</div>
+                  <div><strong>Street:</strong> {selectedBiz.addressStreet}</div>
+                  <div><strong>Timings:</strong> {selectedBiz.workingHours}</div>
+                  <div><strong>Phone:</strong> {selectedBiz.phoneNumber}</div>
+                </div>
+                <div style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid #cbd5e1', height: '150px' }}>
+                  <iframe 
+                    width="100%" 
+                    height="100%" 
+                    style={{ border: '0', display: 'block' }} 
+                    loading="lazy" 
+                    allowFullScreen 
+                    referrerPolicy="no-referrer-when-downgrade"
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedBiz.businessName + ', ' + (selectedBiz.addressStreet || '') + ', ' + selectedBiz.addressLocality)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                  ></iframe>
+                </div>
               </div>
 
               <div>
@@ -429,35 +468,47 @@ const BizDirectoryMain = () => {
               </div>
 
               {/* Add review form */}
-              <form onSubmit={submitReview} style={{ display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}>
+              <form onSubmit={submitReview} style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <input 
+                      type="text" 
+                      placeholder="Your Name" 
+                      value={newReviewName} 
+                      onChange={(e) => setNewReviewName(e.target.value)} 
+                      required 
+                      style={{ flexGrow: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: 'black', minWidth: '180px' }}
+                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#475569' }}>{lang === 'en' ? 'Rating:' : 'மதிப்பீடு:'}</span>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <i 
+                            key={star}
+                            className={star <= newReviewRating ? "fas fa-star" : "far fa-star"} 
+                            onClick={() => setNewReviewRating(star)}
+                            style={{ 
+                              fontSize: '22px', 
+                              color: '#fbbf24', 
+                              cursor: 'pointer',
+                              transition: 'transform 0.1s'
+                            }}
+                          ></i>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  
                   <input 
                     type="text" 
-                    placeholder="Your Name" 
-                    value={newReviewName} 
-                    onChange={(e) => setNewReviewName(e.target.value)} 
+                    placeholder="Write your review message..." 
+                    value={newReviewComment} 
+                    onChange={(e) => setNewReviewComment(e.target.value)} 
                     required 
-                    style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
+                    style={{ padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: 'black' }}
                   />
-                  <select 
-                    value={newReviewRating} 
-                    onChange={(e) => setNewReviewRating(parseInt(e.target.value))}
-                    style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                  >
-                    <option value="5">5 Stars</option>
-                    <option value="4">4 Stars</option>
-                    <option value="3">3 Stars</option>
-                  </select>
                 </div>
-                <input 
-                  type="text" 
-                  placeholder="Write your review message..." 
-                  value={newReviewComment} 
-                  onChange={(e) => setNewReviewComment(e.target.value)} 
-                  required 
-                  style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                />
-                <button type="submit" style={{ background: '#ef4444', color: 'white', border: 'none', padding: '10px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
+                <button type="submit" style={{ background: '#ef4444', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
                   Submit Review
                 </button>
               </form>
@@ -536,6 +587,44 @@ const BizDirectoryMain = () => {
                       placeholder="09:00 AM - 09:00 PM"
                       style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
                     />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label style={{ fontSize: '13px', fontWeight: 'bold' }}>{lang === 'en' ? 'Company Photo' : 'நிறுவன படம்'}</label>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '6px' }}>
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        try {
+                          const res = await fetchApi('/directory/upload', {
+                            method: 'POST',
+                            body: formData
+                          });
+                          setNewBizCover(res.url);
+                        } catch (err) {
+                          console.warn("Failed to upload photo, using base64 preview", err);
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            setNewBizCover(event.target.result);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      style={{ fontSize: '12px', color: '#64748b' }}
+                    />
+                    {newBizCover && (
+                      <img 
+                        src={newBizCover} 
+                        alt="Preview" 
+                        style={{ width: '60px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #cbd5e1' }} 
+                      />
+                    )}
                   </div>
                 </div>
 

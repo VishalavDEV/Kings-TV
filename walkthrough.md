@@ -570,7 +570,126 @@ We have fully refactored and rebuilt the user interfaces for the **NFC Business 
    - **Search Controls & Blue Hero Banner:** Advanced header search inputs and an indigo hero banner illustrating multiple-quotes comparison checkboxes ("Quote: ₹38,500" best price).
    - **Quick Categories Row:** Custom card buttons showing icons, category names, and RFQs count statistics.
    - **RFQ Listing Cards Feed:** Open/My RFQ filter tabs, RFQ rows with category header badges, title, description, specifications tags (quantity, budget range, target location), and quotes received counter with purple "View Quotes" actions.
-   - **Quick Actions & Stats Widgets:** Features post/browse shortcuts, RFQs posted and awarded stats summary grid, and a recent RFQ alert checklist.
+    - **Quick Actions & Stats Widgets:** Features post/browse shortcuts, RFQs posted and awarded stats summary grid, and a recent RFQ alert checklist.
 
+---
+
+# Walkthrough - Local Directory Nested Sub-dropdown
+
+We have successfully updated the header navigation dropdown menu to support a nested sub-dropdown for the **Local Directory** module:
+
+1. **Sub-Dropdown Restructuring:**
+   - Grouped and nested the three key regional pages (**Deals**, **RFQ**, and **NFC Card**) directly inside the **Local Directory** category object within [Header.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/components/Header.jsx).
+   - Removed them as flat, sibling items from the main dropdown list to improve organization and hierarchy.
+2. **Interactive Hover & Active Styling:**
+   - Modified desktop hover events to smoothly show the child sub-dropdown listing containing Deals, RFQ, and NFC Card.
+   - Implemented high-contrast active link styling, rendering the active item in the sub-dropdown list with a soft blue background (`#EFF6FF` in light mode, `#334155` in dark mode) and gold/brown text (`var(--primary, #B3732A)`), matching the mock guidelines perfectly.
+3. **Mobile Responsive Collapse Integration:**
+   - Updated the mobile vertical sidebar drawer menu to collapse child nodes under their parent directories.
+   - Preserved path resolutions so clicking child links redirects correctly to the Deals, RFQ, or NFC Card dashboard.
+
+## Verification
+- Verified that all pages and links build successfully with zero errors.
+- Confirmed visually via browser recordings that routing and state highlights resolve dynamically.
+
+---
+
+# Walkthrough - NFC Business Card Dashboard Redesign
+
+We have successfully redesigned the **NFC Business Card** dashboard ([NfcCardDashboard.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/NfcCardDashboard.jsx)) to match the provided mockup UI screen exactly:
+
+1. **Dashboard Header Section & Main Layout Integration:**
+   - Moved the `/nfc` route to the standard layout in `App.jsx` so it renders with the primary website Header (including the black logo bar, search, translator, theme switcher, LIVE button, user avatar, and navigation menu) and Footer, aligning it with pages like the main home app.
+   - Inserted a detailed title section at the top of the card component with a circular purple wifi/radar avatar icon, title **"NFC Business Card"**, and subtitle **"Manage your NFC card and tap-to-pay profile"**.
+   - Placed the "+ Request New Card" button on the top-right in purple theme branding.
+   - Added breadcrumbs navigation support at the top (`Home > Local Directory > NFC Card`).
+
+2. **Accurate Row/Column Grid Layout:**
+   - **Row 1:** Placed the **NFC Mockup Card** (black gold-crown premium card) and detailed metadata/status capsule (Status: Activated) on the left (spans 1 column), and stacked the **Card Dispatch Timeline** (Requested, Printing, Shipped, Activated) and **Linked Payment Account** details on the right (spans 2 columns).
+   - **Row 2:** Aligned the **Tap & Transaction Summary** metrics panel (4 cards side-by-side: Total Taps, Total Payments, Successful Payments, Today's Taps) on the left (spans 2 columns), and the **Quick Actions** list panel on the right (spans 1 column).
+   - **Row 3:** Renders the transaction history table containing detailed columns.
+
+3. **Bilingual Support & Interactive Forms:**
+   - Localized all card information and labels to dynamically support English and Tamil language switcher states.
+   - Handled modal bindings for "Update Payment Details" to link merchant UPI payee accounts correctly.
+
+## Screenshots
+
+![NFC Page Website Header View](file:///C:/Users/vishal%20AV/.gemini/antigravity-ide/brain/6b2ea00b-0b24-4230-a37e-b352cdd5b2f5/nfc_card_timeline_1784150272691.png)
+
+![NFC Dashboard UI Layout](file:///C:/Users/vishal%20AV/.gemini/antigravity-ide/brain/6b2ea00b-0b24-4230-a37e-b352cdd5b2f5/nfc_card_timeline_1784150272691.png)
+
+![Update UPI Modal](file:///C:/Users/vishal%20AV/.gemini/antigravity-ide/brain/6b2ea00b-0b24-4230-a37e-b352cdd5b2f5/nfc_payment_modal_1784148543408.png)
+
+---
+
+# Walkthrough - Deals Dashboard Redesign
+
+We have successfully redesigned the **Deals Listing** page ([DealsListing.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/DealsListing.jsx)) to match the provided mockup UI screen exactly:
+
+1. **3-Column Dashboard Layout:**
+   - **Column 1 (Left Sidebar Filters):**
+     - Renders category, location, and distance dropdown selection boxes.
+     - Adds checkboxes for Discount Types (`% Off`, `Flat Amount Off`, `Buy One Get One`, `Combo Offers`).
+     - Includes a price slider from `₹0` to `₹50,000+` and an expiry date filter select.
+     - Features an "Apply Filters" button and a "Clear All" reset link.
+   - **Column 2-3 (Center Main Body):**
+     - Renders a purple hero promotion banner with a flame "Deal of the Day" badge, bold titles, and a vector illustration of gift packages and shopping bags.
+     - Adds pill filter tabs row (`All Deals`, `Expiring Soon`, etc.).
+     - Populates a grid of 6 deals cards featuring custom category tags, heart favorite icons, titles, merchants, locality tags, expiry clock badges, and bookmark icons.
+   - **Column 4 (Right Sidebar):**
+     - Renders a "Featured Deal" card with an active countdown timer clock showing Days, Hours, Minutes, and Seconds.
+     - Displays a list of "Top Categories" with colored vector circular icons next to category names.
+     - Displays an "Are you a business?" indigo card with a vector shop icon and a "Create a Deal" button trigger.
+
+2. **Functional Header Search Binding:**
+   - Wired up the sticky header search input inside `DashboardLayout.jsx` to dynamically dispatch search events to the `DealsListing.jsx` search state so that typing search terms in the dashboard header filters the catalog cards list instantly.
+
+## Screenshots
+
+![Deals Top View Mockup Match](file:///C:/Users/vishal%20AV/.gemini/antigravity-ide/brain/6b2ea00b-0b24-4230-a37e-b352cdd5b2f5/deals_page_top_layout_1784152347415.png)
+
+![Deals Cards Grid Scroll View](file:///C:/Users/vishal%20AV/.gemini/antigravity-ide/brain/6b2ea00b-0b24-4230-a37e-b352cdd5b2f5/deals_page_layout_1784152343278.png)
+
+---
+
+# Walkthrough - RFQ Dashboard Redesign
+
+We have successfully redesigned the **RFQ Marketplace** page ([RfqMarketplace.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/RfqMarketplace.jsx)) to match the provided mockup UI screen exactly:
+
+1. **Dashboard Grid Layout:**
+   - **Left Main Section (spans 3/4 width):**
+     - Renders a deep indigo hero banner featuring verified business badges and an SVG illustration of an RFQ clipboard showing active quote values (`₹45,000`, `₹38,500`, and `₹50,200`).
+     - Adds a floating Search & Category/Location filter card overlapping the bottom of the hero banner.
+     - Places a horizontal category scrollable row containing customized card buttons for construction, printing, fabrication, events, IT services, and more.
+     - Organizes a list view of open requirements with layout blocks displaying categories, titles, detailed requirements, boxes with units/project counts, target budgets, localities, validities, clock countdowns, quotes counts, and check quotes buttons.
+   - **Right Sidebar Section (spans 1/4 width):**
+     - Renders a "Quick Actions" panel with buttons for "Post a New RFQ" and "Browse Open RFQs".
+     - Displays an "RFQ Stats" grid panel for RFQs Posted, Quotes Received, Awarded, and In Progress.
+     - Populates a "Recent RFQs" list containing itemized bids count summaries and post timestamps.
+     - Adds a promotional card targeting businesses with a store illustration vector.
+
+## Screenshots
+
+![RFQ Marketplace Layout Match](file:///C:/Users/vishal%20AV/.gemini/antigravity-ide/brain/6b2ea00b-0b24-4230-a37e-b352cdd5b2f5/rfq_page_layout_1784152756812.png)
+
+---
+
+# Walkthrough - Main Website Header Integration for Deals & RFQ
+
+We have successfully integrated the **Deals Listing** and **RFQ Marketplace** pages to use the primary website layout:
+
+1. **Header & Footer Integration:**
+   - Modified `App.jsx` to remove the custom dashboard wrapper for `/deals` and `/rfq`, rendering them instead inside the standard layout path list.
+   - They now display the black main header bar (with hamburger menu, gold KINGS logo, search, translator, theme switcher, LIVE button, and user avatar) and the white navigation bar (Home, Politics, Business, Sports, Cinema, Technology, Local Directory, International, Videos, Web Stories) matching the Home page and the NFC page exactly.
+
+2. **Centered Spacing:**
+   - Added standard padding container class rules (`container mx-auto px-4 py-8`) to both `.deals-main-dashboard` and `.rfq-main-dashboard` page roots so that the inner grids and content align cleanly under the main website header.
+
+## Screenshots
+
+![Deals page with website header](file:///C:/Users/vishal%20AV/.gemini/antigravity-ide/brain/6b2ea00b-0b24-4230-a37e-b352cdd5b2f5/deals_page_top_1784153323242.png)
+
+![RFQ page with website header](file:///C:/Users/vishal%20AV/.gemini/antigravity-ide/brain/6b2ea00b-0b24-4230-a37e-b352cdd5b2f5/rfq_page_top_1784153334671.png)
 
 

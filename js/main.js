@@ -576,7 +576,7 @@ document.addEventListener('DOMContentLoaded', function() {
     "சர்வதேசம்": "International",
     "வீдео": "Video",
     "வெப் ஸ்டோரிஸ்": "Web Stories",
-    "நம்ம ஊர்": "Local Directory",
+    "நம்ம ஊர்": "Regional",
     "செய்திகள்": "News",
     "வாழ்த்து": "Wishes",
     "இரங்கல்": "Obituaries",
@@ -1016,8 +1016,8 @@ document.addEventListener('DOMContentLoaded', function() {
     "ட்ரெண்டிங் News": "Trending News",
 
     // subpages: directory.html
-    "நம்ம ஊர் வணிகக் கோப்பகம் - KING 24x7 | Local Business Directory": "Local Business Directory - KING 24x7",
-    "நம்ம ஊர் வணிகக் கோப்பகம்": "Local Business Directory",
+    "நம்ம ஊர் வணிகக் கோப்பகம் - KING 24x7 | Local Business Directory": "Regional Business Directory - KING 24x7",
+    "நம்ம ஊர் வணிகக் கோப்பகம்": "Regional Business Directory",
     "உள்ளூர் வணிகங்கள், அவசர உதவிகள், மருத்துவமனைகள், பிளம்பர்கள் மற்றும் சேவை வழங்குநர்களின் தொடர்பு விபரங்கள் தமிழில்.": "Local businesses, emergency services, hospitals, plumbers and service providers contact details in Tamil.",
     "உள்ளூர் வணிகங்கள் மற்றும் சேவை வழங்குநர்களின் முழுமையான விபரங்கள்": "Complete details of local businesses and service providers",
     "வகைப்பாடுகள்": "Categories",

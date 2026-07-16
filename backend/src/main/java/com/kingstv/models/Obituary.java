@@ -101,6 +101,9 @@ public class Obituary {
     @Column(nullable = false)
     private String status = "published";
 
+    @Column(name = "is_celebrity")
+    private Boolean isCelebrity = false;
+
     @Column(name = "created_by")
     private Long createdBy;
 
@@ -249,4 +252,7 @@ public class Obituary {
 
     public Boolean getDeleted() { return deleted; }
     public void setDeleted(Boolean deleted) { this.deleted = deleted; }
+
+    public Boolean getIsCelebrity() { return isCelebrity; }
+    public void setIsCelebrity(Boolean isCelebrity) { this.isCelebrity = isCelebrity; }
 }

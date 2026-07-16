@@ -7,8 +7,23 @@ const RfqMarketplace = () => {
   const { lang } = useContext(LanguageContext);
   const { theme } = useContext(ThemeContext);
 
+  const defaultRfqs = [
+    {
+      rfq: { id: 1, title: "Need 500 Custom Printed T-Shirts", category: "Printing", description: "High quality cotton t-shirts with front and back print. Sizes: S to XXL.", quantity: 500, budget: "50,000 - 80,000", location: "Chennai, TN", deadline: "2026-05-25T23:59:59", status: "open" },
+      quotesCount: 12
+    },
+    {
+      rfq: { id: 2, title: "Interior Work for 3BHK Apartment", category: "Interior", description: "Modular kitchen, wardrobes, false ceiling and painting work.", quantity: 1, budget: "2,00,000 - 3,50,000", location: "Tambaram, Chennai", deadline: "2026-05-28T23:59:59", status: "open" },
+      quotesCount: 8
+    },
+    {
+      rfq: { id: 3, title: "AC Maintenance for 10 Offices", category: "Services", description: "Quarterly maintenance for 10 split AC units in office spaces.", quantity: 10, budget: "15,000 - 25,000", location: "Guindy, Chennai", deadline: "2026-05-26T23:59:59", status: "open" },
+      quotesCount: 5
+    }
+  ];
+
   // RFQ Lists State
-  const [rfqs, setRfqs] = useState([]);
+  const [rfqs, setRfqs] = useState(defaultRfqs);
   const [loading, setLoading] = useState(true);
   const [selectedRfq, setSelectedRfq] = useState(null);
   const [quotesList, setQuotesList] = useState([]);
@@ -39,30 +54,16 @@ const RfqMarketplace = () => {
     setLoading(true);
     fetchApi('/rfq')
       .then(data => {
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           setRfqs(data);
         } else {
-          setRfqs([]);
+          setRfqs(defaultRfqs);
         }
         setLoading(false);
       })
       .catch(() => {
         setLoading(false);
-        // Fallbacks matching Mockup 4
-        setRfqs([
-          {
-            rfq: { id: 1, title: "Need 500 Custom Printed T-Shirts", category: "Printing", description: "High quality cotton t-shirts with front and back print. Sizes: S to XXL.", quantity: 500, budget: "50,000 - 80,000", location: "Chennai, TN", deadline: "2026-05-25T23:59:59", status: "open" },
-            quotesCount: 12
-          },
-          {
-            rfq: { id: 2, title: "Interior Work for 3BHK Apartment", category: "Interior", description: "Modular kitchen, wardrobes, false ceiling and painting work.", quantity: 1, budget: "2,00,000 - 3,50,000", location: "Tambaram, Chennai", deadline: "2026-05-28T23:59:59", status: "open" },
-            quotesCount: 8
-          },
-          {
-            rfq: { id: 3, title: "AC Maintenance for 10 Offices", category: "Services", description: "Quarterly maintenance for 10 split AC units in office spaces.", quantity: 10, budget: "15,000 - 25,000", location: "Guindy, Chennai", deadline: "2026-05-26T23:59:59", status: "open" },
-            quotesCount: 5
-          }
-        ]);
+        setRfqs(defaultRfqs);
       });
   };
 
@@ -203,73 +204,219 @@ const RfqMarketplace = () => {
   ];
 
   return (
-    <div className="rfq-main-dashboard">
-      
-      {/* 1. HEADER BANNER */}
-      <div className="relative rounded-3xl overflow-hidden p-6 md:p-8 mb-8 bg-gradient-to-r from-violet-600 to-indigo-600 text-white flex flex-col md:flex-row justify-between items-center gap-6 shadow-xl">
-        <div className="space-y-2">
-          <span className="bg-white/20 backdrop-blur-md text-xs font-bold px-3.5 py-1 rounded-full uppercase tracking-wider">
-            RFQ - Request for Quote
-          </span>
-          <h2 className="text-2xl md:text-3xl font-black">Get the best quotes from verified businesses</h2>
-          <p className="text-xs opacity-90">Post your requirements, compare custom proposals, save time &amp; money.</p>
-        </div>
-        <button 
-          onClick={() => setShowRfqModal(true)}
-          className="bg-white text-indigo-600 font-bold px-6 py-3 rounded-xl text-xs shadow-md transition transform hover:scale-105"
-        >
-          Post a New RFQ
-        </button>
-      </div>
-
-      {/* SEARCH AND FILTERS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-gray-500/5 p-3 rounded-2xl border border-gray-700/20 mb-8 text-xs text-gray-800">
-        <div className="flex items-center px-3 bg-white/10 rounded-lg">
-          <i className="fas fa-search text-gray-400 mr-2"></i>
-          <input 
-            type="text" 
-            placeholder="Search RFQs..." 
-            className="w-full bg-transparent p-2 focus:outline-none"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <select 
-          className="bg-white/10 border border-gray-700/20 p-2.5 rounded-lg focus:outline-none"
-          value={selectedCat}
-          onChange={(e) => setSelectedCat(e.target.value)}
-        >
-          <option value="all">All Categories</option>
-          <option value="Printing">Printing</option>
-          <option value="Construction">Construction</option>
-          <option value="Fabrication">Fabrication</option>
-          <option value="Events">Events</option>
-          <option value="Services">Services</option>
-        </select>
-        <select 
-          className="bg-white/10 border border-gray-700/20 p-2.5 rounded-lg focus:outline-none"
-          value={selectedLoc}
-          onChange={(e) => setSelectedLoc(e.target.value)}
-        >
-          <option value="all">All Locations</option>
-          <option value="Chennai">Chennai</option>
-          <option value="TN">Tamil Nadu</option>
-        </select>
-      </div>
-
-      <div className="flex flex-col lg:flex-row gap-8">
+    <div className="container mx-auto px-4 py-8 rfq-main-dashboard text-slate-800 dark:text-slate-100" style={{ paddingBottom: '60px' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         
-        {/* RFQ CARDS COLUMN (Column 1) */}
-        <div className="flex-1 space-y-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Open Requirements</h2>
-            <div className="flex gap-2 text-xs">
-              <button onClick={() => setSelectedCat('all')} className="px-3.5 py-1.5 rounded-lg border border-gray-700/20 bg-red-600 text-white font-bold">Open RFQs</button>
-              <button className="px-3.5 py-1.5 rounded-lg border border-gray-700/20 font-medium">Shortlisted</button>
-              <button className="px-3.5 py-1.5 rounded-lg border border-gray-700/20 font-medium">Awarded</button>
+        {/* COLUMN 1-3: Left Main section */}
+        <div className="lg:col-span-3 flex flex-col gap-6">
+          
+          {/* Hero Banner Card */}
+          <div className="relative rounded-3xl overflow-visible p-6 md:p-8 bg-gradient-to-r from-[#0f172a] via-[#1e1b4b] to-[#312e81] text-white flex justify-between items-center gap-6 shadow-xl min-h-[220px]">
+            <div className="space-y-4 max-w-md relative z-10">
+              <h2 className="text-2xl md:text-3xl font-extrabold leading-tight">Get the best quotes<br/>from <span className="text-[#6366f1]">verified businesses</span></h2>
+              <div className="flex flex-col gap-2.5 text-xs text-gray-300">
+                <div className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded bg-white/10 flex items-center justify-center text-indigo-400">
+                    <i className="fas fa-user-check text-[10px]"></i>
+                  </span>
+                  <div>
+                    <span className="font-bold text-white block">Verified Businesses</span>
+                    <span className="text-[10px] text-gray-400">KYC verified &amp; trusted</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded bg-white/10 flex items-center justify-center text-indigo-400">
+                    <i className="fas fa-balance-scale text-[10px]"></i>
+                  </span>
+                  <div>
+                    <span className="font-bold text-white block">Compare Quotes</span>
+                    <span className="text-[10px] text-gray-400">Choose the best deal</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded bg-white/10 flex items-center justify-center text-indigo-400">
+                    <i className="fas fa-piggy-bank text-[10px]"></i>
+                  </span>
+                  <div>
+                    <span className="font-bold text-white block">Save Time &amp; Money</span>
+                    <span className="text-[10px] text-gray-400">Competitive pricing</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Mockup Clipboard Quote Illustration */}
+            <div className="hidden md:flex relative z-10 w-48 h-44 items-center justify-center">
+              <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-2xl">
+                <rect x="50" y="30" width="100" height="140" rx="10" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="2"/>
+                <rect x="80" y="18" width="40" height="16" rx="4" fill="#94a3b8" />
+                <text x="100" y="55" fill="#312e81" fontSize="13" fontWeight="900" textAnchor="middle">RFQ</text>
+                <circle cx="130" cy="50" r="8" fill="#fbbf24"/>
+                <path d="M128,47 L132,53" stroke="white" strokeWidth="1.5" />
+                <rect x="30" y="80" width="60" height="28" rx="6" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1.5" />
+                <text x="35" y="92" fill="#64748b" fontSize="7" fontWeight="bold">Quote</text>
+                <text x="35" y="102" fill="#22c55e" fontSize="8" fontWeight="bold">₹45,000</text>
+                <rect x="65" y="112" width="70" height="32" rx="6" fill="#f5f3ff" stroke="#c084fc" strokeWidth="2" />
+                <text x="71" y="125" fill="#7c3aed" fontSize="8" fontWeight="bold">Quote</text>
+                <text x="71" y="137" fill="#4f46e5" fontSize="10" fontWeight="950">₹38,500</text>
+                <rect x="110" y="78" width="60" height="28" rx="6" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1.5" />
+                <text x="115" y="90" fill="#64748b" fontSize="7" fontWeight="bold">Quote</text>
+                <text x="115" y="100" fill="#64748b" fontSize="8" fontWeight="bold">₹50,200</text>
+              </svg>
             </div>
           </div>
 
+          {/* Floating Search Card */}
+          <div className={`p-4 rounded-2xl border shadow-lg -mt-8 relative z-20 mx-4 ${
+            theme === 'dark' ? 'bg-[#1f2937] border-gray-800' : 'bg-white border-gray-100'
+          }`}>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+              <div className="md:col-span-2 flex items-center px-3 bg-gray-50 dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800">
+                <i className="fas fa-search text-gray-400 mr-2.5"></i>
+                <input 
+                  type="text" 
+                  placeholder="Search RFQ by title, category, or keyword..." 
+                  className="w-full bg-transparent py-2.5 text-xs focus:outline-none text-gray-800 dark:text-white"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              
+              <div className="relative">
+                <select 
+                  value={selectedCat}
+                  onChange={(e) => setSelectedCat(e.target.value)}
+                  className={`w-full p-2.5 pr-8 rounded-xl border text-xs focus:outline-none appearance-none cursor-pointer ${
+                    theme === 'dark' ? 'bg-[#111827] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'
+                  }`}
+                >
+                  <option value="all">All Categories</option>
+                  <option value="Printing">Printing</option>
+                  <option value="Interior">Interior</option>
+                  <option value="Services">Services</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-450">
+                  <i className="fas fa-chevron-down text-[8px]"></i>
+                </div>
+              </div>
+
+              <div className="relative">
+                <select 
+                  value={selectedLoc}
+                  onChange={(e) => setSelectedLoc(e.target.value)}
+                  className={`w-full p-2.5 pr-8 rounded-xl border text-xs focus:outline-none appearance-none cursor-pointer ${
+                    theme === 'dark' ? 'bg-[#111827] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'
+                  }`}
+                >
+                  <option value="all">All Locations</option>
+                  <option value="Chennai">Chennai</option>
+                  <option value="TN">Tamil Nadu</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-450">
+                  <i className="fas fa-chevron-down text-[8px]"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Categories Row */}
+          <div className="flex gap-3 overflow-x-auto pb-1 mt-2 scrollbar-none">
+            <button 
+              onClick={() => { setSelectedCat('all'); setSelectedLoc('all'); }}
+              className="p-3 rounded-xl border-2 border-[#6366f1] bg-[#f5f3ff] text-left min-w-[120px] cursor-pointer"
+            >
+              <h4 className="font-extrabold text-[11px] text-[#6366f1]">All Categories</h4>
+              <p className="text-[9px] text-[#a78bfa] font-bold mt-0.5">All Types</p>
+            </button>
+            
+            <button onClick={() => setSelectedCat('Construction')} className="p-3 rounded-xl border border-gray-150 bg-white hover:bg-gray-50 text-left min-w-[120px] cursor-pointer flex items-start gap-2.5">
+              <span className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500 mt-0.5">
+                <i className="fas fa-building text-xs"></i>
+              </span>
+              <div>
+                <h4 className="font-extrabold text-[11px] text-gray-755">Construction</h4>
+                <p className="text-[9px] text-gray-400 font-bold mt-0.5">125 RFQs</p>
+              </div>
+            </button>
+
+            <button onClick={() => setSelectedCat('Printing')} className="p-3 rounded-xl border border-gray-150 bg-white hover:bg-gray-50 text-left min-w-[120px] cursor-pointer flex items-start gap-2.5">
+              <span className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 mt-0.5">
+                <i className="fas fa-print text-xs"></i>
+              </span>
+              <div>
+                <h4 className="font-extrabold text-[11px] text-gray-755">Printing</h4>
+                <p className="text-[9px] text-gray-400 font-bold mt-0.5">84 RFQs</p>
+              </div>
+            </button>
+
+            <button onClick={() => setSelectedCat('Fabrication')} className="p-3 rounded-xl border border-gray-150 bg-white hover:bg-gray-50 text-left min-w-[120px] cursor-pointer flex items-start gap-2.5">
+              <span className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500 mt-0.5">
+                <i className="fas fa-tools text-xs"></i>
+              </span>
+              <div>
+                <h4 className="font-extrabold text-[11px] text-gray-755">Fabrication</h4>
+                <p className="text-[9px] text-gray-400 font-bold mt-0.5">67 RFQs</p>
+              </div>
+            </button>
+
+            <button onClick={() => setSelectedCat('Events')} className="p-3 rounded-xl border border-gray-150 bg-white hover:bg-gray-50 text-left min-w-[120px] cursor-pointer flex items-start gap-2.5">
+              <span className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center text-pink-500 mt-0.5">
+                <i className="fas fa-birthday-cake text-xs"></i>
+              </span>
+              <div>
+                <h4 className="font-extrabold text-[11px] text-gray-755">Events</h4>
+                <p className="text-[9px] text-gray-400 font-bold mt-0.5">53 RFQs</p>
+              </div>
+            </button>
+
+            <button onClick={() => setSelectedCat('Services')} className="p-3 rounded-xl border border-gray-150 bg-white hover:bg-gray-50 text-left min-w-[120px] cursor-pointer flex items-start gap-2.5">
+              <span className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500 mt-0.5">
+                <i className="fas fa-laptop text-xs"></i>
+              </span>
+              <div>
+                <h4 className="font-extrabold text-[11px] text-gray-755">IT Services</h4>
+                <p className="text-[9px] text-gray-400 font-bold mt-0.5">41 RFQs</p>
+              </div>
+            </button>
+
+            <button onClick={() => alert("Opening all marketplace categories...")} className="p-3 rounded-xl border border-gray-150 bg-white hover:bg-gray-50 text-left min-w-[100px] cursor-pointer flex items-center justify-center gap-1">
+              <span className="font-extrabold text-[11px] text-gray-600">More</span>
+              <i className="fas fa-chevron-right text-[10px] text-gray-400"></i>
+            </button>
+          </div>
+
+          {/* Tab List Header */}
+          <div className="flex justify-between items-center text-xs mt-4">
+            <div className="flex gap-2">
+              {['Open RFQs', 'My RFQs', 'Quotes Received', 'Closed / Awarded'].map((t, idx) => (
+                <button 
+                  key={idx} 
+                  className={`px-4 py-2.5 rounded-xl font-bold border transition whitespace-nowrap cursor-pointer ${
+                    t === 'Open RFQs' 
+                      ? 'bg-[#f5f3ff] border-[#ddd6fe]/60 text-[#7c3aed]' 
+                      : 'bg-white border-gray-150 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <span className="text-gray-400 font-bold">Sort by:</span>
+                <select className="bg-transparent border-0 font-extrabold text-gray-700 dark:text-gray-300 focus:outline-none cursor-pointer">
+                  <option>Latest</option>
+                  <option>Budget: High to Low</option>
+                  <option>Quotes: Most to Least</option>
+                </select>
+              </div>
+              <button className="px-3 py-2 rounded-xl border border-gray-150 bg-white hover:bg-gray-50 font-bold flex items-center gap-1.5 cursor-pointer">
+                <i className="fas fa-sliders-h text-[11px] text-gray-500"></i> Filters
+              </button>
+            </div>
+          </div>
+
+          {/* List of RFQs */}
           {loading ? (
             <div className="space-y-4">
               {[1, 2, 3].map(n => (
@@ -277,90 +424,274 @@ const RfqMarketplace = () => {
               ))}
             </div>
           ) : filteredRfqs.length === 0 ? (
-            <div className="text-center py-16 rounded-3xl border-2 border-dashed border-gray-700/20">
-              <i className="fas fa-file-signature text-4xl text-gray-500 mb-4"></i>
-              <h3 className="text-lg font-bold mb-2">No RFQs posted yet</h3>
-              <p className="text-sm text-gray-500">Post your requirement to get custom quotes from verified partners.</p>
+            <div className="text-center py-16 rounded-3xl border-2 border-dashed border-gray-200">
+              <i className="fas fa-file-signature text-4xl text-gray-300 mb-4"></i>
+              <h3 className="text-lg font-bold mb-2">No RFQs found</h3>
+              <p className="text-xs text-gray-400">Try adjusting your filters or search query.</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredRfqs.map(item => (
-                <div 
-                  key={item.rfq.id}
-                  onClick={() => handleRfqClick(item)}
-                  className={`p-5 rounded-2xl border cursor-pointer transition transform hover:-translate-y-0.5 hover:shadow-lg ${
-                    theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-200'
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-[10px] uppercase font-bold text-red-500">{item.rfq.category}</span>
-                    <span className="bg-green-600/10 text-green-500 text-[10px] px-2.5 py-0.5 rounded-full font-bold capitalize">
-                      {item.rfq.status}
-                    </span>
+              {filteredRfqs.map(item => {
+                const r = item.rfq;
+                const isPrinting = r.category.toLowerCase() === 'printing';
+                const isInterior = r.category.toLowerCase() === 'interior';
+                
+                // Custom images mapping
+                let bannerImg = 'https://images.unsplash.com/photo-1562157873-818bc0726f68?w=300';
+                let labelBg = 'bg-purple-100 text-purple-700';
+                if (isInterior) {
+                  bannerImg = 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=300';
+                  labelBg = 'bg-indigo-100 text-indigo-700';
+                } else if (r.category.toLowerCase() === 'services') {
+                  bannerImg = 'https://images.unsplash.com/photo-1621905252507-b354bc25edac?w=300';
+                  labelBg = 'bg-blue-100 text-blue-700';
+                }
+
+                return (
+                  <div 
+                    key={r.id}
+                    onClick={() => handleRfqClick(item)}
+                    className={`p-4 rounded-2xl border transition shadow-sm hover:shadow-md cursor-pointer flex flex-col md:flex-row justify-between gap-4 ${
+                      theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-100'
+                    }`}
+                  >
+                    <div className="flex gap-4 flex-1">
+                      <div className="w-28 h-28 rounded-xl bg-cover bg-center flex-shrink-0" style={{ backgroundImage: `url(${bannerImg})` }}></div>
+                      <div className="space-y-2 flex-1">
+                        <div className="flex justify-between items-start">
+                          <span className={`text-[8px] font-extrabold uppercase px-2 py-0.5 rounded ${labelBg}`}>
+                            {r.category}
+                          </span>
+                          <button 
+                            type="button" 
+                            onClick={(e) => { e.stopPropagation(); alert("Saved RFQ!"); }}
+                            className="text-gray-400 hover:text-[#6366f1] bg-transparent border-0 cursor-pointer p-0"
+                          >
+                            <i className="far fa-bookmark text-xs"></i>
+                          </button>
+                        </div>
+                        <h4 className="font-extrabold text-xs text-gray-850 dark:text-white mt-1">{r.title}</h4>
+                        <p className="text-[10px] text-gray-405 leading-relaxed line-clamp-2 h-7">{r.description}</p>
+                        
+                        <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[9.5px] text-gray-400 font-bold border-t border-gray-100 dark:border-gray-800/10 pt-2">
+                          <span className="flex items-center gap-1 text-gray-700 dark:text-gray-300">
+                            <i className="fas fa-box text-indigo-500"></i> {r.quantity} {r.category === 'Interior' ? 'Project' : 'Units'}
+                          </span>
+                          <span className="flex items-center gap-1 text-gray-700 dark:text-gray-300">
+                            <i className="fas fa-wallet text-indigo-500"></i> ₹{r.budget}
+                          </span>
+                          <span className="flex items-center gap-1 text-gray-700 dark:text-gray-300">
+                            <i className="fas fa-map-marker-alt text-indigo-500"></i> {r.location}
+                          </span>
+                        </div>
+                        <div className="flex gap-4 text-[9px] text-red-500 font-bold">
+                          <span className="flex items-center gap-1"><i className="far fa-clock"></i> Response by {new Date(r.deadline).getDate()} {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][new Date(r.deadline).getMonth()]} {new Date(r.deadline).getFullYear()}</span>
+                          <span className="text-gray-400 flex items-center gap-1"><i className="far fa-user"></i> Posted {r.id === 1 ? '2 hours ago' : r.id === 2 ? '5 hours ago' : '1 day ago'}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Right hand quotes summary */}
+                    <div className="flex flex-row md:flex-col justify-between md:justify-center items-center text-center px-4 md:border-l border-gray-100 dark:border-gray-855/10 min-w-[120px]">
+                      <div>
+                        <h3 className="text-lg font-black text-slate-800 dark:text-white leading-none">{item.quotesCount}</h3>
+                        <p className="text-[9px] text-gray-400 uppercase tracking-wider font-bold mt-1">Quotes Received</p>
+                      </div>
+                      <button className="mt-3 py-2 px-4 rounded-xl border border-[#6366f1]/20 text-[#6366f1] hover:bg-[#6366f1] hover:text-white text-[10px] font-bold transition bg-transparent cursor-pointer">
+                        View Quotes
+                      </button>
+                    </div>
                   </div>
-                  <h3 className="font-extrabold text-sm md:text-md mb-2">{item.rfq.title}</h3>
-                  <p className="text-xs text-gray-500 mb-4 line-clamp-2">{item.rfq.description}</p>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[10px] text-gray-500 border-t border-gray-800/10 pt-3">
-                    <div>
-                      <span className="block text-gray-400 uppercase font-semibold">Quantity</span>
-                      <span className="font-bold text-xs">{item.rfq.quantity} Units</span>
-                    </div>
-                    <div>
-                      <span className="block text-gray-400 uppercase font-semibold">Estimated Budget</span>
-                      <span className="font-bold text-xs">₹{item.rfq.budget}</span>
-                    </div>
-                    <div>
-                      <span className="block text-gray-400 uppercase font-semibold">Bids Count</span>
-                      <span className="font-bold text-xs text-indigo-500">{item.quotesCount} proposals</span>
-                    </div>
-                    <div className="text-right">
-                      <button className="text-red-500 hover:underline font-bold text-xs">View Quotes &rarr;</button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
+
+          {/* Load More Button */}
+          <button className="w-full py-3 bg-white hover:bg-gray-50 border border-gray-150 text-gray-600 font-bold text-xs rounded-2xl flex items-center justify-center gap-2 transition cursor-pointer shadow-sm">
+            Load More RFQs <i className="fas fa-chevron-down text-[10px]"></i>
+          </button>
+
         </div>
 
-        {/* STATS & SIDEBAR INFO (Column 2) */}
-        <div className="w-full lg:w-80 flex-shrink-0 space-y-6">
-          <div className={`p-6 rounded-2xl border ${theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-200'}`}>
-            <h3 className="font-bold text-sm mb-4">RFQ Performance</h3>
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div className="bg-gray-500/5 p-3 rounded-xl border border-gray-700/20">
-                <h4 className="text-xl font-black text-red-500">12</h4>
-                <p className="text-[9px] uppercase tracking-wider text-gray-500">RFQs Posted</p>
+        {/* COLUMN 4: Right Sidebar */}
+        <div className="lg:col-span-1 flex flex-col gap-6">
+          
+          {/* Quick Actions */}
+          <div className={`p-5 rounded-2xl border shadow-sm ${
+            theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-100'
+          }`}>
+            <h3 className="font-extrabold text-xs text-gray-400 uppercase tracking-wider mb-4">Quick Actions</h3>
+            
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={() => setShowRfqModal(true)}
+                className="w-full p-4 rounded-xl bg-[#6366f1] hover:bg-[#4f46e5] text-white transition flex items-center justify-between text-left border-0 cursor-pointer shadow-sm"
+              >
+                <div className="flex items-center gap-3.5">
+                  <span className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-sm">
+                    +
+                  </span>
+                  <div>
+                    <span className="font-black text-xs block">Post a New RFQ</span>
+                    <span className="text-[9px] text-indigo-200">I Need Something</span>
+                  </div>
+                </div>
+                <i className="fas fa-chevron-right text-indigo-200 text-[10px]"></i>
+              </button>
+
+              <button 
+                onClick={() => alert("Navigating to Browse requirements...")}
+                className={`w-full p-4 rounded-xl border flex items-center justify-between text-left cursor-pointer transition ${
+                  theme === 'dark' ? 'bg-transparent border-gray-800 hover:bg-gray-850 text-white' : 'bg-white border-gray-100 hover:bg-gray-50 text-gray-700'
+                }`}
+              >
+                <div className="flex items-center gap-3.5">
+                  <span className="w-8 h-8 rounded-full bg-[#f3f4f6] dark:bg-[#111827] flex items-center justify-center text-gray-500">
+                    <i className="far fa-file-alt text-xs"></i>
+                  </span>
+                  <div>
+                    <span className="font-black text-xs block text-slate-800 dark:text-white">Browse Open RFQs</span>
+                    <span className="text-[9px] text-gray-400">Find requirements</span>
+                  </div>
+                </div>
+                <i className="fas fa-chevron-right text-gray-400 text-[10px]"></i>
+              </button>
+            </div>
+          </div>
+
+          {/* RFQ Stats */}
+          <div className={`p-5 rounded-2xl border shadow-sm ${
+            theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-100'
+          }`}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-extrabold text-xs text-gray-400 uppercase tracking-wider">RFQ Stats</h3>
+              <select className="bg-transparent border-0 font-bold text-xs text-gray-500 focus:outline-none cursor-pointer">
+                <option>This Month</option>
+                <option>This Year</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-center mb-4">
+              <div className="bg-[#f5f3ff] dark:bg-purple-950/20 p-3 rounded-xl border border-purple-100/50 dark:border-purple-900/10">
+                <h4 className="text-lg font-black text-purple-650">12</h4>
+                <p className="text-[8px] text-purple-400 uppercase tracking-widest font-bold mt-1">RFQs Posted</p>
               </div>
-              <div className="bg-gray-500/5 p-3 rounded-xl border border-gray-700/20">
-                <h4 className="text-xl font-black text-green-500">18</h4>
-                <p className="text-[9px] uppercase tracking-wider text-gray-500">Quotes Recv</p>
+              <div className="bg-[#f5f3ff] dark:bg-purple-950/20 p-3 rounded-xl border border-purple-100/50 dark:border-purple-900/10">
+                <h4 className="text-lg font-black text-purple-650">18</h4>
+                <p className="text-[8px] text-purple-400 uppercase tracking-widest font-bold mt-1">Quotes Received</p>
               </div>
-              <div className="bg-gray-500/5 p-3 rounded-xl border border-gray-700/20">
-                <h4 className="text-xl font-black text-blue-500">02</h4>
-                <p className="text-[9px] uppercase tracking-wider text-gray-500">Awarded</p>
+              <div className="bg-[#ecfdf5] dark:bg-green-950/20 p-3 rounded-xl border border-green-100/50 dark:border-green-900/10">
+                <h4 className="text-lg font-black text-green-600">2</h4>
+                <p className="text-[8px] text-green-500 uppercase tracking-widest font-bold mt-1">Awarded</p>
               </div>
-              <div className="bg-gray-500/5 p-3 rounded-xl border border-gray-700/20">
-                <h4 className="text-xl font-black text-yellow-500">01</h4>
-                <p className="text-[9px] uppercase tracking-wider text-gray-500">In Progress</p>
+              <div className="bg-[#fffbeb] dark:bg-amber-950/20 p-3 rounded-xl border border-amber-100/50 dark:border-amber-900/10">
+                <h4 className="text-lg font-black text-amber-600">1</h4>
+                <p className="text-[8px] text-amber-500 uppercase tracking-widest font-bold mt-1">In Progress</p>
+              </div>
+            </div>
+
+            <a href="#" onClick={(e) => { e.preventDefault(); alert("Viewing all RFQs..."); }} className="text-xs text-[#6366f1] hover:underline font-bold block text-center">
+              View All My RFQs &rarr;
+            </a>
+          </div>
+
+          {/* Recent RFQs */}
+          <div className={`p-5 rounded-2xl border shadow-sm ${
+            theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-100'
+          }`}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-extrabold text-xs text-gray-400 uppercase tracking-wider">Recent RFQs</h3>
+              <a href="#" onClick={(e) => { e.preventDefault(); alert("Viewing all recent RFQs..."); }} className="text-xs text-[#6366f1] hover:underline font-bold">View All</a>
+            </div>
+
+            <div className="flex flex-col gap-3.5 text-xs">
+              <div className="flex justify-between items-start">
+                <div className="flex gap-2.5">
+                  <span className="w-6 h-6 rounded bg-emerald-500/10 text-emerald-500 flex items-center justify-center flex-shrink-0">
+                    <i className="fas fa-lightbulb text-[10px]"></i>
+                  </span>
+                  <div>
+                    <h4 className="font-bold text-gray-700 dark:text-gray-300">Need LED Sign Board</h4>
+                    <p className="text-[9px] text-gray-400 mt-0.5">T. Nagar, Chennai</p>
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <span className="text-[9.5px] font-bold text-orange-500 block">2 Quotes</span>
+                  <span className="text-[8px] text-gray-400">2h ago</span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-start">
+                <div className="flex gap-2.5">
+                  <span className="w-6 h-6 rounded bg-[#6366f1]/10 text-[#6366f1] flex items-center justify-center flex-shrink-0">
+                    <i className="fas fa-broom text-[10px]"></i>
+                  </span>
+                  <div>
+                    <h4 className="font-bold text-gray-700 dark:text-gray-300">Office Cleaning Services</h4>
+                    <p className="text-[9px] text-gray-400 mt-0.5">Anna Nagar, Chennai</p>
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <span className="text-[9.5px] font-bold text-[#6366f1] block">4 Quotes</span>
+                  <span className="text-[8px] text-gray-400">5h ago</span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-start">
+                <div className="flex gap-2.5">
+                  <span className="w-6 h-6 rounded bg-purple-500/10 text-purple-500 flex items-center justify-center flex-shrink-0">
+                    <i className="fas fa-pencil-alt text-[10px]"></i>
+                  </span>
+                  <div>
+                    <h4 className="font-bold text-gray-700 dark:text-gray-300">Bulk Office Stationery</h4>
+                    <p className="text-[9px] text-gray-400 mt-0.5">Guindy, Chennai</p>
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <span className="text-[9.5px] font-bold text-[#6366f1] block">3 Quotes</span>
+                  <span className="text-[8px] text-gray-400">1d ago</span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-start">
+                <div className="flex gap-2.5">
+                  <span className="w-6 h-6 rounded bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0">
+                    <i className="fas fa-cookie-bite text-[10px]"></i>
+                  </span>
+                  <div>
+                    <h4 className="font-bold text-gray-700 dark:text-gray-300">Catering for Event</h4>
+                    <p className="text-[9px] text-gray-400 mt-0.5">ECR, Chennai</p>
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <span className="text-[9.5px] font-bold text-[#6366f1] block">6 Quotes</span>
+                  <span className="text-[8px] text-gray-400">1d ago</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className={`p-6 rounded-2xl border ${theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-200'}`}>
-            <h3 className="font-bold text-sm mb-4">Marketplace Categories</h3>
-            <div className="flex flex-col gap-3 text-xs">
-              {categories.map((c, i) => (
-                <div key={i} className="flex justify-between items-center cursor-pointer hover:text-red-500">
-                  <span className="flex items-center gap-2">
-                    <i className={`fas ${c.icon} ${c.color}`}></i> {c.name}
-                  </span>
-                  <span className="text-gray-500">{c.count} RFQs</span>
-                </div>
-              ))}
+          {/* For Businesses */}
+          <div className="p-5 rounded-2xl border shadow-sm bg-gradient-to-br from-[#e0e7ff] to-[#f5f3ff] dark:from-slate-900 dark:to-purple-950/20 border-indigo-100/50 flex items-center justify-between gap-4">
+            <div className="space-y-2">
+              <h4 className="font-extrabold text-xs text-indigo-950 dark:text-indigo-200">For Businesses</h4>
+              <p className="text-[10px] text-indigo-750 dark:text-indigo-400 leading-normal">Respond to RFQs and grow your business</p>
+              <button 
+                type="button" 
+                onClick={() => alert("Opening seller dashboard panel...")}
+                className="py-1.5 px-3 bg-white text-indigo-650 hover:bg-[#6366f1] hover:text-white border border-[#6366f1]/20 font-bold text-[10px] rounded-lg transition cursor-pointer shadow-sm"
+              >
+                View RFQs for Businesses
+              </button>
+            </div>
+            <div className="w-14 h-14 flex-shrink-0 text-indigo-500 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" className="w-full h-full" fill="currentColor">
+                <path d="M12 3L2 12h3v8h14v-8h3L12 3zm0 4.83l5 4.5V18H7v-5.67l5-4.5z"/>
+              </svg>
             </div>
           </div>
+
         </div>
 
       </div>

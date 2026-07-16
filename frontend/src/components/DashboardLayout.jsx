@@ -87,7 +87,13 @@ const DashboardLayout = ({ children }) => {
             ) : (
               <div className="db-header-search-box">
                 <i className="fas fa-search search-icon"></i>
-                <input type="text" placeholder={headerDetails.placeholder} />
+                <input 
+                  type="text" 
+                  placeholder={headerDetails.placeholder} 
+                  onChange={(e) => {
+                    window.dispatchEvent(new CustomEvent('db-search', { detail: e.target.value }));
+                  }}
+                />
                 <span className="search-shortcut">⌘K</span>
               </div>
             )}

@@ -25,6 +25,7 @@ import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/directory")
@@ -121,9 +122,38 @@ public class DirectoryController {
         listing.setWorkingHours(entity.getWorkingHours());
         listing.setPhoneNumber(entity.getPhoneNumber());
         listing.setStatus(entity.getStatus());
+        listing.setCoverUrl(entity.getCoverUrl());
+        listing.setLogoUrl(entity.getLogoUrl());
+        listing.setDescription(entity.getDescription());
         
         DirectoryListing updated = directoryRepository.save(listing);
         return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "File is empty"));
+        }
+        try {
+            java.nio.file.Path uploadPath = java.nio.file.Paths.get("uploads/directory");
+            if (!java.nio.file.Files.exists(uploadPath)) {
+                java.nio.file.Files.createDirectories(uploadPath);
+            }
+            String contentType = file.getContentType();
+            String extension = ".jpg";
+            if (contentType != null && contentType.equals("image/png")) {
+                extension = ".png";
+            }
+            String fileName = "biz_" + System.currentTimeMillis() + "_" + (int)(Math.random() * 1000) + extension;
+            java.nio.file.Path filePath = uploadPath.resolve(fileName);
+            java.nio.file.Files.copy(file.getInputStream(), filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+            return ResponseEntity.ok(Map.of("url", "/uploads/directory/" + fileName));
+        } catch (java.io.IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to upload image: " + e.getMessage()));
+        }
     }
 
     @PatchMapping("/changeStatus")

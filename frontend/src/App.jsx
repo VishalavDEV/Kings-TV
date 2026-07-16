@@ -41,20 +41,6 @@ function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
   const location = useLocation();
 
-  const isDashboardRoute = ['/nfc', '/deals', '/rfq'].includes(location.pathname);
-
-  if (isDashboardRoute) {
-    return (
-      <DashboardLayout>
-        <Routes>
-          <Route path="/nfc" element={<NfcCardDashboard />} />
-          <Route path="/deals" element={<DealsListing />} />
-          <Route path="/rfq" element={<RfqMarketplace />} />
-        </Routes>
-      </DashboardLayout>
-    );
-  }
-
   return (
     <div className="app-container">
       {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
@@ -70,6 +56,9 @@ function AppContent() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/directory" element={<BizDirectoryMain />} />
           <Route path="/directory.html" element={<Navigate to="/directory" replace />} />
+          <Route path="/nfc" element={<NfcCardDashboard />} />
+          <Route path="/deals" element={<DealsListing />} />
+          <Route path="/rfq" element={<RfqMarketplace />} />
           <Route path="/classifieds" element={<Classifieds />} />
           <Route path="/classifieds.html" element={<Navigate to="/classifieds" replace />} />
           <Route path="/wishes" element={<Wishes />} />

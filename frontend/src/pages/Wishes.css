@@ -446,3 +446,34 @@
   padding: 20px !important;
   margin-top: 40px !important;
 }
+
+/* Mobile responsive slider for wishes */
+@media (max-width: 768px) {
+  .wishes-grid {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 16px !important;
+    padding-bottom: 12px !important;
+    margin-bottom: 24px !important;
+  }
+  
+  .wish-card-premium {
+    flex: 0 0 280px !important;
+    max-width: 280px !important;
+  }
+
+  .wishes-grid::-webkit-scrollbar {
+    height: 4px !important;
+  }
+  .wishes-grid::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-radius: 4px !important;
+  }
+  .wishes-grid::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15) !important;
+    border-radius: 4px !important;
+  }
+}
