@@ -173,6 +173,7 @@ public class ObituaryController {
         details.put("reportCount", obit.getReportCount());
         details.put("status", obit.getStatus());
         details.put("createdAt", obit.getCreatedAt());
+        details.put("isCelebrity", obit.getIsCelebrity());
 
         details.put("gallery", obituaryService.getObituaryGallery(obit.getId()));
         details.put("guestbook", obituaryService.getObituaryGuestbook(obit.getId()));
@@ -207,6 +208,9 @@ public class ObituaryController {
         obit.setFamilyPhone((String) request.get("familyPhone"));
         obit.setPosterRelationship((String) request.get("posterRelationship"));
         obit.setStatus("published");
+        if (request.containsKey("isCelebrity") && request.get("isCelebrity") != null) {
+            obit.setIsCelebrity(Boolean.valueOf(request.get("isCelebrity").toString()));
+        }
 
         if (request.containsKey("dateOfBirth") && request.get("dateOfBirth") != null) {
             obit.setDateOfBirth(LocalDate.parse(request.get("dateOfBirth").toString()));

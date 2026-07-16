@@ -51,7 +51,7 @@ const translateVideo = (vid, lang) => {
 export const fetchApi = async (endpoint, options = {}) => {
   const session = JSON.parse(localStorage.getItem('king24x7_session') || 'null');
   const headers = {
-    'Content-Type': 'application/json',
+    ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
     ...(session && session.token ? { 'Authorization': `Bearer ${session.token}` } : {}),
     ...options.headers
   };

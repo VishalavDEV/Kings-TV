@@ -540,106 +540,12 @@ const Wishes = () => {
             </div>
           </div>
 
-          <div className="wishes-hero-right">
-            <div className="wish-stat-item">
-              <div className="wish-stat-icon stat-icon-gold"><i className="fas fa-users"></i></div>
-              <div>
-                <div className="wish-stat-val">12,458+</div>
-                <div className="wish-stat-lbl">{lang === 'en' ? 'Total Wishes' : 'மொத்த வாழ்த்துகள்'}</div>
-              </div>
-            </div>
-            <div className="wish-stat-item">
-              <div className="wish-stat-icon stat-icon-pink"><i className="fas fa-birthday-cake"></i></div>
-              <div>
-                <div className="wish-stat-val">5,632+</div>
-                <div className="wish-stat-lbl">{lang === 'en' ? 'Posted Today' : 'இன்று பதிவானவை'}</div>
-              </div>
-            </div>
-            <div className="wish-stat-item">
-              <div className="wish-stat-icon stat-icon-orange"><i className="fas fa-map-marker-alt"></i></div>
-              <div>
-                <div className="wish-stat-val">98+</div>
-                <div className="wish-stat-lbl">{lang === 'en' ? 'Districts' : 'மாவட்டங்கள்'}</div>
-              </div>
-            </div>
           </div>
-        </div>
       </section>
-
-      {/* CATEGORY SEARCH ROW */}
-      <div className="category-section-header">
-        <h2 className="category-section-title">{lang === 'en' ? 'Search by Categories' : 'வகைகள் மூலம் தேடுங்கள்'}</h2>
-        <span className="view-all-link" onClick={() => setSelectedCat('all')}>
-          {lang === 'en' ? 'View All' : 'அனைத்தையும் பார்க்க'} &rarr;
-        </span>
-      </div>
-
-      <div className="cat-slider-container">
-        <button
-          className={`cat-slide-btn ${selectedCat === 'all' ? 'active' : ''}`}
-          onClick={() => { setSelectedCat('all'); setPage(0); }}
-        >
-          <i className={`fas ${getCategoryIcon('all')}`}></i>
-          <span>{lang === 'en' ? 'All' : 'அனைத்து'}</span>
-        </button>
-        {categories.map(cat => (
-          <button
-            key={cat.id}
-            className={`cat-slide-btn ${selectedCat === cat.slug ? 'active' : ''}`}
-            onClick={() => { setSelectedCat(cat.slug); setPage(0); }}
-          >
-            <i className={`fas ${getCategoryIcon(cat.slug)}`}></i>
-            <span>{lang === 'en' ? cat.name : cat.nameTa}</span>
-          </button>
-        ))}
-      </div>
 
       {/* FILTER CONTROLS BAR */}
       <div className="wishes-filter-bar">
         <h2 style={{ fontSize: '18px', fontWeight: '800' }}>{lang === 'en' ? 'Recent Wishes' : 'சமீபத்திய வாழ்த்துகள்'}</h2>
-        
-        <div className="wishes-filter-dropdowns">
-          <select
-            className="wishes-select"
-            value={selectedDistrict}
-            onChange={(e) => { setSelectedDistrict(e.target.value); setPage(0); }}
-          >
-            <option value="all">{lang === 'en' ? 'All Districts' : 'அனைத்து மாவட்டங்கள்'}</option>
-            {districts.map(d => (
-              <option key={d.id} value={d.id}>
-                {lang === 'en' ? d.nameEn : d.nameTa}
-              </option>
-            ))}
-          </select>
-
-          <select
-            className="wishes-select"
-            value={selectedCat}
-            onChange={(e) => { setSelectedCat(e.target.value); setPage(0); }}
-          >
-            <option value="all">{lang === 'en' ? 'All Categories' : 'அனைத்து வகைகள்'}</option>
-            {categories.map(c => (
-              <option key={c.id} value={c.slug}>
-                {lang === 'en' ? c.name : c.nameTa}
-              </option>
-            ))}
-          </select>
-
-          <select
-            className="wishes-select"
-            value={selectedSort}
-            onChange={(e) => { setSelectedSort(e.target.value); setPage(0); }}
-          >
-            <option value="newest">{lang === 'en' ? 'Latest' : 'சமீபத்தியவை'}</option>
-            <option value="popular">{lang === 'en' ? 'Most Popular' : 'அதிகம் பார்க்கப்பட்டவை'}</option>
-            <option value="trending">{lang === 'en' ? 'Trending' : 'பிரபலமானவை'}</option>
-            <option value="nearby">{lang === 'en' ? 'Near Me' : 'அருகிலுள்ளவை'}</option>
-          </select>
-
-          <button className="filter-adv-btn" onClick={() => alert(lang === 'en' ? "Advanced filters modal coming soon!" : "கூடுதல் வடிகட்டிகள் விரைவில்!")}>
-            <i className="fas fa-sliders-h"></i>
-          </button>
-        </div>
       </div>
 
       {/* WISHES GRID */}
@@ -741,37 +647,7 @@ const Wishes = () => {
         </section>
       )}
 
-      {/* INFORMATION HIGHLIGHTS FOOTER */}
-      <section className="wishes-highlights-footer">
-        <div className="wish-highlight-box">
-          <div className="wish-highlight-icon"><i className="fas fa-calendar-alt"></i></div>
-          <div>
-            <h4 className="wish-highlight-title">{lang === 'en' ? 'Scheduled Release' : 'திட்டமிடப்பட்ட வெளியீடு'}</h4>
-            <div className="wish-highlight-desc">{lang === 'en' ? 'Automatically publish on special days' : 'சிறப்பு நாளில் தானாக வெளியிடலாம்'}</div>
-          </div>
-        </div>
-        <div className="wish-highlight-box">
-          <div className="wish-highlight-icon"><i className="fas fa-share-alt"></i></div>
-          <div>
-            <h4 className="wish-highlight-title">{lang === 'en' ? 'Share Instantly' : 'பகிரங்கள்'}</h4>
-            <div className="wish-highlight-desc">{lang === 'en' ? 'Share on WhatsApp, Facebook' : 'WhatsApp, Facebook மற்றும் பிறவற்றில் பகிரலாம்'}</div>
-          </div>
-        </div>
-        <div className="wish-highlight-box">
-          <div className="wish-highlight-icon"><i className="fas fa-heart"></i></div>
-          <div>
-            <h4 className="wish-highlight-title">{lang === 'en' ? 'Reactions & Comments' : 'விருப்பு & கருத்துகள்'}</h4>
-            <div className="wish-highlight-desc">{lang === 'en' ? 'Like wishes and voice comments' : 'வாழ்த்துக்களை விரும்புங்கள் மற்றும் கருத்து பகிருங்கள்'}</div>
-          </div>
-        </div>
-        <div className="wish-highlight-box">
-          <div className="wish-highlight-icon"><i className="fas fa-shield-alt"></i></div>
-          <div>
-            <h4 className="wish-highlight-title">{lang === 'en' ? 'Secure Platform' : 'பாதுகாப்பான தளம்'}</h4>
-            <div className="wish-highlight-desc">{lang === 'en' ? 'Your details are safe with us' : 'உங்கள் தகவல்கள் பாதுகாப்பாக வைக்கப்படும்'}</div>
-          </div>
-        </div>
-      </section>
+
 
       {/* GREETING MODAL */}
       {selectedWish && (

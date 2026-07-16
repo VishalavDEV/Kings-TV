@@ -56,6 +56,19 @@ const Obituaries = () => {
   // Upload states
   const [uploadingDeceased, setUploadingDeceased] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [isCelebrity, setIsCelebrity] = useState(false);
+
+  // Background body scroll lock effect when modal is active
+  useEffect(() => {
+    if (showCreateModal || selectedObit) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showCreateModal, selectedObit]);
 
   // Guestbook inputs
   const [visitorName, setVisitorName] = useState('');
@@ -294,7 +307,8 @@ const Obituaries = () => {
       posterRelationship,
       biography,
       frameTemplateId: formFrame || null,
-      galleryUrls
+      galleryUrls,
+      isCelebrity
     };
 
     fetchApi('/obituaries', {
@@ -325,6 +339,7 @@ const Obituaries = () => {
         setBiography('');
         setFormFrame('');
         setGalleryUrls([]);
+        setIsCelebrity(false);
         loadObituaries();
       })
       .catch(err => {
@@ -412,11 +427,55 @@ const Obituaries = () => {
   };
 
   const fallbackObits = [
-    { id: 1, deceasedName: 'பொன்னம்மாள்', age: 78, location: 'திருவாரூர், தமிழ்நாடு', demiseDate: '2025-07-15', dateOfPassing: '2025-07-15', dateOfBirth: '1946-01-10', shortDescription: 'அன்புத்தாய் பொன்னம்மாள் இயற்கை எய்தினார். இவரது ஆத்மா சாந்தியடைய பிரார்த்திக்கிறோம்.', tributeCount: 128, guestbookCount: 24 },
-    { id: 2, deceasedName: 'சுப்பிரமணியன்', age: 85, location: 'சேலம், தமிழ்நாடு', demiseDate: '2025-07-14', dateOfPassing: '2025-07-14', dateOfBirth: '1940-03-02', shortDescription: 'மதிப்பிற்குரிய சுப்பிரமணியன் இயற்கை எய்தினார். இவரது இறுதிச் சடங்குகள் சேலத்தில் நடைபெறும்.', tributeCount: 256, guestbookCount: 42 },
-    { id: 3, deceasedName: 'லட்சுமி அம்மாள்', age: 72, location: 'கோவை, தமிழ்நாடு', demiseDate: '2025-07-13', dateOfPassing: '2025-07-13', dateOfBirth: '1953-06-12', shortDescription: 'கோவை லட்சுமி அம்மாள் இயற்கை எய்தினார்.', tributeCount: 198, guestbookCount: 31 },
-    { id: 4, deceasedName: 'முருகேசன்', age: 80, location: 'மதுரை, தமிழ்நாடு', demiseDate: '2025-07-12', dateOfPassing: '2025-07-12', dateOfBirth: '1944-09-05', shortDescription: 'மதுரை முருகேசன் இயற்கை எய்தினார்.', tributeCount: 143, guestbookCount: 18 }
+    { id: 1, deceasedName: 'பொன்னம்மாள்', age: 78, location: 'திருவாரூர், தமிழ்நாடு', demiseDate: '2025-07-15', dateOfPassing: '2025-07-15', dateOfBirth: '1946-01-10', shortDescription: 'அன்புத்தாய் பொன்னம்மாள் இயற்கை எய்தினார். இவரது ஆத்மா சாந்தியடைய பிரார்த்திக்கிறோம்.', tributeCount: 128, guestbookCount: 24, isCelebrity: true },
+    { id: 2, deceasedName: 'சுப்பிரமணியன்', age: 85, location: 'சேலம், தமிழ்நாடு', demiseDate: '2025-07-14', dateOfPassing: '2025-07-14', dateOfBirth: '1940-03-02', shortDescription: 'மதிப்பிற்குரிய சுப்பிரமணியன் இயற்கை எய்தினார். இவரது இறுதிச் சடங்குகள் சேலத்தில் நடைபெறும்.', tributeCount: 256, guestbookCount: 42, isCelebrity: false },
+    { id: 3, deceasedName: 'லட்சுமி அம்மாள்', age: 72, location: 'கோவை, தமிழ்நாடு', demiseDate: '2025-07-13', dateOfPassing: '2025-07-13', dateOfBirth: '1953-06-12', shortDescription: 'கோவை லட்சுமி அம்மாள் இயற்கை எய்தினார்.', tributeCount: 198, guestbookCount: 31, isCelebrity: true },
+    { id: 4, deceasedName: 'முருகேசன்', age: 80, location: 'மதுரை, தமிழ்நாடு', demiseDate: '2025-07-12', dateOfPassing: '2025-07-12', dateOfBirth: '1944-09-05', shortDescription: 'மதுரை முருகேசன் இயற்கை எய்தினார்.', tributeCount: 143, guestbookCount: 18, isCelebrity: false }
   ];
+
+  const renderObitCard = (obit) => {
+    const frameClass = obit.frameTemplate?.category || 'golden';
+    return (
+      <div className="memorial-card" key={obit.id} style={{ width: '100%' }}>
+        <div className="memorial-card-header">
+          <span>2 {lang === 'en' ? 'hours ago' : 'மணி நேரத்திற்கு முன்'}</span>
+          <i className="far fa-bookmark memorial-card-flag"></i>
+        </div>
+
+        <div className="memorial-photo-frame-container" onClick={() => handleOpenDetails(obit)}>
+          <div className="memorial-portrait-circle">
+            {obit.photo ? (
+              <img src={obit.photo} alt={obit.deceasedName} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <i className="fas fa-user" style={{ fontSize: '42px', color: '#cbd5e1' }}></i>
+              </div>
+            )}
+            <div className={`frame-overlay frame-overlay-${frameClass}`}></div>
+          </div>
+        </div>
+
+        <div className="memorial-card-body">
+          <div>
+            <h3 className="memorial-deceased-name">{obit.deceasedName}</h3>
+            <span className="memorial-deceased-age">{lang === 'en' ? 'Age ' : 'வயது '} {obit.age}</span>
+            <div className="memorial-deceased-loc">{obit.location || obit.nativePlace}</div>
+            <div className="memorial-deceased-dates">
+              {obit.dateOfBirth ? new Date(obit.dateOfBirth).toLocaleDateString() : 'N/A'} - {obit.dateOfPassing ? new Date(obit.dateOfPassing).toLocaleDateString() : 'N/A'}
+            </div>
+          </div>
+
+          <div className="memorial-card-metrics">
+            <span><i className="fas fa-fire" style={{ color: '#d97706' }}></i> {obit.tributeCount || 0} {lang === 'en' ? 'Tributes' : 'இரங்கல்கள்'}</span>
+            <span><i className="far fa-comment"></i> {obit.guestbookCount || 0} {lang === 'en' ? 'Condolences' : 'செய்திகள்'}</span>
+            <button className="memorial-details-btn" onClick={() => handleOpenDetails(obit)}>
+              {lang === 'en' ? 'Details' : 'விவரங்கள்'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <main className="container obits-module-container" style={{ paddingTop: '20px' }}>
@@ -468,29 +527,7 @@ const Obituaries = () => {
             </div>
           </div>
 
-          <div className="obits-hero-right">
-            <div className="obits-stat-card">
-              <i className="fas fa-fire obits-stat-icon icon-gold"></i>
-              <div className="obits-stat-val">2,458+</div>
-              <div className="obits-stat-lbl">{lang === 'en' ? 'This Week' : 'இந்த வாரம்'}</div>
-            </div>
-            <div className="obits-stat-card">
-              <i className="far fa-heart obits-stat-icon icon-heart"></i>
-              <div className="obits-stat-val">18,632+</div>
-              <div className="obits-stat-lbl">{lang === 'en' ? 'Total Condolences' : 'மொத்த இரங்கல் பதிவுகள்'}</div>
-            </div>
-            <div className="obits-stat-card">
-              <i className="fas fa-users obits-stat-icon icon-users"></i>
-              <div className="obits-stat-val">45,128+</div>
-              <div className="obits-stat-lbl">{lang === 'en' ? 'Tributes Count' : 'இரங்கல் செய்திகள்'}</div>
-            </div>
-            <div className="obits-stat-card">
-              <i className="fas fa-seedling obits-stat-icon icon-flower"></i>
-              <div className="obits-stat-val">1,254+</div>
-              <div className="obits-stat-lbl">{lang === 'en' ? 'Posted Today' : 'இன்று பதிவுகள்'}</div>
-            </div>
           </div>
-        </div>
       </section>
 
       {/* QUICK CATEGORIES SLIDER ROW */}
@@ -512,27 +549,7 @@ const Obituaries = () => {
             <button className={`obits-slide-btn ${selectedCat === 'recent' ? 'active' : ''}`} onClick={() => { setSelectedCat('recent'); setSelectedSort('newest'); }}>
               <i className="fas fa-fire-alt"></i> {lang === 'en' ? 'Recently Added' : 'சமீபத்தியவை'}
             </button>
-            <button className={`obits-slide-btn ${selectedCat === 'district' ? 'active' : ''}`} onClick={() => alert(lang === 'en' ? 'Choose district in select box!' : 'மாவட்டம் தேர்ந்தெடுக்கவும்!')}>
-              <i className="fas fa-map"></i> {lang === 'en' ? 'District Wise' : 'மாவட்ட வாரியாக'}
-            </button>
-            <button className={`obits-slide-btn ${selectedCat === 'nearby' ? 'active' : ''}`} onClick={() => { setSelectedCat('nearby'); }}>
-              <i className="fas fa-map-marker-alt"></i> {lang === 'en' ? 'Near Me' : 'என் அருகில்'}
-            </button>
           </div>
-        </div>
-
-        {/* Center callout lotus flower Pay Tribute box */}
-        <div className="obits-center-callout-box">
-          <div className="obits-callout-text-block">
-            <span className="obits-callout-lotus">🌸</span>
-            <div className="obits-callout-desc">
-              <strong>{lang === 'en' ? 'Pay Tribute' : 'நினைவு அஞ்சலி செலுத்துங்கள்'}</strong><br/>
-              {lang === 'en' ? 'Light a virtual candle to remember them.' : 'ஒரு மெழுகுவர்த்தி ஏற்றி அஞ்சலி செலுத்தி, அவர்களை நினைவுகூருங்கள்.'}
-            </div>
-          </div>
-          <button className="obits-callout-btn" onClick={() => setShowCreateModal(true)}>
-            {lang === 'en' ? 'Pay Tribute' : 'அஞ்சலி செலுத்து'}
-          </button>
         </div>
       </div>
 
@@ -559,51 +576,34 @@ const Obituaries = () => {
               <p>{lang === 'en' ? 'No obituaries found.' : 'பதிவுகள் எதுவும் காணப்படவில்லை.'}</p>
             </div>
           ) : (
-            <div className="memorial-grid">
-              {obits.map(obit => {
-                const frameClass = obit.frameTemplate?.category || 'golden';
-                return (
-                  <div className="memorial-card" key={obit.id}>
-                    <div className="memorial-card-header">
-                      <span>2 {lang === 'en' ? 'hours ago' : 'மணி நேரத்திற்கு முன்'}</span>
-                      <i className="far fa-bookmark memorial-card-flag"></i>
-                    </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+              {/* Celebrity Column */}
+              <div>
+                <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#7c3aed', marginBottom: '16px', borderBottom: '2px solid #7c3aed', paddingBottom: '6px' }}>
+                  {lang === 'en' ? 'Celebrity Memorials' : 'பிரபலங்களின் இரங்கல்கள்'}
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {obits.filter(o => o.isCelebrity).length === 0 ? (
+                    <p style={{ fontSize: '12px', color: '#94a3b8' }}>{lang === 'en' ? 'No celebrity memorials.' : 'பிரபலங்கள் இரங்கல் பதிவு இல்லை.'}</p>
+                  ) : (
+                    obits.filter(o => o.isCelebrity).map(obit => renderObitCard(obit))
+                  )}
+                </div>
+              </div>
 
-                    <div className="memorial-photo-frame-container" onClick={() => handleOpenDetails(obit)}>
-                      <div className="memorial-portrait-circle">
-                        {obit.photo ? (
-                          <img src={obit.photo} alt={obit.deceasedName} />
-                        ) : (
-                          <div style={{ width: '100%', height: '100%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <i className="fas fa-user" style={{ fontSize: '42px', color: '#cbd5e1' }}></i>
-                          </div>
-                        )}
-                        {/* Selected frame overlay template dynamically */}
-                        <div className={`frame-overlay frame-overlay-${frameClass}`}></div>
-                      </div>
-                    </div>
-
-                    <div className="memorial-card-body">
-                      <div>
-                        <h3 className="memorial-deceased-name">{obit.deceasedName}</h3>
-                        <span className="memorial-deceased-age">{lang === 'en' ? 'Age ' : 'வயது '} {obit.age}</span>
-                        <div className="memorial-deceased-loc">{obit.location || obit.nativePlace}</div>
-                        <div className="memorial-deceased-dates">
-                          {obit.dateOfBirth ? new Date(obit.dateOfBirth).toLocaleDateString() : 'N/A'} - {obit.dateOfPassing ? new Date(obit.dateOfPassing).toLocaleDateString() : 'N/A'}
-                        </div>
-                      </div>
-
-                      <div className="memorial-card-metrics">
-                        <span><i className="fas fa-fire" style={{ color: '#d97706' }}></i> {obit.tributeCount || 0} {lang === 'en' ? 'Tributes' : 'இரங்கல்கள்'}</span>
-                        <span><i className="far fa-comment"></i> {obit.guestbookCount || 0} {lang === 'en' ? 'Condolences' : 'செய்திகள்'}</span>
-                        <button className="memorial-details-btn" onClick={() => handleOpenDetails(obit)}>
-                          {lang === 'en' ? 'Details' : 'விவரங்கள்'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {/* Normal People Column */}
+              <div>
+                <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#4b5563', marginBottom: '16px', borderBottom: '2px solid #cbd5e1', paddingBottom: '6px' }}>
+                  {lang === 'en' ? 'General Memorials' : 'பொது இரங்கல்கள்'}
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {obits.filter(o => !o.isCelebrity).length === 0 ? (
+                    <p style={{ fontSize: '12px', color: '#94a3b8' }}>{lang === 'en' ? 'No general memorials.' : 'பொது இரங்கல் பதிவு இல்லை.'}</p>
+                  ) : (
+                    obits.filter(o => !o.isCelebrity).map(obit => renderObitCard(obit))
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -855,6 +855,19 @@ const Obituaries = () => {
                     />
                     {uploadingDeceased && <span style={{ fontSize: '11px', color: '#7c3aed' }}>Uploading...</span>}
                   </div>
+                </div>
+
+                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="checkbox"
+                    id="isCelebrityCheckbox"
+                    checked={isCelebrity}
+                    onChange={(e) => setIsCelebrity(e.target.checked)}
+                    style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                  />
+                  <label htmlFor="isCelebrityCheckbox" style={{ fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>
+                    {lang === 'en' ? 'Is Celebrity / VIP Person' : 'பிரபல நபர் / முக்கிய பிரமுகர்'}
+                  </label>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
