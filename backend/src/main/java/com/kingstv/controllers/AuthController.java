@@ -17,6 +17,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import com.kingstv.models.AuditLog;
+import jakarta.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping({"/api/v1/auth", "/api/auth"})
 public class AuthController {
@@ -38,6 +41,9 @@ public class AuthController {
 
     @Autowired
     private com.kingstv.repository.RoleRepository roleRepository;
+
+    @Autowired
+    private com.kingstv.repository.AuditLogRepository auditLogRepository;
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
 
@@ -117,7 +123,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> login(@RequestBody Map<String, String> request, HttpServletRequest httpRequest) {
         String email = request.get("email");
         String password = request.get("password");
 
@@ -146,6 +152,22 @@ public class AuthController {
 
         String accessToken = jwtUtil.generateToken(savedUser.getEmail(), savedUser.getRole(), savedUser.getId(), getUserPermissions(savedUser));
         String refreshToken = createRefreshToken(savedUser);
+
+        // Record Audit Log entry for login action
+        try {
+            AuditLog log = new AuditLog();
+            log.setActorId(savedUser.getId());
+            log.setActorEmail(savedUser.getEmail());
+            log.setActorRole(savedUser.getRole());
+            log.setActionType("LOGIN");
+            log.setEntityType("USER");
+            log.setEntityId(savedUser.getId());
+            log.setDetails("Logged in successfully via LOCAL credentials");
+            log.setIpAddress(httpRequest != null ? httpRequest.getRemoteAddr() : "127.0.0.1");
+            auditLogRepository.save(log);
+        } catch (Exception ex) {
+            System.err.println("Audit log save failed: " + ex.getMessage());
+        }
 
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Login successful");
