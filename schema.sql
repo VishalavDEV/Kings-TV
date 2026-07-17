@@ -442,7 +442,7 @@ CREATE TABLE IF NOT EXISTS obituary (
     INDEX idx_location(state_id,district_id,taluk_id,village_id),
     INDEX idx_status(status),
     INDEX idx_passing(date_of_passing),
-    INDEX idx_funeral(funeral_datetime),
+    INDEX idx_funeral(funeral_datetime)
 );
 
 CREATE TABLE IF NOT EXISTS obituary_gallery (
@@ -454,7 +454,7 @@ CREATE TABLE IF NOT EXISTS obituary_gallery (
     is_deleted INT default 0,
     CONSTRAINT fk_obituary_gallery
         FOREIGN KEY (obituary_id)
-        REFERENCES obituary(obituary_id)
+        REFERENCES obituary(id)
         ON DELETE CASCADE,
     UNIQUE KEY uk_obituary_photo(obituary_id,display_order)
 );
@@ -469,7 +469,7 @@ CREATE TABLE IF NOT EXISTS obituary_tribute (
     is_deleted INT default 0,
     CONSTRAINT fk_tribute_obituary
         FOREIGN KEY (obituary_id)
-        REFERENCES obituary(obituary_id)
+        REFERENCES obituary(id)
         ON DELETE CASCADE,
     UNIQUE KEY uk_user(obituary_id,user_id),
     UNIQUE KEY uk_device(obituary_id,device_id)
@@ -492,7 +492,7 @@ CREATE TABLE obituary_report (
     is_deleted INT default 0,
     CONSTRAINT fk_report_obituary
         FOREIGN KEY (obituary_id)
-        REFERENCES obituary(obituary_id)
+        REFERENCES obituary(id)
         ON DELETE CASCADE
 );
 
@@ -511,7 +511,7 @@ CREATE TABLE obituary_guestbook (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_guestbook_obituary
         FOREIGN KEY (obituary_id)
-        REFERENCES obituary(obituary_id)
+        REFERENCES obituary(id)
         ON DELETE CASCADE,
     is_deleted INT default 0,
     INDEX idx_obituary(obituary_id),
@@ -526,7 +526,7 @@ CREATE TABLE obituary_frame_template (
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_deleted INT default 0,
+    is_deleted INT default 0
 );
 
 
@@ -611,7 +611,7 @@ CREATE TABLE job_skill (
         ON UPDATE CURRENT_TIMESTAMP,
     is_deleted INT default 0,
     FOREIGN KEY(job_id)
-        REFERENCES job(job_id)
+        REFERENCES job(id)
         ON DELETE CASCADE,
     INDEX idx_skill(skill_name)
 );
@@ -663,7 +663,7 @@ CREATE TABLE job_seeker (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
-    is_deleted INT default 0,
+    is_deleted INT default 0
 );
 
 CREATE TABLE job_seeker_skill (
@@ -671,7 +671,7 @@ CREATE TABLE job_seeker_skill (
     seeker_id INT NOT NULL,
     skill_name VARCHAR(100) NOT NULL,
     FOREIGN KEY(seeker_id)
-        REFERENCES job_seeker(seeker_id)
+        REFERENCES job_seeker(id)
         ON DELETE CASCADE,
     INDEX idx_skill(skill_name)
 );
@@ -694,10 +694,10 @@ CREATE TABLE job_application (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY(job_id)
-        REFERENCES job(job_id)
+        REFERENCES job(id)
         ON DELETE CASCADE,
     FOREIGN KEY(seeker_id)
-        REFERENCES job_seeker(seeker_id)
+        REFERENCES job_seeker(id)
         ON DELETE CASCADE,
     UNIQUE KEY uk_job_application(job_id,seeker_id),
     INDEX idx_status(status),
