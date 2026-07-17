@@ -226,7 +226,7 @@ const Login = () => {
 
           <div style={{ marginTop: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img 
-              src="/assets/images/logo-banner-dark.png" 
+              src="assets/images/logo-banner-dark.png" 
               alt="Logo" 
               style={{ maxWidth: '180px', height: 'auto', opacity: 0.9, objectFit: 'contain' }}
             />

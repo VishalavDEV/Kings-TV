@@ -646,7 +646,7 @@ const Header = () => {
 
   const renderLogo = (size = 'normal', forceDark = false) => {
     const isDark = forceDark || theme === 'dark';
-    const logoUrl = isDark ? "/assets/images/logo-banner-dark.png" : "/assets/images/logo-banner-light.png";
+    const logoUrl = isDark ? "assets/images/logo-banner-dark.png" : "assets/images/logo-banner-light.png";
     return (
       <Link to="/" className="logo-link" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
         <img 

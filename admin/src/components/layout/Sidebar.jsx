@@ -25,7 +25,7 @@ const Sidebar = () => {
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <img src="/assets/logo-banner-light.png" alt="King TV Admin" />
+        <img src="assets/logo-banner-light.png" alt="King TV Admin" />
       </div>
       
       <nav className="sidebar-nav">
