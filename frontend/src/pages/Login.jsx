@@ -119,8 +119,14 @@ const Login = () => {
       
       const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
       if (res.user && adminRoles.includes(res.user.role)) {
+        const getAdminPortalUrl = () => {
+          const host = window.location.hostname;
+          return (host === 'localhost' || host === '127.0.0.1')
+            ? 'http://localhost:3000/admin/layout'
+            : 'https://king-tv.test-technoprint.online/admin/layout';
+        };
         setTimeout(() => {
-          window.location.href = 'http://localhost:3000/admin/layout';
+          window.location.href = getAdminPortalUrl();
         }, 1200);
       } else {
         const from = location.state?.from || '/';
@@ -161,8 +167,14 @@ const Login = () => {
       
       const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
       if (res.user && adminRoles.includes(res.user.role)) {
+        const getAdminPortalUrl = () => {
+          const host = window.location.hostname;
+          return (host === 'localhost' || host === '127.0.0.1')
+            ? 'http://localhost:3000/admin/layout'
+            : 'https://king-tv.test-technoprint.online/admin/layout';
+        };
         setTimeout(() => {
-          window.location.href = 'http://localhost:3000/admin/layout';
+          window.location.href = getAdminPortalUrl();
         }, 1200);
       } else {
         const from = location.state?.from || '/';

@@ -1,14 +1,7 @@
 RewriteEngine On
+RewriteBase /
 
-# 1. Map clean URLs (without .html) to static HTML files
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_URI} !^/admin/
-RewriteCond %{REQUEST_FILENAME}.html -f
-RewriteRule ^([^/]+)$ $1.html [L]
-
-# 2. Support SPA routing for the React Admin app inside /admin
-RewriteCond %{REQUEST_URI} ^/admin/ [NC]
+# Support SPA routing for the React Admin Dashboard app
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^admin/(.*)$ admin/index.html [L]
+RewriteRule ^(.*)$ index.html [L]

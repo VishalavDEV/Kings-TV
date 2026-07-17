@@ -114,11 +114,25 @@ const Sidebar = () => {
           </>
         )}
         
-        <div className="nav-section-title">{t('personal')}</div>
         <NavLink to="/profile" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
           <Users size={18} />
           {t('myProfile')}
         </NavLink>
+        
+        {(() => {
+          const getNewsSiteUrl = () => {
+            const host = window.location.hostname;
+            return (host === 'localhost' || host === '127.0.0.1')
+              ? 'http://localhost:5173'
+              : 'https://king-tv.test-technoprint.online/kingstv/';
+          };
+          return (
+            <a href={getNewsSiteUrl()} target="_blank" rel="noopener noreferrer" className="nav-link" style={{ color: 'var(--primary)' }}>
+              <i className="fas fa-globe" style={{ fontSize: '18px', width: '18px', display: 'inline-flex', justifyContent: 'center' }}></i>
+              <span style={{ marginLeft: '6px' }}>View News Site</span>
+            </a>
+          );
+        })()}
       </nav>
     </aside>
   );

@@ -89,6 +89,45 @@ const UserDropdown = ({ isOpen, onClose, onLogout }) => {
         >
           <span style={{ fontSize: '16px' }}>👤</span> My Profile
         </button>
+
+        {(() => {
+          const userStr = localStorage.getItem('king24x7_user');
+          if (!userStr) return null;
+          try {
+            const userObj = JSON.parse(userStr);
+            const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
+            if (userObj && adminRoles.includes(userObj.role)) {
+              const getAdminPortalUrl = () => {
+                const host = window.location.hostname;
+                return (host === 'localhost' || host === '127.0.0.1')
+                  ? 'http://localhost:3000/admin/layout'
+                  : 'https://king-tv.test-technoprint.online/admin/layout';
+              };
+              return (
+                <button 
+                  style={{ ...itemStyle, color: '#FFD700' }}
+                  onClick={() => {
+                    window.location.href = getAdminPortalUrl();
+                    onClose();
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = '#ffffff';
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 215, 0, 0.15)';
+                    e.currentTarget.style.paddingLeft = '22px';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = '#FFD700';
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.paddingLeft = '18px';
+                  }}
+                >
+                  <span style={{ fontSize: '16px' }}>🛡️</span> Admin Portal
+                </button>
+              );
+            }
+          } catch(e) {}
+          return null;
+        })()}
         
         <div style={{ height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.05)', margin: '4px 0' }}></div>
         
