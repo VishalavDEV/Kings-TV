@@ -23,6 +23,26 @@ const ArticleDetail = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
 
+  const [sidebarWeather, setSidebarWeather] = useState({ temp: '32°C', condition: 'Partly Cloudy', conditionTa: 'மேகமூட்டம்', humidity: '72%', wind: '18 km/h' });
+
+  useEffect(() => {
+    const baseApi = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api/v1';
+    fetch(`${baseApi}/weather?city=Chennai`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.temp) {
+          setSidebarWeather({
+            temp: data.temp,
+            condition: data.condition,
+            conditionTa: data.conditionTa,
+            humidity: data.humidity,
+            wind: data.wind
+          });
+        }
+      })
+      .catch(err => console.warn("Failed to load sidebar weather", err));
+  }, []);
+
   const allFallbackArticles = [
     {
       id: 'demo-1',
@@ -936,11 +956,11 @@ const ArticleDetail = () => {
               {lang === 'en' ? 'Chennai Weather' : 'சென்னை வானிலை'}
             </h4>
             <div className="weather-current" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-              <div className="temp" style={{ fontSize: '32px', fontWeight: 800 }}>32°C</div>
+              <div className="temp" style={{ fontSize: '32px', fontWeight: 800 }}>{sidebarWeather.temp}</div>
               <div className="details" style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column' }}>
-                <strong style={{ color: 'var(--text-dark)' }}>{lang === 'en' ? 'Partly Cloudy' : 'மேகமூட்டம்'}</strong>
-                <span>{lang === 'en' ? 'Humidity: 72%' : 'ஈரப்பதம்: 72%'}</span>
-                <span>{lang === 'en' ? 'Wind: 18 km/h' : 'காற்று: 18 km/h'}</span>
+                <strong style={{ color: 'var(--text-dark)' }}>{lang === 'en' ? sidebarWeather.condition : sidebarWeather.conditionTa}</strong>
+                <span>{lang === 'en' ? `Humidity: ${sidebarWeather.humidity}` : `ஈரப்பதம்: ${sidebarWeather.humidity}`}</span>
+                <span>{lang === 'en' ? `Wind: ${sidebarWeather.wind}` : `காற்று: ${sidebarWeather.wind}`}</span>
               </div>
             </div>
           </div>

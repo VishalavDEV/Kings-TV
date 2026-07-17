@@ -1,11 +1,53 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
+import { AuthContext } from '../context/AuthContext';
 import { fetchApi } from '../utils/api';
 import './Jobs.css';
 
 const Jobs = () => {
   const { lang } = useContext(LanguageContext);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, user, token } = useContext(AuthContext);
+
+  // View States
+  const [activeView, setActiveView] = useState('list'); // 'list', 'seeker-dashboard', 'seeker-profile-create', 'employer-dashboard', 'employer-profile-create'
+  const [seekerDashboardData, setSeekerDashboardData] = useState(null);
+  const [employerDashboardData, setEmployerDashboardData] = useState(null);
+  const [employerSubView, setEmployerSubView] = useState('dashboard'); // 'dashboard', 'post-job', 'manage-jobs', 'manage-applicants', 'company-profile'
+
+  // Seeker Profile Form States
+  const [seekerHeadline, setSeekerHeadline] = useState('');
+  const [seekerSkills, setSeekerSkills] = useState('');
+  const [seekerEducation, setSeekerEducation] = useState('');
+  const [seekerExperience, setSeekerExperience] = useState('1 Year');
+  const [seekerPrefLoc, setSeekerPrefLoc] = useState('');
+  const [seekerSalary, setSeekerSalary] = useState('');
+  const [seekerResumeUrl, setSeekerResumeUrl] = useState('');
+
+  // Employer Profile Form States
+  const [empCompanyName, setEmpCompanyName] = useState('');
+  const [empCompanyLogo, setEmpCompanyLogo] = useState('');
+  const [empIndustry, setEmpIndustry] = useState('');
+  const [empWebsite, setEmpWebsite] = useState('');
+  const [empAddress, setEmpAddress] = useState('');
+  const [empAbout, setEmpAbout] = useState('');
+  const [empPhone, setEmpPhone] = useState('');
+
+  // Selected Job for Applicants & list of applicants
+  const [selectedJobForApplicants, setSelectedJobForApplicants] = useState(null);
+  const [applicantsList, setApplicantsList] = useState([]);
+
+  // Toast State
+  const [toastMessage, setToastMessage] = useState(null);
+  const [toastType, setToastType] = useState('success');
+
+  // Confirmation dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogMessage, setDialogMessage] = useState('');
+  const [dialogConfirmAction, setDialogConfirmAction] = useState(null);
   
   // Data lists
   const [jobs, setJobs] = useState([]);
@@ -129,6 +171,329 @@ const Jobs = () => {
   useEffect(() => {
     loadJobs();
   }, [selectedCat, selectedDist, selectedType, selectedSort, searchQuery, page]);
+
+  // ==========================================================================
+  // RECRUITMENT PLATFORM HANDLER METHODS
+  // ==========================================================================
+
+  // Helper to show custom alerts
+  const showToast = (msg, type = 'success') => {
+    setToastMessage(msg);
+    setToastType(type);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // Helper for confirm dialog
+  const confirmAction = (title, message, action) => {
+    setDialogTitle(title);
+    setDialogMessage(message);
+    setDialogConfirmAction(() => () => {
+      action();
+      setDialogOpen(false);
+    });
+    setDialogOpen(true);
+  };
+
+  // Upload file helper
+  const handleFileUpload = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const uploadUrl = `${import.meta.env.VITE_API_BASE || 'http://localhost:5000/api/v1'}/jobs/upload`;
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      body: formData
+    });
+    if (!response.ok) throw new Error("File upload failed");
+    const data = await response.json();
+    return data.url;
+  };
+
+  // Handle redirects on load if arriving after auth redirection
+  useEffect(() => {
+    if (isAuthenticated && location.state?.openJobRole) {
+      const role = location.state.openJobRole;
+      window.history.replaceState({}, document.title);
+      handleZoneClick(role);
+    }
+  }, [isAuthenticated, location.state]);
+
+  const handleZoneClick = async (role) => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: '/jobs', jobRole: role } });
+      return;
+    }
+
+    if (role === 'seeker') {
+      setLoading(true);
+      try {
+        const profile = await fetchApi('/candidate/profile');
+        if (profile && profile.skills && profile.education) {
+          await fetchSeekerDashboard();
+        } else {
+          if (profile) {
+            setSeekerHeadline(profile.headline || '');
+            setSeekerSkills(profile.skills || '');
+            setSeekerEducation(profile.education || '');
+            setSeekerExperience(profile.experience || '1 Year');
+            setSeekerPrefLoc(profile.preferredLocation || '');
+            setSeekerSalary(profile.expectedSalary || '');
+          }
+          setActiveView('seeker-profile-create');
+        }
+      } catch (err) {
+        console.error("Failed to load candidate profile", err);
+        setActiveView('seeker-profile-create');
+      } finally {
+        setLoading(false);
+      }
+    } else if (role === 'employer') {
+      setLoading(true);
+      try {
+        const company = await fetchApi('/employer/profile');
+        if (company && company.companyName) {
+          await fetchEmployerDashboard();
+        } else {
+          setActiveView('employer-profile-create');
+        }
+      } catch (err) {
+        console.error("Failed to load company profile", err);
+        setActiveView('employer-profile-create');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const fetchSeekerDashboard = async () => {
+    try {
+      const data = await fetchApi('/candidate/dashboard');
+      setSeekerDashboardData(data);
+      if (data.profile) {
+        setSeekerHeadline(data.profile.headline || '');
+        setSeekerSkills(data.profile.skills || '');
+        setSeekerEducation(data.profile.education || '');
+        setSeekerExperience(data.profile.experience || '1 Year');
+        setSeekerPrefLoc(data.profile.preferredLocation || '');
+        setSeekerSalary(data.profile.expectedSalary || '');
+        if (data.resume) {
+          setSeekerResumeUrl(data.resume.fileUrl || '');
+        }
+      }
+      setActiveView('seeker-dashboard');
+    } catch (err) {
+      console.error(err);
+      showToast(lang === 'en' ? "Failed to load candidate dashboard" : "தேடுபவர் கட்டுப்பாட்டுப் பலகை ஏற்ற முடியவில்லை", 'error');
+    }
+  };
+
+  const fetchEmployerDashboard = async () => {
+    try {
+      const data = await fetchApi('/employer/dashboard');
+      setEmployerDashboardData(data);
+      if (data.company) {
+        setEmpCompanyName(data.company.companyName || '');
+        setEmpCompanyLogo(data.company.logo || '');
+        setEmpIndustry(data.company.industry || '');
+        setEmpWebsite(data.company.website || '');
+        setEmpAddress(data.company.address || '');
+        setEmpAbout(data.company.about || '');
+        setEmpPhone(data.company.phone || '');
+      }
+      setActiveView('employer-dashboard');
+    } catch (err) {
+      console.error(err);
+      showToast(lang === 'en' ? "Failed to load employer dashboard" : "நிறுவன கட்டுப்பாட்டுப் பலகை ஏற்ற முடியவில்லை", 'error');
+    }
+  };
+
+  const handleSeekerProfileSave = async (e) => {
+    e.preventDefault();
+    if (!seekerHeadline || !seekerSkills || !seekerEducation || !seekerPrefLoc) {
+      showToast(lang === 'en' ? "Please fill all required fields" : "தேவையான அனைத்து புலங்களையும் நிரப்பவும்", 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        headline: seekerHeadline,
+        skills: seekerSkills,
+        education: seekerEducation,
+        experience: seekerExperience,
+        preferredLocation: seekerPrefLoc,
+        expectedSalary: seekerSalary ? parseFloat(seekerSalary) : null
+      };
+
+      const profile = await fetchApi('/candidate/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (seekerResumeUrl) {
+        await fetchApi(`/resume/upload?candidateId=${profile.id}&fileUrl=${encodeURIComponent(seekerResumeUrl)}&atsScore=85&parsedData=${encodeURIComponent(seekerSkills)}`, {
+          method: 'POST'
+        });
+      }
+
+      showToast(lang === 'en' ? "Profile saved successfully!" : "சுயவிவரம் வெற்றிகரமாக சேமிக்கப்பட்டது!");
+      await fetchSeekerDashboard();
+    } catch (err) {
+      console.error(err);
+      showToast(lang === 'en' ? "Failed to save profile" : "சுயவிவரத்தை சேமிக்க முடியவில்லை", 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleWithdrawApplication = async (appId) => {
+    setLoading(true);
+    try {
+      await fetchApi(`/candidate/applications/${appId}`, {
+        method: 'DELETE'
+      });
+      showToast(lang === 'en' ? "Application withdrawn successfully." : "விண்ணப்பம் வெற்றிகரமாக திரும்பப் பெறப்பட்டது.");
+      await fetchSeekerDashboard();
+    } catch (err) {
+      console.error(err);
+      showToast(lang === 'en' ? "Failed to withdraw application." : "விண்ணப்பத்தை திரும்பப் பெற முடியவில்லை.", 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmployerProfileSave = async (e) => {
+    e.preventDefault();
+    if (!empCompanyName || !empIndustry || !empAddress || !empAbout) {
+      showToast(lang === 'en' ? "Please fill all required fields" : "தேவையான அனைத்து புலங்களையும் நிரப்பவும்", 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        companyName: empCompanyName,
+        logo: empCompanyLogo,
+        industry: empIndustry,
+        website: empWebsite,
+        address: empAddress,
+        about: empAbout,
+        phone: empPhone
+      };
+
+      await fetchApi('/employer/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      showToast(lang === 'en' ? "Company profile saved successfully!" : "நிறுவன விவரங்கள் வெற்றிகரமாக சேமிக்கப்பட்டது!");
+      await fetchEmployerDashboard();
+    } catch (err) {
+      console.error(err);
+      showToast(lang === 'en' ? "Failed to save company profile" : "நிறுவன விவரங்களை சேமிக்க முடியவில்லை", 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePostJob = async (e, isDraft = false) => {
+    e.preventDefault();
+    if (!newTitle || !newDesc || !newCatId || !newDistrictId || !newSkills) {
+      showToast(lang === 'en' ? "Please fill all required fields" : "தேவையான அனைத்து புலங்களையும் நிரப்பவும்", 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        title: newTitle,
+        description: newDesc,
+        categoryObj: { id: newCatId },
+        experienceMin: newExpMin,
+        experienceMax: newExpMax,
+        salaryMin: newSalMin,
+        salaryMax: newSalMax,
+        employmentType: newTypeSelect,
+        workMode: newModeSelect,
+        vacancies: newVacancies,
+        districtId: newDistrictId || null,
+        requiredSkills: newSkills,
+        status: isDraft ? 'draft' : 'active'
+      };
+
+      await fetchApi('/employer/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      showToast(isDraft ? (lang === 'en' ? "Job draft saved!" : "வரைவு சேமிக்கப்பட்டது!") : (lang === 'en' ? "Job vacancy published!" : "வேலை வாய்ப்பு வெளியிடப்பட்டது!"));
+      
+      // Reset form fields
+      setNewTitle('');
+      setNewDesc('');
+      setNewSkills('');
+      setNewDistrictId('');
+      
+      await fetchEmployerDashboard();
+      setEmployerSubView('manage-jobs');
+    } catch (err) {
+      console.error(err);
+      showToast(lang === 'en' ? "Failed to publish job vacancy" : "வேலை வாய்ப்பை வெளியிட முடியவில்லை", 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCloseJob = async (jobId) => {
+    setLoading(true);
+    try {
+      await fetchApi(`/employer/jobs/${jobId}`, {
+        method: 'DELETE'
+      });
+      showToast(lang === 'en' ? "Job vacancy closed/deleted successfully." : "வேலை வாய்ப்பு வெற்றிகரமாக மூடப்பட்டது.");
+      await fetchEmployerDashboard();
+    } catch (err) {
+      console.error(err);
+      showToast(lang === 'en' ? "Failed to close job vacancy." : "வேலை வாய்ப்பை மூட முடியவில்லை.", 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewApplicants = async (job) => {
+    setLoading(true);
+    setSelectedJobForApplicants(job);
+    try {
+      const data = await fetchApi(`/employer/jobs/${job.id}/applicants`);
+      setApplicantsList(data);
+      setEmployerSubView('manage-applicants');
+    } catch (err) {
+      console.error(err);
+      showToast(lang === 'en' ? "Failed to retrieve applicants list" : "விண்ணப்பதாரர்களின் பட்டியலை பெற முடியவில்லை", 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateApplicantStatus = async (appId, newStatus) => {
+    setLoading(true);
+    try {
+      await fetchApi(`/employer/applications/${appId}/status?status=${encodeURIComponent(newStatus)}`, {
+        method: 'POST'
+      });
+      showToast(lang === 'en' ? `Candidate status updated to: ${newStatus}` : `வேட்பாளர் நிலை மாற்றப்பட்டது: ${newStatus}`);
+      
+      // Update local applicants list state
+      setApplicantsList(prev => prev.map(a => a.applicationId === appId ? { ...a, applicationStatus: newStatus } : a));
+    } catch (err) {
+      console.error(err);
+      showToast(lang === 'en' ? "Failed to update status." : "நிலையை புதுப்பிக்க முடியவில்லை.", 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Open job details
   const handleOpenDetails = (job) => {
@@ -265,6 +630,874 @@ const Jobs = () => {
     setShowShareModal(false);
   };
 
+  // ==========================================================================
+  // CANDIDATE & EMPLOYER VIEW RENDERERS
+  // ==========================================================================
+
+  const renderSeekerDashboard = () => {
+    if (!seekerDashboardData) return <div style={{ padding: '80px 0', textAlign: 'center' }}><i className="fas fa-spinner fa-spin" style={{ fontSize: '32px', color: '#2563eb' }}></i></div>;
+
+    const { profile, applications, user: userData } = seekerDashboardData;
+
+    const totalApps = applications.length;
+    const pendingApps = applications.filter(a => a.applicationStatus === 'Applied' || a.applicationStatus === 'Pending').length;
+    const shortlistedApps = applications.filter(a => a.applicationStatus === 'Shortlisted').length;
+    const interviewApps = applications.filter(a => a.applicationStatus === 'Interview Scheduled' || a.applicationStatus === 'Interview').length;
+    const selectedApps = applications.filter(a => a.applicationStatus === 'Selected').length;
+    const rejectedApps = applications.filter(a => a.applicationStatus === 'Rejected').length;
+
+    return (
+      <div className="job-dashboard-view text-left" style={{ padding: '24px', background: '#f8fafc', borderRadius: '16px' }}>
+        <div className="job-dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px' }}>
+          <div>
+            <h2 style={{ margin: 0, fontWeight: 800 }}>{lang === 'en' ? 'Candidate Dashboard' : 'வேட்பாளர் கட்டுப்பாட்டுப் பலகை'}</h2>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>
+              Welcome back, {userData?.fullName}! Keep track of your job applications.
+            </p>
+          </div>
+          <button className="dashboard-back-btn" onClick={() => setActiveView('list')}>
+            <i className="fas fa-arrow-left"></i> {lang === 'en' ? 'Back to Jobs' : 'வேலைகளுக்குத் திரும்பு'}
+          </button>
+        </div>
+
+        <div className="seeker-stats-grid">
+          <div className="metric-card primary">
+            <span className="metric-value">{totalApps}</span>
+            <span className="metric-label">{lang === 'en' ? 'Total Applied' : 'விண்ணப்பித்தது'}</span>
+          </div>
+          <div className="metric-card">
+            <span className="metric-value">{pendingApps}</span>
+            <span className="metric-label">{lang === 'en' ? 'Pending' : 'நிலுவையில்'}</span>
+          </div>
+          <div className="metric-card warning">
+            <span className="metric-value">{shortlistedApps}</span>
+            <span className="metric-label">{lang === 'en' ? 'Shortlisted' : 'பரிசீலனையில்'}</span>
+          </div>
+          <div className="metric-card success">
+            <span className="metric-value">{interviewApps}</span>
+            <span className="metric-label">{lang === 'en' ? 'Interviews' : 'நேர்காணல்'}</span>
+          </div>
+          <div className="metric-card primary" style={{ background: '#dcfce7', borderColor: '#bbf7d0' }}>
+            <span className="metric-value" style={{ color: '#15803d' }}>{selectedApps}</span>
+            <span className="metric-label" style={{ color: '#15803d' }}>{lang === 'en' ? 'Selected' : 'தேர்வு'}</span>
+          </div>
+          <div className="metric-card danger">
+            <span className="metric-value">{rejectedApps}</span>
+            <span className="metric-label">{lang === 'en' ? 'Rejected' : 'நிராகரிக்கப்பட்டது'}</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginTop: '24px' }}>
+          
+          <div className="dashboard-widget-card">
+            <h3 className="dashboard-widget-title">
+              <i className="fas fa-file-invoice" style={{ color: '#2563eb' }}></i>
+              {lang === 'en' ? 'Job Applications History' : 'விண்ணப்ப வரலாறு'}
+            </h3>
+            
+            {applications.length === 0 ? (
+              <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                <i className="fas fa-folder-open" style={{ fontSize: '32px', marginBottom: '12px', display: 'block' }}></i>
+                {lang === 'en' ? 'You have not applied for any jobs yet.' : 'நீங்கள் இன்னும் எந்த வேலைக்கும் விண்ணப்பிக்கவில்லை.'}
+              </div>
+            ) : (
+              <div className="table-container">
+                <table className="modern-table">
+                  <thead>
+                    <tr>
+                      <th>{lang === 'en' ? 'Job Title' : 'பணி'}</th>
+                      <th>{lang === 'en' ? 'Company' : 'நிறுவனம்'}</th>
+                      <th>{lang === 'en' ? 'Applied Date' : 'விண்ணப்பித்த நாள்'}</th>
+                      <th>{lang === 'en' ? 'Status' : 'நிலை'}</th>
+                      <th style={{ textAlign: 'center' }}>{lang === 'en' ? 'Action' : 'செயல்'}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {applications.map(app => (
+                      <tr key={app.applicationId}>
+                        <td style={{ fontWeight: 700, color: '#0f172a' }}>{app.jobTitle}</td>
+                        <td>{app.companyName}</td>
+                        <td>{new Date(app.appliedAt).toLocaleDateString()}</td>
+                        <td>
+                          <span className={`status-badge ${app.applicationStatus.toLowerCase().replace(' ', '_')}`}>
+                            {app.applicationStatus}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                            <button 
+                              className="btn-secondary" 
+                              style={{ padding: '4px 10px', fontSize: '11px' }}
+                              onClick={() => handleOpenDetails({ id: app.jobId, title: app.jobTitle, companyName: app.companyName, location: app.location })}
+                            >
+                              {lang === 'en' ? 'View' : 'விவரம்'}
+                            </button>
+                            {app.applicationStatus !== 'Selected' && app.applicationStatus !== 'Rejected' && (
+                              <button 
+                                className="btn-primary" 
+                                style={{ padding: '4px 10px', fontSize: '11px', background: '#dc2626' }}
+                                onClick={() => confirmAction(
+                                  lang === 'en' ? 'Withdraw Application?' : 'விண்ணப்பத்தைத் திரும்பப் பெறவா?',
+                                  lang === 'en' ? 'Are you sure you want to withdraw your application? This action cannot be undone.' : 'விண்ணப்பத்தைத் திரும்பப் பெற விரும்புகிறீர்களா? இதை மாற்ற முடியாது.',
+                                  () => handleWithdrawApplication(app.applicationId)
+                                )}
+                              >
+                                {lang === 'en' ? 'Withdraw' : 'திரும்பப் பெறு'}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            
+            <div className="dashboard-widget-card">
+              <h3 className="dashboard-widget-title">
+                <i className="fas fa-bolt" style={{ color: '#fbbf24' }}></i>
+                {lang === 'en' ? 'Quick Actions' : 'விரைவுச் செயல்கள்'}
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <button className="btn-primary" onClick={() => setActiveView('list')} style={{ width: '100%' }}>
+                  <i className="fas fa-search"></i> {lang === 'en' ? 'Browse Jobs' : 'வேலை தேடுக'}
+                </button>
+                <button className="btn-secondary" onClick={() => setActiveView('seeker-profile-create')} style={{ width: '100%' }}>
+                  <i className="fas fa-user-edit"></i> {lang === 'en' ? 'Edit Profile' : 'சுயவிவரம் திருத்துக'}
+                </button>
+              </div>
+            </div>
+
+            <div className="dashboard-widget-card">
+              <h3 className="dashboard-widget-title">
+                <i className="fas fa-user-tie" style={{ color: '#db2777' }}></i>
+                {lang === 'en' ? 'Profile Details' : 'சுயவிவர விவரங்கள்'}
+              </h3>
+              <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div>
+                  <strong style={{ color: '#475569' }}>{lang === 'en' ? 'Current Headline:' : 'தற்போதைய பணி:'}</strong>
+                  <div style={{ fontWeight: 600, marginTop: '2px' }}>{profile.headline || 'N/A'}</div>
+                </div>
+                <div>
+                  <strong style={{ color: '#475569' }}>{lang === 'en' ? 'Skills:' : 'திறன்கள்:'}</strong>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
+                    {profile.skills ? profile.skills.split(',').map(s => (
+                      <span key={s} style={{ background: '#f1f5f9', color: '#334155', padding: '3px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>{s.trim()}</span>
+                    )) : 'N/A'}
+                  </div>
+                </div>
+                <div>
+                  <strong style={{ color: '#475569' }}>{lang === 'en' ? 'Education:' : 'கல்வி:'}</strong>
+                  <div style={{ fontWeight: 600, marginTop: '2px' }}>{profile.education || 'N/A'}</div>
+                </div>
+                <div>
+                  <strong style={{ color: '#475569' }}>{lang === 'en' ? 'Experience:' : 'அனுபவம்:'}</strong>
+                  <div style={{ fontWeight: 600, marginTop: '2px' }}>{profile.experience || 'N/A'}</div>
+                </div>
+                {seekerResumeUrl && (
+                  <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '10px', marginTop: '10px' }}>
+                    <a 
+                      href={seekerResumeUrl} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      <i className="fas fa-file-pdf" style={{ fontSize: '16px', color: '#dc2626' }}></i>
+                      {lang === 'en' ? 'View Uploaded Resume' : 'பதிவேற்றிய விவரக்குறிப்பு'}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    );
+  };
+
+  const renderSeekerProfileCreate = () => {
+    return (
+      <div className="job-dashboard-view text-left" style={{ padding: '24px', background: '#f8fafc', borderRadius: '16px' }}>
+        <div className="job-dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px' }}>
+          <div>
+            <h2 style={{ margin: 0, fontWeight: 800 }}>
+              {seekerDashboardData?.profile?.skills
+                ? (lang === 'en' ? 'Edit Candidate Profile' : 'சுயவிவரத்தைத் திருத்துக')
+                : (lang === 'en' ? 'Create Candidate Profile' : 'வேட்பாளர் சுயவிவரம் உருவாக்கு')}
+            </h2>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>
+              Name, Email, and Phone are auto-filled and read-only. Provide your job details.
+            </p>
+          </div>
+          <button className="dashboard-back-btn" onClick={() => {
+            if (seekerDashboardData?.profile?.skills) {
+              setActiveView('seeker-dashboard');
+            } else {
+              setActiveView('list');
+            }
+          }}>
+            <i className="fas fa-arrow-left"></i> {lang === 'en' ? 'Cancel' : 'ரத்து செய்'}
+          </button>
+        </div>
+
+        <form onSubmit={handleSeekerProfileSave} className="recruitment-form">
+          <div className="profile-form-grid">
+            
+            <div>
+              <label>{lang === 'en' ? 'Full Name' : 'பெயர்'}</label>
+              <input type="text" value={user?.fullName || 'Candidate User'} disabled style={{ background: '#f1f5f9', cursor: 'not-allowed' }} />
+            </div>
+
+            <div>
+              <label>{lang === 'en' ? 'Email Address' : 'மின்னஞ்சல்'}</label>
+              <input type="email" value={user?.email || 'candidate@gmail.com'} disabled style={{ background: '#f1f5f9', cursor: 'not-allowed' }} />
+            </div>
+
+            <div>
+              <label>{lang === 'en' ? 'Phone Number' : 'கைபேசி எண்'}</label>
+              <input type="text" value={user?.phone || '+91 98765 43210'} disabled style={{ background: '#f1f5f9', cursor: 'not-allowed' }} />
+            </div>
+
+            <div>
+              <label>{lang === 'en' ? 'Current Headline / Target Role *' : 'தற்போதைய பதவி / இலக்கு பணி *'}</label>
+              <input 
+                type="text" 
+                placeholder="e.g. Software Engineer, React Specialist" 
+                value={seekerHeadline} 
+                onChange={(e) => setSeekerHeadline(e.target.value)} 
+                required 
+              />
+            </div>
+
+            <div>
+              <label>{lang === 'en' ? 'Work Experience *' : 'வேலை அனுபவம் *'}</label>
+              <select value={seekerExperience} onChange={(e) => setSeekerExperience(e.target.value)}>
+                <option value="Fresher">Fresher (0 - 1 Year)</option>
+                <option value="1-3 Years">1 - 3 Years</option>
+                <option value="3-6 Years">3 - 6 Years</option>
+                <option value="6+ Years">6+ Years</option>
+              </select>
+            </div>
+
+            <div>
+              <label>{lang === 'en' ? 'Highest Education Qualification *' : 'கல்வித் தகுதி *'}</label>
+              <input 
+                type="text" 
+                placeholder="e.g. B.E. Computer Science, MCA, B.Sc" 
+                value={seekerEducation} 
+                onChange={(e) => setSeekerEducation(e.target.value)} 
+                required 
+              />
+            </div>
+
+            <div>
+              <label>{lang === 'en' ? 'Skills * (Comma separated)' : 'திறன்கள் * (காற்புள்ளியால் பிரிக்கவும்)'}</label>
+              <input 
+                type="text" 
+                placeholder="e.g. React, Java, Spring Boot, SQL" 
+                value={seekerSkills} 
+                onChange={(e) => setSeekerSkills(e.target.value)} 
+                required 
+              />
+            </div>
+
+            <div>
+              <label>{lang === 'en' ? 'Preferred Location *' : 'விரும்பும் பணி இடம் *'}</label>
+              <select value={seekerPrefLoc} onChange={(e) => setSeekerPrefLoc(e.target.value)} required>
+                <option value="">Select Preferred Location</option>
+                {districts.map(d => (
+                  <option key={d.districtId} value={lang === 'en' ? d.nameEn : d.nameTa}>{lang === 'en' ? d.nameEn : d.nameTa}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label>{lang === 'en' ? 'Expected Monthly Salary (INR - Optional)' : 'எதிர்பார்க்கும் மாதச் சம்பளம் (விருப்பம்)'}</label>
+              <input 
+                type="number" 
+                placeholder="e.g. 50000" 
+                value={seekerSalary} 
+                onChange={(e) => setSeekerSalary(e.target.value)} 
+              />
+            </div>
+
+            <div className="form-group-full">
+              <label>{lang === 'en' ? 'Resume Attachment (PDF/DOC/DOCX) *' : 'விவரக்குறிப்பு கோப்பு (PDF/DOC/DOCX) *'}</label>
+              
+              <div 
+                className="drag-drop-zone"
+                onClick={() => document.getElementById('candidate-resume-file').click()}
+              >
+                <i className="fas fa-cloud-upload-alt"></i>
+                <div>
+                  <strong>{lang === 'en' ? 'Drag and drop resume here' : 'விவரக்குறிப்பை இங்கே இழுத்து விடுங்கள்'}</strong>
+                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
+                    Or click to browse files from your computer
+                  </div>
+                </div>
+                
+                {seekerResumeUrl && (
+                  <div style={{ color: '#16a34a', fontWeight: 'bold', fontSize: '13px', marginTop: '8px' }}>
+                    <i className="fas fa-check-circle"></i> {lang === 'en' ? 'Resume Attached Successfully' : 'விவரக்குறிப்பு இணைக்கப்பட்டது!'}
+                  </div>
+                )}
+              </div>
+              
+              <input 
+                type="file" 
+                id="candidate-resume-file" 
+                accept=".pdf,.doc,.docx" 
+                style={{ display: 'none' }} 
+                onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  try {
+                    showToast(lang === 'en' ? "Uploading resume..." : "பதிவேற்றப்படுகிறது...");
+                    const url = await handleFileUpload(file);
+                    setSeekerResumeUrl(url);
+                    showToast(lang === 'en' ? "Resume uploaded! Saving profile will parse details." : "விவரக்குறிப்பு பதிவேற்றப்பட்டது!");
+                  } catch (err) {
+                    console.error(err);
+                    showToast(lang === 'en' ? "Upload failed" : "பதிவேற்றம் தோல்வியடைந்தது", 'error');
+                  }
+                }}
+              />
+            </div>
+
+          </div>
+
+          <div className="form-actions-row">
+            <button type="submit" className="btn-primary">
+              <i className="fas fa-save"></i> {lang === 'en' ? 'Save Profile' : 'சுயவிவரம் சேமி'}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  };
+
+  const renderEmployerProfileCreate = () => {
+    return (
+      <div className="job-dashboard-view text-left" style={{ padding: '24px', background: '#f8fafc', borderRadius: '16px' }}>
+        <div className="job-dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px' }}>
+          <div>
+            <h2 style={{ margin: 0, fontWeight: 800 }}>{lang === 'en' ? 'Create Employer Profile' : 'நிறுவன சுயவிவரத்தை உருவாக்கு'}</h2>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>
+              Name, Email are auto-filled. Fill in your business details.
+            </p>
+          </div>
+          <button className="dashboard-back-btn" onClick={() => setActiveView('list')}>
+            <i className="fas fa-arrow-left"></i> {lang === 'en' ? 'Cancel' : 'ரத்து செய்'}
+          </button>
+        </div>
+
+        <form onSubmit={handleEmployerProfileSave} className="recruitment-form">
+          <div className="profile-form-grid">
+            
+            <div>
+              <label>{lang === 'en' ? 'Recruiter Name' : 'பதிவாளர் பெயர்'}</label>
+              <input type="text" value={user?.fullName || 'Employer User'} disabled style={{ background: '#f1f5f9', cursor: 'not-allowed' }} />
+            </div>
+
+            <div>
+              <label>{lang === 'en' ? 'Recruiter Email' : 'பதிவாளர் மின்னஞ்சல்'}</label>
+              <input type="email" value={user?.email || 'employer@gmail.com'} disabled style={{ background: '#f1f5f9', cursor: 'not-allowed' }} />
+            </div>
+
+            <div>
+              <label>{lang === 'en' ? 'Company Name *' : 'நிறுவனத்தின் பெயர் *'}</label>
+              <input 
+                type="text" 
+                placeholder="e.g. TCS, Zoho, HDFC Bank" 
+                value={empCompanyName} 
+                onChange={(e) => setEmpCompanyName(e.target.value)} 
+                required 
+              />
+            </div>
+
+            <div>
+              <label>{lang === 'en' ? 'Industry Type *' : 'தொழில்துறை வகை *'}</label>
+              <input 
+                type="text" 
+                placeholder="e.g. IT & Software, Banking, Healthcare" 
+                value={empIndustry} 
+                onChange={(e) => setEmpIndustry(e.target.value)} 
+                required 
+              />
+            </div>
+
+            <div>
+              <label>{lang === 'en' ? 'Company Website URL' : 'இணையதள முகவரி'}</label>
+              <input 
+                type="url" 
+                placeholder="e.g. https://www.tcs.com" 
+                value={empWebsite} 
+                onChange={(e) => setEmpWebsite(e.target.value)} 
+              />
+            </div>
+
+            <div>
+              <label>{lang === 'en' ? 'Company Phone Number' : 'தொலைபேசி எண்'}</label>
+              <input 
+                type="text" 
+                placeholder="e.g. +91 44 2824 1000" 
+                value={empPhone} 
+                onChange={(e) => setEmpPhone(e.target.value)} 
+              />
+            </div>
+
+            <div className="form-group-full">
+              <label>{lang === 'en' ? 'Company Logo (Optional)' : 'நிறுவனத்தின் லோகோ (விருப்பம்)'}</label>
+              <div 
+                className="drag-drop-zone"
+                onClick={() => document.getElementById('company-logo-file').click()}
+                style={{ padding: '20px' }}
+              >
+                <i className="fas fa-image"></i>
+                <div>
+                  <strong>{lang === 'en' ? 'Click to upload Company Logo image' : 'நிறுவன லோகோ படத்தை பதிவேற்ற கிளிக் செய்யவும்'}</strong>
+                </div>
+                {empCompanyLogo && (
+                  <div style={{ marginTop: '8px' }}>
+                    <img src={empCompanyLogo} alt="Logo preview" style={{ height: '40px', objectFit: 'contain' }} />
+                  </div>
+                )}
+              </div>
+              <input 
+                type="file" 
+                id="company-logo-file" 
+                accept="image/*" 
+                style={{ display: 'none' }} 
+                onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  try {
+                    showToast(lang === 'en' ? "Uploading image..." : "பதிவேற்றப்படுகிறது...");
+                    const url = await handleFileUpload(file);
+                    setEmpCompanyLogo(url);
+                    showToast(lang === 'en' ? "Logo uploaded!" : "லோகோ பதிவேற்றப்பட்டது!");
+                  } catch (err) {
+                    console.error(err);
+                    showToast(lang === 'en' ? "Logo upload failed" : "பதிவேற்றம் தோல்வியடைந்தது", 'error');
+                  }
+                }}
+              />
+            </div>
+
+            <div className="form-group-full">
+              <label>{lang === 'en' ? 'Company Office Address *' : 'அலுவலக முகவரி *'}</label>
+              <input 
+                type="text" 
+                placeholder="e.g. Ramanujan IT Park, Chennai, Tamil Nadu" 
+                value={empAddress} 
+                onChange={(e) => setEmpAddress(e.target.value)} 
+                required 
+              />
+            </div>
+
+            <div className="form-group-full">
+              <label>{lang === 'en' ? 'Company About / Description *' : 'நிறுவனத்தின் விவரம் *'}</label>
+              <textarea 
+                rows="4" 
+                placeholder="Briefly describe your company's business and hiring goals..." 
+                value={empAbout} 
+                onChange={(e) => setEmpAbout(e.target.value)} 
+                required
+              />
+            </div>
+
+          </div>
+
+          <div className="form-actions-row">
+            <button type="submit" className="btn-primary">
+              <i className="fas fa-save"></i> {lang === 'en' ? 'Create Profile' : 'சுயவிவரத்தை சேமி'}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  };
+
+  const renderEmployerDashboard = () => {
+    if (!employerDashboardData) return <div style={{ padding: '80px 0', textAlign: 'center' }}><i className="fas fa-spinner fa-spin" style={{ fontSize: '32px', color: '#2563eb' }}></i></div>;
+
+    const { company, jobs: postedJobs, analytics } = employerDashboardData;
+
+    return (
+      <div className="job-dashboard-view text-left" style={{ padding: '24px', background: '#f8fafc', borderRadius: '16px' }}>
+        <div className="job-dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px' }}>
+          <div>
+            <h2 style={{ margin: 0, fontWeight: 800 }}>
+              {company.companyName} - {lang === 'en' ? 'Recruitment Console' : 'வேலை வழங்குபவர் பிரிவு'}
+            </h2>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>
+              Manage your jobs listings and review candidates applications.
+            </p>
+          </div>
+          <button className="dashboard-back-btn" onClick={() => setActiveView('list')}>
+            <i className="fas fa-arrow-left"></i> {lang === 'en' ? 'Back to Jobs' : 'வேலைகளுக்குத் திரும்பு'}
+          </button>
+        </div>
+
+        <div className="dashboard-split-layout">
+          
+          <div className="dashboard-sidebar-menu">
+            <button className={`dashboard-menu-item ${employerSubView === 'dashboard' ? 'active' : ''}`} onClick={() => setEmployerSubView('dashboard')}>
+              <i className="fas fa-chart-line"></i> {lang === 'en' ? 'Overview' : 'கட்டுப்பாட்டுப் பலகை'}
+            </button>
+            <button className={`dashboard-menu-item ${employerSubView === 'post-job' ? 'active' : ''}`} onClick={() => setEmployerSubView('post-job')}>
+              <i className="fas fa-plus-circle"></i> {lang === 'en' ? 'Post a Job' : 'வேலை வாய்ப்பு பதிவிடு'}
+            </button>
+            <button className={`dashboard-menu-item ${employerSubView === 'manage-jobs' ? 'active' : ''}`} onClick={() => setEmployerSubView('manage-jobs')}>
+              <i className="fas fa-briefcase"></i> {lang === 'en' ? 'Manage Jobs' : 'வேலைகளை நிர்வகி'}
+            </button>
+            <button className={`dashboard-menu-item ${employerSubView === 'manage-applicants' ? 'active' : ''}`} onClick={() => setEmployerSubView('manage-applicants')}>
+              <i className="fas fa-users"></i> {lang === 'en' ? 'Manage Candidates' : 'வேட்பாளர்களை நிர்வகி'}
+            </button>
+            <button className={`dashboard-menu-item ${employerSubView === 'company-profile' ? 'active' : ''}`} onClick={() => setEmployerSubView('company-profile')}>
+              <i className="fas fa-building"></i> {lang === 'en' ? 'Company Profile' : 'நிறுவன சுயவிவரம்'}
+            </button>
+          </div>
+
+          <div className="dashboard-main-panel">
+            
+            {employerSubView === 'dashboard' && (
+              <div>
+                <div className="recruiter-stats-grid">
+                  <div className="metric-card primary">
+                    <span className="metric-value">{analytics.totalPostings}</span>
+                    <span className="metric-label">{lang === 'en' ? 'Jobs Posted' : 'மொத்த வேலைகள்'}</span>
+                  </div>
+                  <div className="metric-card success">
+                    <span className="metric-value">{analytics.totalApplications}</span>
+                    <span className="metric-label">{lang === 'en' ? 'Applications' : 'விண்ணப்பங்கள்'}</span>
+                  </div>
+                  <div className="metric-card warning">
+                    <span className="metric-value">
+                      {postedJobs.filter(j => j.status === 'active' || j.status === 'Active').length}
+                    </span>
+                    <span className="metric-label">{lang === 'en' ? 'Active Listings' : 'செயலில் உள்ளவை'}</span>
+                  </div>
+                </div>
+
+                <div className="dashboard-widget-card" style={{ marginTop: '24px' }}>
+                  <h3 className="dashboard-widget-title">
+                    <i className="fas fa-chart-bar" style={{ color: '#2563eb' }}></i>
+                    {lang === 'en' ? 'Applications Distribution' : 'விண்ணப்பங்களின் பரவல்'}
+                  </h3>
+                  
+                  {postedJobs.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
+                      {lang === 'en' ? 'No job vacancies posted yet.' : 'வேலை வாய்ப்புகள் எதுவும் இன்னும் பதிவிடப்படவில்லை.'}
+                    </div>
+                  ) : (
+                    <div className="chart-bar-container">
+                      {postedJobs.slice(0, 5).map(job => {
+                        const totalApp = analytics.totalApplications || 1;
+                        const pct = Math.min(100, Math.max(10, (job.applicantCount / totalApp) * 100));
+                        return (
+                          <div className="chart-bar-row" key={job.id}>
+                            <div className="chart-bar-label">{job.title}</div>
+                            <div className="chart-bar-wrapper">
+                              <div className="chart-bar-fill" style={{ width: `${pct}%` }}></div>
+                            </div>
+                            <div className="chart-bar-value">{job.applicantCount}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {employerSubView === 'company-profile' && (
+              <form onSubmit={handleEmployerProfileSave} className="recruitment-form" style={{ marginTop: 0 }}>
+                <div className="profile-form-grid">
+                  <div>
+                    <label>{lang === 'en' ? 'Company Name *' : 'நிறுவனத்தின் பெயர் *'}</label>
+                    <input type="text" value={empCompanyName} onChange={(e) => setEmpCompanyName(e.target.value)} required />
+                  </div>
+                  <div>
+                    <label>{lang === 'en' ? 'Industry Type *' : 'தொழில்துறை வகை *'}</label>
+                    <input type="text" value={empIndustry} onChange={(e) => setEmpIndustry(e.target.value)} required />
+                  </div>
+                  <div>
+                    <label>{lang === 'en' ? 'Website URL' : 'இணையதள முகவரி'}</label>
+                    <input type="url" value={empWebsite} onChange={(e) => setEmpWebsite(e.target.value)} />
+                  </div>
+                  <div>
+                    <label>{lang === 'en' ? 'Contact Phone' : 'தொலைபேசி எண்'}</label>
+                    <input type="text" value={empPhone} onChange={(e) => setEmpPhone(e.target.value)} />
+                  </div>
+                  <div className="form-group-full">
+                    <label>{lang === 'en' ? 'Company Logo URL' : 'நிறுவன லோகோ முகவரி'}</label>
+                    <input type="text" value={empCompanyLogo} onChange={(e) => setEmpCompanyLogo(e.target.value)} />
+                  </div>
+                  <div className="form-group-full">
+                    <label>{lang === 'en' ? 'Office Address *' : 'முகவரி *'}</label>
+                    <input type="text" value={empAddress} onChange={(e) => setEmpAddress(e.target.value)} required />
+                  </div>
+                  <div className="form-group-full">
+                    <label>{lang === 'en' ? 'Company Description *' : 'விவரம் *'}</label>
+                    <textarea rows="4" value={empAbout} onChange={(e) => setEmpAbout(e.target.value)} required />
+                  </div>
+                </div>
+                <div className="form-actions-row">
+                  <button type="submit" className="btn-primary">
+                    <i className="fas fa-save"></i> {lang === 'en' ? 'Save Changes' : 'சுயவிவரம் சேமி'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {employerSubView === 'post-job' && (
+              <form onSubmit={(e) => handlePostJob(e, false)} className="recruitment-form" style={{ marginTop: 0 }}>
+                <div className="profile-form-grid">
+                  <div>
+                    <label>{lang === 'en' ? 'Job Title *' : 'வேலை தலைப்பு *'}</label>
+                    <input type="text" placeholder="e.g. Senior Java Developer" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} required />
+                  </div>
+                  <div>
+                    <label>{lang === 'en' ? 'Job Category *' : 'பிரிவு *'}</label>
+                    <select value={newCatId} onChange={(e) => setNewCatId(e.target.value)} required>
+                      <option value="">Select Category</option>
+                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label>{lang === 'en' ? 'Employment Type *' : 'பணி வகை *'}</label>
+                    <select value={newTypeSelect} onChange={(e) => setNewTypeSelect(e.target.value)}>
+                      <option value="Full Time">Full Time</option>
+                      <option value="Part Time">Part Time</option>
+                      <option value="Work From Home">Work From Home</option>
+                      <option value="Internship">Internship</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label>{lang === 'en' ? 'Work Mode *' : 'பணி முறை *'}</label>
+                    <select value={newModeSelect} onChange={(e) => setNewModeSelect(e.target.value)}>
+                      <option value="Work From Office">Work From Office</option>
+                      <option value="Remote">Remote</option>
+                      <option value="Hybrid">Hybrid</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label>{lang === 'en' ? 'Required Skills * (Comma separated)' : 'தேவைப்படும் திறன்கள் *'}</label>
+                    <input type="text" placeholder="e.g. Java, Spring Boot, Hibernate" value={newSkills} onChange={(e) => setNewSkills(e.target.value)} required />
+                  </div>
+                  <div>
+                    <label>{lang === 'en' ? 'District Location *' : 'பணி மாவட்டம் *'}</label>
+                    <select value={newDistrictId} onChange={(e) => setNewDistrictId(e.target.value)} required>
+                      <option value="">Select District</option>
+                      {districts.map(d => <option key={d.districtId} value={d.districtId}>{lang === 'en' ? d.nameEn : d.nameTa}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label>{lang === 'en' ? 'Min Experience (Years)' : 'குறைந்தபட்ச அனுபவம்'}</label>
+                    <input type="number" min="0" value={newExpMin} onChange={(e) => setNewExpMin(parseInt(e.target.value))} />
+                  </div>
+                  <div>
+                    <label>{lang === 'en' ? 'Max Experience (Years)' : 'அதிகபட்ச அனுபவம்'}</label>
+                    <input type="number" min="0" value={newExpMax} onChange={(e) => setNewExpMax(parseInt(e.target.value))} />
+                  </div>
+                  <div>
+                    <label>{lang === 'en' ? 'Min Salary Range (Lakhs/Year)' : 'குறைந்தபட்ச சம்பளம் (லட்சங்களில்/ஆண்டு)'}</label>
+                    <input type="number" step="0.1" value={newSalMin} onChange={(e) => setNewSalMin(parseFloat(e.target.value))} />
+                  </div>
+                  <div>
+                    <label>{lang === 'en' ? 'Max Salary Range (Lakhs/Year)' : 'அதிகபட்ச சம்பளம் (லட்சங்களில்/ஆண்டு)'}</label>
+                    <input type="number" step="0.1" value={newSalMax} onChange={(e) => setNewSalMax(parseFloat(e.target.value))} />
+                  </div>
+                  <div>
+                    <label>{lang === 'en' ? 'Vacancies Count' : 'காலியிடங்கள் எண்ணிக்கை'}</label>
+                    <input type="number" min="1" value={newVacancies} onChange={(e) => setNewVacancies(parseInt(e.target.value))} />
+                  </div>
+                  <div className="form-group-full">
+                    <label>{lang === 'en' ? 'Job Description *' : 'பணி বিবরণ *'}</label>
+                    <textarea rows="4" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} required />
+                  </div>
+                </div>
+                <div className="form-actions-row">
+                  <button type="button" className="btn-secondary" onClick={(e) => handlePostJob(e, true)}>
+                    {lang === 'en' ? 'Save as Draft' : 'வரைவாக சேமி'}
+                  </button>
+                  <button type="submit" className="btn-primary">
+                    <i className="fas fa-paper-plane"></i> {lang === 'en' ? 'Publish Job' : 'வேலையை வெளியிடு'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {employerSubView === 'manage-jobs' && (
+              <div className="dashboard-widget-card" style={{ marginTop: 0 }}>
+                <h3 className="dashboard-widget-title">
+                  <i className="fas fa-briefcase" style={{ color: '#2563eb' }}></i>
+                  {lang === 'en' ? 'Manage Job Listings' : 'வேலை வாய்ப்புகளை நிர்வகி'}
+                </h3>
+                
+                {postedJobs.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                    {lang === 'en' ? 'No job vacancies posted yet.' : 'வேலை வாய்ப்புகள் எதுவும் இன்னும் பதிவிடப்படவில்லை.'}
+                  </div>
+                ) : (
+                  <div className="table-container">
+                    <table className="modern-table">
+                      <thead>
+                        <tr>
+                          <th>{lang === 'en' ? 'Job Title' : 'வேலை தலைப்பு'}</th>
+                          <th>{lang === 'en' ? 'Views' : 'பார்வைகள்'}</th>
+                          <th>{lang === 'en' ? 'Applicants' : 'விண்ணப்பங்கள்'}</th>
+                          <th>{lang === 'en' ? 'Status' : 'நிலை'}</th>
+                          <th style={{ textAlign: 'center' }}>{lang === 'en' ? 'Action' : 'செயல்'}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {postedJobs.map(job => (
+                          <tr key={job.id}>
+                            <td style={{ fontWeight: 700 }}>{job.title}</td>
+                            <td>{job.viewsCount || 0}</td>
+                            <td style={{ fontWeight: 700, color: '#2563eb' }}>{job.applicantCount || 0}</td>
+                            <td>
+                              <span className={`status-badge ${job.status === 'active' || job.status === 'Active' ? 'selected' : 'rejected'}`}>
+                                {job.status || 'Active'}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                <button className="btn-secondary" style={{ padding: '4px 10px', fontSize: '11.5px' }} onClick={() => handleViewApplicants(job)}>
+                                  <i className="fas fa-users"></i> {lang === 'en' ? 'Applicants' : 'வேட்பாளர்கள்'}
+                                </button>
+                                {job.status !== 'closed' && job.status !== 'Closed' && (
+                                  <button 
+                                    className="btn-primary" 
+                                    style={{ padding: '4px 10px', fontSize: '11.5px', background: '#dc2626' }}
+                                    onClick={() => confirmAction(
+                                      lang === 'en' ? 'Close Job Posting?' : 'பணியை மூட விரும்புகிறீர்களா?',
+                                      lang === 'en' ? 'Are you sure you want to close this job vacancy? It will no longer receive applications.' : 'வேலை வாய்ப்பை மூட விரும்புகிறீர்களா? இனி விண்ணப்பங்கள் வராது.',
+                                      () => handleCloseJob(job.id)
+                                    )}
+                                  >
+                                    {lang === 'en' ? 'Close' : 'மூடு'}
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {employerSubView === 'manage-applicants' && (
+              <div className="dashboard-widget-card" style={{ marginTop: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h3 className="dashboard-widget-title" style={{ margin: 0 }}>
+                    <i className="fas fa-users" style={{ color: '#2563eb' }}></i>
+                    {selectedJobForApplicants 
+                      ? `${lang === 'en' ? 'Candidates for' : 'விண்ணப்பதாரர்கள்:'} ${selectedJobForApplicants.title}` 
+                      : (lang === 'en' ? 'Select a job to view candidates' : 'விண்ணப்பதாரர்களைக் காண வேலையைத் தேர்வு செய்யவும்')}
+                  </h3>
+                  
+                  <select 
+                    style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '12.5px', maxWidth: '240px' }}
+                    value={selectedJobForApplicants?.id || ''}
+                    onChange={(e) => {
+                      const selectedId = parseInt(e.target.value);
+                      const selectedObj = postedJobs.find(j => j.id === selectedId);
+                      if (selectedObj) handleViewApplicants(selectedObj);
+                    }}
+                  >
+                    <option value="">{lang === 'en' ? 'Select Job' : 'வேலையைத் தெரிவு செய்க'}</option>
+                    {postedJobs.map(j => <option key={j.id} value={j.id}>{j.title}</option>)}
+                  </select>
+                </div>
+
+                {!selectedJobForApplicants ? (
+                  <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                    {lang === 'en' ? 'Please select a job from the dropdown above to manage candidates.' : 'வேட்பாளர்களை நிர்வகிக்க மேலே உள்ள விருப்பத்திலிருந்து வேலையைத் தேர்ந்தெடுக்கவும்.'}
+                  </div>
+                ) : applicantsList.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                    {lang === 'en' ? 'No applications received for this job vacancy yet.' : 'இந்த வேலைக்கு இன்னும் விண்ணப்பங்கள் எதுவும் வரவில்லை.'}
+                  </div>
+                ) : (
+                  <div className="table-container">
+                    <table className="modern-table">
+                      <thead>
+                        <tr>
+                          <th>{lang === 'en' ? 'Candidate Name' : 'பெயர்'}</th>
+                          <th>{lang === 'en' ? 'Email / Phone' : 'தொடர்பு'}</th>
+                          <th>{lang === 'en' ? 'Resume' : 'சுயவிவரக்குறிப்பு'}</th>
+                          <th>{lang === 'en' ? 'Applied Date' : 'தேதி'}</th>
+                          <th>{lang === 'en' ? 'Status' : 'நிலை'}</th>
+                          <th style={{ textAlign: 'center' }}>{lang === 'en' ? 'Update Status' : 'நிலை மாற்றுக'}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {applicantsList.map(app => (
+                          <tr key={app.applicationId}>
+                            <td style={{ fontWeight: 700 }}>{app.applicantName}</td>
+                            <td style={{ fontSize: '11.5px' }}>
+                              <div>{app.email || 'N/A'}</div>
+                              <div style={{ color: '#64748b' }}>{app.applicantPhone || 'N/A'}</div>
+                            </td>
+                            <td>
+                              {app.resumeUrl ? (
+                                <a 
+                                  href={app.resumeUrl} 
+                                  target="_blank" 
+                                  rel="noreferrer" 
+                                  style={{ color: '#2563eb', fontWeight: 'bold', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                >
+                                  <i className="fas fa-file-pdf" style={{ color: '#dc2626' }}></i> {lang === 'en' ? 'Resume' : 'கோப்பு'}
+                                </a>
+                              ) : 'No attachment'}
+                            </td>
+                            <td>{new Date(app.appliedAt).toLocaleDateString()}</td>
+                            <td>
+                              <span className={`status-badge ${app.applicationStatus.toLowerCase().replace(' ', '_')}`}>
+                                {app.applicationStatus}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <select 
+                                style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '11.5px', background: 'white' }}
+                                value={app.applicationStatus}
+                                onChange={(e) => handleUpdateApplicantStatus(app.applicationId, e.target.value)}
+                              >
+                                <option value="Applied">Applied</option>
+                                <option value="Shortlisted">Shortlisted</option>
+                                <option value="Interview Scheduled">Interview Scheduled</option>
+                                <option value="Selected">Selected</option>
+                                <option value="Rejected">Rejected</option>
+                              </select>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+
+        </div>
+      </div>
+    );
+  };
+
   const fallbackCategories = [
     { id: 1, name: 'IT & Software', slug: 'it-software', icon: 'fa-laptop-code', activeJobCount: 2845, companiesHiringCount: 120 },
     { id: 2, name: 'Sales & Marketing', slug: 'sales-marketing', icon: 'fa-bullhorn', activeJobCount: 4126, companiesHiringCount: 180 },
@@ -282,6 +1515,148 @@ const Jobs = () => {
     { id: 3, title: 'Relationship Manager', companyName: 'HDFC Bank', experienceMin: 2, experienceMax: 5, salaryMin: 4, salaryMax: 8, location: 'Salem, Tamil Nadu', employmentType: 'Full Time', workMode: 'Work From Office', requiredSkills: 'Sales, Customer Relationship', featured: true },
     { id: 4, title: 'Staff Nurse', companyName: 'Apollo Hospitals', experienceMin: 0, experienceMax: 2, salaryMin: 2, salaryMax: 4, location: 'Trichy, Tamil Nadu', employmentType: 'Full Time', workMode: 'Work From Office', requiredSkills: 'Nursing, Patient Care', featured: true }
   ];
+
+  const handleApplyClick = (job) => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: '/jobs' } });
+      return;
+    }
+    setApplicantName(user?.fullName || '');
+    setApplicantPhone(user?.phone || '');
+    setSelectedJob(job);
+    setShowApplyModal(true);
+  };
+
+  const handlePostJobHeroClick = async () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: '/jobs', jobRole: 'employer' } });
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const company = await fetchApi('/employer/profile');
+      if (company && company.companyName) {
+        await fetchEmployerDashboard();
+        setEmployerSubView('post-job');
+      } else {
+        setActiveView('employer-profile-create');
+      }
+    } catch (err) {
+      console.error(err);
+      setActiveView('employer-profile-create');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (activeView === 'seeker-dashboard') {
+    return (
+      <main className="container jobs-module-container" style={{ paddingTop: '20px' }}>
+        <div className="breadcrumbs" style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+          <Link to="/" style={{ color: 'var(--primary)', textDecoration: 'none' }}>{lang === 'en' ? 'Home' : 'முகப்பு'}</Link>
+          <i className="fas fa-chevron-right" style={{ fontSize: '9px', margin: '0 8px' }}></i>
+          <span style={{ cursor: 'pointer', color: 'var(--primary)' }} onClick={() => setActiveView('list')}>{lang === 'en' ? 'Jobs Board' : 'வேலைவாய்ப்பு'}</span>
+          <i className="fas fa-chevron-right" style={{ fontSize: '9px', margin: '0 8px' }}></i>
+          <span>{lang === 'en' ? 'Candidate Dashboard' : 'வேட்பாளர் பலகை'}</span>
+        </div>
+        {renderSeekerDashboard()}
+        {toastMessage && (
+          <div className={`recruitment-toast ${toastType}`}>
+            <i className={toastType === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'}></i>
+            {toastMessage}
+          </div>
+        )}
+        {dialogOpen && (
+          <div className="recruitment-dialog-overlay">
+            <div className="recruitment-dialog text-left">
+              <h3 style={{ margin: '0 0 10px 0' }}>{dialogTitle}</h3>
+              <p style={{ fontSize: '13px', color: '#475569', margin: '0 0 20px 0' }}>{dialogMessage}</p>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <button className="btn-secondary" onClick={() => setDialogOpen(false)}>{lang === 'en' ? 'Cancel' : 'ரத்து செய்'}</button>
+                <button className="btn-primary" style={{ background: '#dc2626' }} onClick={dialogConfirmAction}>{lang === 'en' ? 'Confirm' : 'உறுதி செய்'}</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+    );
+  }
+
+  if (activeView === 'seeker-profile-create') {
+    return (
+      <main className="container jobs-module-container" style={{ paddingTop: '20px' }}>
+        <div className="breadcrumbs" style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+          <Link to="/" style={{ color: 'var(--primary)', textDecoration: 'none' }}>{lang === 'en' ? 'Home' : 'முகப்பு'}</Link>
+          <i className="fas fa-chevron-right" style={{ fontSize: '9px', margin: '0 8px' }}></i>
+          <span style={{ cursor: 'pointer', color: 'var(--primary)' }} onClick={() => setActiveView('list')}>{lang === 'en' ? 'Jobs Board' : 'வேலைவாய்ப்பு'}</span>
+          <i className="fas fa-chevron-right" style={{ fontSize: '9px', margin: '0 8px' }}></i>
+          <span>{lang === 'en' ? 'Candidate Profile' : 'வேட்பாளர் சுயவிவரம்'}</span>
+        </div>
+        {renderSeekerProfileCreate()}
+        {toastMessage && (
+          <div className={`recruitment-toast ${toastType}`}>
+            <i className={toastType === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'}></i>
+            {toastMessage}
+          </div>
+        )}
+      </main>
+    );
+  }
+
+  if (activeView === 'employer-dashboard') {
+    return (
+      <main className="container jobs-module-container" style={{ paddingTop: '20px' }}>
+        <div className="breadcrumbs" style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+          <Link to="/" style={{ color: 'var(--primary)', textDecoration: 'none' }}>{lang === 'en' ? 'Home' : 'முகப்பு'}</Link>
+          <i className="fas fa-chevron-right" style={{ fontSize: '9px', margin: '0 8px' }}></i>
+          <span style={{ cursor: 'pointer', color: 'var(--primary)' }} onClick={() => setActiveView('list')}>{lang === 'en' ? 'Jobs Board' : 'வேலைவாய்ப்பு'}</span>
+          <i className="fas fa-chevron-right" style={{ fontSize: '9px', margin: '0 8px' }}></i>
+          <span>{lang === 'en' ? 'Employer Dashboard' : 'வேலை வழங்குபவர் பலகை'}</span>
+        </div>
+        {renderEmployerDashboard()}
+        {toastMessage && (
+          <div className={`recruitment-toast ${toastType}`}>
+            <i className={toastType === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'}></i>
+            {toastMessage}
+          </div>
+        )}
+        {dialogOpen && (
+          <div className="recruitment-dialog-overlay">
+            <div className="recruitment-dialog text-left">
+              <h3 style={{ margin: '0 0 10px 0' }}>{dialogTitle}</h3>
+              <p style={{ fontSize: '13px', color: '#475569', margin: '0 0 20px 0' }}>{dialogMessage}</p>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <button className="btn-secondary" onClick={() => setDialogOpen(false)}>{lang === 'en' ? 'Cancel' : 'ரத்து செய்'}</button>
+                <button className="btn-primary" style={{ background: '#dc2626' }} onClick={dialogConfirmAction}>{lang === 'en' ? 'Confirm' : 'உறுதி செய்'}</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+    );
+  }
+
+  if (activeView === 'employer-profile-create') {
+    return (
+      <main className="container jobs-module-container" style={{ paddingTop: '20px' }}>
+        <div className="breadcrumbs" style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+          <Link to="/" style={{ color: 'var(--primary)', textDecoration: 'none' }}>{lang === 'en' ? 'Home' : 'முகப்பு'}</Link>
+          <i className="fas fa-chevron-right" style={{ fontSize: '9px', margin: '0 8px' }}></i>
+          <span style={{ cursor: 'pointer', color: 'var(--primary)' }} onClick={() => setActiveView('list')}>{lang === 'en' ? 'Jobs Board' : 'வேலைவாய்ப்பு'}</span>
+          <i className="fas fa-chevron-right" style={{ fontSize: '9px', margin: '0 8px' }}></i>
+          <span>{lang === 'en' ? 'Employer Profile' : 'நிறுவன சுயவிவரம்'}</span>
+        </div>
+        {renderEmployerProfileCreate()}
+        {toastMessage && (
+          <div className={`recruitment-toast ${toastType}`}>
+            <i className={toastType === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'}></i>
+            {toastMessage}
+          </div>
+        )}
+      </main>
+    );
+  }
 
   return (
     <main className="container jobs-module-container" style={{ paddingTop: '20px' }}>
@@ -308,7 +1683,7 @@ const Jobs = () => {
             <button className="jobs-hero-btn-find" onClick={loadJobs}>
               {lang === 'en' ? 'Find Jobs' : 'வேலை தேடுக'}
             </button>
-            <button className="jobs-hero-btn-post" onClick={() => setShowPostModal(true)}>
+            <button className="jobs-hero-btn-post" onClick={handlePostJobHeroClick}>
               {lang === 'en' ? 'Post a Job' : 'வேலைவாய்ப்பு பதிவிட'}
             </button>
           </div>
@@ -533,8 +1908,8 @@ const Jobs = () => {
                 <div className="jobs-sidebar-zone-desc">{lang === 'en' ? 'Create profile and get best job matches.' : 'சுயவிவரம் அமைத்து தகுதியான பணிகளைப் பெறுங்கள்.'}</div>
               </div>
             </div>
-            <button className="jobs-sidebar-zone-btn" onClick={() => { setDashboardRole('candidate'); setShowDashboardModal(true); }}>
-              {lang === 'en' ? 'Create Profile' : 'சுயவிவரம்'}
+            <button className="jobs-sidebar-zone-btn" onClick={() => handleZoneClick('seeker')}>
+              {lang === 'en' ? 'Job Seeker Zone' : 'சுயவிவரம்'}
             </button>
           </div>
 
@@ -549,55 +1924,10 @@ const Jobs = () => {
                 <div className="jobs-sidebar-zone-desc">{lang === 'en' ? 'Post jobs and manage candidates.' : 'வேலைகளைப் பதிவிட்டு விண்ணப்பதாரர்களை நிர்வகியுங்கள்.'}</div>
               </div>
             </div>
-            <button className="jobs-sidebar-zone-btn" onClick={() => { setDashboardRole('employer'); setShowDashboardModal(true); }}>
-              {lang === 'en' ? 'Employer Login' : 'உள்நுழைக'}
+            <button className="jobs-sidebar-zone-btn" onClick={() => handleZoneClick('employer')}>
+              {lang === 'en' ? 'Employer Zone' : 'உள்நுழைக'}
             </button>
           </div>
-
-          {/* Upload Resume */}
-          <div className="jobs-sidebar-card" style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0' }}>
-            <div className="jobs-sidebar-zone-details">
-              <div className="jobs-zone-icon-box resume">
-                <i className="fas fa-file-upload"></i>
-              </div>
-              <div>
-                <h4 className="jobs-sidebar-zone-title">{lang === 'en' ? 'Upload Resume' : 'விவரக்குறிப்பு பதிவேற்ற'}</h4>
-                <div className="jobs-sidebar-zone-desc">{lang === 'en' ? 'Let employers search you easily.' : 'நிறுவனங்கள் உங்களை எளிதாகத் தொடர்புகொள்ளட்டும்.'}</div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <input 
-                type="file" 
-                id="sidebar-resume-input" 
-                accept=".pdf,.docx" 
-                onChange={handleResumeUpload} 
-                style={{ display: 'none' }}
-              />
-              <button 
-                className="jobs-sidebar-zone-btn" 
-                style={{ background: '#16a34a', color: 'white', border: 'none' }}
-                onClick={() => document.getElementById('sidebar-resume-input').click()}
-              >
-                {uploadingResume ? 'Parsing...' : (lang === 'en' ? 'Upload' : 'பதிவேற்று')}
-              </button>
-            </div>
-          </div>
-
-          {/* ATS score match display */}
-          {atsScore && (
-            <div className="ats-score-box">
-              <div className="ats-score-header">
-                <span>ATS Resume Match Score</span>
-                <span style={{ color: '#16a34a' }}>{atsScore}%</span>
-              </div>
-              <div className="ats-score-bar-bg">
-                <div className="ats-score-bar-fill" style={{ width: `${atsScore}%` }}></div>
-              </div>
-              <div style={{ fontSize: '10px', color: '#64748b', marginTop: '8px', lineHeight: '1.4' }}>
-                {atsFeedback.map((f, i) => <div key={i}>{f}</div>)}
-              </div>
-            </div>
-          )}
 
           {/* Jobs by Category hiring lists */}
           <div className="jobs-sidebar-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
@@ -700,7 +2030,7 @@ const Jobs = () => {
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '14px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
                 <button 
-                  onClick={() => setShowApplyModal(true)}
+                  onClick={() => handleApplyClick(selectedJob)}
                   style={{ flex: 2, background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '12px', fontSize: '13.5px', fontWeight: 'bold', cursor: 'pointer' }}
                 >
                   Quick Apply
@@ -779,262 +2109,6 @@ const Jobs = () => {
                 Submit Application
               </button>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* DASHBOARDS VIEW MODAL */}
-      {showDashboardModal && (
-        <div className="modal open" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: '1000' }}>
-          <div className="modal-content" style={{ maxWidth: '800px', width: '95%', maxHeight: '90vh', overflowY: 'auto', padding: '24px' }}>
-            <div className="modal-header" style={{ paddingBottom: '12px', borderBottom: '1px solid #e2e8f0', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0 }}>
-                {dashboardRole === 'candidate' ? 'Candidate Zone Profile' : 'Employer Recruitment Console'}
-              </h3>
-              <button className="modal-close" onClick={() => setShowDashboardModal(false)}>&times;</button>
-            </div>
-            
-            {dashboardRole === 'candidate' ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {/* Candidate Dashboard */}
-                <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px' }}>
-                  <h4 style={{ margin: '0 0 8px 0' }}>Profile Completion: 75%</h4>
-                  <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ width: '75%', height: '100%', background: '#2563eb' }}></div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <h4 style={{ marginBottom: '8px' }}>Applied Jobs History</h4>
-                    <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', background: 'white' }}>
-                      <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '8px', marginBottom: '8px' }}>
-                        <strong>Full Stack Developer</strong> - TCS
-                        <div style={{ fontSize: '11px', color: '#16a34a', fontWeight: 'bold' }}>Under Review</div>
-                      </div>
-                      <div>
-                        <strong>Software Engineer</strong> - Zoho Corp
-                        <div style={{ fontSize: '11px', color: '#2563eb', fontWeight: 'bold' }}>Interview Scheduled</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 style={{ marginBottom: '8px' }}>Resume Parser Details</h4>
-                    <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', background: 'white', fontSize: '12px' }}>
-                      <p><strong>Detected Skills:</strong> React, Spring Boot, MySQL, CSS</p>
-                      <p><strong>Education:</strong> B.E. Computer Science & Eng</p>
-                      <p><strong>ATS Matching score:</strong> 82%</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {/* Employer Dashboard */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-                  <div style={{ background: '#eff6ff', padding: '14px', borderRadius: '8px', textAlign: 'center' }}>
-                    <h2>8</h2>
-                    <span style={{ fontSize: '11.5px', color: '#64748b' }}>Active Job Postings</span>
-                  </div>
-                  <div style={{ background: '#fdf2f8', padding: '14px', borderRadius: '8px', textAlign: 'center' }}>
-                    <h2>143</h2>
-                    <span style={{ fontSize: '11.5px', color: '#64748b' }}>Total Applicants</span>
-                  </div>
-                  <div style={{ background: '#f0fdf4', padding: '14px', borderRadius: '8px', textAlign: 'center' }}>
-                    <h2>24</h2>
-                    <span style={{ fontSize: '11.5px', color: '#64748b' }}>Interviews Scheduled</span>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 style={{ marginBottom: '10px' }}>Recent Vacancies Postings</h4>
-                  <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', background: 'white' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #f1f5f9', marginBottom: '8px' }}>
-                      <span><strong>Java Developer</strong> (6 Applicants)</span>
-                      <button style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => alert("Manage candidate list coming soon!")}>Manage</button>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span><strong>React Frontend Developer</strong> (12 Applicants)</span>
-                      <button style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => alert("Manage candidate list coming soon!")}>Manage</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* CREATE JOB VACANCY MODAL */}
-      {showPostModal && (
-        <div className="modal open" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: '1000' }}>
-          <div className="modal-content" style={{ maxWidth: '600px', width: '95%', maxHeight: '90vh', overflowY: 'auto', padding: '24px' }}>
-            <div className="modal-header" style={{ paddingBottom: '12px', borderBottom: '1px solid #e2e8f0', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0 }}>{lang === 'en' ? 'Post New Job Vacancy' : 'புதிய வேலைவாய்ப்பு வெளியிட'}</h3>
-              <button className="modal-close" onClick={() => setShowPostModal(false)}>&times;</button>
-            </div>
-
-            <div className="modal-body" style={{ padding: '0' }}>
-              <form onSubmit={handlePostJobSubmit} className="space-y-4 text-left" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="form-group">
-                    <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Job Title *</label>
-                    <input 
-                      type="text" 
-                      value={newTitle}
-                      onChange={(e) => setNewTitle(e.target.value)}
-                      required 
-                      placeholder="e.g. Senior Java Dev"
-                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Hiring Company *</label>
-                    <select 
-                      value={newCompanyId}
-                      onChange={(e) => setNewCompanyId(e.target.value)}
-                      required
-                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                    >
-                      <option value="">-- Choose Company --</option>
-                      <option value="1">Tata Consultancy Services</option>
-                      <option value="2">Zoho Corporation</option>
-                      <option value="3">HDFC Bank</option>
-                      <option value="4">Apollo Hospitals</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="form-group">
-                    <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Job Category *</label>
-                    <select 
-                      value={newCatId}
-                      onChange={(e) => setNewCatId(e.target.value)}
-                      required
-                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                    >
-                      <option value="">-- Choose Category --</option>
-                      {categories.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label style={{ fontSize: '13px', fontWeight: 'bold' }}>District Locality</label>
-                    <select 
-                      value={newDistrictId}
-                      onChange={(e) => setNewDistrictId(e.target.value)}
-                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                    >
-                      <option value="">-- Choose District --</option>
-                      {districts.map(d => (
-                        <option key={d.id} value={d.id}>{lang === 'en' ? d.nameEn : d.nameTa}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
-                  <div className="form-group">
-                    <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Min Exp *</label>
-                    <input 
-                      type="number" 
-                      value={newExpMin} 
-                      onChange={(e) => setNewExpMin(parseInt(e.target.value))} 
-                      required 
-                      style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Max Exp</label>
-                    <input 
-                      type="number" 
-                      value={newExpMax} 
-                      onChange={(e) => setNewExpMax(parseInt(e.target.value))} 
-                      style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Min Sal *</label>
-                    <input 
-                      type="number" 
-                      step="0.1" 
-                      value={newSalMin} 
-                      onChange={(e) => setNewSalMin(parseFloat(e.target.value))} 
-                      required 
-                      style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Max Sal</label>
-                    <input 
-                      type="number" 
-                      step="0.1" 
-                      value={newSalMax} 
-                      onChange={(e) => setNewSalMax(parseFloat(e.target.value))} 
-                      style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="form-group">
-                    <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Employment Type</label>
-                    <select 
-                      value={newTypeSelect} 
-                      onChange={(e) => setNewTypeSelect(e.target.value)}
-                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                    >
-                      <option value="Full Time">Full Time</option>
-                      <option value="Part Time">Part Time</option>
-                      <option value="Internship">Internship</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Work Mode</label>
-                    <select 
-                      value={newModeSelect} 
-                      onChange={(e) => setNewModeSelect(e.target.value)}
-                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                    >
-                      <option value="Work From Office">Work From Office</option>
-                      <option value="Remote">Remote</option>
-                      <option value="Hybrid">Hybrid</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Required Skills (comma separated) *</label>
-                  <input 
-                    type="text" 
-                    value={newSkills}
-                    onChange={(e) => setNewSkills(e.target.value)}
-                    required 
-                    placeholder="e.g. Java, React, SQL"
-                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Job Description *</label>
-                  <textarea 
-                    value={newDesc}
-                    onChange={(e) => setNewDesc(e.target.value)}
-                    required 
-                    rows="3"
-                    placeholder="Enter key details about roles and responsibilities..."
-                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                  ></textarea>
-                </div>
-
-                <button type="submit" style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', padding: '12px', fontSize: '14.5px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' }}>
-                  {lang === 'en' ? 'Post Vacancy' : 'வேலை வாய்ப்பை பதிவிடு'}
-                </button>
-              </form>
-            </div>
           </div>
         </div>
       )}

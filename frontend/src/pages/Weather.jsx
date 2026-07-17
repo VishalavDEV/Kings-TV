@@ -221,88 +221,14 @@ const Weather = () => {
     const coords = cityCoords[selectedCity];
     if (!coords) return;
 
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto`)
+    const baseApi = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api/v1';
+    fetch(`${baseApi}/weather?city=${selectedCity}&lat=${coords.lat}&lon=${coords.lon}`)
       .then(res => res.json())
       .then(data => {
-        if (data && data.current) {
-          const currentCode = data.current.weather_code;
-          const conditionMapping = {
-            0: { en: 'Sunny', ta: 'வெயில்', icon: '☀️' },
-            1: { en: 'Partly Cloudy', ta: 'பகுதி மேகமூட்டம்', icon: '⛅' },
-            2: { en: 'Partly Cloudy', ta: 'பகுதி மேகமூட்டம்', icon: '⛅' },
-            3: { en: 'Partly Cloudy', ta: 'பகுதி மேகமூட்டம்', icon: '⛅' },
-            45: { en: 'Foggy', ta: 'மூடுபனி', icon: '🌫️' },
-            48: { en: 'Foggy', ta: 'மூடுபனி', icon: '🌫️' },
-            51: { en: 'Drizzle', ta: 'சாரல் மழை', icon: '🌧️' },
-            53: { en: 'Drizzle', ta: 'சாரல் மழை', icon: '🌧️' },
-            55: { en: 'Drizzle', ta: 'சாரல் மழை', icon: '🌧️' },
-            61: { en: 'Rainy', ta: 'மழை', icon: '🌧️' },
-            63: { en: 'Rainy', ta: 'மழை', icon: '🌧️' },
-            65: { en: 'Heavy Rain', ta: 'கனமழை', icon: '🌧️' },
-            80: { en: 'Showers', ta: 'மழைச்சாரல்', icon: '🌦️' },
-            81: { en: 'Showers', ta: 'மழைச்சாரல்', icon: '🌦️' },
-            82: { en: 'Showers', ta: 'மழைச்சாரல்', icon: '🌦️' },
-            95: { en: 'Thunderstorms', ta: 'இடிமழை', icon: '⛈️' },
-            96: { en: 'Thunderstorms', ta: 'இடிமழை', icon: '⛈️' },
-            99: { en: 'Thunderstorms', ta: 'இடிமழை', icon: '⛈️' }
-          };
-
-          const condition = conditionMapping[currentCode] || { en: 'Cloudy', ta: 'மேகமூட்டம்', icon: '☁️' };
-          const maxTemp = Math.round(data.daily.temperature_2m_max[0]);
-          const minTemp = Math.round(data.daily.temperature_2m_min[0]);
-          
-          // Helper to format time cleanly
-          const formatTime = (isoStr) => {
-            try {
-              const d = new Date(isoStr);
-              return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            } catch(e) {
-              return isoStr.split('T')[1] || isoStr;
-            }
-          };
-
-          const sunriseRaw = formatTime(data.daily.sunrise[0]);
-          const sunsetRaw = formatTime(data.daily.sunset[0]);
-
-          const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-          const daysOfWeekTa = ['ஞாயிறு', 'திங்கள்', 'செவ்வாய்', 'புதன்', 'வியாழன்', 'வெள்ளி', 'சனி'];
-          const forecast = [];
-          
-          for (let i = 0; i < 7; i++) {
-            const timeStr = data.daily.time[i];
-            const dateObj = new Date(timeStr);
-            const dayName = daysOfWeek[dateObj.getDay()];
-            const dayNameTa = daysOfWeekTa[dateObj.getDay()];
-            const dayMax = Math.round(data.daily.temperature_2m_max[i]);
-            const dayCode = data.daily.weather_code ? data.daily.weather_code[i] : 0;
-            const dayCond = conditionMapping[dayCode] || { en: 'Sunny', ta: 'வெயில்', icon: '☀️' };
-            
-            forecast.push({
-              day: dayName,
-              dayTa: dayNameTa,
-              icon: dayCond.icon,
-              temp: `${dayMax}°`,
-              desc: dayCond.en,
-              descTa: dayCond.ta
-            });
-          }
-
+        if (data && data.temp) {
           setWeatherData(prev => ({
             ...prev,
-            [selectedCity]: {
-              ...prev[selectedCity],
-              temp: `${Math.round(data.current.temperature_2m)}°C`,
-              condition: condition.en,
-              conditionTa: condition.ta,
-              humidity: `${data.current.relative_humidity_2m}%`,
-              wind: `${data.current.wind_speed_10m} km/h`,
-              uv: `Index (${Math.round(data.daily.uv_index_max[0])})`,
-              sunrise: sunriseRaw,
-              sunset: sunsetRaw,
-              forecastSummaryEn: `Expect ${condition.en.toLowerCase()} conditions today with a high of ${maxTemp}°C and low of ${minTemp}°C.`,
-              forecastSummaryTa: `இன்று ${condition.ta} வானிலை காணப்படும், அதிகபட்சமாக ${maxTemp}°C மற்றும் குறைந்தபட்சமாக ${minTemp}°C வெப்பம் பதிவாகும்.`,
-              forecast: forecast
-            }
+            [selectedCity]: data
           }));
         }
       })

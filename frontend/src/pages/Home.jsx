@@ -11,6 +11,31 @@ const Home = () => {
   const [videos, setVideos] = useState([]);
   const [liveVideo, setLiveVideo] = useState(null);
   const [tickerIndex, setTickerIndex] = useState(0);
+  const [categoriesMap, setCategoriesMap] = useState({});
+  const initialTickers = [
+    lang === 'en' ? "Paddy procurement price increased - farmers express delight!" : "🌾 நெல் கொள்முதல் விலை உயர்வு - விவசாயிகள் மகிழ்ச்சி",
+    lang === 'en' ? "Vijay 69th movie announcement sends fans into celebration mode!" : "🎬 விஜய் 69-வது படம் அறிவிப்பு - ரசிகர்கள் கொண்டாட்டம்",
+    lang === 'en' ? "Class 12 board results to be declared soon - education department updates." : "📚 +2 தேர்வு முடிவுகள் விரைவில் - கல்வித்துறை தகவல்",
+    lang === 'en' ? "Electricity tariff hike in Chennai creates public concern." : "⚡ சென்னையில் மின் கட்டணம் உயர்வு - நுகர்வோர் அதிருப்தி",
+    lang === 'en' ? "New Vande Bharat rail service introduced by Southern Railway." : "🚆 புதிய வந்தே பாரத் ரயில் சேவை அறிமுகம் - தெற்கு ரயில்வே",
+    lang === 'en' ? "Heavy rain alert issued for tomorrow in Tamil Nadu." : "🔴 தமிழகத்தில் நாளை முதல் கனமழை எச்சரிக்கை - வானிலை மையம்"
+  ];
+  const [tickers, setTickers] = useState(initialTickers);
+  const [stories, setStories] = useState([]);
+  const [weatherData, setWeatherData] = useState({
+    temp: '32°C',
+    condition: lang === 'en' ? 'Cloudy' : 'மேகமூட்டம்',
+    humidity: '72%',
+    wind: '18 km/h',
+    forecast: [
+      { day: lang === 'en' ? 'Mon' : 'தி', icon: '☀️', temp: '32°' },
+      { day: lang === 'en' ? 'Tue' : 'செ', icon: '⛅', temp: '31°' },
+      { day: lang === 'en' ? 'Wed' : 'பு', icon: '🌤️', temp: '33°' }
+    ]
+  });
+
+  const [trendingNews, setTrendingNews] = useState([]);
+  const [caseStudies, setCaseStudies] = useState([]);
 
   // Crowd Reporter States
   const [showReportModal, setShowReportModal] = useState(false);
@@ -22,16 +47,7 @@ const Home = () => {
   const [reportVideoUrl, setReportVideoUrl] = useState('');
 
   const getCategoryDetails = (categoryId) => {
-    const categories = {
-      1: { slug: 'politics', en: 'Politics', ta: 'அரசியல்' },
-      2: { slug: 'business', en: 'Business', ta: 'வணிகம்' },
-      3: { slug: 'sports', en: 'Sports', ta: 'விளையாட்டு' },
-      4: { slug: 'cinema', en: 'Cinema', ta: 'பொழுதுபோக்கு' },
-      5: { slug: 'tech', en: 'Tech', ta: 'தொழில்நுட்பம்' },
-      6: { slug: 'regional', en: 'Regional', ta: 'மாநில செய்திகள்' },
-      7: { slug: 'international', en: 'International', ta: 'சர்வதேச செய்திகள்' }
-    };
-    return categories[categoryId] || { slug: 'politics', en: 'Politics', ta: 'அரசியல்' };
+    return categoriesMap[categoryId] || { slug: 'politics', en: 'Politics', ta: 'அரசியல்' };
   };
 
   const fallbackArticles = [
@@ -141,6 +157,24 @@ const Home = () => {
   });
 
   useEffect(() => {
+    // 1. Fetch Categories
+    fetchApi('/categories')
+      .then(data => {
+        if (Array.isArray(data)) {
+          const map = {};
+          data.forEach(cat => {
+            map[cat.id || cat.categoryId] = {
+              slug: cat.slug || 'politics',
+              en: cat.name || 'Politics',
+              ta: cat.nameTa || 'அரசியல்'
+            };
+          });
+          setCategoriesMap(map);
+        }
+      })
+      .catch(err => console.warn("Could not load categories", err));
+
+    // 2. Fetch Articles
     fetchApi('/articles')
       .then(data => {
         const list = Array.isArray(data) ? data : [];
@@ -151,6 +185,47 @@ const Home = () => {
         setArticles(prefixedFallbackArticles);
       });
 
+    // 3. Fetch Breaking News
+    fetchApi('/breaking-news/getAllWeb?size=10')
+      .then(data => {
+        const list = data && Array.isArray(data.content) ? data.content : [];
+        if (list.length > 0) {
+          const formatted = list.map(item => (lang === 'en' ? item.title : item.titleTa) || item.title);
+          setTickers(formatted);
+        } else {
+          setTickers(initialTickers);
+        }
+      })
+      .catch(err => {
+        console.warn("Could not load breaking news from API, using fallback", err);
+        setTickers(initialTickers);
+      });
+
+    // 4. Fetch Web Stories
+    fetchApi('/web-stories/getAllWeb?size=6')
+      .then(data => {
+        const list = data && Array.isArray(data.content) ? data.content : [];
+        if (list.length > 0) {
+          const formatted = list.map(item => ({
+            id: item.id || item.storyId,
+            titleTa: item.titleTa,
+            titleEn: item.titleEn,
+            cat: item.cat || 'politics',
+            badge: item.badge || 'NEW',
+            views: item.viewsCount ? `${(item.viewsCount / 1000).toFixed(1)}K` : '0K',
+            gradient: item.backgroundGradient || 'linear-gradient(135deg, #667eea, #764ba2)'
+          }));
+          setStories(formatted);
+        } else {
+          setStories(storiesList);
+        }
+      })
+      .catch(err => {
+        console.warn("Could not load web stories from API, using fallback", err);
+        setStories(storiesList);
+      });
+
+    // 5. Fetch Videos
     fetchApi('/videos')
       .then(data => {
         const list = Array.isArray(data) ? data : [];
@@ -181,6 +256,7 @@ const Home = () => {
         setVideos(prefixedFallbackVideos);
       });
 
+    // 6. Fetch Live Video
     fetchApi('/videos/live')
       .then(data => {
         if (data && data.youtubeUrl) {
@@ -194,14 +270,61 @@ const Home = () => {
         }
       })
       .catch(err => console.warn("Could not load live video from API", err));
+
+    // 7. Fetch Weather Forecast from backend for Chennai
+    const baseApi = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api/v1';
+    fetch(`${baseApi}/weather?city=Chennai`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.temp) {
+          const forecastData = [];
+          if (data.forecast && Array.isArray(data.forecast)) {
+            for (let i = 0; i < Math.min(3, data.forecast.length); i++) {
+              const fc = data.forecast[i];
+              forecastData.push({
+                day: lang === 'en' ? fc.day : (fc.day === 'Mon' ? 'தி' : fc.day === 'Tue' ? 'செ' : fc.day === 'Wed' ? 'பு' : fc.day === 'Thu' ? 'வி' : fc.day === 'Fri' ? 'வெ' : fc.day === 'Sat' ? 'ச' : 'ஞா'),
+                icon: fc.icon,
+                temp: fc.temp
+              });
+            }
+          }
+          setWeatherData({
+            temp: data.temp,
+            condition: lang === 'en' ? data.condition : data.conditionTa,
+            humidity: data.humidity,
+            wind: data.wind,
+            forecast: forecastData.length > 0 ? forecastData : weatherData.forecast
+          });
+        }
+      })
+      .catch(err => console.warn("Weather fetch failed, using default info", err));
+
+    // 8. Fetch Trending News (top 3 most viewed articles)
+    fetchApi('/articles/getAll?sortBy=viewsCount&direction=desc&size=3')
+      .then(data => {
+        const list = data && Array.isArray(data.content) ? data.content : [];
+        if (list.length > 0) {
+          setTrendingNews(list);
+        }
+      })
+      .catch(err => console.warn("Could not load trending articles", err));
+
+    // 9. Fetch Business Case Studies (PDFs)
+    fetchApi('/pdfs')
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setCaseStudies(data);
+        }
+      })
+      .catch(err => console.warn("Could not load PDFs", err));
   }, [lang]);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTickerIndex(prev => (prev + 1) % mockTickers.length);
+      setTickerIndex(prev => (prev + 1) % tickers.length);
     }, slideSpeed * 1000);
     return () => clearInterval(timer);
-  }, [slideSpeed, mockTickers.length]);
+  }, [slideSpeed, tickers.length]);
 
   const handleSubmitReport = (e) => {
     e.preventDefault();
@@ -264,14 +387,14 @@ const Home = () => {
           </div>
           <div className="breaking-ticker">
             <div className="breaking-track" id="breakTrack">
-              <a href="#">{mockTickers[tickerIndex]}</a>
+              <a href="#">{tickers[tickerIndex]}</a>
             </div>
           </div>
           <div className="breaking-controls">
-            <button onClick={() => setTickerIndex(prev => (prev - 1 + mockTickers.length) % mockTickers.length)}>
+            <button onClick={() => setTickerIndex(prev => (prev - 1 + tickers.length) % tickers.length)}>
               <i className="fas fa-chevron-left"></i>
             </button>
-            <button onClick={() => setTickerIndex(prev => (prev + 1) % mockTickers.length)}>
+            <button onClick={() => setTickerIndex(prev => (prev + 1) % tickers.length)}>
               <i className="fas fa-chevron-right"></i>
             </button>
           </div>
@@ -468,7 +591,7 @@ const Home = () => {
                 <Link to="/web-stories" className="view-all">{lang === 'en' ? 'View All' : 'அனைத்தும் காண'} <i className="fas fa-arrow-right"></i></Link>
               </div>
               <div className="stories-track">
-                {storiesList.map(story => {
+                {stories.map(story => {
                   const catSlug = story.cat === 'tech' ? 'technology' : story.cat === 'agri' ? 'agriculture' : story.cat;
                   const catNames = {
                     sports: { en: 'Sports', ta: 'விளையாட்டு' },
@@ -505,27 +628,30 @@ const Home = () => {
               <i className="fas fa-fire" style={{ color: '#EF4444' }}></i>{' '}
               {lang === 'en' ? 'Trending News' : 'ட்ரெண்டிங் செய்திகள்'}
             </h4>
-            <div className="trending-item">
-              <span className="rank top3">1</span>
-              <div className="info">
-                <h5>{lang === 'en' ? 'New Metro expansion announced in Chennai' : 'சென்னை பெருநகரில் புதிய மெட்ரோ ரயில் திட்டம் அறிவிப்பு'}</h5>
-                <div className="meta"><span><i className="far fa-eye"></i> 45.2K</span><span className="trend-score">+2.4K/hr</span></div>
-              </div>
-            </div>
-            <div className="trending-item">
-              <span className="rank top3">2</span>
-              <div className="info">
-                <h5>{lang === 'en' ? 'Supreme Court updates on Cauvery water management' : 'காவிரி நீர் மேலாண்மை குறித்த உச்சநீதிமன்றம் முக்கிய உத்தரவு'}</h5>
-                <div className="meta"><span><i className="far fa-eye"></i> 38.7K</span><span className="trend-score">+1.8K/hr</span></div>
-              </div>
-            </div>
-            <div className="trending-item">
-              <span className="rank top3">3</span>
-              <div className="info">
-                <h5>{lang === 'en' ? 'Indian economy records 8% growth - World Bank' : 'இந்திய பொருளாதாரம் 8% வளர்ச்சி - உலக வங்கி அறிக்கை'}</h5>
-                <div className="meta"><span><i className="far fa-eye"></i> 32.1K</span><span className="trend-score">+1.5K/hr</span></div>
-              </div>
-            </div>
+            {(() => {
+              const fallbackTrending = [
+                { rank: 1, title: lang === 'en' ? 'New Metro expansion announced in Chennai' : 'சென்னை பெருநகரில் புதிய மெட்ரோ ரயில் திட்டம் அறிவிப்பு', views: '45.2K', score: '+2.4K/hr' },
+                { rank: 2, title: lang === 'en' ? 'Supreme Court updates on Cauvery water management' : 'காவிரி நீர் மேலாண்மை குறித்த உச்சநீதிமன்றம் முக்கிய உத்தரவு', views: '38.7K', score: '+1.8K/hr' },
+                { rank: 3, title: lang === 'en' ? 'Indian economy records 8% growth - World Bank' : 'இந்திய பொருளாதாரம் 8% வளர்ச்சி - உலக வங்கி அறிக்கை', views: '32.1K', score: '+1.5K/hr' }
+              ];
+              const displayList = trendingNews.length > 0 ? trendingNews : fallbackTrending;
+              return displayList.map((art, idx) => (
+                <div className="trending-item" key={art.id || art.article_id || idx}>
+                  <span className="rank top3">{idx + 1}</span>
+                  <div className="info">
+                    <h5>
+                      {art.titleEn || art.title
+                        ? (lang === 'en' ? (art.titleEn || art.title) : (art.titleTa || art.title))
+                        : art.title}
+                    </h5>
+                    <div className="meta">
+                      <span><i className="far fa-eye"></i> {art.viewsCount ? `${(art.viewsCount/1000).toFixed(1)}K` : (art.views || '0K')}</span>
+                      <span className="trend-score">{art.score || `+${Math.floor(Math.random() * 5) + 1}K/hr`}</span>
+                    </div>
+                  </div>
+                </div>
+              ));
+            })()}
           </div>
 
           {/* Weather Widget */}
@@ -551,29 +677,21 @@ const Home = () => {
               </Link>
             </div>
             <div className="weather-current">
-              <div className="temp" id="weatherTemp">32°C</div>
+              <div className="temp" id="weatherTemp">{weatherData.temp}</div>
               <div className="details">
-                <strong>{lang === 'en' ? 'Cloudy' : 'மேகமூட்டம்'}</strong>
-                <span>{lang === 'en' ? 'Humidity: 72%' : 'ஈரப்பதம்: 72%'}</span>
-                <span>{lang === 'en' ? 'Wind: 18 km/h' : 'காற்று: 18 km/h'}</span>
+                <strong>{weatherData.condition}</strong>
+                <span>{lang === 'en' ? `Humidity: ${weatherData.humidity}` : `ஈரப்பதம்: ${weatherData.humidity}`}</span>
+                <span>{lang === 'en' ? `Wind: ${weatherData.wind}` : `காற்று: ${weatherData.wind}`}</span>
               </div>
             </div>
             <div className="weather-forecast-grid">
-              <div className="weather-forecast-col">
-                <div className="day">{lang === 'en' ? 'Mon' : 'தி'}</div>
-                <div className="icon">☀️</div>
-                <div className="temp">32°</div>
-              </div>
-              <div className="weather-forecast-col">
-                <div className="day">{lang === 'en' ? 'Tue' : 'செ'}</div>
-                <div className="icon">⛅</div>
-                <div className="temp">31°</div>
-              </div>
-              <div className="weather-forecast-col">
-                <div className="day">{lang === 'en' ? 'Wed' : 'பு'}</div>
-                <div className="icon">🌤️</div>
-                <div className="temp">33°</div>
-              </div>
+              {weatherData.forecast.map((f, idx) => (
+                <div className="weather-forecast-col" key={idx}>
+                  <div className="day">{f.day}</div>
+                  <div className="icon">{f.icon}</div>
+                  <div className="temp">{f.temp}</div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -624,18 +742,26 @@ const Home = () => {
                 </Link>
               </div>
               <div className="case-studies-grid">
-                <div className="case-study-col">
-                  <div className="company-logo"><i className="fas fa-building" style={{ color: '#0057FF' }}></i> Infosys</div>
-                  <span className="tag">{lang === 'en' ? 'Tech' : 'தொழில்நுட்பம்'}</span>
-                  <h5>{lang === 'en' ? 'Infosys: Digital Transformation Journey' : 'Infosys: டிஜிட்டல் மாற்றுப் பயணம்'}</h5>
-                  <a href="#" className="pdf-btn"><i className="fas fa-file-pdf"></i> PDF</a>
-                </div>
-                <div className="case-study-col">
-                  <div className="company-logo"><i className="fas fa-car" style={{ color: '#EF4444' }}></i> TVS</div>
-                  <span className="tag">{lang === 'en' ? 'Automobile' : 'ஆட்டோமொபைல்'}</span>
-                  <h5>{lang === 'en' ? 'TVS Motor: Sustainable Growth Journey' : 'TVS Motor: நிலையான வளர்ச்சி'}</h5>
-                  <a href="#" className="pdf-btn"><i className="fas fa-file-pdf"></i> PDF</a>
-                </div>
+                {(() => {
+                  const fallbackCaseStudies = [
+                    { id: 1, title: lang === 'en' ? 'Infosys: Digital Transformation Journey' : 'Infosys: டிஜிட்டல் மாற்றுப் பயணம்', company: 'Infosys', tag: lang === 'en' ? 'Tech' : 'தொழில்நுட்பம்', iconClass: 'fas fa-building', iconColor: '#0057FF', pdfUrl: '#' },
+                    { id: 2, title: lang === 'en' ? 'TVS Motor: Sustainable Growth Journey' : 'TVS Motor: நிலையான வளர்ச்சி', company: 'TVS Motor', tag: lang === 'en' ? 'Automobile' : 'ஆட்டோமொபைல்', iconClass: 'fas fa-car', iconColor: '#EF4444', pdfUrl: '#' }
+                  ];
+                  const displayStudies = caseStudies.length > 0 ? caseStudies : fallbackCaseStudies;
+                  return displayStudies.map((study, idx) => (
+                    <div className="case-study-col" key={study.id || idx}>
+                      <div className="company-logo">
+                        <i className={study.iconClass || "fas fa-file-pdf"} style={{ color: study.iconColor || "#0057FF" }}></i>{' '}
+                        {study.company || (study.titleEn || study.title || '').split(':')[0]}
+                      </div>
+                      <span className="tag">{study.tag || (lang === 'en' ? 'Document' : 'ஆவணம்')}</span>
+                      <h5>{lang === 'en' ? (study.titleEn || study.title) : (study.titleTa || study.title)}</h5>
+                      <a href={study.pdfUrl || '#'} className="pdf-btn" target="_blank" rel="noreferrer">
+                        <i className="fas fa-file-pdf"></i> PDF
+                      </a>
+                    </div>
+                  ));
+                })()}
               </div>
             </div>
           )}
