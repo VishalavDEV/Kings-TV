@@ -94,7 +94,15 @@ const Login = () => {
       const res = await authService.googleLogin(mockEmail, mockName, '');
       login(res.user, res.accessToken, res.refreshToken, rememberMe);
       triggerToast(lang === 'en' ? 'Successfully logged in with Phone!' : 'தொலைபேசி மூலம் வெற்றிகரமாக உள்நுழைந்தீர்கள்!');
-      setTimeout(() => navigate('/'), 1200);
+      
+      const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
+      if (res.user && adminRoles.includes(res.user.role)) {
+        setTimeout(() => {
+          window.location.href = 'http://localhost:3000/admin/layout';
+        }, 1200);
+      } else {
+        setTimeout(() => navigate('/'), 1200);
+      }
     } catch (err) {
       triggerToast(err.message, '#EF4444');
     }
@@ -106,7 +114,15 @@ const Login = () => {
       const res = await authService.login(email, pwd);
       login(res.user, res.accessToken, res.refreshToken, rememberMe);
       triggerToast(lang === 'en' ? 'Successfully logged in!' : 'வெற்றிகரமாக உள்நுழைந்துவிட்டீர்கள்!');
-      setTimeout(() => navigate('/'), 1200);
+      
+      const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
+      if (res.user && adminRoles.includes(res.user.role)) {
+        setTimeout(() => {
+          window.location.href = 'http://localhost:3000/admin/layout';
+        }, 1200);
+      } else {
+        setTimeout(() => navigate('/'), 1200);
+      }
     } catch (err) {
       triggerToast(err.message, '#EF4444');
     }
@@ -138,7 +154,15 @@ const Login = () => {
 
       login(res.user, res.accessToken, res.refreshToken, rememberMe);
       triggerToast(lang === 'en' ? `Connected with ${socialProvider.toUpperCase()}!` : `${socialProvider.toUpperCase()} உடன் இணைக்கப்பட்டது!`);
-      setTimeout(() => navigate('/'), 1200);
+      
+      const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
+      if (res.user && adminRoles.includes(res.user.role)) {
+        setTimeout(() => {
+          window.location.href = 'http://localhost:3000/admin/layout';
+        }, 1200);
+      } else {
+        setTimeout(() => navigate('/'), 1200);
+      }
     } catch (err) {
       triggerToast(err.message, '#EF4444');
     }
