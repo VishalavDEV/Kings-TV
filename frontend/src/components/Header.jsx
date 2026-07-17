@@ -93,12 +93,13 @@ const Header = () => {
   const [weatherTemp, setWeatherTemp] = useState('32°C');
 
   useEffect(() => {
-    // Fetch live weather for default district (Chennai) on load
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=13.0827&longitude=80.2707&current=temperature_2m`)
+    // Fetch live weather for default district (Chennai) on load from backend
+    const baseApi = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api/v1';
+    fetch(`${baseApi}/weather?city=Chennai`)
       .then(res => res.json())
       .then(data => {
-        if (data && data.current) {
-          setWeatherTemp(`${Math.round(data.current.temperature_2m)}°C`);
+        if (data && data.temp) {
+          setWeatherTemp(data.temp);
         }
       })
       .catch(err => console.warn("Failed to fetch default temp", err));
@@ -575,20 +576,35 @@ const Header = () => {
 
   const handleDistrictChange = (selected) => {
     setDistrict(selected);
-    const temps = {
-      'சென்னை': '32°C',
-      'கோயம்புத்தூர்': '28°C',
-      'மதுரை': '34°C',
-      'சேலம்': '31°C',
-      'திருச்சி': '33°C',
-      'திருநெல்வேலி': '35°C',
-      'வேலூர்': '33°C',
-      'ஈரோடு': '30°C',
-      'தஞ்சாவூர்': '32°C',
-      'கன்னியாகுமரி': '29°C',
-      'நாமக்கல்': '31°C'
+    const cityMap = {
+      'சென்னை': 'Chennai',
+      'கோயம்புத்தூர்': 'Coimbatore',
+      'மதுரை': 'Madurai',
+      'சேலம்': 'Salem',
+      'திருச்சி': 'Trichy',
+      'ஈரோடு': 'Erode'
     };
-    setWeatherTemp(temps[selected] || '32°C');
+    const engCity = cityMap[selected];
+    if (engCity) {
+      const baseApi = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api/v1';
+      fetch(`${baseApi}/weather?city=${engCity}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.temp) {
+            setWeatherTemp(data.temp);
+          }
+        })
+        .catch(err => console.warn("Failed to fetch changed district temp", err));
+    } else {
+      const temps = {
+        'திருநெல்வேலி': '35°C',
+        'வேலூர்': '33°C',
+        'தஞ்சாவூர்': '32°C',
+        'கன்னியாகுமரி': '29°C',
+        'நாமக்கல்': '31°C'
+      };
+      setWeatherTemp(temps[selected] || '32°C');
+    }
   };
 
   const getTamilRole = (role) => {

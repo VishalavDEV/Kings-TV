@@ -41,6 +41,9 @@ public class Company {
 
     private Boolean verified = false;
 
+    @Column(name = "user_id")
+    private Long userId;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -106,4 +109,7 @@ public class Company {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
 }

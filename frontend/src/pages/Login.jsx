@@ -101,7 +101,9 @@ const Login = () => {
           window.location.href = 'http://localhost:3000/admin/layout';
         }, 1200);
       } else {
-        setTimeout(() => navigate('/'), 1200);
+        const from = location.state?.from || '/';
+        const redirectState = location.state?.jobRole ? { openJobRole: location.state.jobRole } : null;
+        setTimeout(() => navigate(from, { state: redirectState }), 1200);
       }
     } catch (err) {
       triggerToast(err.message, '#EF4444');
@@ -121,7 +123,9 @@ const Login = () => {
           window.location.href = 'http://localhost:3000/admin/layout';
         }, 1200);
       } else {
-        setTimeout(() => navigate('/'), 1200);
+        const from = location.state?.from || '/';
+        const redirectState = location.state?.jobRole ? { openJobRole: location.state.jobRole } : null;
+        setTimeout(() => navigate(from, { state: redirectState }), 1200);
       }
     } catch (err) {
       triggerToast(err.message, '#EF4444');
@@ -161,7 +165,9 @@ const Login = () => {
           window.location.href = 'http://localhost:3000/admin/layout';
         }, 1200);
       } else {
-        setTimeout(() => navigate('/'), 1200);
+        const from = location.state?.from || '/';
+        const redirectState = location.state?.jobRole ? { openJobRole: location.state.jobRole } : null;
+        setTimeout(() => navigate(from, { state: redirectState }), 1200);
       }
     } catch (err) {
       triggerToast(err.message, '#EF4444');
