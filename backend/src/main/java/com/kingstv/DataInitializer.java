@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.stereotype.Component;
+import org.springframework.jdbc.core.JdbcTemplate;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -54,28 +55,81 @@ public class DataInitializer {
     @Autowired
     private NfcTapHistoryRepository nfcTapHistoryRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @EventListener(ApplicationReadyEvent.class)
     public void initDatabase() {
+        if (categoryRepository.count() > 0) {
+            System.out.println("Database already has data. Skipping database seeding to preserve dynamic data.");
+            return;
+        }
         System.out.println("Starting Database Seeding...");
 
         // Clean up legacy records to force correct UTF-8 re-seeding
         try {
-            nfcTapHistoryRepository.deleteAll();
-            nfcCardRepository.deleteAll();
-            webStoryRepository.deleteAll();
-            wishRepository.deleteAll();
-            directoryRepository.deleteAll();
-            jobRepository.deleteAll();
-            classifiedRepository.deleteAll();
-            obituaryRepository.deleteAll();
-            videoContentRepository.deleteAll();
-            articleRepository.deleteAll();
-            districtRepository.deleteAll();
-            subCategoryRepository.deleteAll();
-            categoryRepository.deleteAll();
+            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0;");
+            
+            // Truncate dependent child tables to avoid foreign key violations
+            jdbcTemplate.execute("TRUNCATE TABLE wish_reactions;");
+            jdbcTemplate.execute("TRUNCATE TABLE wish_comments;");
+            jdbcTemplate.execute("TRUNCATE TABLE wish_comment_likes;");
+            jdbcTemplate.execute("TRUNCATE TABLE wish_saved;");
+            jdbcTemplate.execute("TRUNCATE TABLE wish_shares;");
+            jdbcTemplate.execute("TRUNCATE TABLE wish_views;");
+            jdbcTemplate.execute("TRUNCATE TABLE wish_reports;");
+            jdbcTemplate.execute("TRUNCATE TABLE wish_gallery;");
+            jdbcTemplate.execute("TRUNCATE TABLE wish_notifications;");
+            
+            jdbcTemplate.execute("TRUNCATE TABLE job_applications;");
+            jdbcTemplate.execute("TRUNCATE TABLE job_views;");
+            jdbcTemplate.execute("TRUNCATE TABLE job_shares;");
+            jdbcTemplate.execute("TRUNCATE TABLE job_reports;");
+            jdbcTemplate.execute("TRUNCATE TABLE saved_jobs;");
+            
+            jdbcTemplate.execute("TRUNCATE TABLE classified_images;");
+            jdbcTemplate.execute("TRUNCATE TABLE classified_reviews;");
+            jdbcTemplate.execute("TRUNCATE TABLE classified_seller_profiles;");
+            jdbcTemplate.execute("TRUNCATE TABLE classified_views;");
+            jdbcTemplate.execute("TRUNCATE TABLE classified_reports;");
+            jdbcTemplate.execute("TRUNCATE TABLE classified_shares;");
+            jdbcTemplate.execute("TRUNCATE TABLE classified_favourites;");
+            
+            jdbcTemplate.execute("TRUNCATE TABLE obituary_views;");
+            jdbcTemplate.execute("TRUNCATE TABLE obituary_tributes;");
+            jdbcTemplate.execute("TRUNCATE TABLE obituary_reports;");
+            jdbcTemplate.execute("TRUNCATE TABLE obituary_notifications;");
+            jdbcTemplate.execute("TRUNCATE TABLE obituary_guestbook_likes;");
+            jdbcTemplate.execute("TRUNCATE TABLE obituary_guestbook;");
+            jdbcTemplate.execute("TRUNCATE TABLE obituary_gallery;");
+            
+            jdbcTemplate.execute("TRUNCATE TABLE business_favorites;");
+            jdbcTemplate.execute("TRUNCATE TABLE business_gallery;");
+            jdbcTemplate.execute("TRUNCATE TABLE business_reviews;");
+
+            // Truncate primary tables
+            jdbcTemplate.execute("TRUNCATE TABLE nfc_tap_history;");
+            jdbcTemplate.execute("TRUNCATE TABLE nfc_cards;");
+            jdbcTemplate.execute("TRUNCATE TABLE web_stories;");
+            jdbcTemplate.execute("TRUNCATE TABLE local_business_directory;");
+            jdbcTemplate.execute("TRUNCATE TABLE jobs;");
+            jdbcTemplate.execute("TRUNCATE TABLE classified_listings;");
+            jdbcTemplate.execute("TRUNCATE TABLE local_obituaries;");
+            jdbcTemplate.execute("TRUNCATE TABLE video_contents;");
+            jdbcTemplate.execute("TRUNCATE TABLE articles;");
+            jdbcTemplate.execute("TRUNCATE TABLE districts;");
+            jdbcTemplate.execute("TRUNCATE TABLE sub_categories;");
+            jdbcTemplate.execute("TRUNCATE TABLE categories;");
+            
             System.out.println("Old seeded records cleaned successfully.");
         } catch(Exception e) {
             System.err.println("Clean up failed: " + e.getMessage());
+        } finally {
+            try {
+                jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1;");
+            } catch(Exception ex) {
+                // ignore
+            }
         }
 
         // 1. Seed Categories

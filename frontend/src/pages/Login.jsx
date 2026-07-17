@@ -94,7 +94,9 @@ const Login = () => {
       const res = await authService.googleLogin(mockEmail, mockName, '');
       login(res.user, res.accessToken, res.refreshToken, rememberMe);
       triggerToast(lang === 'en' ? 'Successfully logged in with Phone!' : 'தொலைபேசி மூலம் வெற்றிகரமாக உள்நுழைந்தீர்கள்!');
-      setTimeout(() => navigate('/'), 1200);
+      const from = location.state?.from || '/';
+      const redirectState = location.state?.jobRole ? { openJobRole: location.state.jobRole } : null;
+      setTimeout(() => navigate(from, { state: redirectState }), 1200);
     } catch (err) {
       triggerToast(err.message, '#EF4444');
     }
@@ -106,7 +108,9 @@ const Login = () => {
       const res = await authService.login(email, pwd);
       login(res.user, res.accessToken, res.refreshToken, rememberMe);
       triggerToast(lang === 'en' ? 'Successfully logged in!' : 'வெற்றிகரமாக உள்நுழைந்துவிட்டீர்கள்!');
-      setTimeout(() => navigate('/'), 1200);
+      const from = location.state?.from || '/';
+      const redirectState = location.state?.jobRole ? { openJobRole: location.state.jobRole } : null;
+      setTimeout(() => navigate(from, { state: redirectState }), 1200);
     } catch (err) {
       triggerToast(err.message, '#EF4444');
     }
@@ -138,7 +142,9 @@ const Login = () => {
 
       login(res.user, res.accessToken, res.refreshToken, rememberMe);
       triggerToast(lang === 'en' ? `Connected with ${socialProvider.toUpperCase()}!` : `${socialProvider.toUpperCase()} உடன் இணைக்கப்பட்டது!`);
-      setTimeout(() => navigate('/'), 1200);
+      const from = location.state?.from || '/';
+      const redirectState = location.state?.jobRole ? { openJobRole: location.state.jobRole } : null;
+      setTimeout(() => navigate(from, { state: redirectState }), 1200);
     } catch (err) {
       triggerToast(err.message, '#EF4444');
     }
