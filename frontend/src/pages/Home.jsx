@@ -286,26 +286,28 @@ const Home = () => {
   return (
     <div style={{ width: '100%' }}>
       {/* BREAKING NEWS */}
-      <div className="breaking-news">
-        <div className="container">
-          <div className="breaking-label" style={{ backgroundColor: '#FFD700', color: '#000' }}>
-            <i className="fas fa-bolt"></i> BREAKING NEWS
-          </div>
-          <div className="breaking-ticker">
-            <div className="breaking-track" id="breakTrack">
-              <a href="#">{tickers[tickerIndex]}</a>
+      {sections.news_ticker !== false && sections.ticker !== false && (
+        <div className="breaking-news">
+          <div className="container">
+            <div className="breaking-label" style={{ backgroundColor: '#FFD700', color: '#000' }}>
+              <i className="fas fa-bolt"></i> BREAKING NEWS
+            </div>
+            <div className="breaking-ticker">
+              <div className="breaking-track" id="breakTrack">
+                <a href="#">{tickers[tickerIndex]}</a>
+              </div>
+            </div>
+            <div className="breaking-controls">
+              <button onClick={() => setTickerIndex(prev => (prev - 1 + tickers.length) % tickers.length)}>
+                <i className="fas fa-chevron-left"></i>
+              </button>
+              <button onClick={() => setTickerIndex(prev => (prev + 1) % tickers.length)}>
+                <i className="fas fa-chevron-right"></i>
+              </button>
             </div>
           </div>
-          <div className="breaking-controls">
-            <button onClick={() => setTickerIndex(prev => (prev - 1 + tickers.length) % tickers.length)}>
-              <i className="fas fa-chevron-left"></i>
-            </button>
-            <button onClick={() => setTickerIndex(prev => (prev + 1) % tickers.length)}>
-              <i className="fas fa-chevron-right"></i>
-            </button>
-          </div>
         </div>
-      </div>
+      )}
 
       {/* HERO SECTION */}
       {sections.hero !== false && featured && (
@@ -372,7 +374,8 @@ const Home = () => {
       )}
 
       {/* QUICK ACCESS ICONS */}
-      <section className="quick-access">
+      {sections.quick_access !== false && (
+        <section className="quick-access">
         <div className="container">
           <div className="quick-grid">
             <Link to="/category/politics" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -406,12 +409,14 @@ const Home = () => {
           </div>
         </div>
       </section>
+      )}
 
       {/* MAIN CONTAINER */}
       <div className="container main-layout-container">
         <div className="left-content-column">
           {/* LATEST NEWS */}
-          <section className="news-section">
+          {sections.latest_news !== false && (
+            <section className="news-section">
             <div className="section-title">
               <h2><i className="fas fa-newspaper"></i> {lang === 'en' ? 'Latest News' : 'சமீபத்திய செய்திகள்'}</h2>
               <a href="#" className="view-all">{lang === 'en' ? 'View All' : 'அனைத்தும் காண'} <i className="fas fa-arrow-right"></i></a>
@@ -457,6 +462,7 @@ const Home = () => {
               })}
             </div>
           </section>
+          )}
 
           {/* VIDEO NEWS */}
           {sections.video !== false && (
@@ -540,7 +546,8 @@ const Home = () => {
         {/* RIGHT SIDEBAR */}
         <aside className="trending-sidebar" style={{ maxWidth: `${widgetWidth}px` }}>
           {/* Trending list */}
-          <div className="trending-list" style={{ marginBottom: '20px' }}>
+          {sections.trending_sidebar !== false && (
+            <div className="trending-list" style={{ marginBottom: '20px' }}>
             <h4>
               <i className="fas fa-fire" style={{ color: '#EF4444' }}></i>{' '}
               {lang === 'en' ? 'Trending News' : 'ட்ரெண்டிங் செய்திகள்'}
@@ -570,9 +577,11 @@ const Home = () => {
               ));
             })()}
           </div>
+          )}
 
           {/* Weather Widget */}
-          <div className="weather-widget">
+          {sections.weather !== false && (
+            <div className="weather-widget">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
               <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <i className="fas fa-cloud-sun" style={{ color: 'var(--primary)' }}></i>{' '}
@@ -611,6 +620,7 @@ const Home = () => {
               ))}
             </div>
           </div>
+          )}
 
           {/* Live TV Widget */}
           {sections.livetv !== false && (

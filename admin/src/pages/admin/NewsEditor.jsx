@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api';
 import { Save, ArrowLeft, Send, CheckCircle, MapPin } from 'lucide-react';
@@ -86,10 +86,10 @@ const NewsEditor = () => {
   };
 
   const inputStyle = {
-    width: '100%', padding: '0.6rem 0.9rem', borderRadius: 'var(--radius-sm)',
-    border: '1px solid var(--border)', background: 'var(--bg-secondary)',
+    width: '100%', padding: '0.75rem 1rem', borderRadius: '8px',
+    border: '1px solid rgba(255, 255, 255, 0.15)', background: 'rgba(255, 255, 255, 0.05)',
     color: 'var(--text-primary)', fontSize: '0.875rem', boxSizing: 'border-box',
-    outline: 'none', transition: 'border 0.2s',
+    outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s',
   };
   const taStyle = { ...inputStyle, minHeight: '140px', resize: 'vertical', fontFamily: 'inherit' };
   const labelStyle = { fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' };
@@ -100,12 +100,12 @@ const NewsEditor = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button onClick={() => navigate('/admin/news')}
-            style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '0.5rem', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex' }}>
+            style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.5rem', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex' }}>
             <ArrowLeft size={16} />
           </button>
           <div>
-            <h1 style={{ marginBottom: '0.15rem' }}>{isEdit ? '?? Edit Article' : '?? Create Article'}</h1>
-            <p className="text-secondary">{isEdit ? `Editing ID #${id}` : 'New article � Tamil required'}</p>
+            <h1 style={{ marginBottom: '0.15rem' }}>{isEdit ? '✏️ Edit Article' : '📝 Create Article'}</h1>
+            <p className="text-secondary">{isEdit ? `Editing ID #${id}` : 'New article — Tamil required'}</p>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -115,13 +115,13 @@ const NewsEditor = () => {
           </button>
           <button onClick={() => save('pending')} disabled={saving}
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', padding: '0.5rem 1rem',
-              borderRadius: 'var(--radius-sm)', background: 'rgba(245,158,11,0.1)', color: '#F59E0B',
+              borderRadius: '8px', background: 'rgba(245,158,11,0.1)', color: '#F59E0B',
               border: '1px solid rgba(245,158,11,0.3)', cursor: 'pointer' }}>
             <Send size={15} /> Submit for Review
           </button>
           <button onClick={() => save('published')} disabled={saving}
             className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-            <CheckCircle size={15} /> {saving ? 'Saving�' : 'Publish'}
+            <CheckCircle size={15} /> {saving ? 'Saving…' : 'Publish'}
           </button>
         </div>
       </div>
@@ -129,7 +129,7 @@ const NewsEditor = () => {
       {/* Alert */}
       {msg && (
         <div style={{
-          padding: '0.75rem 1rem', marginBottom: '1rem', borderRadius: 'var(--radius-sm)', fontSize: '0.875rem', fontWeight: 600,
+          padding: '0.75rem 1rem', marginBottom: '1rem', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 600,
           background: msg.isError ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
           color: msg.isError ? '#EF4444' : '#10B981',
           border: `1px solid ${msg.isError ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)'}`,
@@ -141,68 +141,68 @@ const NewsEditor = () => {
         {TABS.map((tab, i) => (
           <button key={tab} onClick={() => setActiveTab(i)}
             style={{
-              padding: '0.6rem 1.25rem', border: 'none', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600,
+              padding: '0.75rem 1.5rem', border: 'none', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600,
               background: 'transparent', borderBottom: activeTab === i ? '2px solid var(--primary)' : '2px solid transparent',
               color: activeTab === i ? 'var(--primary)' : 'var(--text-muted)', marginBottom: '-2px', transition: 'all 0.2s'
             }}>
-            {tab === 'Tamil' && '???? '}{tab === 'English' && '?? '}{tab === 'SEO' && '?? '}{tab === 'Settings' && '?? '}{tab}
+            {tab === 'Tamil' && '🇮🇳 '}{tab === 'English' && '🌐 '}{tab === 'SEO' && '🔍 '}{tab === 'Settings' && '⚙️ '}{tab}
           </button>
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '1.5rem', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '1.5rem', alignItems: 'start' }}>
         {/* Main Content */}
-        <div className="glass-panel" style={{ padding: '1.5rem' }}>
+        <div className="glass-panel" style={{ padding: '1.75rem', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
           {/* Tamil Tab */}
           {activeTab === 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
                 <label style={labelStyle}>Tamil Title <span style={{ color: '#EF4444' }}>*</span></label>
                 <input style={inputStyle} value={form.titleTa}
-                  onChange={e => set('titleTa', e.target.value)} placeholder="????? ???????�" />
+                  onChange={e => set('titleTa', e.target.value)} placeholder="தமிழ் தலைப்பு..." />
               </div>
               <div>
                 <label style={labelStyle}>Short Description (Tamil)</label>
                 <textarea style={taStyle} value={form.shortDescTa}
-                  onChange={e => set('shortDescTa', e.target.value)} placeholder="?????????? ????????�" rows={3} />
+                  onChange={e => set('shortDescTa', e.target.value)} placeholder="சுருக்கமான விளக்கம்..." rows={3} />
               </div>
               <div>
                 <label style={labelStyle}>Content (Tamil) <span style={{ color: '#EF4444' }}>*</span></label>
                 <textarea style={{ ...taStyle, minHeight: '260px' }} value={form.contentTa}
-                  onChange={e => set('contentTa', e.target.value)} placeholder="?????? ??????????�" />
+                  onChange={e => set('contentTa', e.target.value)} placeholder="செய்தி உள்ளடக்கம்..." />
               </div>
             </div>
           )}
 
           {/* English Tab */}
           {activeTab === 1 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
                 <label style={labelStyle}>English Title</label>
                 <input style={inputStyle} value={form.titleEn}
                   onChange={e => { set('titleEn', e.target.value); if (!form.slug) set('slug', slugify(e.target.value)); }}
-                  placeholder="English headline�" />
+                  placeholder="English headline..." />
               </div>
               <div>
                 <label style={labelStyle}>Short Description (English)</label>
                 <textarea style={taStyle} value={form.shortDescEn}
-                  onChange={e => set('shortDescEn', e.target.value)} placeholder="Brief summary�" rows={3} />
+                  onChange={e => set('shortDescEn', e.target.value)} placeholder="Brief summary..." rows={3} />
               </div>
               <div>
                 <label style={labelStyle}>Content (English)</label>
                 <textarea style={{ ...taStyle, minHeight: '260px' }} value={form.contentEn}
-                  onChange={e => set('contentEn', e.target.value)} placeholder="Full article content�" />
+                  onChange={e => set('contentEn', e.target.value)} placeholder="Full article content..." />
               </div>
             </div>
           )}
 
           {/* SEO Tab */}
           {activeTab === 2 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
                 <label style={labelStyle}>SEO Title <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(max 60 chars)</span></label>
                 <input style={inputStyle} value={form.metaTitle}
-                  onChange={e => set('metaTitle', e.target.value)} placeholder="SEO optimized title�" maxLength={60} />
+                  onChange={e => set('metaTitle', e.target.value)} placeholder="SEO optimized title..." maxLength={60} />
                 <div style={{ fontSize: '0.75rem', color: form.metaTitle.length > 55 ? '#F59E0B' : 'var(--text-muted)', marginTop: '4px' }}>
                   {form.metaTitle.length}/60 characters
                 </div>
@@ -210,7 +210,7 @@ const NewsEditor = () => {
               <div>
                 <label style={labelStyle}>Meta Description <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(max 160 chars)</span></label>
                 <textarea style={{ ...taStyle, minHeight: '80px' }} value={form.metaDescription}
-                  onChange={e => set('metaDescription', e.target.value)} placeholder="Meta description for search engines�" maxLength={160} />
+                  onChange={e => set('metaDescription', e.target.value)} placeholder="Meta description for search engines..." maxLength={160} />
                 <div style={{ fontSize: '0.75rem', color: form.metaDescription.length > 150 ? '#F59E0B' : 'var(--text-muted)', marginTop: '4px' }}>
                   {form.metaDescription.length}/160 characters
                 </div>
@@ -218,7 +218,7 @@ const NewsEditor = () => {
               <div>
                 <label style={labelStyle}>Meta Keywords</label>
                 <input style={inputStyle} value={form.metaKeywords}
-                  onChange={e => set('metaKeywords', e.target.value)} placeholder="news, tamil, politics, �" />
+                  onChange={e => set('metaKeywords', e.target.value)} placeholder="news, tamil, politics..." />
               </div>
               <div>
                 <label style={labelStyle}>URL Slug</label>
@@ -240,7 +240,7 @@ const NewsEditor = () => {
 
           {/* Settings Tab */}
           {activeTab === 3 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
                 <label style={labelStyle}>Author Name</label>
                 <input style={inputStyle} value={form.authorName}
@@ -251,8 +251,8 @@ const NewsEditor = () => {
                 <input type="datetime-local" style={inputStyle} value={form.publishedAt}
                   onChange={e => set('publishedAt', e.target.value)} />
               </div>
-              <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
-                <label style={{ ...labelStyle, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <label style={{ ...labelStyle, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
                   <MapPin size={14} /> GPS Visibility (optional)
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
@@ -278,24 +278,24 @@ const NewsEditor = () => {
         </div>
 
         {/* Sidebar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Status */}
-          <div className="glass-panel" style={{ padding: '1.25rem' }}>
+          <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
             <label style={labelStyle}>Status</label>
             <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.status} onChange={e => set('status', e.target.value)}>
-              <option value="draft">?? Draft</option>
-              <option value="pending">? Pending Review</option>
-              <option value="published">? Published</option>
-              <option value="rejected">? Rejected</option>
-              <option value="archived">?? Archived</option>
+              <option value="draft">📝 Draft</option>
+              <option value="pending">⏳ Pending Review</option>
+              <option value="published">✅ Published</option>
+              <option value="rejected">❌ Rejected</option>
+              <option value="archived">📦 Archived</option>
             </select>
           </div>
 
           {/* Category */}
-          <div className="glass-panel" style={{ padding: '1.25rem' }}>
+          <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
             <label style={labelStyle}>Category</label>
             <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.categoryId} onChange={e => set('categoryId', e.target.value)}>
-              <option value="">� Select Category �</option>
+              <option value="">— Select Category —</option>
               {categories.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -303,21 +303,21 @@ const NewsEditor = () => {
           </div>
 
           {/* Featured Image */}
-          <div className="glass-panel" style={{ padding: '1.25rem' }}>
+          <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
             <label style={labelStyle}>Featured Image URL</label>
             <input style={inputStyle} value={form.imageUrl}
-              onChange={e => set('imageUrl', e.target.value)} placeholder="https://�/image.jpg" />
+              onChange={e => set('imageUrl', e.target.value)} placeholder="https://..." />
             {form.imageUrl && (
               <img src={form.imageUrl} alt="preview" onError={e => e.target.style.display = 'none'}
-                style={{ width: '100%', borderRadius: '6px', marginTop: '0.75rem', maxHeight: '140px', objectFit: 'cover' }} />
+                style={{ width: '100%', borderRadius: '8px', marginTop: '0.75rem', maxHeight: '140px', objectFit: 'cover' }} />
             )}
           </div>
 
           {/* Save actions */}
-          <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
             <button onClick={() => save()} disabled={saving}
               className="btn btn-primary" style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-              <Save size={15} /> {saving ? 'Saving�' : 'Save Changes'}
+              <Save size={15} /> {saving ? 'Saving...' : 'Save Changes'}
             </button>
             <button onClick={() => navigate('/admin/news')}
               className="btn btn-secondary" style={{ width: '100%' }}>Cancel</button>
