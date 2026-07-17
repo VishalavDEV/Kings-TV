@@ -235,7 +235,7 @@ public class ArticleController {
             String scheme = request.getScheme();
             String serverName = request.getServerName();
             int port = request.getServerPort();
-            String portStr = (port == 5000) ? ":5173" : ((port != 80 && port != 443) ? ":" + port : "");
+            String portStr = (port == 8080) ? ":5173" : ((port != 80 && port != 443) ? ":" + port : "");
             article.setCanonicalUrl(scheme + "://" + serverName + portStr + "/news/" + article.getSlug());
         }
     }
@@ -244,7 +244,7 @@ public class ArticleController {
         String scheme = request.getScheme();
         String serverName = request.getServerName();
         int port = request.getServerPort();
-        String portStr = (port == 5000) ? ":5173" : ((port != 80 && port != 443) ? ":" + port : "");
+        String portStr = (port == 8080) ? ":5173" : ((port != 80 && port != 443) ? ":" + port : "");
         String baseUrl = scheme + "://" + serverName + portStr;
         
         String headline = article.getTitleTa() != null ? article.getTitleTa() : article.getTitleEn();

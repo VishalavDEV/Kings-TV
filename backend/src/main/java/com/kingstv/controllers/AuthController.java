@@ -125,6 +125,8 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("message", "Email and Password are required"));
         }
 
+        email = email.trim();
+
         Optional<User> userOpt = userRepository.findByEmail(email.toLowerCase());
         if (userOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid email or password"));

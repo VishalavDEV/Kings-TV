@@ -405,10 +405,18 @@ public class DataInitializer {
 
         // 16. Seed Default Layouts
         System.out.println("Seeding Web and Mobile Home Layout Sections...");
-        seedLayoutSection("hero", "Breaking News Hero", 1, "WEB");
-        seedLayoutSection("district_news", "District Local Bulletins", 2, "WEB");
-        seedLayoutSection("live_tv", "Live TV Feed", 3, "WEB");
-        seedLayoutSection("sports", "Sports Updates", 4, "WEB");
+        seedLayoutSection("news_ticker", "⚡ Breaking News Ticker", 1, "WEB");
+        seedLayoutSection("hero", "📰 Hero Section", 2, "WEB");
+        seedLayoutSection("quick_access", "🔘 Quick Access Icons", 3, "WEB");
+        seedLayoutSection("latest_news", "🆕 Latest News", 4, "WEB");
+        seedLayoutSection("video_news", "🎥 Video News", 5, "WEB");
+        seedLayoutSection("web_stories", "📱 Web Stories", 6, "WEB");
+        seedLayoutSection("trending_sidebar", "🔥 Trending Sidebar", 7, "WEB");
+        seedLayoutSection("weather", "🌦️ Weather Widget", 8, "WEB");
+        seedLayoutSection("live_tv", "📺 Live TV Widget", 9, "WEB");
+        seedLayoutSection("business_case", "💼 Business Case Studies", 10, "WEB");
+        seedLayoutSection("crowd_reporter", "📢 Crowd Reporter", 11, "WEB");
+        seedLayoutSection("news_digest", "📑 News Digest", 12, "WEB");
         
         seedLayoutSection("mobile_hero", "Trending Stories Feed", 1, "MOBILE");
         seedLayoutSection("mobile_live_tv", "Live Broadcast", 2, "MOBILE");

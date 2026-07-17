@@ -213,7 +213,7 @@ const Wishes = () => {
     const formData = new FormData();
     formData.append('file', file);
 
-    const uploadUrl = `${import.meta.env.VITE_API_BASE || 'http://localhost:5000/api/v1'}/wishes/upload`;
+    const uploadUrl = `${import.meta.env.VITE_API_BASE || 'http://localhost:8080/api/v1'}/wishes/upload`;
     const session = JSON.parse(localStorage.getItem('king24x7_session') || 'null');
     const headers = {};
     if (session && session.token) {

@@ -72,4 +72,15 @@ public class HomeLayoutController {
         }
         return ResponseEntity.ok(Map.of("message", "Layout reordered successfully"));
     }
+
+    @DeleteMapping("/{id}")
+    @RequiresPermission(Permission.HOME_LAYOUT_MANAGE)
+    public ResponseEntity<?> deleteSection(@PathVariable Long id) {
+        return layoutRepository.findById(id)
+            .map(section -> {
+                layoutRepository.delete(section);
+                return ResponseEntity.ok(Map.of("message", "Section deleted successfully"));
+            })
+            .orElse(ResponseEntity.notFound().build());
+    }
 }

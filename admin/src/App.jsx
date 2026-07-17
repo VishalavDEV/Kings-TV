@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { I18nProvider } from './context/I18nContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/admin/UserManagement';
@@ -18,6 +19,9 @@ import MyPosts from './pages/journalist/MyPosts';
 import PostEditor from './pages/journalist/PostEditor';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
+import NewsManagement from './pages/admin/NewsManagement';
+import NewsEditor from './pages/admin/NewsEditor';
+
 
 const ProtectedLayout = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
@@ -40,7 +44,8 @@ const ProtectedLayout = ({ children, allowedRoles }) => {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <I18nProvider>
+        <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
           
@@ -93,6 +98,24 @@ function App() {
             </ProtectedLayout>
           } />
 
+          <Route path="/admin/news" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
+              <NewsManagement />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/news/create" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
+              <NewsEditor />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/news/:id/edit" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
+              <NewsEditor />
+            </ProtectedLayout>
+          } />
+
           <Route path="/admin/surveys" element={
             <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
               <SurveyBuilder />
@@ -138,6 +161,7 @@ function App() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
+     </I18nProvider>
     </AuthProvider>
   );
 }

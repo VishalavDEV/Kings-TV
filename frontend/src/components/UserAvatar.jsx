@@ -10,7 +10,7 @@ const UserAvatar = ({ user, size = 36, onClick }) => {
 
   const hasImage = user.profileImage && user.profileImage.trim() !== '';
   const imageUrl = hasImage 
-    ? (user.profileImage.startsWith('http') ? user.profileImage : `http://localhost:5000${user.profileImage}`)
+    ? (user.profileImage.startsWith('http') ? user.profileImage : `http://localhost:8080${user.profileImage}`)
     : null;
 
   const avatarStyle = {

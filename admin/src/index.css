@@ -40,6 +40,11 @@
   --transition-normal: 0.25s ease;
 }
 
+html[lang="ta"] {
+  --font-sans: 'Noto Sans Tamil', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-title: 'Mukta Malar', 'Outfit', sans-serif;
+}
+
 [data-theme="light"] {
   --bg-primary: #FAF9F6;
   --bg-secondary: #FFFFFF;
@@ -443,4 +448,28 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+/* Hide Google Translate Banner and Iframe Toolbars */
+.goog-te-banner-frame.skiptranslate,
+.goog-te-banner-frame,
+.goog-te-balloon-frame,
+iframe.goog-te-banner-frame,
+.goog-te-menu-value,
+.goog-te-gadget-icon,
+.goog-te-gadget-simple,
+.goog-te-banner {
+  display: none !important;
+}
+
+body {
+  top: 0 !important;
+}
+
+#google_translate_element {
+  display: none !important;
+}
+
+.skiptranslate {
+  display: none !important;
 }

@@ -69,6 +69,17 @@
 
 body {
   font-family: 'Noto Sans Tamil', 'Segoe UI', sans-serif;
+}
+
+html[lang="en"] body {
+  font-family: 'Outfit', 'Segoe UI', sans-serif;
+}
+
+html[lang="ta"] body {
+  font-family: 'Noto Sans Tamil', 'Mukta Malar', 'Segoe UI', sans-serif;
+}
+
+body {
   background: var(--bg-light);
   color: var(--text-dark);
   overflow-x: hidden;

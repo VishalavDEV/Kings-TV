@@ -153,7 +153,7 @@ const Jobs = () => {
     const formData = new FormData();
     formData.append('file', file);
 
-    const uploadUrl = `${import.meta.env.VITE_API_BASE || 'http://localhost:5000/api/v1'}/jobs/upload`;
+    const uploadUrl = `${import.meta.env.VITE_API_BASE || 'http://localhost:8080/api/v1'}/jobs/upload`;
     try {
       const response = await fetch(uploadUrl, {
         method: 'POST',

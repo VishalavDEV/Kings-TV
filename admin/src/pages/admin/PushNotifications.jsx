@@ -7,6 +7,7 @@ const PushNotifications = () => {
     title: '',
     message: '',
     url: '',
+    imageUrl: '',
     targetSegment: 'GLOBAL'
   });
   const [loading, setLoading] = useState(false);
@@ -19,10 +20,23 @@ const PushNotifications = () => {
     
     setLoading(true);
     try {
-      await api.post('/admin/push-notifications', formData);
+      const payload = {
+        title: formData.title,
+        body: formData.message,
+        imageUrl: formData.imageUrl,
+        actionUrl: formData.url,
+        targetType: formData.targetSegment
+      };
+      const response = await api.post('/admin/push-notifications', payload);
+      const createdNotification = response.data;
+      
+      // Auto-trigger broadcast on the created draft record
+      await api.post(`/admin/push-notifications/${createdNotification.id}/send`);
+      
       alert("Notification broadcasted successfully!");
-      setFormData({ title: '', message: '', url: '', targetSegment: 'GLOBAL' });
+      setFormData({ title: '', message: '', url: '', imageUrl: '', targetSegment: 'GLOBAL' });
     } catch (error) {
+      console.error(error);
       alert("Failed to send notification.");
     }
     setLoading(false);
@@ -62,6 +76,15 @@ const PushNotifications = () => {
             type="url" name="url" className="form-control" 
             value={formData.url} onChange={handleChange} 
             placeholder="https://king24x7.com/news/123"
+          />
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Big Image URL (Optional)</label>
+          <input 
+            type="url" name="imageUrl" className="form-control" 
+            value={formData.imageUrl} onChange={handleChange} 
+            placeholder="https://king24x7.com/assets/images/banner.jpg"
           />
         </div>
 

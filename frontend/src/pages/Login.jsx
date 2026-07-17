@@ -175,33 +175,30 @@ const Login = () => {
   return (
     <div className="login-wrapper" style={{ background: '#000000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', position: 'relative', overflow: 'hidden' }}>
       <div className="login-container" style={{ width: '100%', maxWidth: '960px', background: 'rgba(255, 255, 255, 0.03)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', zIndex: 2, display: 'grid', gridTemplateColumns: '1.2fr 1.8fr' }}>
-        
         <div className="login-left" style={{ background: 'rgba(0, 0, 0, 0.3)', padding: '40px 30px', borderRight: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div className="login-left-header">
             <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--primary)', letterSpacing: '1px', marginBottom: '8px' }}>KINGS 24x7</div>
             <h2 style={{ fontSize: '22px', fontWeight: 800, color: 'white', lineHeight: 1.3, marginBottom: '12px' }}>
-              {forgotFlow 
-                ? (lang === 'en' ? 'Password Reset' : 'கடவுச்சொல் மீட்பு')
-                : (lang === 'en' ? 'Authentication Hub' : 'அங்கீகார மையம்')}
+              {forgotFlow ? 'Password Reset' : 'Authentication Hub'}
             </h2>
             <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.6)', lineHeight: 1.6 }}>
-              {lang === 'en' ? 'Truth. Responsibility. In Tamil. Access portal components tailored to your role.' : 'உண்மை. பொறுப்பு. தமிழில். உங்கள் பங்கிற்கு ஏற்ப வடிவமைக்கப்பட்ட பக்கங்களை அணுகவும்.'}
+              Truth. Responsibility. Access portal components tailored to your role.
             </p>
           </div>
 
           {!forgotFlow && (
             <div style={{ marginTop: '20px', textAlign: 'center' }}>
               <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.4)', fontStyle: 'italic' }}>
-                {lang === 'en' ? 'Access your personalized news experience.' : 'உங்களின் பிரத்யேக செய்தி அனுபவத்தை அணுகவும்.'}
+                Access your personalized news experience.
               </p>
             </div>
           )}
 
           <div style={{ marginTop: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img 
-              src="/assets/icons/logo-icon-dark.png" 
+              src="/assets/images/logo-banner-dark.png" 
               alt="Logo" 
-              style={{ maxWidth: '90px', height: 'auto', opacity: 0.8 }}
+              style={{ maxWidth: '180px', height: 'auto', opacity: 0.9, objectFit: 'contain' }}
             />
           </div>
         </div>
@@ -350,12 +347,12 @@ const Login = () => {
             <div>
               <div style={{ marginBottom: '24px' }}>
                 <h3 style={{ fontSize: '28px', fontWeight: 800, color: 'white', marginBottom: '8px' }}>
-                  {lang === 'en' ? 'Welcome Back!' : 'நல்வரவு!'}
+                  Welcome Back!
                 </h3>
                 <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.5 }}>
                   {loginMethod === 'email'
-                    ? (lang === 'en' ? 'Enter your email and password to access your role workspace.' : 'உங்கள் பங்கிற்கான பணியிடத்தை அணுக மின்னஞ்சல் மற்றும் கடவுச்சொல்லை உள்ளிடவும்.')
-                    : (lang === 'en' ? 'Enter your phone number to receive a simulated OTP code.' : 'மாதிரி OTP குறியீட்டைப் பெற உங்கள் தொலைபேசி எண்ணை உள்ளிடவும்.')}
+                    ? 'Enter your email and password to access your role workspace.'
+                    : 'Enter your phone number to receive a simulated OTP code.'}
                 </p>
               </div>
 
@@ -377,7 +374,7 @@ const Login = () => {
                     transition: 'all 0.2s'
                   }}
                 >
-                  {lang === 'en' ? 'Email Login' : 'மின்னஞ்சல் உள்நுழைவு'}
+                  Email Login
                 </button>
                 <button
                   type="button"
@@ -395,7 +392,7 @@ const Login = () => {
                     transition: 'all 0.2s'
                   }}
                 >
-                  {lang === 'en' ? 'Phone OTP' : 'தொலைபேசி OTP'}
+                  Phone OTP
                 </button>
               </div>
 
@@ -403,7 +400,7 @@ const Login = () => {
                 <form onSubmit={handleManualAuth} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div className="form-group" style={{ position: 'relative' }}>
                     <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.7)', display: 'block', marginBottom: '8px' }}>
-                      {lang === 'en' ? 'Email Address *' : 'மின்னஞ்சல் முகவரி *'}
+                      Email Address *
                     </label>
                     <div style={{ position: 'relative' }}>
                       <i className="fas fa-envelope" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.4)' }}></i>
@@ -430,7 +427,7 @@ const Login = () => {
 
                   <div className="form-group" style={{ position: 'relative' }}>
                     <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.7)', display: 'block', marginBottom: '8px' }}>
-                      {lang === 'en' ? 'Password *' : 'கடவுச்சொல் *'}
+                      Password *
                     </label>
                     <div style={{ position: 'relative' }}>
                       <i className="fas fa-lock" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.4)' }}></i>
@@ -480,7 +477,7 @@ const Login = () => {
                         onChange={(e) => setRememberMe(e.target.checked)}
                         style={{ accentColor: 'var(--primary)' }} 
                       />
-                      <span>{lang === 'en' ? 'Remember Me' : 'என்னை நினைவில் கொள்'}</span>
+                      <span>Remember Me</span>
                     </label>
                     <span 
                       onClick={() => {
@@ -490,7 +487,7 @@ const Login = () => {
                       }} 
                       style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600, cursor: 'pointer' }}
                     >
-                      {lang === 'en' ? 'Forgot Password?' : 'கடவுச்சொல் மறந்துவிட்டதா?'}
+                      Forgot Password?
                     </span>
                   </div>
 
@@ -511,14 +508,14 @@ const Login = () => {
                       transition: 'all 0.3s'
                     }}
                   >
-                    <span>{lang === 'en' ? 'Sign In' : 'உள்நுழைய'}</span>
+                    <span>Sign In</span>
                   </button>
                 </form>
               ) : (
                 <form onSubmit={handlePhoneAuth} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div className="form-group" style={{ position: 'relative' }}>
                     <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.7)', display: 'block', marginBottom: '8px' }}>
-                      {lang === 'en' ? 'Phone Number *' : 'தொலைபேசி எண் *'}
+                      Phone Number *
                     </label>
                     <div style={{ position: 'relative' }}>
                       <i className="fas fa-phone" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.4)' }}></i>
@@ -528,7 +525,7 @@ const Login = () => {
                         onChange={(e) => setPhoneNumber(e.target.value)}
                         required 
                         disabled={phoneOtpSent}
-                        placeholder={lang === 'en' ? 'e.g. +91 98765 43210' : 'எ.கா: +91 98765 43210'}
+                        placeholder="e.g. +91 98765 43210"
                         style={{
                           width: '100%',
                           padding: '14px 16px 14px 44px',
@@ -547,7 +544,7 @@ const Login = () => {
                   {phoneOtpSent && (
                     <div className="form-group" style={{ position: 'relative' }}>
                       <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.7)', display: 'block', marginBottom: '8px' }}>
-                        {lang === 'en' ? '6-Digit OTP Code *' : '6-இலக்க OTP குறியீடு *'}
+                        6-Digit OTP Code *
                       </label>
                       <div style={{ position: 'relative' }}>
                         <i className="fas fa-key" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.4)' }}></i>
@@ -572,7 +569,7 @@ const Login = () => {
                         />
                       </div>
                       <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>{lang === 'en' ? 'Simulated OTP is: 123456' : 'மாதிரி OTP: 123456'}</span>
+                        <span>Simulated OTP is: 123456</span>
                         {phoneOtpCountdown > 0 ? (
                           <span>Resend in {phoneOtpCountdown}s</span>
                         ) : (
@@ -580,7 +577,7 @@ const Login = () => {
                             onClick={handleSendPhoneOtp} 
                             style={{ color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}
                           >
-                            {lang === 'en' ? 'Resend OTP' : 'OTP-ஐ மீண்டும் அனுப்பு'}
+                            Resend OTP
                           </span>
                         )}
                       </div>
@@ -606,7 +603,7 @@ const Login = () => {
                         transition: 'all 0.3s'
                       }}
                     >
-                      <span>{lang === 'en' ? 'Send OTP' : 'OTP அனுப்பு'}</span>
+                      <span>Send OTP</span>
                     </button>
                   ) : (
                     <button 
@@ -626,7 +623,7 @@ const Login = () => {
                         transition: 'all 0.3s'
                       }}
                     >
-                      <span>{lang === 'en' ? 'Verify & Sign In' : 'சரிபார்த்து உள்நுழைய'}</span>
+                      <span>Verify & Sign In</span>
                     </button>
                   )}
                 </form>
@@ -667,17 +664,17 @@ const Login = () => {
                     e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
                   }}
                 >
-                  <i className="fab fa-google" style={{ color: '#EA4335' }}></i> {lang === 'en' ? 'Continue with Google' : 'கூகுள் மூலம் தொடரவும்'}
+                  <i className="fab fa-google" style={{ color: '#EA4335' }}></i> Continue with Google
                 </button>
               </div>
 
               <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)' }}>
-                {lang === 'en' ? "Don't have an account? " : 'புதிய கணக்கு வேண்டுமா? '}
+                Don't have an account?{' '}
                 <Link 
                   to="/register" 
                   style={{ color: 'var(--primary)', cursor: 'pointer', fontWeight: 700, textDecoration: 'none' }}
                 >
-                  {lang === 'en' ? 'Create Account' : 'கணக்கை உருவாக்கு'}
+                  Create Account
                 </Link>
               </div>
             </div>

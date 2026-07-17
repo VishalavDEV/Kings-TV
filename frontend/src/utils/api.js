@@ -74,7 +74,7 @@ export const fetchApi = async (endpoint, options = {}) => {
   }
 
   const data = await response.json();
-  const lang = localStorage.getItem('king24x7_lang') || 'ta';
+  const lang = localStorage.getItem('king24x7_lang') || 'en';
 
   if (endpoint.startsWith('/videos') && lang === 'en') {
     if (Array.isArray(data)) {

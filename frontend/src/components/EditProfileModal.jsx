@@ -6,7 +6,7 @@ const EditProfileModal = ({ user, token, onClose, onSaveSuccess }) => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(
     user.profileImage
-      ? (user.profileImage.startsWith('http') ? user.profileImage : `http://localhost:5000${user.profileImage}`)
+      ? (user.profileImage.startsWith('http') ? user.profileImage : `http://localhost:8080${user.profileImage}`)
       : null
   );
   const [error, setError] = useState('');

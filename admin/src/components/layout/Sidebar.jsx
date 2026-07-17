@@ -16,9 +16,11 @@ import {
   Key,
   Activity
 } from 'lucide-react';
+import { useI18n } from '../../context/I18nContext';
 
 const Sidebar = () => {
   const { user, hasAnyRole } = useAuth();
+  const { t } = useI18n();
 
   return (
     <aside className="sidebar">
@@ -27,91 +29,95 @@ const Sidebar = () => {
       </div>
       
       <nav className="sidebar-nav">
-        <div className="nav-section-title">Main</div>
+        <div className="nav-section-title">{t('main')}</div>
         <NavLink to="/dashboard" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
           <LayoutDashboard size={18} />
-          Dashboard
+          {t('dashboard')}
         </NavLink>
         
         {hasAnyRole(['SUPER_ADMIN', 'CHIEF_EDITOR']) && (
           <NavLink to="/admin/analytics" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
             <PieChart size={18} />
-            Analytics
+            {t('analytics')}
           </NavLink>
         )}
         
         {hasAnyRole(['SUPER_ADMIN', 'CHIEF_EDITOR']) && (
           <>
-            <div className="nav-section-title">Management</div>
+            <div className="nav-section-title">{t('management')}</div>
+            <NavLink to="/admin/news" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              <FileText size={18} />
+              News Management
+            </NavLink>
             <NavLink to="/admin/users" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               <Users size={18} />
-              User Accounts
+              {t('userAccounts')}
             </NavLink>
             <NavLink to="/admin/content" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               <FileText size={18} />
-              Content Queue
+              {t('contentQueue')}
             </NavLink>
           </>
         )}
 
         {hasAnyRole(['MOBILE_JOURNALIST', 'INSTITUTION_LOGIN']) && (
           <>
-            <div className="nav-section-title">Workspace</div>
+            <div className="nav-section-title">{t('workspace')}</div>
             <NavLink to="/journalist/posts" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               <Edit3 size={18} />
-              My Posts
+              {t('myPosts')}
             </NavLink>
           </>
         )}
 
         {hasAnyRole(['SUPER_ADMIN', 'CHIEF_EDITOR']) && (
           <>
-            <div className="nav-section-title">Engagement & Layout</div>
+            <div className="nav-section-title">{t('engagementLayout')}</div>
             <NavLink to="/admin/push" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               <BellRing size={18} />
-              Push Notifications
+              {t('push')}
             </NavLink>
             <NavLink to="/admin/layout" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               <Layout size={18} />
-              Home Layout
+              {t('layout')}
             </NavLink>
           </>
         )}
 
         {hasAnyRole(['SUPER_ADMIN']) && (
           <>
-            <div className="nav-section-title">Configuration</div>
+            <div className="nav-section-title">{t('configuration')}</div>
             <NavLink to="/admin/roles" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               <Key size={18} />
-              Roles & Permissions
+              {t('rolesPermissions')}
             </NavLink>
             <NavLink to="/admin/taxonomy" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               <Tags size={18} />
-              Taxonomy Manager
+              {t('taxonomy')}
             </NavLink>
             <NavLink to="/admin/surveys" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               <HelpCircle size={18} />
-              Survey Builder
+              {t('surveys')}
             </NavLink>
             <NavLink to="/admin/settings" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               <Settings size={18} />
-              System Settings
+              {t('settings')}
             </NavLink>
             <NavLink to="/admin/profanity" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               <AlertTriangle size={18} />
-              Profanity Filter
+              {t('profanity')}
             </NavLink>
             <NavLink to="/admin/audit-logs" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               <Activity size={18} />
-              Audit Logs
+              {t('audit')}
             </NavLink>
           </>
         )}
         
-        <div className="nav-section-title">Personal</div>
+        <div className="nav-section-title">{t('personal')}</div>
         <NavLink to="/profile" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
           <Users size={18} />
-          My Profile
+          {t('myProfile')}
         </NavLink>
       </nav>
     </aside>
