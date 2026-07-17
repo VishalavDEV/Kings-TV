@@ -5,11 +5,11 @@
 --           Local Directories, Classifeds, Wishes, Jobs, and Customizations.
 -- ==========================================
 
-CREATE DATABASE IF NOT EXISTS kings_tv_db
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
-
-USE kings_tv_db;
+-- CREATE DATABASE IF NOT EXISTS kings_tv_db
+--     CHARACTER SET utf8mb4
+--     COLLATE utf8mb4_unicode_ci;
+-- 
+-- USE kings_tv_db;
 
 -- -----------------------------------------------------
 -- Table `users`
@@ -207,7 +207,7 @@ CREATE TABLE IF NOT EXISTS `local_business_directory` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`) ON DELETE SET NULL,
     INDEX `idx_directory_cat_loc` (`category`, `address_locality`),
-    FULLTEXT `idx_directory_search` (`business_name`, `address_street`)
+    INDEX `idx_directory_search` (`business_name`, `address_street`)
 ) ENGINE=InnoDB COMMENT='Yellow Pages business directory metadata';
 
 -- -----------------------------------------------------
