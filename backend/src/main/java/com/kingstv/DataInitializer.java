@@ -82,6 +82,45 @@ public class DataInitializer {
 
     @EventListener(ApplicationReadyEvent.class)
     public void initDatabase() {
+        // Ensure database tables use UTF-8 character encoding (utf8mb4) to prevent ???? for Tamil characters
+        String[] tables = {
+            "articles", "categories", "comments", "video_contents", "web_stories", 
+            "local_business_directory", "jobs", "classified_listings", "local_obituaries", 
+            "wishes", "districts", "breaking_news"
+        };
+        for (String table : tables) {
+            try {
+                jdbcTemplate.execute("ALTER TABLE `" + table + "` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+            } catch (Exception e) {
+                System.out.println("Could not alter table " + table + " charset: " + e.getMessage());
+            }
+        // Ensure standard news portal categories exist
+        String[][] standardCategories = {
+            {"Tamil Nadu", "தமிழ்நாடு", "tamilnadu", "7", "fas fa-map-marker-alt"},
+            {"India", "இந்தியா", "india", "8", "fas fa-flag"},
+            {"Lifestyle & Health", "வாழ்க்கை முறை", "lifestyle", "9", "fas fa-heartbeat"},
+            {"Crime & Law", "குற்றம்", "crime", "10", "fas fa-gavel"},
+            {"Education & Jobs", "கல்வி மற்றும் வேலைவாய்ப்பு", "education", "11", "fas fa-graduation-cap"},
+            {"Agriculture", "விவசாயம்", "agriculture", "12", "fas fa-seedling"}
+        };
+        for (String[] catInfo : standardCategories) {
+            try {
+                if (categoryRepository.findBySlug(catInfo[2]).isEmpty()) {
+                    Category cat = new Category();
+                    cat.setName(catInfo[0]);
+                    cat.setNameTa(catInfo[1]);
+                    cat.setSlug(catInfo[2]);
+                    cat.setDisplayOrder(Integer.parseInt(catInfo[3]));
+                    cat.setIcon(catInfo[4]);
+                    cat.setIsNav(true);
+                    cat.setIsActive(true);
+                    categoryRepository.save(cat);
+                }
+            } catch (Exception e) {
+                System.out.println("Could not seed category " + catInfo[0] + ": " + e.getMessage());
+            }
+        }
+
         if (categoryRepository.count() > 0) {
             System.out.println("Database already has data. Skipping database seeding to preserve dynamic data.");
             return;

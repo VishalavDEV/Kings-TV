@@ -30,6 +30,10 @@ const NewsEditor = () => {
   const [aiLoading, setAiLoading] = useState(false);
 
   const [lastSavedTime, setLastSavedTime] = useState(null);
+  
+  // AI SEO Assistant state
+  const [aiSeoLoading, setAiSeoLoading] = useState(false);
+  const [aiSeoSuggestions, setAiSeoSuggestions] = useState(null);
 
   const [form, setForm] = useState({
     titleTa: '', titleEn: '', contentTa: '', contentEn: '',
@@ -148,7 +152,7 @@ const NewsEditor = () => {
       const imagesUploadHandler = (blobInfo, progress) => new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.withCredentials = false;
-        const baseApi = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api/v1';
+        const baseApi = api.defaults.baseURL || 'http://localhost:8080/api/v1';
         xhr.open('POST', `${baseApi}/articles/upload`);
         
         const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
@@ -174,7 +178,7 @@ const NewsEditor = () => {
             reject('Invalid JSON: ' + xhr.responseText);
             return;
           }
-          const serverBase = (import.meta.env.VITE_API_BASE || 'http://localhost:8080/api/v1')
+          const serverBase = (api.defaults.baseURL || 'http://localhost:8080/api/v1')
             .replace(/\/api\/v1\/?$/, '')
             .replace(/\/api\/?$/, '');
           resolve(serverBase + json.url);
@@ -288,7 +292,7 @@ const NewsEditor = () => {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         if (res.data && res.data.url) {
-          const serverBase = (import.meta.env.VITE_API_BASE || 'http://localhost:8080/api/v1')
+          const serverBase = (api.defaults.baseURL || 'http://localhost:8080/api/v1')
             .replace(/\/api\/v1\/?$/, '')
             .replace(/\/api\/?$/, '');
           uploadedItems.push({
@@ -319,7 +323,7 @@ const NewsEditor = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       if (res.data && res.data.url) {
-        const serverBase = (import.meta.env.VITE_API_BASE || 'http://localhost:8080/api/v1')
+        const serverBase = (api.defaults.baseURL || 'http://localhost:8080/api/v1')
           .replace(/\/api\/v1\/?$/, '')
           .replace(/\/api\/?$/, '');
         set('imageUrl', serverBase + res.data.url);
@@ -396,6 +400,88 @@ const NewsEditor = () => {
       setAiLoading(false);
     }
   };
+
+  const generateAiSeoSuggestions = async () => {
+    const textToAnalyze = form.contentTa || form.contentEn || form.titleTa;
+    if (!textToAnalyze) {
+      showMsg('Please write some content first to generate SEO suggestions.', true);
+      return;
+    }
+    setAiSeoLoading(true);
+    try {
+      const [seoRes, headlinesRes, tagsRes] = await Promise.allSettled([
+        api.post('/articles/ai-assist', { action: 'seo', text: textToAnalyze }),
+        api.post('/articles/ai-assist', { action: 'headlines', text: form.titleTa || form.titleEn || textToAnalyze.substring(0, 100) }),
+        api.post('/articles/ai-assist', { action: 'tags', text: textToAnalyze })
+      ]);
+
+      const suggestions = { titles: [], descriptions: [], tags: [] };
+
+      if (seoRes.status === 'fulfilled' && seoRes.value.data?.result) {
+        const lines = seoRes.value.data.result.split('\n');
+        lines.forEach(line => {
+          if (line.startsWith('SEO_TITLE:')) {
+            suggestions.titles.push(line.replace('SEO_TITLE:', '').trim());
+          } else if (line.startsWith('META_DESC:')) {
+            suggestions.descriptions.push(line.replace('META_DESC:', '').trim());
+          }
+        });
+      }
+
+      if (headlinesRes.status === 'fulfilled' && headlinesRes.value.data?.result) {
+        const lines = headlinesRes.value.data.result.split('\n');
+        lines.forEach(line => {
+          const cleaned = line.replace(/^\d+\.\s*/, '').trim();
+          if (cleaned) {
+            const parts = cleaned.split('|');
+            const englishHeadline = parts[1] ? parts[1].trim() : parts[0].trim();
+            suggestions.titles.push(englishHeadline);
+          }
+        });
+      }
+
+      if (tagsRes.status === 'fulfilled' && tagsRes.value.data?.result) {
+        suggestions.tags = tagsRes.value.data.result
+          .split(',')
+          .map(t => t.trim())
+          .filter(t => t.length > 0);
+      }
+
+      suggestions.titles = [...new Set(suggestions.titles)].filter(t => t.length > 0);
+      if (suggestions.descriptions.length === 0) {
+        suggestions.descriptions.push(textToAnalyze.replace(/<[^>]*>?/gm, '').substring(0, 150) + '...');
+      }
+
+      setAiSeoSuggestions(suggestions);
+      showMsg('Successfully generated AI SEO suggestions!');
+    } catch (err) {
+      showMsg('Failed to fetch AI recommendations.', true);
+    } finally {
+      setAiSeoLoading(false);
+    }
+  };
+
+  // Auto-generate tags/keywords on entering SEO tab
+  useEffect(() => {
+    if (activeTab === 2 && !form.metaKeywords && (form.contentTa || form.contentEn)) {
+      const autoGenTags = async () => {
+        try {
+          const res = await api.post('/articles/ai-assist', { 
+            action: 'tags', 
+            text: form.contentTa || form.contentEn 
+          });
+          if (res.data?.result) {
+            const cleanedTags = res.data.result.split(',').map(s=>s.trim()).filter(s=>s).join(', ');
+            set('metaKeywords', cleanedTags);
+            showMsg('AI automatically generated keywords/tags for you!', false);
+          }
+        } catch (e) {
+          console.warn('Auto-generation of keywords failed', e);
+        }
+      };
+      autoGenTags();
+    }
+  }, [activeTab]);
 
   const showMsg = (text, isError = false) => {
     setMsg({ text, isError });
@@ -638,6 +724,73 @@ const NewsEditor = () => {
               boxSizing: 'border-box',
               opacity: activeTab === 2 ? 1 : 0
             }}>
+              {/* AI SEO Assistant Widget */}
+              <div className="glass-panel" style={{ padding: '1.5rem', background: 'rgba(179, 115, 42, 0.08)', border: '1px solid var(--primary)', borderRadius: '10px' }}>
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, color: 'var(--primary)', fontSize: '1.1rem', fontWeight: 700 }}>
+                  ✨ AI News SEO Assistant
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.25rem 0 1rem 0' }}>
+                  Analyze your article to automatically suggest titles, meta descriptions, and search tags.
+                </p>
+                
+                <button onClick={generateAiSeoSuggestions} disabled={aiSeoLoading} className="btn btn-primary" style={{ fontSize: '0.85rem' }}>
+                  {aiSeoLoading ? 'Analyzing Content...' : '🔍 Generate SEO Suggestions'}
+                </button>
+
+                {aiSeoSuggestions && (
+                  <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+                    {aiSeoSuggestions.titles && aiSeoSuggestions.titles.length > 0 && (
+                      <div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>🎯 Suggested SEO Titles:</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                          {aiSeoSuggestions.titles.map((t, idx) => (
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border-color)', gap: '1rem' }}>
+                              <span style={{ fontSize: '0.82rem', color: 'var(--text-primary)' }}>{t}</span>
+                              <button onClick={() => { set('metaTitle', t); showMsg('Meta Title updated!'); }} className="btn btn-secondary" style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>Use</button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {aiSeoSuggestions.descriptions && aiSeoSuggestions.descriptions.length > 0 && (
+                      <div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>📝 Suggested Meta Descriptions:</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                          {aiSeoSuggestions.descriptions.map((d, idx) => (
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border-color)', gap: '1rem' }}>
+                              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{d}</span>
+                              <button onClick={() => { set('metaDescription', d); showMsg('Meta Description updated!'); }} className="btn btn-secondary" style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>Use</button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {aiSeoSuggestions.tags && aiSeoSuggestions.tags.length > 0 && (
+                      <div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>🏷️ Suggested Search Tags:</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                          {aiSeoSuggestions.tags.map((tag, idx) => (
+                            <div key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'var(--bg-secondary)', padding: '0.25rem 0.5rem', borderRadius: '15px', border: '1px solid var(--border-color)', fontSize: '0.78rem' }}>
+                              <span>#{tag}</span>
+                              <button onClick={() => {
+                                const currentTags = form.metaKeywords ? form.metaKeywords.split(',').map(s=>s.trim()).filter(s=>s) : [];
+                                if (!currentTags.includes(tag)) {
+                                  const newTags = [...currentTags, tag].join(', ');
+                                  set('metaKeywords', newTags);
+                                  showMsg(`Added tag #${tag}`);
+                                }
+                              }} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', padding: 0, fontWeight: 700, fontSize: '0.8rem' }}>+</button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label style={labelStyle}>SEO Title <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(max 60 chars)</span></label>
                 <input style={inputStyle} value={form.metaTitle}
