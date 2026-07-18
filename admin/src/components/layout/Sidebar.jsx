@@ -14,7 +14,9 @@ import {
   Layout,
   HelpCircle,
   Key,
-  Activity
+  Activity,
+  Calendar,
+  DollarSign
 } from 'lucide-react';
 import { useI18n } from '../../context/I18nContext';
 
@@ -36,23 +38,36 @@ const Sidebar = () => {
         </NavLink>
         
         {hasAnyRole(['SUPER_ADMIN', 'CHIEF_EDITOR']) && (
-          <NavLink to="/admin/analytics" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-            <PieChart size={18} />
-            {t('analytics')}
-          </NavLink>
-        )}
-        
-        {hasAnyRole(['SUPER_ADMIN', 'CHIEF_EDITOR']) && (
           <>
-            <div className="nav-section-title">{t('management')}</div>
+            <div className="nav-section-title">📰 NEWSROOM</div>
+            <NavLink to="/admin/editorial-calendar" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              <Calendar size={18} />
+              Editorial Calendar
+            </NavLink>
             <NavLink to="/admin/news" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               <FileText size={18} />
               News Management
             </NavLink>
-            <NavLink to="/admin/users" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <Users size={18} />
-              {t('userAccounts')}
+            <NavLink to="/admin/news/create" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              <Edit3 size={18} />
+              Create Article
             </NavLink>
+            <NavLink to="/admin/ugc-queue" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              <Users size={18} />
+              UGC Queue
+            </NavLink>
+            <NavLink to="/admin/breaking" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              <AlertTriangle size={18} />
+              Breaking News
+            </NavLink>
+
+            <div className="nav-section-title">📊 ANALYTICS</div>
+            <NavLink to="/admin/analytics" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              <PieChart size={18} />
+              {t('analytics')}
+            </NavLink>
+
+            <div className="nav-section-title">🏗️ CONTENT</div>
             <NavLink to="/admin/content" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               <FileText size={18} />
               {t('contentQueue')}
@@ -86,7 +101,17 @@ const Sidebar = () => {
 
         {hasAnyRole(['SUPER_ADMIN']) && (
           <>
-            <div className="nav-section-title">{t('configuration')}</div>
+            <div className="nav-section-title">💰 MONETIZATION</div>
+            <NavLink to="/admin/ads" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              <DollarSign size={18} />
+              Ad Management
+            </NavLink>
+
+            <div className="nav-section-title">⚙️ SYSTEM</div>
+            <NavLink to="/admin/users" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              <Users size={18} />
+              {t('userAccounts')}
+            </NavLink>
             <NavLink to="/admin/roles" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               <Key size={18} />
               {t('rolesPermissions')}

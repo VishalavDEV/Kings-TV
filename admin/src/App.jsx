@@ -21,7 +21,10 @@ import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import NewsManagement from './pages/admin/NewsManagement';
 import NewsEditor from './pages/admin/NewsEditor';
-
+import BreakingNewsDashboard from './pages/admin/BreakingNewsDashboard';
+import UgcQueue from './pages/admin/UgcQueue';
+import EditorialCalendar from './pages/admin/EditorialCalendar';
+import AdManagement from './pages/admin/AdManagement';
 
 const ProtectedLayout = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
@@ -109,6 +112,31 @@ function App() {
               <NewsEditor />
             </ProtectedLayout>
           } />
+
+          <Route path="/admin/breaking" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
+              <BreakingNewsDashboard />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/ugc-queue" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR', 'SUB_EDITOR']}>
+              <UgcQueue />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/editorial-calendar" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
+              <EditorialCalendar />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/ads" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
+              <AdManagement />
+            </ProtectedLayout>
+          } />
+
 
           <Route path="/admin/news/:id/edit" element={
             <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>

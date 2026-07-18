@@ -1,180 +1,194 @@
-import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import api from '../../api';
-import { Save, Sparkles, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import api from "../../api";
+import { useAuth } from "../../context/AuthContext";
+import { Save, AlertCircle, FileImage, Send, MapPin } from "lucide-react";
 
 const PostEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const isEditing = !!id;
+  const formRef = useRef(null);
 
-  const [formData, setFormData] = useState({
-    titleEn: '',
-    titleTa: '',
-    contentEn: '',
-    contentTa: '',
-    categoryId: '',
-    videoDurationSeconds: '',
-    latitude: '',
-    longitude: '',
-    visibilityRadiusKm: ''
+  const [form, setForm] = useState({
+    titleTa: "", titleEn: "", contentTa: "", contentEn: "",
+    categoryId: "", shortDescTa: "", shortDescEn: "",
+    featuredImage: "", status: "draft"
   });
+  
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [msg, setMsg] = useState(null);
+  const [active, setActive] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const showMsg = (text, isError = false) => { setMsg({ text, isError }); setTimeout(() => setMsg(null), 4000); };
 
-  const handleAiRewrite = async () => {
-    if (!formData.contentEn.trim()) {
-      alert("Please enter some English content to rewrite.");
-      return;
-    }
-    setAiLoading(true);
-    try {
-      const res = await api.post('/admin/my-content/ai-rewrite', { text: formData.contentEn, style: 'professional' });
-      setFormData(prev => ({ ...prev, contentEn: res.data.rewritten }));
-    } catch (e) {
-      alert("AI Rewrite failed. Please try again.");
-    }
-    setAiLoading(false);
-  };
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    
-    try {
-      const payload = { ...formData };
-      if (payload.categoryId) payload.categoryId = parseInt(payload.categoryId, 10);
-      if (payload.videoDurationSeconds) payload.videoDurationSeconds = parseInt(payload.videoDurationSeconds, 10);
-      if (payload.latitude) payload.latitude = parseFloat(payload.latitude);
-      if (payload.longitude) payload.longitude = parseFloat(payload.longitude);
-      if (payload.visibilityRadiusKm) payload.visibilityRadiusKm = parseFloat(payload.visibilityRadiusKm);
+  useEffect(() => {
+    api.get("/categories").then(r => setCategories(r.data || []));
+    if (isEditing) {
+      api.get(`/articles/${id}`).then(r => { setForm(r.data); setActive(true); })
+        .catch(() => { showMsg("Failed to load article.", true); setActive(true); });
+    } else { setActive(true); }
+  }, [id, isEditing]);
 
-      if (isEditing) {
-        await api.put(`/admin/my-content/${id}`, payload);
-      } else {
-        await api.post('/admin/my-content', payload);
+  useEffect(() => {
+    if (!active) return;
+    const initEditor = () => {
+      const commonConfig = {
+        height: 400,
+        menubar: false,
+        plugins: ["lists", "link", "image", "media", "table", "code", "wordcount"],
+        toolbar: "undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist | link image media",
+        skin: "oxide",
+        content_css: "default",
+        content_style: "body { font-family:Inter,sans-serif; font-size:16px; line-height: 1.6; } img { border-radius: 8px; }",
+        images_upload_handler: async (blobInfo) => {
+          const fd = new FormData();
+          fd.append("file", blobInfo.blob(), blobInfo.filename());
+          const res = await api.post("/articles/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
+          return res.data.url;
+        }
+      };
+
+      if (window.tinymce) {
+        window.tinymce.init({
+          ...commonConfig,
+          selector: "#j-tinymce-ta",
+          setup: ed => ed.on("change keyup blur", () => setForm(f => ({ ...f, contentTa: ed.getContent() }))),
+          init_instance_callback: ed => formRef.current.contentTa && ed.setContent(formRef.current.contentTa)
+        });
+        window.tinymce.init({
+          ...commonConfig,
+          selector: "#j-tinymce-en",
+          setup: ed => ed.on("change keyup blur", () => setForm(f => ({ ...f, contentEn: ed.getContent() }))),
+          init_instance_callback: ed => formRef.current.contentEn && ed.setContent(formRef.current.contentEn)
+        });
       }
-      navigate('/journalist/posts');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save post.');
-    }
+    };
+    initEditor();
+    return () => { if (window.tinymce) { window.tinymce.remove("#j-tinymce-ta"); window.tinymce.remove("#j-tinymce-en"); } };
+  }, [active]);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await api.post("/articles/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      setForm(f => ({ ...f, featuredImage: res.data.url }));
+      showMsg("Featured image uploaded!");
+    } catch { showMsg("Failed to upload image.", true); }
     setLoading(false);
   };
 
+  const save = async (submitForReview) => {
+    let payload = { ...form };
+    if (!payload.titleTa) { showMsg("Tamil title is required.", true); return; }
+    if (!payload.categoryId) { showMsg("Please select a category.", true); return; }
+
+    if (submitForReview) payload.status = "pending";
+
+    setLoading(true);
+    
+    if (payload.status === "pending" || payload.status === "published") {
+      try {
+        let seoUpdates = {};
+        if (!payload.metaTitle) seoUpdates.metaTitle = payload.titleEn || payload.titleTa;
+        if (!payload.metaDescription && payload.contentTa) {
+          const res = await api.post("/articles/ai-assist", { action: "summarize", text: payload.contentTa, context: "ta" });
+          if (res.data?.result) seoUpdates.metaDescription = res.data.result;
+        }
+        payload = { ...payload, ...seoUpdates };
+      } catch (e) { console.warn("SEO AI failed", e); }
+    }
+
+    try {
+      if (isEditing) {
+        await api.put("/articles/saveUpdate", { ...payload, id: parseInt(id) });
+        showMsg("Draft updated successfully!");
+      } else {
+        await api.post("/articles/saveUpdate", payload);
+        showMsg("Draft created successfully!");
+      }
+      setTimeout(() => navigate("/journalist/posts"), 1500);
+    } catch (err) { showMsg(err.response?.data?.message || "Failed to save.", true); }
+    setLoading(false);
+  };
+
+  const inputStyle = { width: "100%", padding: "0.75rem 1rem", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-surface)", color: "var(--text-primary)", fontSize: "0.875rem", boxSizing: "border-box" };
+  const labelStyle = { fontSize: "0.8rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.4rem", display: "block" };
+
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <div style={{ marginBottom: '2rem' }}>
-        <h1>{isEditing ? 'Edit Post' : 'Create New Post'}</h1>
-        <p className="text-secondary">Fill in the details for your submission. Content will be reviewed by the Chief Editor.</p>
+    <div className="animate-fade-in" style={{ padding: "1.5rem 0", maxWidth: "900px", margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+        <div>
+          <h1 style={{ marginBottom: "0.25rem" }}>{isEditing ? "Edit Story" : "Write Story"}</h1>
+          <p className="text-secondary">Save as draft or submit to editors for review.</p>
+        </div>
+        <div style={{ display: "flex", gap: "1rem" }}>
+          <button onClick={() => save(false)} disabled={loading} className="btn btn-secondary" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Save size={16} /> Save Draft</button>
+          <button onClick={() => save(true)} disabled={loading} className="btn btn-primary" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Send size={16} /> Submit for Review</button>
+        </div>
       </div>
 
-      {error && (
-        <div style={{ backgroundColor: 'var(--danger-glow)', color: 'var(--danger)', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <AlertCircle size={18} /> {error}
+      {msg && (
+        <div style={{ padding: "1rem", marginBottom: "1.5rem", borderRadius: "8px", background: msg.isError ? "rgba(239,68,68,0.1)" : "rgba(16,185,129,0.1)", color: msg.isError ? "#EF4444" : "#10B981", border: `1px solid ${msg.isError ? "rgba(239,68,68,0.3)" : "rgba(16,185,129,0.3)"}`, display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: 600 }}>
+          <AlertCircle size={18} /> {msg.text}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="glass-panel" style={{ padding: '2rem' }}>
-        <div className="form-group">
-          <label className="form-label">Title (English)</label>
-          <input 
-            type="text" name="titleEn" className="form-control" 
-            value={formData.titleEn} onChange={handleChange} required
-          />
-        </div>
-
-        <div className="form-group">
-          <label className="form-label">Content Body (English)</label>
-          <div style={{ position: 'relative' }}>
-            <textarea 
-              name="contentEn" className="form-control" rows="6"
-              value={formData.contentEn} onChange={handleChange} required
-              style={{ paddingBottom: '3rem' }}
-            />
-            <button 
-              type="button" 
-              className="btn btn-secondary" 
-              style={{ position: 'absolute', bottom: '0.5rem', right: '0.5rem', padding: '0.4rem 0.75rem', fontSize: '0.8rem', backgroundColor: 'var(--bg-secondary)' }}
-              onClick={handleAiRewrite}
-              disabled={aiLoading}
-            >
-              <Sparkles size={14} color="var(--primary)" /> 
-              {aiLoading ? 'Rewriting...' : 'AI Rewrite'}
-            </button>
+      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+        <div className="glass-panel" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div><label style={labelStyle}>Tamil Headline *</label><input style={inputStyle} value={form.titleTa} onChange={e => setForm(f => ({ ...f, titleTa: e.target.value }))} /></div>
+            <div><label style={labelStyle}>English Headline</label><input style={inputStyle} value={form.titleEn} onChange={e => setForm(f => ({ ...f, titleEn: e.target.value }))} /></div>
+          </div>
+          <div><label style={labelStyle}>Category *</label>
+            <select style={inputStyle} value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))}>
+              <option value="">— Select Category —</option>
+              {categories.map(c => <option key={c.id} value={c.id}>{c.nameTa} ({c.name})</option>)}
+            </select>
           </div>
         </div>
 
-        <div className="form-group">
-          <label className="form-label">Category ID (Assigned only)</label>
-          <input 
-            type="number" name="categoryId" className="form-control" 
-            value={formData.categoryId} onChange={handleChange} 
-            placeholder="e.g. 1"
-          />
+        <div className="glass-panel" style={{ padding: "1.5rem" }}>
+          <label style={{ ...labelStyle, marginBottom: "1rem" }}>Tamil Content</label>
+          <div style={{ border: "1px solid var(--border-color)", borderRadius: "8px", overflow: "hidden" }}><textarea id="j-tinymce-ta"></textarea></div>
+        </div>
+        
+        <div className="glass-panel" style={{ padding: "1.5rem" }}>
+          <label style={{ ...labelStyle, marginBottom: "1rem" }}>English Content (Optional)</label>
+          <div style={{ border: "1px solid var(--border-color)", borderRadius: "8px", overflow: "hidden" }}><textarea id="j-tinymce-en"></textarea></div>
         </div>
 
-        <div className="form-group">
-          <label className="form-label">Video Duration (Seconds)</label>
-          <input 
-            type="number" name="videoDurationSeconds" className="form-control" 
-            value={formData.videoDurationSeconds} onChange={handleChange} 
-            placeholder="e.g. 45"
-          />
-          <small style={{ color: 'var(--text-muted)' }}>Required if attaching a video. Maximum length is strictly enforced.</small>
-        </div>
-
-        <div style={{ marginTop: '1.5rem', padding: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
-          <h4 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Sparkles size={16} color="var(--primary)" /> GPS Location Visibility (Geo-Fencing)
-          </h4>
-          <p className="text-secondary" style={{ fontSize: '0.85rem', marginBottom: '1rem' }}>
-            Optional. Only users within this radius of the GPS coordinates will see this article. Leave blank to make the article visible globally.
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label">Latitude</label>
-              <input 
-                type="number" step="any" name="latitude" className="form-control" 
-                value={formData.latitude} onChange={handleChange} 
-                placeholder="e.g. 40.7128"
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Longitude</label>
-              <input 
-                type="number" step="any" name="longitude" className="form-control" 
-                value={formData.longitude} onChange={handleChange} 
-                placeholder="e.g. -74.0060"
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Visibility Radius (km)</label>
-              <input 
-                type="number" step="any" name="visibilityRadiusKm" className="form-control" 
-                value={formData.visibilityRadiusKm} onChange={handleChange} 
-                placeholder="e.g. 10"
-              />
+        <div className="glass-panel" style={{ padding: "1.5rem" }}>
+          <label style={labelStyle}>Featured Image</label>
+          <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
+            {form.featuredImage ? (
+              <div style={{ position: "relative", width: "120px", height: "80px", borderRadius: "8px", overflow: "hidden" }}>
+                <img src={form.featuredImage} alt="Featured" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <button onClick={() => setForm(f => ({ ...f, featuredImage: "" }))} style={{ position: "absolute", top: "4px", right: "4px", background: "rgba(0,0,0,0.7)", color: "white", border: "none", borderRadius: "50%", width: "20px", height: "20px", cursor: "pointer", fontSize: "12px", display: "flex", alignItems: "center", justifyContent: "center" }}>?</button>
+              </div>
+            ) : (
+              <div style={{ width: "120px", height: "80px", borderRadius: "8px", background: "var(--bg-secondary)", border: "1px dashed var(--border-color)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}><FileImage size={24} /></div>
+            )}
+            <div style={{ flex: 1 }}>
+              <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} id="f-upload" />
+              <label htmlFor="f-upload" className="btn btn-secondary" style={{ display: "inline-flex", cursor: "pointer", alignItems: "center", gap: "0.5rem" }}>Upload Image File</label>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>Or paste URL below:</div>
+              <input style={{ ...inputStyle, marginTop: "0.5rem" }} value={form.featuredImage} onChange={e => setForm(f => ({ ...f, featuredImage: e.target.value }))} placeholder="https://..." />
             </div>
           </div>
         </div>
-
-        <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            <Save size={16} /> {loading ? 'Saving...' : 'Submit to Review Queue'}
-          </button>
-          <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>
-            Cancel
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   );
 };
-
 export default PostEditor;

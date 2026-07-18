@@ -403,13 +403,44 @@ const NewsEditor = () => {
   };
 
   const save = async (statusOverride) => {
-    const payload = { ...form };
+    let payload = { ...form };
     if (statusOverride) payload.status = statusOverride;
     if (isEdit) payload.id = parseInt(id);
     if (!payload.slug && payload.titleEn) payload.slug = slugify(payload.titleEn);
     if (!payload.titleTa) { showMsg('Tamil title is required.', true); setActiveTab(0); return; }
 
     setSaving(true);
+    
+    // Auto-SEO on publish
+    if (payload.status === 'published') {
+      try {
+        let seoUpdates = {};
+        let needsSeo = false;
+        if (!payload.metaTitle) {
+          seoUpdates.metaTitle = payload.titleEn || payload.titleTa;
+          needsSeo = true;
+        }
+        if (!payload.metaDescription && payload.contentTa) {
+          const res = await api.post('/articles/ai-assist', { action: 'summarize', text: payload.contentTa, context: 'ta' });
+          if (res.data?.result) seoUpdates.metaDescription = res.data.result;
+          needsSeo = true;
+        }
+        if (!payload.metaKeywords && payload.contentTa) {
+          const res = await api.post('/articles/ai-assist', { action: 'tags', text: payload.contentTa, context: 'ta' });
+          if (res.data?.result) seoUpdates.metaKeywords = res.data.result.split(',').map(s=>s.trim()).filter(s=>s).join(', ');
+          needsSeo = true;
+        }
+        
+        if (needsSeo) {
+           payload = { ...payload, ...seoUpdates };
+           setForm(f => ({ ...f, ...seoUpdates }));
+           showMsg('AI auto-generated SEO fields.', false);
+        }
+      } catch (err) {
+        console.warn('Auto-SEO failed', err);
+      }
+    }
+
     try {
       if (isEdit) {
         await api.put('/articles/saveUpdate', payload);
