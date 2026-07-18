@@ -544,9 +544,23 @@ const NewsEditor = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: aiPanelOpen ? '1fr 320px 320px' : '1fr 320px', gap: '1.5rem', alignItems: 'start', transition: 'grid-template-columns 0.3s' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div className="glass-panel" style={{ padding: '1.75rem', borderRadius: '12px' }}>
+          <div className="glass-panel" style={{ padding: '1.75rem', borderRadius: '12px', position: 'relative', minHeight: '500px' }}>
             {/* Tamil Tab */}
-            <div style={{ display: activeTab === 0 ? 'flex' : 'none', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '1.5rem',
+              visibility: activeTab === 0 ? 'visible' : 'hidden',
+              height: activeTab === 0 ? 'auto' : 0,
+              overflow: activeTab === 0 ? 'visible' : 'hidden',
+              position: activeTab === 0 ? 'relative' : 'absolute',
+              width: '100%',
+              left: 0,
+              top: activeTab === 0 ? 0 : '1.75rem',
+              padding: activeTab === 0 ? 0 : '0 1.75rem',
+              boxSizing: 'border-box',
+              opacity: activeTab === 0 ? 1 : 0
+            }}>
               <div>
                 <label style={labelStyle}>Tamil Title <span style={{ color: '#EF4444' }}>*</span></label>
                 <input style={inputStyle} value={form.titleTa}
@@ -570,7 +584,21 @@ const NewsEditor = () => {
             </div>
 
             {/* English Tab */}
-            <div style={{ display: activeTab === 1 ? 'flex' : 'none', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '1.5rem',
+              visibility: activeTab === 1 ? 'visible' : 'hidden',
+              height: activeTab === 1 ? 'auto' : 0,
+              overflow: activeTab === 1 ? 'visible' : 'hidden',
+              position: activeTab === 1 ? 'relative' : 'absolute',
+              width: '100%',
+              left: 0,
+              top: activeTab === 1 ? 0 : '1.75rem',
+              padding: activeTab === 1 ? 0 : '0 1.75rem',
+              boxSizing: 'border-box',
+              opacity: activeTab === 1 ? 1 : 0
+            }}>
               <div>
                 <label style={labelStyle}>English Title</label>
                 <input style={inputStyle} value={form.titleEn}
@@ -595,7 +623,21 @@ const NewsEditor = () => {
             </div>
 
             {/* SEO Tab */}
-            <div style={{ display: activeTab === 2 ? 'flex' : 'none', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '1.5rem',
+              visibility: activeTab === 2 ? 'visible' : 'hidden',
+              height: activeTab === 2 ? 'auto' : 0,
+              overflow: activeTab === 2 ? 'visible' : 'hidden',
+              position: activeTab === 2 ? 'relative' : 'absolute',
+              width: '100%',
+              left: 0,
+              top: activeTab === 2 ? 0 : '1.75rem',
+              padding: activeTab === 2 ? 0 : '0 1.75rem',
+              boxSizing: 'border-box',
+              opacity: activeTab === 2 ? 1 : 0
+            }}>
               <div>
                 <label style={labelStyle}>SEO Title <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(max 60 chars)</span></label>
                 <input style={inputStyle} value={form.metaTitle}
@@ -635,7 +677,21 @@ const NewsEditor = () => {
             </div>
 
             {/* Settings Tab */}
-            <div style={{ display: activeTab === 3 ? 'flex' : 'none', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '1.5rem',
+              visibility: activeTab === 3 ? 'visible' : 'hidden',
+              height: activeTab === 3 ? 'auto' : 0,
+              overflow: activeTab === 3 ? 'visible' : 'hidden',
+              position: activeTab === 3 ? 'relative' : 'absolute',
+              width: '100%',
+              left: 0,
+              top: activeTab === 3 ? 0 : '1.75rem',
+              padding: activeTab === 3 ? 0 : '0 1.75rem',
+              boxSizing: 'border-box',
+              opacity: activeTab === 3 ? 1 : 0
+            }}>
               <div>
                 <label style={labelStyle}>Author Name</label>
                 <input style={inputStyle} value={form.authorName}
