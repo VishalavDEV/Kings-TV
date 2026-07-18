@@ -94,6 +94,7 @@ public class DataInitializer {
             } catch (Exception e) {
                 System.out.println("Could not alter table " + table + " charset: " + e.getMessage());
             }
+        }
         // Ensure standard news portal categories exist
         String[][] standardCategories = {
             {"Tamil Nadu", "தமிழ்நாடு", "tamilnadu", "7", "fas fa-map-marker-alt"},
