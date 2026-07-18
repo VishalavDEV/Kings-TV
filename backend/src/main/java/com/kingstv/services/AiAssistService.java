@@ -120,16 +120,20 @@ public class AiAssistService {
                     Article content: """ + text;
 
             case "seo" -> """
-                    You are an SEO specialist for a news website called "KINGS 24x7".
+                    You are an SEO specialist for a Tamil news website called "KINGS 24x7".
                     Based on the following article content, generate:
-                    1. SEO Title (max 60 characters)
-                    2. Meta Description (max 155 characters)
-                    3. URL Slug (lowercase, hyphens, no special characters)
+                    1. SEO Title in Tamil (60-70 characters)
+                    2. Meta Description in Tamil (150-160 characters)
+                    3. URL Slug in transliterated English/Latin characters (lowercase, hyphens, no special characters, e.g. puthiya-indhiya-ani-...)
+                    4. Focus Keywords: 5-8 relevant focus keywords (comma separated)
+                    5. Tags: 5-8 relevant tags (comma separated)
                     
                     Format your response exactly as:
-                    SEO_TITLE: [your title]
-                    META_DESC: [your description]
-                    SLUG: [your-slug]
+                    SEO_TITLE: [Tamil title]
+                    META_DESC: [Tamil description]
+                    SLUG: [transliterated-slug]
+                    KEYWORDS: [comma, separated, focus, keywords]
+                    TAGS: [comma, separated, tags]
                     
                     Article content: """ + text;
 

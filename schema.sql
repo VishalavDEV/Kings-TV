@@ -104,6 +104,7 @@ CREATE TABLE IF NOT EXISTS `articles` (
     `meta_title` VARCHAR(255) NULL,
     `meta_description` TEXT NULL,
     `meta_keywords` VARCHAR(255) NULL,
+    `focus_keywords` VARCHAR(255) NULL,
     `slug` VARCHAR(255) UNIQUE NULL,
     `canonical_url` VARCHAR(255) NULL,
     `featured_image` VARCHAR(255) NULL,

@@ -41,7 +41,7 @@ const NewsEditor = () => {
     authorName: 'Kings TV News Desk', status: 'draft',
     categoryId: '', subcategoryId: '',
     districtId: '', constituency: '',
-    metaTitle: '', metaDescription: '', metaKeywords: '', slug: '', canonicalUrl: '',
+    metaTitle: '', metaDescription: '', metaKeywords: '', focusKeywords: '', slug: '', canonicalUrl: '',
     latitude: '', longitude: '', visibilityRadiusKm: '',
     publishedAt: '',
   });
@@ -97,7 +97,7 @@ const NewsEditor = () => {
           categoryId: a.categoryId || '', subcategoryId: a.subcategoryId || '',
           districtId: a.districtId || '', constituency: a.constituency || '',
           metaTitle: a.metaTitle || '', metaDescription: a.metaDescription || '',
-          metaKeywords: a.metaKeywords || '', slug: a.slug || '', canonicalUrl: a.canonicalUrl || '',
+          metaKeywords: a.metaKeywords || '', focusKeywords: a.focusKeywords || '', slug: a.slug || '', canonicalUrl: a.canonicalUrl || '',
           latitude: a.latitude || '', longitude: a.longitude || '',
           visibilityRadiusKm: a.visibilityRadiusKm || '',
           publishedAt: a.publishedAt ? a.publishedAt.substring(0, 16) : '',
@@ -483,6 +483,49 @@ const NewsEditor = () => {
     }
   }, [activeTab]);
 
+  const autoFillSeoWithAi = async () => {
+    const textToAnalyze = form.contentTa || form.contentEn || form.titleTa;
+    if (!textToAnalyze) {
+      showMsg('Please write some content first to generate SEO suggestions.', true);
+      return;
+    }
+    setAiSeoLoading(true);
+    try {
+      const res = await api.post('/articles/ai-assist', { action: 'seo', text: textToAnalyze });
+      if (res.data && res.data.result) {
+        const lines = res.data.result.split('\n');
+        let updates = {};
+        lines.forEach(line => {
+          if (line.startsWith('SEO_TITLE:')) {
+            updates.metaTitle = line.replace('SEO_TITLE:', '').trim();
+          } else if (line.startsWith('META_DESC:')) {
+            updates.metaDescription = line.replace('META_DESC:', '').trim();
+          } else if (line.startsWith('SLUG:')) {
+            updates.slug = line.replace('SLUG:', '').trim();
+          } else if (line.startsWith('KEYWORDS:')) {
+            updates.focusKeywords = line.replace('KEYWORDS:', '').trim();
+          } else if (line.startsWith('TAGS:')) {
+            updates.metaKeywords = line.replace('TAGS:', '').trim();
+          }
+        });
+
+        setForm(f => {
+          const newForm = { ...f, ...updates };
+          formRef.current = newForm;
+          return newForm;
+        });
+
+        showMsg('✨ AI successfully auto-filled all 5 SEO fields!', false);
+      } else {
+        showMsg('AI returned invalid response.', true);
+      }
+    } catch (err) {
+      showMsg('Failed to auto-fill SEO fields via AI.', true);
+    } finally {
+      setAiSeoLoading(false);
+    }
+  };
+
   const showMsg = (text, isError = false) => {
     setMsg({ text, isError });
     setTimeout(() => setMsg(null), 4000);
@@ -733,9 +776,14 @@ const NewsEditor = () => {
                   Analyze your article to automatically suggest titles, meta descriptions, and search tags.
                 </p>
                 
-                <button onClick={generateAiSeoSuggestions} disabled={aiSeoLoading} className="btn btn-primary" style={{ fontSize: '0.85rem' }}>
-                  {aiSeoLoading ? 'Analyzing Content...' : '🔍 Generate SEO Suggestions'}
-                </button>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button onClick={autoFillSeoWithAi} disabled={aiSeoLoading} className="btn btn-primary" style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {aiSeoLoading ? 'Auto-filling...' : '✨ One-Click AI Auto-Fill (All Fields)'}
+                  </button>
+                  <button onClick={generateAiSeoSuggestions} disabled={aiSeoLoading} className="btn btn-secondary" style={{ fontSize: '0.85rem' }}>
+                    🔍 Generate & Suggest Options
+                  </button>
+                </div>
 
                 {aiSeoSuggestions && (
                   <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
@@ -746,7 +794,7 @@ const NewsEditor = () => {
                           {aiSeoSuggestions.titles.map((t, idx) => (
                             <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border-color)', gap: '1rem' }}>
                               <span style={{ fontSize: '0.82rem', color: 'var(--text-primary)' }}>{t}</span>
-                              <button onClick={() => { set('metaTitle', t); showMsg('Meta Title updated!'); }} className="btn btn-secondary" style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>Use</button>
+                              <button onClick={() => { set('metaTitle', t); showMsg('Meta Title updated!'); }} className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>Use</button>
                             </div>
                           ))}
                         </div>
@@ -760,7 +808,7 @@ const NewsEditor = () => {
                           {aiSeoSuggestions.descriptions.map((d, idx) => (
                             <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border-color)', gap: '1rem' }}>
                               <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{d}</span>
-                              <button onClick={() => { set('metaDescription', d); showMsg('Meta Description updated!'); }} className="btn btn-secondary" style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>Use</button>
+                              <button onClick={() => { set('metaDescription', d); showMsg('Meta Description updated!'); }} className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>Use</button>
                             </div>
                           ))}
                         </div>
@@ -811,6 +859,11 @@ const NewsEditor = () => {
                 <label style={labelStyle}>Meta Keywords / Search Tags</label>
                 <input style={inputStyle} value={form.metaKeywords}
                   onChange={e => set('metaKeywords', e.target.value)} placeholder="news, tamil, politics..." />
+              </div>
+              <div>
+                <label style={labelStyle}>Focus Keywords</label>
+                <input style={inputStyle} value={form.focusKeywords}
+                  onChange={e => set('focusKeywords', e.target.value)} placeholder="e.g. புதிய இந்திய அணி, இளம் வீரர்கள்..." />
               </div>
               <div>
                 <label style={labelStyle}>URL Slug</label>

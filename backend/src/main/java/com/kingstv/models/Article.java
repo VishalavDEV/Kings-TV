@@ -63,6 +63,9 @@ public class Article {
     @Column(name = "meta_keywords")
     private String metaKeywords;
 
+    @Column(name = "focus_keywords")
+    private String focusKeywords;
+
     @Column(unique = true)
     private String slug;
 
@@ -137,6 +140,8 @@ public class Article {
     public void setMetaDescription(String metaDescription) { this.metaDescription = metaDescription; }
     public String getMetaKeywords() { return metaKeywords; }
     public void setMetaKeywords(String metaKeywords) { this.metaKeywords = metaKeywords; }
+    public String getFocusKeywords() { return focusKeywords; }
+    public void setFocusKeywords(String focusKeywords) { this.focusKeywords = focusKeywords; }
     public String getSlug() { return slug; }
     public void setSlug(String slug) { this.slug = slug; }
     public String getCanonicalUrl() { return canonicalUrl; }
