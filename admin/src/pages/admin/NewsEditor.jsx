@@ -23,6 +23,14 @@ const NewsEditor = () => {
   const [districts, setDistricts] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
 
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiAction, setAiAction] = useState('expand');
+  const [aiResult, setAiResult] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const [lastSavedTime, setLastSavedTime] = useState(null);
+
   const [form, setForm] = useState({
     titleTa: '', titleEn: '', contentTa: '', contentEn: '',
     shortDescTa: '', shortDescEn: '', imageUrl: '', featuredImage: '',
@@ -38,6 +46,35 @@ const NewsEditor = () => {
   useEffect(() => {
     formRef.current = form;
   }, [form]);
+
+  // Auto-save logic
+  useEffect(() => {
+    if (!isEdit) {
+      const savedDraft = localStorage.getItem('newsEditorDraft');
+      if (savedDraft) {
+        if (window.confirm('You have an unsaved draft. Do you want to restore it?')) {
+          try {
+            const parsed = JSON.parse(savedDraft);
+            setForm(parsed);
+          } catch (e) {
+            console.error('Failed to parse draft', e);
+          }
+        } else {
+          localStorage.removeItem('newsEditorDraft');
+        }
+      }
+    }
+  }, [isEdit]);
+
+  useEffect(() => {
+    const autoSaveInterval = setInterval(() => {
+      if (!isEdit && (formRef.current.titleTa || formRef.current.contentTa)) {
+        localStorage.setItem('newsEditorDraft', JSON.stringify(formRef.current));
+        setLastSavedTime(new Date());
+      }
+    }, 30000); // 30 seconds
+    return () => clearInterval(autoSaveInterval);
+  }, [isEdit]);
 
   // Load Categories & Districts Data
   useEffect(() => {
@@ -152,21 +189,39 @@ const NewsEditor = () => {
         xhr.send(formData);
       });
 
-      window.tinymce.init({
-        selector: '#tinymce-contentTa',
-        height: 400,
-        menubar: true,
+      const commonConfig = {
+        height: 600,
+        menubar: 'file edit view insert format tools table help',
         plugins: [
           'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
           'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-          'insertdatetime', 'media', 'table', 'help', 'wordcount'
+          'insertdatetime', 'media', 'table', 'help', 'wordcount',
+          'emoticons', 'codesample', 'quickbars', 'directionality', 'nonbreaking',
+          'pagebreak', 'accordion', 'visualchars', 'template'
         ],
-        toolbar: 'undo redo | blocks | ' +
-          'bold italic forecolor | alignleft aligncenter ' +
-          'alignright alignjustify | bullist numlist outdent indent | ' +
-          'removeformat | image media table | help',
-        content_style: 'body { font-family:Inter,Outfit,-apple-system,BlinkMacSystemFont,sans-serif; font-size:14px; background-color: var(--bg-surface); color: var(--text-primary); }',
+        toolbar1: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify',
+        toolbar2: 'bullist numlist outdent indent | link image media table | emoticons charmap | removeformat fullscreen preview | template',
+        quickbars_selection_toolbar: 'bold italic | quicklink h2 h3 blockquote',
+        quickbars_insert_toolbar: 'quickimage quicktable',
+        contextmenu: 'link image table',
+        templates: [
+          { title: 'Breaking News', description: 'Standard breaking news layout', content: '<h3><strong>BREAKING NEWS</strong></h3><p>[Lead paragraph goes here. Keep it punchy and to the point.]</p><p>[Additional details.]</p>' },
+          { title: 'Press Release', description: 'Formal press release format', content: '<h3><strong>PRESS RELEASE</strong></h3><p><strong>FOR IMMEDIATE RELEASE</strong></p><p>[City, Date] &mdash; [Company/Organization] today announced...</p>' },
+          { title: 'Interview / Q&A', description: 'Q&A format', content: '<p><strong>Interviewer:</strong> [Question here]</p><p><strong>Guest:</strong> [Answer here]</p>' }
+        ],
+        skin: document.documentElement.classList.contains('dark') ? 'oxide-dark' : 'oxide',
+        content_css: document.documentElement.classList.contains('dark') ? 'dark' : 'default',
+        content_style: 'body { font-family:Inter,Outfit,-apple-system,BlinkMacSystemFont,sans-serif; font-size:16px; line-height: 1.6; background-color: var(--bg-surface); color: var(--text-primary); } img { border-radius: 8px; }',
         images_upload_handler: imagesUploadHandler,
+        image_advtab: true,
+        image_caption: true,
+        toolbar_sticky: true,
+        toolbar_sticky_offset: 60
+      };
+
+      window.tinymce.init({
+        ...commonConfig,
+        selector: '#tinymce-contentTa',
         setup: (editor) => {
           editor.on('change keyup blur', () => {
             setForm(f => ({ ...f, contentTa: editor.getContent() }));
@@ -180,20 +235,8 @@ const NewsEditor = () => {
       });
 
       window.tinymce.init({
+        ...commonConfig,
         selector: '#tinymce-contentEn',
-        height: 400,
-        menubar: true,
-        plugins: [
-          'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-          'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-          'insertdatetime', 'media', 'table', 'help', 'wordcount'
-        ],
-        toolbar: 'undo redo | blocks | ' +
-          'bold italic forecolor | alignleft aligncenter ' +
-          'alignright alignjustify | bullist numlist outdent indent | ' +
-          'removeformat | image media table | help',
-        content_style: 'body { font-family:Inter,Outfit,-apple-system,BlinkMacSystemFont,sans-serif; font-size:14px; background-color: var(--bg-surface); color: var(--text-primary); }',
-        images_upload_handler: imagesUploadHandler,
         setup: (editor) => {
           editor.on('change keyup blur', () => {
             setForm(f => ({ ...f, contentEn: editor.getContent() }));
@@ -264,6 +307,29 @@ const NewsEditor = () => {
     setUploadProgress(null);
   };
 
+  const handleFeaturedImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const res = await api.post('/articles/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data && res.data.url) {
+        const serverBase = (import.meta.env.VITE_API_BASE || 'http://localhost:8080/api/v1')
+          .replace(/\/api\/v1\/?$/, '')
+          .replace(/\/api\/?$/, '');
+        set('imageUrl', serverBase + res.data.url);
+        showMsg('Featured image uploaded successfully!');
+      }
+    } catch (err) {
+      showMsg('Failed to upload featured image.', true);
+    }
+  };
+
   const insertMediaIntoTinyMCE = (url, type) => {
     if (!window.tinymce) return;
     const activeEditorId = activeTab === 0 ? 'tinymce-contentTa' : 'tinymce-contentEn';
@@ -296,6 +362,41 @@ const NewsEditor = () => {
     if (!form.slug && form.titleEn) set('slug', slugify(form.titleEn));
   };
 
+  const runAiAction = async () => {
+    if (!aiPrompt && !['seo', 'tags'].includes(aiAction)) {
+      showMsg('Please provide some text or context for the AI.', true);
+      return;
+    }
+    
+    setAiLoading(true);
+    setAiResult('');
+    
+    let textToProcess = aiPrompt;
+    if (aiAction === 'seo' || aiAction === 'tags') {
+       textToProcess = form.contentTa || form.contentEn;
+       if (!textToProcess) {
+         showMsg('Please write some article content first.', true);
+         setAiLoading(false);
+         return;
+       }
+    }
+
+    try {
+      const res = await api.post('/articles/ai-assist', {
+        action: aiAction,
+        text: textToProcess,
+        context: activeTab === 0 ? 'ta' : 'en'
+      });
+      if (res.data && res.data.result) {
+        setAiResult(res.data.result);
+      }
+    } catch (err) {
+      setAiResult('Error generating AI content. Please try again.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const showMsg = (text, isError = false) => {
     setMsg({ text, isError });
     setTimeout(() => setMsg(null), 4000);
@@ -325,6 +426,15 @@ const NewsEditor = () => {
     }
   };
 
+  const calcStats = (html) => {
+    if (!html) return { words: 0, chars: 0, readingTime: 0 };
+    const text = html.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+    const words = text ? text.split(' ').length : 0;
+    const chars = text.length;
+    const readingTime = Math.ceil(words / 200); // 200 words per minute avg
+    return { words, chars, readingTime };
+  };
+
   const inputStyle = {
     width: '100%', padding: '0.75rem 1rem', borderRadius: '8px',
     border: '1px solid var(--border-color)', background: 'var(--bg-surface)',
@@ -345,10 +455,21 @@ const NewsEditor = () => {
           </button>
           <div>
             <h1 style={{ marginBottom: '0.15rem' }}>{isEdit ? '✏️ Edit Article' : '📝 Create Article'}</h1>
-            <p className="text-secondary">{isEdit ? `Editing ID #${id}` : 'New article — Tamil required'}</p>
+            <p className="text-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {isEdit ? `Editing ID #${id}` : 'New article — Tamil required'}
+              {lastSavedTime && (
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: '4px' }}>
+                  Autosaved at {lastSavedTime.toLocaleTimeString()}
+                </span>
+              )}
+            </p>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button onClick={() => setAiPanelOpen(!aiPanelOpen)}
+            className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', background: aiPanelOpen ? 'var(--primary)' : '', color: aiPanelOpen ? '#fff' : '' }}>
+            ✨ AI Assistant
+          </button>
           <button onClick={() => save('draft')} disabled={saving}
             className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
             <Save size={15} /> Save Draft
@@ -390,7 +511,7 @@ const NewsEditor = () => {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '1.5rem', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: aiPanelOpen ? '1fr 320px 320px' : '1fr 320px', gap: '1.5rem', alignItems: 'start', transition: 'grid-template-columns 0.3s' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div className="glass-panel" style={{ padding: '1.75rem', borderRadius: '12px' }}>
             {/* Tamil Tab */}
@@ -409,6 +530,11 @@ const NewsEditor = () => {
                 <label style={labelStyle}>Content (Tamil) <span style={{ color: '#EF4444' }}>*</span></label>
                 <textarea id="tinymce-contentTa" style={{ ...taStyle, minHeight: '350px' }} value={form.contentTa}
                   onChange={e => set('contentTa', e.target.value)} placeholder="செய்தி உள்ளடக்கம்..." />
+                <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem', padding: '0.5rem', background: 'var(--bg-secondary)', borderRadius: '4px' }}>
+                  <span>📊 {calcStats(form.contentTa).words} words</span>
+                  <span>📖 ~{calcStats(form.contentTa).readingTime} min read</span>
+                  <span>🔤 {calcStats(form.contentTa).chars} characters</span>
+                </div>
               </div>
             </div>
 
@@ -429,6 +555,11 @@ const NewsEditor = () => {
                 <label style={labelStyle}>Content (English)</label>
                 <textarea id="tinymce-contentEn" style={{ ...taStyle, minHeight: '350px' }} value={form.contentEn}
                   onChange={e => set('contentEn', e.target.value)} placeholder="Full article content..." />
+                <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem', padding: '0.5rem', background: 'var(--bg-secondary)', borderRadius: '4px' }}>
+                  <span>📊 {calcStats(form.contentEn).words} words</span>
+                  <span>📖 ~{calcStats(form.contentEn).readingTime} min read</span>
+                  <span>🔤 {calcStats(form.contentEn).chars} characters</span>
+                </div>
               </div>
             </div>
 
@@ -577,6 +708,17 @@ const NewsEditor = () => {
                         >
                           <Copy size={10} />
                         </button>
+                        <button 
+                          onClick={() => {
+                            if(window.confirm('Delete this media item?')) {
+                              setMediaList(mediaList.filter((_, i) => i !== idx));
+                            }
+                          }}
+                          style={{ padding: '3px 6px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '4px', fontSize: '0.65rem', cursor: 'pointer', color: '#EF4444' }}
+                          title="Remove from list"
+                        >
+                          ✕
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -651,9 +793,15 @@ const NewsEditor = () => {
 
           {/* Featured Image */}
           <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
-            <label style={labelStyle}>Featured Image URL</label>
-            <input style={inputStyle} value={form.imageUrl}
-              onChange={e => set('imageUrl', e.target.value)} placeholder="https://..." />
+            <label style={labelStyle}>Featured Image</label>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <input style={{ ...inputStyle, flex: 1 }} value={form.imageUrl}
+                onChange={e => set('imageUrl', e.target.value)} placeholder="Image URL..." />
+              <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '0 0.75rem', borderRadius: '8px' }}>
+                <Plus size={16} /> Upload
+                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFeaturedImageUpload} />
+              </label>
+            </div>
             {form.imageUrl && (
               <img src={form.imageUrl} alt="preview" onError={e => e.target.style.display = 'none'}
                 style={{ width: '100%', borderRadius: '8px', marginTop: '0.75rem', maxHeight: '140px', objectFit: 'cover' }} />
@@ -688,6 +836,71 @@ const NewsEditor = () => {
               className="btn btn-secondary" style={{ width: '100%' }}>Cancel</button>
           </div>
         </div>
+
+        {/* AI Assistant Panel */}
+        {aiPanelOpen && (
+          <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '1.25rem', borderRadius: '12px', border: '2px solid var(--primary)', background: 'var(--bg-surface)' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
+              ✨ AI Assistant
+            </h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
+              Use AI to generate headlines, expand text, check grammar, or generate SEO metadata.
+            </p>
+
+            <div>
+              <label style={labelStyle}>Action</label>
+              <select style={{ ...inputStyle, cursor: 'pointer' }} value={aiAction} onChange={e => setAiAction(e.target.value)}>
+                <option value="headlines">🪄 Generate Headlines</option>
+                <option value="expand">✍️ Expand Text</option>
+                <option value="summarize">📝 Summarize</option>
+                <option value="grammar">🔤 Grammar Check</option>
+                <option value="tags">🏷️ Generate Tags</option>
+                <option value="seo">🔍 SEO Optimizer</option>
+                <option value="translate">🌐 Translate (Ta↔En)</option>
+              </select>
+            </div>
+
+            {['headlines', 'expand', 'summarize', 'grammar', 'translate'].includes(aiAction) && (
+              <div>
+                <label style={labelStyle}>Input Text / Idea</label>
+                <textarea 
+                  style={{ ...taStyle, minHeight: '100px' }} 
+                  value={aiPrompt}
+                  onChange={e => setAiPrompt(e.target.value)} 
+                  placeholder="Enter text or rough idea..." 
+                />
+              </div>
+            )}
+
+            <button 
+              onClick={runAiAction} 
+              disabled={aiLoading}
+              className="btn btn-primary" 
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+            >
+              {aiLoading ? '🤖 Generating...' : '🚀 Run AI Action'}
+            </button>
+
+            {aiResult && (
+              <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+                <label style={labelStyle}>AI Output</label>
+                <div style={{ padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: '8px', fontSize: '0.85rem', whiteSpace: 'pre-wrap', maxHeight: '300px', overflowY: 'auto' }}>
+                  {aiResult}
+                </div>
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(aiResult);
+                    showMsg('AI Output copied to clipboard!');
+                  }}
+                  className="btn btn-secondary" 
+                  style={{ width: '100%', marginTop: '0.75rem', fontSize: '0.8rem', padding: '0.4rem' }}
+                >
+                  <Copy size={12} style={{ display: 'inline', marginRight: '4px' }} /> Copy Output
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

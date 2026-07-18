@@ -40,6 +40,9 @@ public class ArticleController {
     @Autowired
     private SlugService slugService;
 
+    @Autowired
+    private com.kingstv.services.AiAssistService aiAssistService;
+
     // --- KEEP Existing Front-End Endpoint Map ---
     @GetMapping
     public List<Article> getArticles(@RequestParam(required = false) String status) {
@@ -291,6 +294,23 @@ public class ArticleController {
                 "    }\n" +
                 "  }\n" +
                 "}";
+    }
+
+    @PostMapping("/ai-assist")
+    public ResponseEntity<?> aiAssist(@RequestBody Map<String, String> payload) {
+        String action = payload.get("action");
+        String text = payload.get("text");
+        String context = payload.get("context");
+
+        if (action == null || text == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", true, "result", "Action and text are required"));
+        }
+
+        Map<String, Object> result = aiAssistService.assist(action, text, context);
+        if (Boolean.TRUE.equals(result.get("error"))) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
+        }
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/upload")
