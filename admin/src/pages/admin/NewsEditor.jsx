@@ -137,7 +137,9 @@ const NewsEditor = () => {
             reject('Invalid JSON: ' + xhr.responseText);
             return;
           }
-          const serverBase = import.meta.env.VITE_SERVER_BASE || 'http://localhost:5000';
+          const serverBase = (import.meta.env.VITE_API_BASE || 'http://localhost:8080/api/v1')
+            .replace(/\/api\/v1\/?$/, '')
+            .replace(/\/api\/?$/, '');
           resolve(serverBase + json.url);
         };
 
@@ -243,7 +245,9 @@ const NewsEditor = () => {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         if (res.data && res.data.url) {
-          const serverBase = import.meta.env.VITE_SERVER_BASE || 'http://localhost:5000';
+          const serverBase = (import.meta.env.VITE_API_BASE || 'http://localhost:8080/api/v1')
+            .replace(/\/api\/v1\/?$/, '')
+            .replace(/\/api\/?$/, '');
           uploadedItems.push({
             name: file.name,
             url: serverBase + res.data.url,
@@ -588,11 +592,11 @@ const NewsEditor = () => {
           <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
             <label style={labelStyle}>Status</label>
             <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.status} onChange={e => set('status', e.target.value)}>
-              <option value="draft">📝 Draft</option>
-              <option value="pending">⏳ Pending Review</option>
-              <option value="published">✅ Published</option>
-              <option value="rejected">❌ Rejected</option>
-              <option value="archived">📦 Archived</option>
+              <option value="draft" style={{ color: '#000000', backgroundColor: '#ffffff' }}>📝 Draft</option>
+              <option value="pending" style={{ color: '#000000', backgroundColor: '#ffffff' }}>⏳ Pending Review</option>
+              <option value="published" style={{ color: '#000000', backgroundColor: '#ffffff' }}>✅ Published</option>
+              <option value="rejected" style={{ color: '#000000', backgroundColor: '#ffffff' }}>❌ Rejected</option>
+              <option value="archived" style={{ color: '#000000', backgroundColor: '#ffffff' }}>📦 Archived</option>
             </select>
           </div>
 
@@ -600,9 +604,9 @@ const NewsEditor = () => {
           <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
             <label style={labelStyle}>Category</label>
             <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.categoryId} onChange={e => set('categoryId', e.target.value)}>
-              <option value="">— Select Category —</option>
+              <option value="" style={{ color: '#000000', backgroundColor: '#ffffff' }}>— Select Category —</option>
               {categories.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id} style={{ color: '#000000', backgroundColor: '#ffffff' }}>{c.name}</option>
               ))}
             </select>
           </div>
@@ -616,9 +620,9 @@ const NewsEditor = () => {
               onChange={e => set('subcategoryId', e.target.value)}
               disabled={!form.categoryId}
             >
-              <option value="">— Select Subcategory —</option>
+              <option value="" style={{ color: '#000000', backgroundColor: '#ffffff' }}>— Select Subcategory —</option>
               {subCategories.map(sc => (
-                <option key={sc.subcategoryId} value={sc.subcategoryId}>{sc.name}</option>
+                <option key={sc.subcategoryId} value={sc.subcategoryId} style={{ color: '#000000', backgroundColor: '#ffffff' }}>{sc.name}</option>
               ))}
             </select>
           </div>
@@ -627,9 +631,9 @@ const NewsEditor = () => {
           <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
             <label style={labelStyle}>District</label>
             <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.districtId} onChange={e => set('districtId', e.target.value)}>
-              <option value="">— Select District —</option>
+              <option value="" style={{ color: '#000000', backgroundColor: '#ffffff' }}>— Select District —</option>
               {districts.map(d => (
-                <option key={d.id} value={d.id}>{d.nameEn}</option>
+                <option key={d.id} value={d.id} style={{ color: '#000000', backgroundColor: '#ffffff' }}>{d.nameEn}</option>
               ))}
             </select>
           </div>
