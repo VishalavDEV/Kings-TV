@@ -462,7 +462,9 @@ const ArticleDetail = () => {
             categoryName: cat.nameTa,
             categoryNameEn: cat.name,
             categorySlug: cat.slug,
-            tags: ['செய்திகள்', 'தமிழகம்'],
+            tags: data.metaKeywords 
+              ? data.metaKeywords.split(',').map(s => s.trim()).filter(Boolean)
+              : ['செய்திகள்', 'தமிழகம்'],
             imageUrl: data.imageUrl,
             gradient: 'linear-gradient(135deg, #1E3A8A, #3B82F6)'
           });
@@ -698,11 +700,12 @@ const ArticleDetail = () => {
           </div>
 
           {/* Article Body */}
-          <article className="article-body-text" id="articleBody" style={{ fontSize: '16px', lineHeight: 1.8, color: 'var(--text-dark)' }}>
-            {(lang === 'en' ? (article.contentEn || article.contentTa) : article.contentTa).split('\n').map((para, i) => (
-              <p key={i} style={{ marginBottom: '16px' }}>{para}</p>
-            ))}
-          </article>
+          <article 
+            className="article-body-text" 
+            id="articleBody" 
+            style={{ fontSize: '16px', lineHeight: 1.8, color: 'var(--text-dark)' }}
+            dangerouslySetInnerHTML={{ __html: lang === 'en' ? (article.contentEn || article.contentTa) : article.contentTa }}
+          />
 
           {/* Tags */}
           <div className="article-tags" id="articleTags" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '24px 0' }}>

@@ -10,10 +10,11 @@ const UserManagement = () => {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
   const [editingUser, setEditingUser] = useState(null);
-  const [editFormData, setEditFormData] = useState({ fullName: '', role: '', phoneNumber: '', websiteUrl: '', password: '' });
+  const [editFormData, setEditFormData] = useState({ fullName: '', role: '', phoneNumber: '', websiteUrl: '', location: '', districtId: '', password: '' });
   const [isAddingUser, setIsAddingUser] = useState(false);
-  const [newUser, setNewUser] = useState({ email: '', fullName: '', role: 'MOBILE_JOURNALIST', password: '' });
+  const [newUser, setNewUser] = useState({ email: '', fullName: '', role: 'MOBILE_JOURNALIST', password: '', phoneNumber: '', location: '', districtId: '' });
   const [availableRoles, setAvailableRoles] = useState([]);
+  const [districts, setDistricts] = useState([]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -31,6 +32,9 @@ const UserManagement = () => {
   useEffect(() => {
     fetchUsers();
     fetchAvailableRoles();
+    api.get('/districts')
+      .then(res => setDistricts(res.data || []))
+      .catch(err => console.warn("Failed to load districts", err));
   }, [page]);
 
   const fetchAvailableRoles = async () => {
@@ -64,13 +68,25 @@ const UserManagement = () => {
     }
   };
 
-  const openEditModal = (u) => {
+  const openEditModal = async (u) => {
     setEditingUser(u);
+    let districtId = '';
+    try {
+      const res = await api.get(`/admin/users/${u.id}`);
+      if (res.data && res.data.districts && res.data.districts.length > 0) {
+        districtId = res.data.districts[0].districtId;
+      }
+    } catch (err) {
+      console.warn("Failed to load user district details", err);
+    }
+    
     setEditFormData({ 
       fullName: u.fullName || '', 
       role: u.role, 
       phoneNumber: u.phoneNumber || '', 
       websiteUrl: u.websiteUrl || '',
+      location: u.location || '',
+      districtId: districtId,
       password: '' // empty means don't change
     });
   };
@@ -82,6 +98,13 @@ const UserManagement = () => {
         if (!payload.password) delete payload.password; // Don't send empty password
 
         await api.put(`/admin/users/${editingUser.id}`, payload);
+        
+        if (payload.districtId) {
+          await api.post(`/admin/users/${editingUser.id}/districts`, {
+            districtIds: [parseInt(payload.districtId)]
+          });
+        }
+        
         fetchUsers();
         setEditingUser(null);
       } catch (e) {
@@ -96,10 +119,18 @@ const UserManagement = () => {
       return;
     }
     try {
-      await api.post(`/admin/users`, newUser);
+      const res = await api.post(`/admin/users`, newUser);
+      const createdUser = res.data;
+
+      if (newUser.districtId && createdUser && createdUser.id) {
+        await api.post(`/admin/users/${createdUser.id}/districts`, {
+          districtIds: [parseInt(newUser.districtId)]
+        });
+      }
+
       fetchUsers();
       setIsAddingUser(false);
-      setNewUser({ email: '', fullName: '', role: 'MOBILE_JOURNALIST', password: '' });
+      setNewUser({ email: '', fullName: '', role: 'MOBILE_JOURNALIST', password: '', phoneNumber: '', location: '', districtId: '' });
       alert("User added successfully!");
     } catch (e) {
       alert("Failed to create user. Email may already exist.");
@@ -226,6 +257,21 @@ const UserManagement = () => {
             </div>
 
             <div className="form-group">
+              <label className="form-label">Location</label>
+              <input type="text" className="form-control" value={editFormData.location} onChange={e => setEditFormData({...editFormData, location: e.target.value})} placeholder="e.g. Chennai, TN" />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Assigned District</label>
+              <select className="form-control" value={editFormData.districtId} onChange={e => setEditFormData({...editFormData, districtId: e.target.value})}>
+                <option value="">— Select District —</option>
+                {districts.map(d => (
+                  <option key={d.id} value={d.id}>{d.nameEn}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
               <label className="form-label">Reset Password (leave blank to keep current)</label>
               <input type="password" className="form-control" value={editFormData.password} onChange={e => setEditFormData({...editFormData, password: e.target.value})} placeholder="New password" />
             </div>
@@ -267,6 +313,26 @@ const UserManagement = () => {
               <select className="form-control" value={newUser.role} onChange={(e) => setNewUser({...newUser, role: e.target.value})}>
                 {availableRoles.map(r => (
                   <option key={r.id} value={r.name}>{r.name.replace(/_/g, ' ')}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Phone Number</label>
+              <input type="text" className="form-control" value={newUser.phoneNumber} onChange={e => setNewUser({...newUser, phoneNumber: e.target.value})} placeholder="e.g. +91 98765 43210" />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Location</label>
+              <input type="text" className="form-control" value={newUser.location} onChange={e => setNewUser({...newUser, location: e.target.value})} placeholder="e.g. Coimbatore, TN" />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Assigned District</label>
+              <select className="form-control" value={newUser.districtId} onChange={e => setNewUser({...newUser, districtId: e.target.value})}>
+                <option value="">— Select District —</option>
+                {districts.map(d => (
+                  <option key={d.id} value={d.id}>{d.nameEn}</option>
                 ))}
               </select>
             </div>

@@ -30,8 +30,19 @@ const Login = () => {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
       <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '400px', padding: '2.5rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>KING24X7</h1>
+        <div style={{ textAlign: 'center', marginBottom: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <img 
+            src="assets/logo-banner-light.png" 
+            alt="KING24X7 Logo" 
+            className="logo-light-only" 
+            style={{ maxHeight: '55px', width: 'auto', marginBottom: '0.5rem' }} 
+          />
+          <img 
+            src="assets/logo-banner-dark.png" 
+            alt="KING24X7 Logo" 
+            className="logo-dark-only" 
+            style={{ maxHeight: '55px', width: 'auto', marginBottom: '0.5rem' }} 
+          />
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Admin Portal Login</p>
         </div>
         

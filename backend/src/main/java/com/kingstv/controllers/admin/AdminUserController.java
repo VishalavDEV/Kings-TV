@@ -134,6 +134,8 @@ public class AdminUserController {
             user.setPhoneNumber((String) request.get("phoneNumber"));
         if (request.containsKey("websiteUrl"))
             user.setWebsiteUrl((String) request.get("websiteUrl"));
+        if (request.containsKey("location"))
+            user.setLocation((String) request.get("location"));
 
         User saved = userRepository.save(user);
 
@@ -161,6 +163,7 @@ public class AdminUserController {
         if (request.containsKey("isActive")) user.setIsActive((Boolean) request.get("isActive"));
         if (request.containsKey("phoneNumber")) user.setPhoneNumber((String) request.get("phoneNumber"));
         if (request.containsKey("websiteUrl")) user.setWebsiteUrl((String) request.get("websiteUrl"));
+        if (request.containsKey("location")) user.setLocation((String) request.get("location"));
         if (request.containsKey("password")) {
             user.setPassword(passwordEncoder.encode((String) request.get("password")));
         }
@@ -292,6 +295,7 @@ public class AdminUserController {
         // public-facing responses (#39, #45). They are only included in admin views.
         map.put("phoneNumber", user.getPhoneNumber());
         map.put("websiteUrl", user.getWebsiteUrl());
+        map.put("location", user.getLocation());
         return map;
     }
 

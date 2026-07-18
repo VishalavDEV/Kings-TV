@@ -1,11 +1,15 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
 import { ThemeContext } from '../context/ThemeContext';
+import { AuthContext } from '../context/AuthContext';
 import { fetchApi } from '../utils/api';
 
 const RfqMarketplace = () => {
   const { lang } = useContext(LanguageContext);
   const { theme } = useContext(ThemeContext);
+  const navigate = useNavigate();
+  const { isAuthenticated } = useContext(AuthContext);
 
   const defaultRfqs = [
     {
@@ -525,7 +529,14 @@ const RfqMarketplace = () => {
             
             <div className="flex flex-col gap-3">
               <button 
-                onClick={() => setShowRfqModal(true)}
+                onClick={() => {
+                if (!isAuthenticated) {
+                  alert(lang === 'en' ? "Please login or sign up to post an RFQ." : "RFQ சமர்ப்பிக்க தயவுசெய்து உள்நுழையவும் அல்லது பதிவு செய்யவும்.");
+                  navigate('/login', { state: { from: '/rfq' } });
+                } else {
+                  setShowRfqModal(true);
+                }
+              }}
                 className="w-full p-4 rounded-xl bg-[#6366f1] hover:bg-[#4f46e5] text-white transition flex items-center justify-between text-left border-0 cursor-pointer shadow-sm"
               >
                 <div className="flex items-center gap-3.5">
@@ -776,7 +787,14 @@ const RfqMarketplace = () => {
                   <h3 className="font-bold text-sm mb-3">Post Your Bid proposal</h3>
                   {!showQuoteForm ? (
                     <button 
-                      onClick={() => setShowQuoteForm(true)}
+                      onClick={() => {
+                        if (!isAuthenticated) {
+                          alert(lang === 'en' ? "Please login or sign up to submit a quotation." : "விலைப்புள்ளி சமர்ப்பிக்க தயவுசெய்து உள்நுழையவும் அல்லது பதிவு செய்யவும்.");
+                          navigate('/login', { state: { from: '/rfq' } });
+                        } else {
+                          setShowQuoteForm(true);
+                        }
+                      }}
                       className="w-full bg-red-600 text-white font-bold py-2.5 rounded-xl text-xs hover:bg-red-700 transition"
                     >
                       Submit a Quotation

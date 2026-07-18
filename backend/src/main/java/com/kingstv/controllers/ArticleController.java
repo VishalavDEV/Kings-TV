@@ -20,6 +20,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.web.multipart.MultipartFile;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/v1/articles")
@@ -285,5 +291,46 @@ public class ArticleController {
                 "    }\n" +
                 "  }\n" +
                 "}";
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "File is empty"));
+        }
+        try {
+            Path uploadPath = Paths.get("uploads/articles");
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+            String contentType = file.getContentType();
+            String extension = ".jpg";
+            if (contentType != null) {
+                if (contentType.equals("image/png")) {
+                    extension = ".png";
+                } else if (contentType.equals("image/gif")) {
+                    extension = ".gif";
+                } else if (contentType.equals("image/webp")) {
+                    extension = ".webp";
+                } else if (contentType.startsWith("video/")) {
+                    if (contentType.equals("video/mp4")) {
+                        extension = ".mp4";
+                    } else if (contentType.equals("video/webm")) {
+                        extension = ".webm";
+                    } else {
+                        extension = ".mp4"; // fallback
+                    }
+                }
+            }
+            String prefix = contentType != null && contentType.startsWith("video/") ? "video_" : "article_";
+            String fileName = prefix + System.currentTimeMillis() + "_" + (int)(Math.random() * 1000) + extension;
+            Path filePath = uploadPath.resolve(fileName);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            return ResponseEntity.ok(Map.of("url", "/uploads/articles/" + fileName));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to upload file: " + e.getMessage()));
+        }
     }
 }

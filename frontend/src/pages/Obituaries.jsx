@@ -1,11 +1,14 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
+import { AuthContext } from '../context/AuthContext';
 import { fetchApi } from '../utils/api';
 import './Obituaries.css';
 
 const Obituaries = () => {
   const { lang } = useContext(LanguageContext);
+  const navigate = useNavigate();
+  const { isAuthenticated } = useContext(AuthContext);
   
   // Data lists
   const [obits, setObits] = useState([]);
@@ -560,7 +563,14 @@ const Obituaries = () => {
         <div className="obits-left-content">
           <h2 style={{ fontSize: '18px', fontWeight: '850', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>{lang === 'en' ? 'Recent Memorials' : 'சமீபத்திய இரங்கல்கள்'}</span>
-            <button onClick={() => setShowCreateModal(true)} style={{ background: '#7c3aed', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '12.5px', fontWeight: 'bold', cursor: 'pointer' }}>
+            <button onClick={() => {
+              if (!isAuthenticated) {
+                alert(lang === 'en' ? "Please login or sign up to post a memorial." : "இரங்கல் அஞ்சலி பதிவு செய்ய தயவுசெய்து உள்நுழையவும் அல்லது பதிவு செய்யவும்.");
+                navigate('/login', { state: { from: '/obituaries' } });
+              } else {
+                setShowCreateModal(true);
+              }
+            }} style={{ background: '#7c3aed', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '12.5px', fontWeight: 'bold', cursor: 'pointer' }}>
               + {lang === 'en' ? 'Post Memorial' : 'நினைவு பதிவு செய்ய'}
             </button>
           </h2>

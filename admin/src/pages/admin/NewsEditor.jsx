@@ -1,7 +1,7 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { Save, ArrowLeft, Send, CheckCircle, MapPin } from 'lucide-react';
+import { Save, ArrowLeft, Send, CheckCircle, MapPin, Image, Video, Link, Copy, Plus } from 'lucide-react';
 
 const TABS = ['Tamil', 'English', 'SEO', 'Settings'];
 
@@ -17,38 +17,274 @@ const NewsEditor = () => {
   const [categories, setCategories] = useState([]);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [mediaList, setMediaList] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(null);
+
+  const [districts, setDistricts] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
 
   const [form, setForm] = useState({
     titleTa: '', titleEn: '', contentTa: '', contentEn: '',
     shortDescTa: '', shortDescEn: '', imageUrl: '', featuredImage: '',
     authorName: 'Kings TV News Desk', status: 'draft',
-    categoryId: '', districtId: '',
+    categoryId: '', subcategoryId: '',
+    districtId: '', constituency: '',
     metaTitle: '', metaDescription: '', metaKeywords: '', slug: '', canonicalUrl: '',
     latitude: '', longitude: '', visibilityRadiusKm: '',
     publishedAt: '',
   });
 
+  const formRef = useRef(form);
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
+
+  // Load Categories & Districts Data
   useEffect(() => {
     api.get('/categories').then(r => setCategories(r.data || [])).catch(() => {});
+    api.get('/districts').then(r => setDistricts(r.data || [])).catch(() => {});
+    
     if (isEdit) {
       api.get(`/articles/${id}`).then(r => {
         const a = r.data;
-        setForm({
+        const formObj = {
           titleTa: a.titleTa || '', titleEn: a.titleEn || '',
           contentTa: a.contentTa || '', contentEn: a.contentEn || '',
           shortDescTa: a.shortDescTa || '', shortDescEn: a.shortDescEn || '',
           imageUrl: a.imageUrl || '', featuredImage: a.featuredImage || '',
           authorName: a.authorName || 'Kings TV News Desk', status: a.status || 'draft',
-          categoryId: a.categoryId || '', districtId: a.districtId || '',
+          categoryId: a.categoryId || '', subcategoryId: a.subcategoryId || '',
+          districtId: a.districtId || '', constituency: a.constituency || '',
           metaTitle: a.metaTitle || '', metaDescription: a.metaDescription || '',
           metaKeywords: a.metaKeywords || '', slug: a.slug || '', canonicalUrl: a.canonicalUrl || '',
           latitude: a.latitude || '', longitude: a.longitude || '',
           visibilityRadiusKm: a.visibilityRadiusKm || '',
           publishedAt: a.publishedAt ? a.publishedAt.substring(0, 16) : '',
-        });
+        };
+        setForm(formObj);
+        
+        // Sync TinyMCE content if ready
+        if (window.tinymce) {
+          const editorTa = window.tinymce.get('tinymce-contentTa');
+          if (editorTa) editorTa.setContent(a.contentTa || '');
+          const editorEn = window.tinymce.get('tinymce-contentEn');
+          if (editorEn) editorEn.setContent(a.contentEn || '');
+        }
       }).catch(() => {});
     }
   }, [id, isEdit]);
+
+  // Dynamically load subcategories when category changes
+  useEffect(() => {
+    if (form.categoryId) {
+      api.get(`/subcategories/getAllWeb?categoryId=${form.categoryId}`)
+        .then(r => {
+          if (r.data && r.data.content) {
+            setSubCategories(r.data.content);
+          } else if (Array.isArray(r.data)) {
+            setSubCategories(r.data);
+          } else {
+            setSubCategories([]);
+          }
+        })
+        .catch(() => setSubCategories([]));
+    } else {
+      setSubCategories([]);
+    }
+  }, [form.categoryId]);
+
+  // Initialize TinyMCE editors
+  useEffect(() => {
+    let active = true;
+    
+    const initTinyMCE = () => {
+      if (!window.tinymce) return;
+
+      // Clean up previous editors to prevent duplicate key errors
+      if (window.tinymce.get('tinymce-contentTa')) {
+        window.tinymce.get('tinymce-contentTa').destroy();
+      }
+      if (window.tinymce.get('tinymce-contentEn')) {
+        window.tinymce.get('tinymce-contentEn').destroy();
+      }
+
+      const imagesUploadHandler = (blobInfo, progress) => new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.withCredentials = false;
+        const baseApi = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api/v1';
+        xhr.open('POST', `${baseApi}/articles/upload`);
+        
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+        if (token) {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        }
+
+        xhr.upload.onprogress = (e) => {
+          progress(e.loaded / e.total * 100);
+        };
+
+        xhr.onload = () => {
+          if (xhr.status === 403 || xhr.status === 401) {
+            reject({ message: 'HTTP Error: ' + xhr.status, remove: true });
+            return;
+          }
+          if (xhr.status < 200 || xhr.status >= 300) {
+            reject('HTTP Error: ' + xhr.status);
+            return;
+          }
+          const json = JSON.parse(xhr.responseText);
+          if (!json || typeof json.url !== 'string') {
+            reject('Invalid JSON: ' + xhr.responseText);
+            return;
+          }
+          const serverBase = import.meta.env.VITE_SERVER_BASE || 'http://localhost:5000';
+          resolve(serverBase + json.url);
+        };
+
+        xhr.onerror = () => {
+          reject('Image upload failed due to a network error.');
+        };
+
+        const formData = new FormData();
+        formData.append('file', blobInfo.blob(), blobInfo.filename());
+        xhr.send(formData);
+      });
+
+      window.tinymce.init({
+        selector: '#tinymce-contentTa',
+        height: 400,
+        menubar: true,
+        plugins: [
+          'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+          'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+          'insertdatetime', 'media', 'table', 'help', 'wordcount'
+        ],
+        toolbar: 'undo redo | blocks | ' +
+          'bold italic forecolor | alignleft aligncenter ' +
+          'alignright alignjustify | bullist numlist outdent indent | ' +
+          'removeformat | image media table | help',
+        content_style: 'body { font-family:Inter,Outfit,-apple-system,BlinkMacSystemFont,sans-serif; font-size:14px; background-color: var(--bg-surface); color: var(--text-primary); }',
+        images_upload_handler: imagesUploadHandler,
+        setup: (editor) => {
+          editor.on('change keyup blur', () => {
+            setForm(f => ({ ...f, contentTa: editor.getContent() }));
+          });
+        },
+        init_instance_callback: (editor) => {
+          if (active && formRef.current.contentTa) {
+            editor.setContent(formRef.current.contentTa);
+          }
+        }
+      });
+
+      window.tinymce.init({
+        selector: '#tinymce-contentEn',
+        height: 400,
+        menubar: true,
+        plugins: [
+          'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+          'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+          'insertdatetime', 'media', 'table', 'help', 'wordcount'
+        ],
+        toolbar: 'undo redo | blocks | ' +
+          'bold italic forecolor | alignleft aligncenter ' +
+          'alignright alignjustify | bullist numlist outdent indent | ' +
+          'removeformat | image media table | help',
+        content_style: 'body { font-family:Inter,Outfit,-apple-system,BlinkMacSystemFont,sans-serif; font-size:14px; background-color: var(--bg-surface); color: var(--text-primary); }',
+        images_upload_handler: imagesUploadHandler,
+        setup: (editor) => {
+          editor.on('change keyup blur', () => {
+            setForm(f => ({ ...f, contentEn: editor.getContent() }));
+          });
+        },
+        init_instance_callback: (editor) => {
+          if (active && formRef.current.contentEn) {
+            editor.setContent(formRef.current.contentEn);
+          }
+        }
+      });
+    };
+
+    const checkInterval = setInterval(() => {
+      if (window.tinymce) {
+        clearInterval(checkInterval);
+        initTinyMCE();
+      }
+    }, 100);
+
+    return () => {
+      active = false;
+      clearInterval(checkInterval);
+      if (window.tinymce) {
+        if (window.tinymce.get('tinymce-contentTa')) {
+          window.tinymce.get('tinymce-contentTa').destroy();
+        }
+        if (window.tinymce.get('tinymce-contentEn')) {
+          window.tinymce.get('tinymce-contentEn').destroy();
+        }
+      }
+    };
+  }, []);
+
+  const handleMediaUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    
+    setUploadProgress(0);
+    const uploadedItems = [];
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      try {
+        const res = await api.post('/articles/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        if (res.data && res.data.url) {
+          const serverBase = import.meta.env.VITE_SERVER_BASE || 'http://localhost:5000';
+          uploadedItems.push({
+            name: file.name,
+            url: serverBase + res.data.url,
+            type: file.type
+          });
+        }
+      } catch (err) {
+        console.error("Upload failed for file", file.name, err);
+      }
+      setUploadProgress(Math.round(((i + 1) / files.length) * 100));
+    }
+    
+    setMediaList(prev => [...prev, ...uploadedItems]);
+    setUploadProgress(null);
+  };
+
+  const insertMediaIntoTinyMCE = (url, type) => {
+    if (!window.tinymce) return;
+    const activeEditorId = activeTab === 0 ? 'tinymce-contentTa' : 'tinymce-contentEn';
+    const editor = window.tinymce.get(activeEditorId);
+    if (!editor) {
+      showMsg('Please click inside the Tamil or English editor first.', true);
+      return;
+    }
+    
+    let html = '';
+    if (type.startsWith('video/')) {
+      html = `<video controls style="max-width: 100%; height: auto; border-radius: 8px; margin: 12px 0;"><source src="${url}" type="${type}">Your browser does not support the video tag.</video><p>&nbsp;</p>`;
+    } else {
+      html = `<img src="${url}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 12px 0;" /><p>&nbsp;</p>`;
+    }
+    editor.insertContent(html);
+    
+    // update form state immediately
+    if (activeTab === 0) {
+      set('contentTa', editor.getContent());
+    } else {
+      set('contentEn', editor.getContent());
+    }
+    showMsg('Media inserted successfully!');
+  };
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
@@ -87,7 +323,7 @@ const NewsEditor = () => {
 
   const inputStyle = {
     width: '100%', padding: '0.75rem 1rem', borderRadius: '8px',
-    border: '1px solid rgba(255, 255, 255, 0.15)', background: 'rgba(255, 255, 255, 0.05)',
+    border: '1px solid var(--border-color)', background: 'var(--bg-surface)',
     color: 'var(--text-primary)', fontSize: '0.875rem', boxSizing: 'border-box',
     outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s',
   };
@@ -151,11 +387,10 @@ const NewsEditor = () => {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '1.5rem', alignItems: 'start' }}>
-        {/* Main Content */}
-        <div className="glass-panel" style={{ padding: '1.75rem', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-          {/* Tamil Tab */}
-          {activeTab === 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="glass-panel" style={{ padding: '1.75rem', borderRadius: '12px' }}>
+            {/* Tamil Tab */}
+            <div style={{ display: activeTab === 0 ? 'flex' : 'none', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
                 <label style={labelStyle}>Tamil Title <span style={{ color: '#EF4444' }}>*</span></label>
                 <input style={inputStyle} value={form.titleTa}
@@ -168,15 +403,13 @@ const NewsEditor = () => {
               </div>
               <div>
                 <label style={labelStyle}>Content (Tamil) <span style={{ color: '#EF4444' }}>*</span></label>
-                <textarea style={{ ...taStyle, minHeight: '260px' }} value={form.contentTa}
+                <textarea id="tinymce-contentTa" style={{ ...taStyle, minHeight: '350px' }} value={form.contentTa}
                   onChange={e => set('contentTa', e.target.value)} placeholder="செய்தி உள்ளடக்கம்..." />
               </div>
             </div>
-          )}
 
-          {/* English Tab */}
-          {activeTab === 1 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* English Tab */}
+            <div style={{ display: activeTab === 1 ? 'flex' : 'none', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
                 <label style={labelStyle}>English Title</label>
                 <input style={inputStyle} value={form.titleEn}
@@ -190,15 +423,13 @@ const NewsEditor = () => {
               </div>
               <div>
                 <label style={labelStyle}>Content (English)</label>
-                <textarea style={{ ...taStyle, minHeight: '260px' }} value={form.contentEn}
+                <textarea id="tinymce-contentEn" style={{ ...taStyle, minHeight: '350px' }} value={form.contentEn}
                   onChange={e => set('contentEn', e.target.value)} placeholder="Full article content..." />
               </div>
             </div>
-          )}
 
-          {/* SEO Tab */}
-          {activeTab === 2 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* SEO Tab */}
+            <div style={{ display: activeTab === 2 ? 'flex' : 'none', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
                 <label style={labelStyle}>SEO Title <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(max 60 chars)</span></label>
                 <input style={inputStyle} value={form.metaTitle}
@@ -216,7 +447,7 @@ const NewsEditor = () => {
                 </div>
               </div>
               <div>
-                <label style={labelStyle}>Meta Keywords</label>
+                <label style={labelStyle}>Meta Keywords / Search Tags</label>
                 <input style={inputStyle} value={form.metaKeywords}
                   onChange={e => set('metaKeywords', e.target.value)} placeholder="news, tamil, politics..." />
               </div>
@@ -236,11 +467,9 @@ const NewsEditor = () => {
                   onChange={e => set('canonicalUrl', e.target.value)} placeholder="https://king24x7.com/news/slug" />
               </div>
             </div>
-          )}
 
-          {/* Settings Tab */}
-          {activeTab === 3 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Settings Tab */}
+            <div style={{ display: activeTab === 3 ? 'flex' : 'none', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
                 <label style={labelStyle}>Author Name</label>
                 <input style={inputStyle} value={form.authorName}
@@ -251,7 +480,7 @@ const NewsEditor = () => {
                 <input type="datetime-local" style={inputStyle} value={form.publishedAt}
                   onChange={e => set('publishedAt', e.target.value)} />
               </div>
-              <div style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ padding: '1.25rem', background: 'var(--bg-surface)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                 <label style={{ ...labelStyle, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
                   <MapPin size={14} /> GPS Visibility (optional)
                 </label>
@@ -274,13 +503,89 @@ const NewsEditor = () => {
                 </div>
               </div>
             </div>
-          )}
+          </div>
+
+          {/* Media Assets Library Panel for Journalists */}
+          <div className="glass-panel" style={{ padding: '1.75rem', borderRadius: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Image size={18} style={{ color: 'var(--primary)' }} /> Media Helper Library
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  Upload article-specific multiple images & videos, then insert them directly at the editor cursor.
+                </p>
+              </div>
+              <div>
+                <label htmlFor="media-helper-upload" className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', cursor: 'pointer', padding: '0.5rem 1rem', borderRadius: '8px' }}>
+                  <Plus size={14} /> Add Media Files
+                </label>
+                <input 
+                  type="file" 
+                  multiple 
+                  accept="image/*,video/*" 
+                  onChange={handleMediaUpload} 
+                  style={{ display: 'none' }} 
+                  id="media-helper-upload" 
+                />
+              </div>
+            </div>
+
+            {uploadProgress !== null && (
+              <div style={{ width: '100%', background: 'var(--border-color)', height: '6px', borderRadius: '3px', marginBottom: '1rem', overflow: 'hidden' }}>
+                <div style={{ width: `${uploadProgress}%`, background: 'var(--primary)', height: '100%', transition: 'width 0.2s' }} />
+              </div>
+            )}
+
+            {mediaList.length === 0 ? (
+              <div style={{ border: '2px dashed var(--border-color)', borderRadius: '8px', padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                No additional media files uploaded yet. Add multiple images & videos for news composition.
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }}>
+                {mediaList.map((item, idx) => (
+                  <div key={idx} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                    <div style={{ height: '90px', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                      {item.type.startsWith('image/') ? (
+                        <img src={item.url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <Video size={32} style={{ color: '#fff' }} />
+                      )}
+                    </div>
+                    <div style={{ padding: '0.5rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.name}>
+                        {item.name}
+                      </span>
+                      <div style={{ display: 'flex', gap: '0.25rem' }}>
+                        <button 
+                          onClick={() => insertMediaIntoTinyMCE(item.url, item.type)}
+                          style={{ flex: 1, padding: '3px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '0.65rem', cursor: 'pointer', fontWeight: 'bold' }}
+                        >
+                          Insert
+                        </button>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(item.url);
+                            showMsg('URL copied to clipboard!');
+                          }}
+                          style={{ padding: '3px 6px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '0.65rem', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                          title="Copy Link"
+                        >
+                          <Copy size={10} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Status */}
-          <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
             <label style={labelStyle}>Status</label>
             <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.status} onChange={e => set('status', e.target.value)}>
               <option value="draft">📝 Draft</option>
@@ -292,7 +597,7 @@ const NewsEditor = () => {
           </div>
 
           {/* Category */}
-          <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
             <label style={labelStyle}>Category</label>
             <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.categoryId} onChange={e => set('categoryId', e.target.value)}>
               <option value="">— Select Category —</option>
@@ -302,8 +607,46 @@ const NewsEditor = () => {
             </select>
           </div>
 
+          {/* Subcategory */}
+          <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
+            <label style={labelStyle}>Subcategory</label>
+            <select 
+              style={{ ...inputStyle, cursor: 'pointer' }} 
+              value={form.subcategoryId} 
+              onChange={e => set('subcategoryId', e.target.value)}
+              disabled={!form.categoryId}
+            >
+              <option value="">— Select Subcategory —</option>
+              {subCategories.map(sc => (
+                <option key={sc.subcategoryId} value={sc.subcategoryId}>{sc.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* District */}
+          <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
+            <label style={labelStyle}>District</label>
+            <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.districtId} onChange={e => set('districtId', e.target.value)}>
+              <option value="">— Select District —</option>
+              {districts.map(d => (
+                <option key={d.id} value={d.id}>{d.nameEn}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Constituency */}
+          <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
+            <label style={labelStyle}>Constituency</label>
+            <input 
+              style={inputStyle} 
+              value={form.constituency}
+              onChange={e => set('constituency', e.target.value)} 
+              placeholder="e.g. Coimbatore South" 
+            />
+          </div>
+
           {/* Featured Image */}
-          <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
             <label style={labelStyle}>Featured Image URL</label>
             <input style={inputStyle} value={form.imageUrl}
               onChange={e => set('imageUrl', e.target.value)} placeholder="https://..." />
@@ -313,8 +656,26 @@ const NewsEditor = () => {
             )}
           </div>
 
+          {/* News Tags */}
+          <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
+            <label style={labelStyle}>News Tags (comma-separated)</label>
+            <input 
+              style={inputStyle} 
+              value={form.metaKeywords}
+              onChange={e => set('metaKeywords', e.target.value)} 
+              placeholder="e.g. Budget, Assembly, Chennai" 
+            />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
+              {(form.metaKeywords || '').split(',').map(s => s.trim()).filter(Boolean).map((t, idx) => (
+                <span key={idx} style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600 }}>
+                  #{t}
+                </span>
+              ))}
+            </div>
+          </div>
+
           {/* Save actions */}
-          <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderRadius: '12px' }}>
             <button onClick={() => save()} disabled={saving}
               className="btn btn-primary" style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
               <Save size={15} /> {saving ? 'Saving...' : 'Save Changes'}

@@ -1,11 +1,14 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
+import { AuthContext } from '../context/AuthContext';
 import { fetchApi } from '../utils/api';
 import './Classifieds.css';
 
 const Classifieds = () => {
   const { lang } = useContext(LanguageContext);
+  const navigate = useNavigate();
+  const { isAuthenticated } = useContext(AuthContext);
 
   // Data lists
   const [ads, setAds] = useState([]);
@@ -444,7 +447,14 @@ const Classifieds = () => {
             <h4 style={{ fontSize: '13.5px', fontWeight: '800', margin: '0 0 4px 0' }}>Post Your Ad</h4>
             <p style={{ fontSize: '10.5px', color: '#64748b', margin: '0 0 16px 0' }}>Reach thousands of potential local buyers instantly.</p>
             <button 
-              onClick={() => setShowPostModal(true)}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  alert(lang === 'en' ? "Please login or sign up to post an advertisement." : "விளம்பரம் செய்ய தயவுசெய்து உள்நுழையவும் அல்லது பதிவு செய்யவும்.");
+                  navigate('/login', { state: { from: '/classifieds' } });
+                } else {
+                  setShowPostModal(true);
+                }
+              }}
               style={{ width: '100%', background: '#4f46e5', color: 'white', border: 'none', padding: '10px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}
             >
               + Post Free Ad

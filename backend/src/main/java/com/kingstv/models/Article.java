@@ -14,8 +14,14 @@ public class Article {
     @Column(name = "category_id")
     private Long categoryId;
 
+    @Column(name = "subcategory_id")
+    private Long subcategoryId;
+
     @Column(name = "district_id")
     private Long districtId;
+
+    @Column(name = "constituency")
+    private String constituency;
 
     @Column(name = "title_ta", nullable = false)
     private String titleTa;
@@ -97,8 +103,12 @@ public class Article {
     public void setId(Long id) { this.id = id; }
     public Long getCategoryId() { return categoryId; }
     public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
+    public Long getSubcategoryId() { return subcategoryId; }
+    public void setSubcategoryId(Long subcategoryId) { this.subcategoryId = subcategoryId; }
     public Long getDistrictId() { return districtId; }
     public void setDistrictId(Long districtId) { this.districtId = districtId; }
+    public String getConstituency() { return constituency; }
+    public void setConstituency(String constituency) { this.constituency = constituency; }
     public String getTitleTa() { return titleTa; }
     public void setTitleTa(String titleTa) { this.titleTa = titleTa; }
     public String getTitleEn() { return titleEn; }

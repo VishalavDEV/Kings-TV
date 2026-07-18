@@ -473,3 +473,33 @@ body {
 .skiptranslate {
   display: none !important;
 }
+
+/* Logo visibility styles based on theme */
+.logo-dark-only {
+  display: none !important;
+}
+
+.logo-light-only {
+  display: block !important;
+}
+
+[data-theme="light"] .logo-light-only {
+  display: none !important;
+}
+
+[data-theme="light"] .logo-dark-only {
+  display: block !important;
+}
+
+/* Light mode overrides for form controls to avoid black text on dark background */
+[data-theme="light"] .form-control {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Ensure dropdown select options are always readable with dark text on light background */
+select option {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}

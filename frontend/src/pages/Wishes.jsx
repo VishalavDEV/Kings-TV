@@ -1,11 +1,14 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
+import { AuthContext } from '../context/AuthContext';
 import { fetchApi } from '../utils/api';
 import './Wishes.css';
 
 const Wishes = () => {
   const { lang } = useContext(LanguageContext);
+  const navigate = useNavigate();
+  const { isAuthenticated } = useContext(AuthContext);
   
   // Data lists
   const [wishes, setWishes] = useState([]);
@@ -517,7 +520,14 @@ const Wishes = () => {
                 ? 'Share heartfelt wishes with your loved ones on special occasions.'
                 : 'உங்கள் அன்பானவர்களுக்கு சிறப்பான தருணங்களில் மனமார்ந்த வாழ்த்துகளை பகிருங்கள்'}
             </p>
-            <button className="wishes-hero-btn" onClick={() => setShowCreateModal(true)}>
+            <button className="wishes-hero-btn" onClick={() => {
+              if (!isAuthenticated) {
+                alert(lang === 'en' ? "Please login or sign up to send a greeting." : "வாழ்த்து அனுப்ப தயவுசெய்து உள்நுழையவும் அல்லது பதிவு செய்யவும்.");
+                navigate('/login', { state: { from: '/wishes' } });
+              } else {
+                setShowCreateModal(true);
+              }
+            }}>
               <i className="fas fa-plus"></i>
               {lang === 'en' ? 'Send Greeting' : 'வாழ்த்து அனுப்புங்கள்'}
             </button>
