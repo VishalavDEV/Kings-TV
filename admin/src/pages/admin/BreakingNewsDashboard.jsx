@@ -24,7 +24,7 @@ const BreakingNewsCard = ({ item, onToggle, onDelete }) => (
       {item.titleEn && <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{item.titleEn}</div>}
       <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
         {item.createdAt && new Date(item.createdAt).toLocaleString()}
-        {item.expiresAt && ` · Expires: ${new Date(item.expiresAt).toLocaleString()}`}
+        {item.expiresAt && ` Â· Expires: ${new Date(item.expiresAt).toLocaleString()}`}
       </div>
     </div>
     <div style={{ display: "flex", gap: "0.5rem" }}>
@@ -203,4 +203,4 @@ const BreakingNewsDashboard = () => {
   );
 };
 
-export default BreakingNewsDashboard;
+export default BreakingNewsDashboard;

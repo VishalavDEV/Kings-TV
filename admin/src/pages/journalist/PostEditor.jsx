@@ -152,7 +152,7 @@ const PostEditor = () => {
           </div>
           <div><label style={labelStyle}>Category *</label>
             <select style={inputStyle} value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))}>
-              <option value="">— Select Category —</option>
+              <option value="">â€” Select Category â€”</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.nameTa} ({c.name})</option>)}
             </select>
           </div>
@@ -191,4 +191,4 @@ const PostEditor = () => {
     </div>
   );
 };
-export default PostEditor;
+export default PostEditor;

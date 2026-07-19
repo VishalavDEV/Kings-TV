@@ -134,7 +134,7 @@ const EditorialCalendar = () => {
       </div>
       {overdue > 0 && (
         <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#EF4444", padding: "0.75rem 1.25rem", borderRadius: "8px", marginBottom: "1.5rem", fontWeight: 600, fontSize: "0.875rem" }}>
-          ?? {overdue} overdue assignment{overdue > 1 ? "s" : ""} — check your list view!
+          ?? {overdue} overdue assignment{overdue > 1 ? "s" : ""} â€” check your list view!
         </div>
       )}
 
@@ -160,7 +160,7 @@ const EditorialCalendar = () => {
               <div>
                 <label style={labelStyle}>Category</label>
                 <select style={inputStyle} value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))}>
-                  <option value="">— Select —</option>
+                  <option value="">â€” Select â€”</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
@@ -285,4 +285,4 @@ const AssignmentRow = ({ assignment: a, onStatusChange, onDelete, showDate }) =>
   );
 };
 
-export default EditorialCalendar;
+export default EditorialCalendar;

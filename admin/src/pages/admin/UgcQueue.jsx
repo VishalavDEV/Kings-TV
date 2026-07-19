@@ -95,7 +95,7 @@ const UgcQueue = () => {
                       <div style={{ fontWeight: 700, marginBottom: "0.25rem" }}>{item.title || item.storyTitle || "Untitled"}</div>
                       <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
                         by <strong>{item.name || item.reporterName || "Anonymous"}</strong>
-                        {item.location && <span> · <MapPin size={11} style={{ display: "inline" }} /> {item.location}</span>}
+                        {item.location && <span> Â· <MapPin size={11} style={{ display: "inline" }} /> {item.location}</span>}
                       </div>
                       <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
                         {item.category && <span>?? {item.category}</span>}
@@ -123,7 +123,7 @@ const UgcQueue = () => {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", fontSize: "0.875rem" }}>
               <div><strong>Title:</strong> {selected.title || selected.storyTitle}</div>
-              <div><strong>Reporter:</strong> {selected.name || selected.reporterName} {selected.location && `· ${selected.location}`}</div>
+              <div><strong>Reporter:</strong> {selected.name || selected.reporterName} {selected.location && `Â· ${selected.location}`}</div>
               {selected.storyText && (
                 <div style={{ background: "var(--bg-secondary)", padding: "0.75rem", borderRadius: "8px", maxHeight: "200px", overflowY: "auto" }}>
                   {selected.storyText}
@@ -156,4 +156,4 @@ const UgcQueue = () => {
   );
 };
 
-export default UgcQueue;
+export default UgcQueue;
