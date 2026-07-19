@@ -57,7 +57,7 @@ def main():
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     
     try:
-        ssh.connect(hostname=HOSTNAME, port=PORT, username=USERNAME, password=PASSWORD, timeout=30)
+        ssh.connect(hostname=HOSTNAME, port=PORT, username=USERNAME, password=PASSWORD, timeout=30, banner_timeout=60)
         print("SSH Connection successful!")
         sftp = ssh.open_sftp()
         print("SFTP Session started!")
