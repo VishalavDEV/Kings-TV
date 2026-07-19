@@ -5,41 +5,42 @@
   --primary-dark: #8F5A1D;
   --primary-light: #FAF4EB;
   --bg-light: #FAF9F6;
-  --text-dark: #1E293B;
-  --text-muted: #64748B;
+  --text-dark: #0F172A;
+  --text-muted: #475569;
   --white: #FFFFFF;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 20px rgba(179, 115, 42, 0.10);
-  --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 1.5px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 6px 24px rgba(179, 115, 42, 0.06);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.08);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-border: rgba(255, 255, 255, 0.4);
   --top-bar-bg: #FFFFFF;
   --top-bar-text: #1E293B;
-  --top-bar-border: rgba(30, 41, 59, 0.15);
+  --top-bar-border: rgba(30, 41, 59, 0.1);
   --top-bar-switcher-bg: rgba(30, 41, 59, 0.05);
   --header-bg: #FFFFFF;
   --header-text: #1E293B;
 }
 
 [data-theme="dark"] {
-  --bg-light: #000000;
-  --text-dark: #F1F5F9;
+  --bg-light: #0B0F19;
+  --text-dark: #F8FAFC;
   --text-muted: #94A3B8;
-  --white: #121212;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
-  --glass-bg: rgba(18, 18, 18, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.05);
-  --top-bar-bg: #000000;
-  --top-bar-text: #FFFFFF;
-  --top-bar-border: rgba(255, 255, 255, 0.2);
-  --top-bar-switcher-bg: rgba(255, 255, 255, 0.1);
-  --header-bg: #000000;
-  --header-text: #FFFFFF;
+  --white: #111827;
+  --shadow-sm: 0 1.5px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 6px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55);
+  --glass-bg: rgba(17, 24, 39, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --top-bar-bg: #0B0F19;
+  --top-bar-text: #F8FAFC;
+  --top-bar-border: rgba(255, 255, 255, 0.1);
+  --top-bar-switcher-bg: rgba(255, 255, 255, 0.08);
+  --header-bg: #0F172A;
+  --header-text: #F8FAFC;
 }
 
 ::-webkit-scrollbar {
@@ -5658,4 +5659,50 @@ ul {
     width: 100% !important;
     border-radius: 8px !important;
   }
+}
+
+/* PREMIUM DESIGN SYSTEM OVERLAYS & MICRO-ANIMATIONS */
+.news-card, .trending-item, .hero-stack-card, .video-card, .story-card, .biz-card, .classified-card, .job-card {
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+.news-card:hover, .hero-stack-card:hover, .video-card:hover, .story-card:hover, .biz-card:hover, .classified-card:hover, .job-card:hover {
+  transform: translateY(-5px) scale(1.01) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+/* Glowing Live Ticker & Badge Styles */
+.live-tv-badge, .badge-tag, .breaking-news {
+  position: relative;
+  overflow: hidden;
+}
+
+.live-tv-badge::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shine-glow 2s infinite;
+}
+
+@keyframes shine-glow {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Enhancing category badge pops */
+.cat-badge, .category-badge {
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Add custom typography weighting to headers */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 800;
+  letter-spacing: -0.5px;
 }
