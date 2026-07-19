@@ -21,6 +21,24 @@ public class CommentController {
         return commentRepository.findAll();
     }
 
+    @GetMapping("/article/{articleId}")
+    public List<Comment> getCommentsByArticleId(@PathVariable Long articleId) {
+        return commentRepository.findByArticleId(articleId);
+    }
+
+    @PostMapping
+    public ResponseEntity<?> createComment(@RequestBody Comment comment) {
+        if (comment.getArticleId() == null || comment.getCommentorName() == null || comment.getCommentText() == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "ArticleId, name, and comment text are required"));
+        }
+        if (comment.getCreatedAt() == null) {
+            comment.setCreatedAt(java.time.LocalDateTime.now());
+        }
+        Comment saved = commentRepository.save(comment);
+        return ResponseEntity.ok(saved);
+    }
+
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getCommentById(@PathVariable Long id) {
         Optional<Comment> commOpt = commentRepository.findById(id);

@@ -319,40 +319,25 @@
 
   <!-- ARTICLE DYNAMIC POPULATION & COMMENTS/SHARE SCRIPT -->
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
       // 1. Get Query Parameters
       const params = new URLSearchParams(window.location.search);
       let cat = params.get('cat') || 'politics';
       cat = cat.toLowerCase();
       let artId = parseInt(params.get('id')) || 1;
 
+      // API Base
+      const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:8080'
+        : window.location.origin;
+
       // Category config maps
       const catConfigs = {
-        politics: {
-          name: 'அரசியல்',
-          themeClass: 'theme-politics',
-          color: '#3B82F6'
-        },
-        business: {
-          name: 'வணிகம்',
-          themeClass: 'theme-business',
-          color: '#22C55E'
-        },
-        sports: {
-          name: 'விளையாட்டு',
-          themeClass: 'theme-sports',
-          color: '#F97316'
-        },
-        cinema: {
-          name: 'பொழுதுபோக்கு',
-          themeClass: 'theme-cinema',
-          color: '#EC4899'
-        },
-        tech: {
-          name: 'தொழில்நுட்பம்',
-          themeClass: 'theme-tech',
-          color: '#A855F7'
-        }
+        politics: { name: 'அரசியல்', themeClass: 'theme-politics', color: '#3B82F6' },
+        business: { name: 'வணிகம்', themeClass: 'theme-business', color: '#22C55E' },
+        sports: { name: 'விளையாட்டு', themeClass: 'theme-sports', color: '#F97316' },
+        cinema: { name: 'பொழுதுபோக்கு', themeClass: 'theme-cinema', color: '#EC4899' },
+        tech: { name: 'தொழில்நுட்பம்', themeClass: 'theme-tech', color: '#A855F7' }
       };
 
       const currentConfig = catConfigs[cat] || catConfigs['politics'];
@@ -363,192 +348,151 @@
       catLink.textContent = currentConfig.name;
       catLink.href = 'category.html?cat=' + cat;
 
-      // Articles Data
-      const articlesData = {
-        1: {
-          titleTa: 'தமிழக சட்டமன்றக் கூட்டத்தொடர் புதிய பட்ஜெட் அறிவிப்புகள் – நேரடித் தகவல்கள்',
-          titleEn: 'Tamil Nadu Assembly Session New Budget Declarations: Live Updates and Key Announcements',
-          author: 'செல்வகுமார்',
-          authorPhotoChar: 'செ',
-          pubDate: '20 மே 2025 | 10:30 AM',
-          updDate: '21 மே 2025 | 09:15 AM',
-          readTime: '3 நிமிட வாசிப்பு',
-          gradient: 'linear-gradient(135deg, #1E3A8A, #3B82F6)',
-          paragraphs: [
-            'தமிழக அரசின் 2026 பட்ஜெட் கூட்டத்தொடரில் பல முக்கிய அறிவிப்புகள் வெளியிடப்பட்டுள்ளன. குறிப்பாக, கல்வி, விவசாயம் மற்றும் உள்கட்டமைப்பு மேம்பாட்டிற்கு இந்த பட்ஜெட்டில் முக்கியத்துவம் அளிக்கப்பட்டுள்ளது. முதலமைச்சர் சட்டப்பேரவையில் இன்று ஆற்றிய உரையில், ஏழை எளிய மக்களின் வாழ்வாதாரத்தை மேம்படுத்தும் பல புதிய திட்டங்களை அறிவித்தார்.',
-            'அமைச்சர் நிதி ஒதுக்கீடு குறித்துப் பேசுகையில், "மாநிலத்தின் நிதிநிலையைக் கருத்தில் கொண்டு, அதே சமயம் மக்கள் நலத் திட்டங்கள் முடங்கிவிடாமல் இருக்க தகுந்த நடவடிக்கைகள் எடுக்கப்பட்டுள்ளன. அடுத்த சில மாதங்களில் இந்த திட்டங்கள் அனைத்தும் செயல்பாட்டிற்கு வரும்" என்றார்.',
-            'எதிர்க்கட்சிகள் பட்ஜெட் நிதிப் பகிர்வு குறித்து சில விமர்சனங்களை எழுப்பிய போதிலும், பெரும்பான்மையான சட்டமன்ற உறுப்பினர்கள் இந்த அறிவிப்புகளுக்கு வரவேற்பு தெரிவித்துள்ளனர். பட்ஜெட் கூட்டத்தொடரின் மீதான விவாதம் இன்னும் சில நாட்களுக்குத் தொடரும் என்று சபாநாயகர் அறிவித்துள்ளார்.'
-          ],
-          tags: ['சட்டமன்றம்', 'தமிழக பட்ஜெட்', 'அரசு கொள்கை', 'நிதி ஒதுக்கீடு'],
-          related: [
-            { title: 'தேசிய தேர்தல் களம்: புது தில்லியில் அனைத்துக் கட்சிக் கூட்டம் இன்று', cat: 'politics', id: 2, gradient: 'linear-gradient(135deg, #3B82F6, #60A5FA)' },
-            { title: 'இந்திய-அமெரிக்க வெளியுறவுத் துறை அமைச்சர்கள் சந்திப்பு', cat: 'politics', id: 3, gradient: 'linear-gradient(135deg, #1D4ED8, #1E3A8A)' },
-            { title: 'புதிய கல்விக் கொள்கை 2026: மாநில அரசுகள் ஆலோசனை', cat: 'politics', id: 4, gradient: 'linear-gradient(135deg, #2563EB, #3B82F6)' }
-          ]
-        },
-        7: {
-          titleTa: 'பங்குச்சந்தை வரலாறு காணாத உயர்வு – சென்செக்ஸ் 83,000 புள்ளிகளைத் தாண்டியது',
-          titleEn: 'Stock Market Reaches Historic High: Sensex Crosses 83,000 Milestone on Technology and Banking Surge',
-          author: 'கிருஷ்ணமூர்த்தி',
-          authorPhotoChar: 'கி',
-          pubDate: '20 மே 2025 | 11:15 AM',
-          updDate: '20 மே 2025 | 03:30 PM',
-          readTime: '2 நிமிட வாசிப்பு',
-          gradient: 'linear-gradient(135deg, #065F46, #10B981)',
-          paragraphs: [
-            'சர்வதேச சந்தைகளில் ஏற்பட்ட சாதகமான சூழல் மற்றும் இந்திய நிறுவனங்களின் சிறந்த காலாண்டு முடிவுகள் காரணமாக இன்று பங்குச்சந்தை புதிய வரலாற்று உச்சத்தை எட்டியுள்ளது. சென்செக்ஸ் குறியீடு வர்த்தக முடிவில் 83,120 புள்ளிகளாகவும், நிஃப்டி குறியீடு 25,300 புள்ளிகளாகவும் நிலைபெற்றது.',
-            'குறிப்பாக, ஐடி மற்றும் வங்கித்துறை பங்குகள் 4% வரை உயர்ந்து சந்தை எழுச்சிக்கு வித்திட்டன. சந்தை நிபுணர்கள் கூறுகையில், "இந்தியப் பொருளாதாரத்தின் வலுவான அடிப்படைக் கூறுகள் மற்றும் தொடர்ந்து வரும் வெளிநாட்டு முதலீடுகள் பங்குச்சந்தைக்கு கூடுதல் பலம் சேர்த்துள்ளன" என்றனர்.',
-            'இந்த திடீர் உயர்வு காரணமாக முதலீட்டாளர்களின் சொத்து மதிப்பு இன்று ஒரே நாளில் பல லட்சம் கோடி ரூபாய் அதிகரித்துள்ளது. எனினும், வரும் நாட்களில் முதலீட்டாளர்கள் லாப நோக்கம் கருதி பங்குகளை விற்கக்கூடும் என்பதால் கவனத்துடன் செயல்படுமாறு அறிவுறுத்தப்படுகிறார்கள்.'
-          ],
-          tags: ['பங்குச்சந்தை', 'வணிகம்', 'முதலீடு', 'பொருளாதாரம்'],
-          related: [
-            { title: 'டாடா மோட்டார்ஸ் மின்சார வாகன உற்பத்தியில் புதிய முதலீடுகள்', cat: 'business', id: 8, gradient: 'linear-gradient(135deg, #10B981, #34D399)' },
-            { title: 'தங்கத்தின் விலை அதிரடி வீழ்ச்சி - இன்றைய நிலவரம்', cat: 'business', id: 9, gradient: 'linear-gradient(135deg, #047857, #10B981)' },
-            { title: 'சென்னையில் புதிய ஸ்டார்ட்அப் கண்காட்சி - இளைஞர்கள் ஆர்வம்', cat: 'business', id: 10, gradient: 'linear-gradient(135deg, #059669, #34D399)' }
-          ]
-        },
-        13: {
-          titleTa: 'IPL 2025: சென்னை சூப்பர் கிங்ஸ் அணி இறுதிப்போட்டிக்கு தகுதி பெற்றது',
-          titleEn: 'IPL 2025: Chennai Super Kings Qualifies for Finals After Thrilling Victory Over Mumbai',
-          author: 'விஜயராகவன்',
-          authorPhotoChar: 'வி',
-          pubDate: '20 மே 2025 | 11:50 PM',
-          updDate: '21 மே 2025 | 07:30 AM',
-          readTime: '4 நிமிட வாசிப்பு',
-          gradient: 'linear-gradient(135deg, #C2410C, #F97316)',
-          paragraphs: [
-            'ஐபிஎல் 2025 தொடரின் பரபரப்பான அரையிறுதிப் போட்டியில் மும்பை இந்தியன்ஸ் அணியை வீழ்த்தி சென்னை சூப்பர் கிங்ஸ் அணி இறுதிப் போட்டிக்கு தகுதி பெற்றது. முதலில் பேட்டிங் செய்த சென்னை அணி 20 ஓவர்களில் 5 விக்கெட் இழப்பிற்கு 198 ரன்கள் எடுத்தது.',
-            'சென்னை அணியின் சார்பில் ருதுராஜ் கெய்க்வாட் அதிரடியாக விளையாடி 82 ரன்கள் குவித்தார். தொடர்ந்து களமிறங்கிய மும்பை அணி சென்னை அணியின் துல்லியமான பந்துவீச்சை எதிர்கொள்ள முடியாமல் 182 ரன்களுக்கு ஆல்-அவுட் ஆனது. இதன் மூலம் சென்னை அணி 16 ரன்கள் வித்தியாசத்தில் அபார வெற்றி பெற்றது.',
-            'இறுதிப் போட்டியில் விளையாட சென்னை தகுதி பெற்றுள்ள நிலையில், ரசிகர்கள் சமூக ஊடகங்களில் வெற்றியை விமரிசையாகக் கொண்டாடி வருகின்றனர். அடுத்த ஞாயிற்றுக்கிழமை நடைபெற உள்ள இறுதிப் போட்டிக்கான டிக்கெட் விற்பனை தற்போதே சூடுபிடிக்கத் துவங்கியுள்ளது.'
-          ],
-          tags: ['IPL 2025', 'கிரிக்கெட்', 'விளையாட்டு', 'சிஎஸ்கே'],
-          related: [
-            { title: 'உலகக் கோப்பை தகுதிச் சுற்று கால்பந்து: இந்திய அணி அபார ஆட்டம்', cat: 'sports', id: 14, gradient: 'linear-gradient(135deg, #F97316, #FB923C)' },
-            { title: 'விம்பிள்டன் டென்னிஸ் 2025: அரையிறுதியில் ரோகன் போபண்ணா ஜோடி', cat: 'sports', id: 15, gradient: 'linear-gradient(135deg, #EA580C, #F97316)' },
-            { title: 'தமிழ்நாடு மாநில அளவிலான தடகள போட்டி மதுரையில் தொடக்கம்', cat: 'sports', id: 16, gradient: 'linear-gradient(135deg, #F97316, #FB923C)' }
-          ]
-        },
-        19: {
-          titleTa: 'விஜய் 69-வது படம்: அனிருத் இசையமைப்பில் உருவாவதாக அதிகாரப்பூர்வ அறிவிப்பு',
-          titleEn: 'Vijay 69: Official Announcement Confirms Anirudh Ravichander as Music Composer for Blockbuster Collaboration',
-          author: 'செல்வி',
-          authorPhotoChar: 'செ',
-          pubDate: '20 மே 2025 | 06:15 PM',
-          updDate: '21 மே 2025 | 10:00 AM',
-          readTime: '2 நிமிட வாசிப்பு',
-          gradient: 'linear-gradient(135deg, #BE185D, #EC4899)',
-          paragraphs: [
-            'தளபதி விஜய்யின் நடிப்பில் உருவாகும் 69-வது திரைப்படத்திற்கு ராக்ஸ்டார் அனிருத் இசையமைக்க உள்ளதாக படத்தயாரிப்பு நிறுவனம் அதிகாரப்பூர்வமாக ட்விட்டரில் அறிவித்துள்ளது. இந்த பிரம்மாண்ட அறிவிப்பு விஜய் ரசிகர்கள் மற்றும் திரை ஆர்வலர்கள் மத்தியில் பெரும் மகிழ்ச்சியை ஏற்படுத்தியுள்ளது.',
-            'ஏற்கனவே விஜய்-அனிருத் கூட்டணியில் வெளியான கத்தி, மாஸ்டர், லியோ போன்ற படங்கள் பிளாக்பஸ்டர் இசையைக் கொடுத்து சாதனை படைத்த நிலையில், இக்கூட்டணி நான்காவது முறையாக இணைவதால் பாடல்கள் மீதான எதிர்பார்ப்பு விண்ணை முட்டியுள்ளது.',
-            'இயக்குனர் ஹெச்.வினோத் இயக்க உள்ள இத்திரைப்படத்தின் படப்பிடிப்புகள் அடுத்த மாதம் துவங்க உள்ளன. இது விஜய்யின் கடைசி படம் என்பதால் ஒட்டுமொத்த கோலிவுட்டும் இத்திரைப்படத்தின் அடுத்தடுத்த அப்டேட்டுகளை ஆவலுடன் எதிர்பார்த்துக் கொண்டிருக்கிறது.'
-          ],
-          tags: ['விஜய் 69', 'கோலிவுட்', 'சினிமா', 'அனிருத்'],
-          related: [
-            { title: 'ஆஸ்கார் 2026 பரிந்துரை பட்டியலில் இடம் பிடித்த தமிழ் திரைப்படம்', cat: 'cinema', id: 20, gradient: 'linear-gradient(135deg, #EC4899, #F472B6)' },
-            { title: 'சமீபத்திய பிளாக்பஸ்டர் படத்தின் நேர்மையான விமர்சனம்', cat: 'cinema', id: 21, gradient: 'linear-gradient(135deg, #9D174D, #EC4899)' },
-            { title: 'பாலிவுட்டின் பிரம்மாண்ட புதிய படம் டீசர் வைரல்', cat: 'cinema', id: 22, gradient: 'linear-gradient(135deg, #EC4899, #F472B6)' }
-          ]
-        },
-        25: {
-          titleTa: 'ChatGPT 5.0 வெளியீடு: செயற்கை நுண்ணறிவில் அடுத்த கட்ட பாய்ச்சல்',
-          titleEn: 'ChatGPT 5.0 Launched: The Next Big Leap in Generative AI Featuring High Cognitive Capabilities and Real-time Voice Analysis',
-          author: 'தினேஷ் கார்த்திக்',
-          authorPhotoChar: 'தி',
-          pubDate: '20 மே 2025 | 02:00 PM',
-          updDate: '20 மே 2025 | 08:30 PM',
-          readTime: '4 நிமிட வாசிப்பு',
-          gradient: 'linear-gradient(135deg, #6D28D9, #A855F7)',
-          paragraphs: [
-            'செயற்கை நுண்ணறிவுத் துறையில் புரட்சிகரமான மாற்றங்களை ஏற்படுத்தும் வகையில், ஓபன்ஏஐ நிறுவனம் தங்களின் மேம்படுத்தப்பட்ட ChatGPT 5.0 மாடலை அதிகாரப்பூர்வமாக வெளியிட்டுள்ளது. இது முந்தைய பதிப்பை விட 10 மடங்கு கூடுதல் வேகம் மற்றும் பகுத்தறியும் திறன் கொண்டது.',
-            'குறிப்பாக, மனித குரலின் தொனி, கோபம் மற்றும் மகிழ்ச்சி ஆகிய உணர்வுகளைப் புரிந்து கொண்டு அதற்கேற்ப பதிலளிக்கும் பிரத்யேக கேமரா & குரல் தொடர்பு வசதி இதில் இணைக்கப்பட்டுள்ளது. கல்வி மற்றும் வணிக நிறுவனங்களில் மெய்நிகர் உதவியாளராக இது பெரும் பங்காற்றும் எனத் தெரிகிறது.',
-            'இதன் வரவு உலகளாவிய தொழில்நுட்ப நிறுவனங்களுக்கு இடையே புதிய போட்டியை உருவாக்கியுள்ளது. தொழில்நுட்ப வல்லுநர்கள் கூறுகையில், "இந்த புதிய AI மாடல் மனித வேலைகளுக்கு உதவியாக இருக்குமே தவிர, வேலைகளைப் பறிக்காது" என தங்கள் கருத்துக்களைப் பதிவு செய்துள்ளனர்.'
-          ],
-          tags: ['ChatGPT 5', 'AI', 'தொழில்நுட்பம்', 'OpenAI'],
-          related: [
-            { title: 'ஆப்பிள் நிறுவனத்தின் புதிய ஐபோன் 17 சீரிஸ் தகவல்கள் கசிந்தன', cat: 'tech', id: 26, gradient: 'linear-gradient(135deg, #A855F7, #C084FC)' },
-            { title: 'இஸ்ரோவின் அடுத்த மைல்கல்: நிலவுக்கு விண்கலம் அனுப்ப திட்டம்', cat: 'tech', id: 27, gradient: 'linear-gradient(135deg, #5B21B6, #A855F7)' },
-            { title: 'இந்தியாவின் புதிய சைபர் பாதுகாப்பு கொள்கை மற்றும் கட்டுப்பாடுகள்', cat: 'tech', id: 28, gradient: 'linear-gradient(135deg, #A855F7, #C084FC)' }
-          ]
+      // Keep reference to fetched article
+      let currentArticle = null;
+
+      function renderArticleContent() {
+        if (!currentArticle) return;
+        const lang = localStorage.getItem('king24x7_lang') ? JSON.parse(localStorage.getItem('king24x7_lang')) : 'ta';
+        const bodyContainer = document.getElementById('articleBody');
+        
+        let contentHtml = '';
+        if (lang === 'en') {
+          contentHtml = currentArticle.contentEn || currentArticle.contentTa || '';
+        } else {
+          contentHtml = currentArticle.contentTa || currentArticle.contentEn || '';
         }
-      };
+        
+        // Resolve relative upload paths inside the HTML content
+        contentHtml = contentHtml.replace(/(src|href)="\/uploads\//g, `$1="${API_BASE}/uploads/`);
+        bodyContainer.innerHTML = contentHtml;
+      }
 
-      const currentArticle = articlesData[artId] || articlesData[1];
+      // Fetch dynamic article from backend
+      try {
+        const response = await fetch(`${API_BASE}/api/v1/articles/${artId}`);
+        if (!response.ok) {
+          throw new Error('Article not found');
+        }
+        currentArticle = await response.json();
 
-      // Update titles
-      document.getElementById('artTitleTa').textContent = currentArticle.titleTa;
-      document.getElementById('artTitleEn').textContent = currentArticle.titleEn;
-      document.getElementById('breadArticleTitle').textContent = currentArticle.titleTa.substring(0, 25) + '...';
-      document.title = currentArticle.titleTa + ' - KING 24x7';
+        // Update titles
+        document.getElementById('artTitleTa').textContent = currentArticle.titleTa || '';
+        document.getElementById('artTitleEn').textContent = currentArticle.titleEn || '';
+        document.getElementById('breadArticleTitle').textContent = (currentArticle.titleTa || currentArticle.titleEn || '').substring(0, 25) + '...';
+        document.title = (currentArticle.titleTa || currentArticle.titleEn || 'செய்தி') + ' - KING 24x7';
 
-      // Update author byline info
-      document.getElementById('authorName').textContent = currentArticle.author;
-      document.getElementById('authorPhoto').textContent = currentArticle.authorPhotoChar;
-      document.getElementById('authorPhoto').style.background = 'linear-gradient(135deg, ' + currentConfig.color + ', #8B5CF6)';
-      document.getElementById('pubDate').textContent = currentArticle.pubDate;
-      document.getElementById('updDate').textContent = currentArticle.updDate;
-      document.getElementById('readTime').innerHTML = '<i class="far fa-clock"></i> ' + currentArticle.readTime;
+        // Update author byline info
+        document.getElementById('authorName').textContent = currentArticle.authorName || 'Kings TV News Desk';
+        document.getElementById('authorPhoto').textContent = (currentArticle.authorName || 'K').charAt(0).toUpperCase();
+        document.getElementById('authorPhoto').style.background = 'linear-gradient(135deg, ' + currentConfig.color + ', #8B5CF6)';
+        
+        // Dates formatting
+        const options = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true };
+        const pubDateStr = currentArticle.publishedAt ? new Date(currentArticle.publishedAt).toLocaleString('en-US', options) : '';
+        const updDateStr = currentArticle.updatedAt ? new Date(currentArticle.updatedAt).toLocaleString('en-US', options) : pubDateStr;
+        
+        document.getElementById('pubDate').textContent = pubDateStr;
+        document.getElementById('updDate').textContent = updDateStr;
 
-      // Update hero image gradient & caption
-      document.getElementById('heroImgGradient').style.background = currentArticle.gradient;
-      document.getElementById('imgCaption').textContent = 'படம்: ' + currentArticle.titleTa + ' செய்தித் தொகுப்பு.';
+        // Reading time
+        const wordCount = ((currentArticle.contentTa || '') + ' ' + (currentArticle.contentEn || '')).split(/\s+/).filter(w => w).length;
+        const readTimeMins = Math.max(1, Math.ceil(wordCount / 200));
+        document.getElementById('readTime').innerHTML = `<i class="far fa-clock"></i> ${readTimeMins} நிமிட வாசிப்பு (${readTimeMins} mins read)`;
 
-      // Render paragraph texts
-      const bodyContainer = document.getElementById('articleBody');
-      bodyContainer.innerHTML = '';
-      currentArticle.paragraphs.forEach(para => {
-        const p = document.createElement('p');
-        p.textContent = para;
-        bodyContainer.appendChild(p);
-      });
+        // Hero Image
+        const heroImg = document.getElementById('heroImgGradient');
+        if (currentArticle.imageUrl) {
+          const resolvedImgUrl = currentArticle.imageUrl.startsWith('http') ? currentArticle.imageUrl : `${API_BASE}${currentArticle.imageUrl}`;
+          heroImg.style.background = `url('${resolvedImgUrl}') center/cover no-repeat`;
+          heroImg.innerHTML = '';
+        } else {
+          heroImg.style.background = 'linear-gradient(135deg, #1E3A8A, #3B82F6)';
+          heroImg.innerHTML = '<i class="fas fa-image fa-3x" style="opacity: 0.5;"></i>';
+        }
+        document.getElementById('imgCaption').textContent = 'படம்: ' + (currentArticle.titleTa || '') + ' செய்தித் தொகுப்பு.';
 
-      // Render tags
-      const tagsContainer = document.getElementById('articleTags');
-      tagsContainer.innerHTML = '';
-      currentArticle.tags.forEach(tag => {
-        const span = document.createElement('span');
-        span.className = 'article-tag';
-        span.textContent = tag;
-        tagsContainer.appendChild(span);
-      });
+        // Render main content body
+        renderArticleContent();
 
-      // Render related articles
-      const relatedGrid = document.getElementById('relatedArticlesGrid');
-      relatedGrid.innerHTML = '';
-      currentArticle.related.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'news-card';
-        card.onclick = function() {
-          window.location.href = 'article.html?cat=' + item.cat + '&id=' + item.id;
-        };
-        card.innerHTML = `
-          <div class="card-img" style="background: ${item.gradient}; height: 120px;">
-            <span class="cat-badge" style="background: var(--category-color, var(--primary));">${currentConfig.name}</span>
-          </div>
-          <div class="card-body" style="padding:10px;">
-            <h3 style="font-size:13px; line-height:1.4;">${item.title}</h3>
-            <div class="card-meta" style="font-size:10px; margin-top:6px;">
-              <span><i class="far fa-clock"></i> 1 நாள் முன்</span>
-            </div>
-          </div>
-        `;
-        relatedGrid.appendChild(card);
+        // Render tags
+        const tagsContainer = document.getElementById('articleTags');
+        tagsContainer.innerHTML = '';
+        if (currentArticle.metaKeywords) {
+          const tags = currentArticle.metaKeywords.split(',').map(t => t.trim()).filter(t => t);
+          tags.forEach(tag => {
+            const span = document.createElement('span');
+            span.className = 'article-tag';
+            span.textContent = tag;
+            tagsContainer.appendChild(span);
+          });
+        }
+
+        // Render related articles
+        const relatedGrid = document.getElementById('relatedArticlesGrid');
+        relatedGrid.innerHTML = '';
+        try {
+          const relRes = await fetch(`${API_BASE}/api/v1/articles/getAllWeb?size=4&categoryId=${currentArticle.categoryId || ''}`);
+          if (relRes.ok) {
+            const relData = await relRes.json();
+            const relatedList = (relData.content || []).filter(a => a.id !== currentArticle.id).slice(0, 3);
+            relatedList.forEach(item => {
+              const card = document.createElement('div');
+              card.className = 'news-card';
+              card.onclick = function() {
+                window.location.href = 'article.html?cat=' + cat + '&id=' + item.id;
+              };
+              const itemTitle = item.titleTa || item.titleEn || '';
+              const itemImg = item.imageUrl ? (item.imageUrl.startsWith('http') ? item.imageUrl : `${API_BASE}${item.imageUrl}`) : '';
+              const cardImgStyle = itemImg ? `background: url('${itemImg}') center/cover no-repeat;` : `background: ${currentConfig.gradient || 'linear-gradient(135deg, #3B82F6, #60A5FA)'};`;
+              card.innerHTML = `
+                <div class="card-img" style="${cardImgStyle} height: 120px;">
+                  <span class="cat-badge" style="background: var(--category-color, var(--primary));">${currentConfig.name}</span>
+                </div>
+                <div class="card-body" style="padding:10px;">
+                  <h3 style="font-size:13px; line-height:1.4;">${itemTitle}</h3>
+                  <div class="card-meta" style="font-size:10px; margin-top:6px;">
+                    <span><i class="far fa-clock"></i> 1 நாள் முன்</span>
+                  </div>
+                </div>
+              `;
+              relatedGrid.appendChild(card);
+            });
+          }
+        } catch (err) {
+          console.warn('Failed to load related articles', err);
+        }
+
+      } catch (err) {
+        console.error('Failed to load article from backend API', err);
+        document.getElementById('artTitleTa').textContent = 'செய்தி காணப்படவில்லை (Article Not Found)';
+        document.getElementById('articleBody').innerHTML = '<p style="text-align: center; color: var(--text-secondary); margin: 2rem 0;">மன்னிக்கவும், நீங்கள் தேடும் செய்தி காணப்படவில்லை அல்லது நீக்கப்பட்டிருக்கலாம்.</p>';
+      }
+
+      // Add listener to lang switchers so we re-render the appropriate language content body
+      document.querySelectorAll('.lang-switcher').forEach(function(select) {
+        select.addEventListener('change', function() {
+          setTimeout(renderArticleContent, 50);
+        });
       });
 
       // 2. Floating Social Share Button Functionality
       const shareUrl = window.location.href;
-      const shareText = currentArticle.titleTa;
-
+      
       document.getElementById('shareWA').onclick = function() {
-        window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(shareText + ' - ' + shareUrl), '_blank');
+        const titleText = currentArticle ? (currentArticle.titleTa || currentArticle.titleEn) : document.title;
+        window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(titleText + ' - ' + shareUrl), '_blank');
       };
       document.getElementById('shareFB').onclick = function() {
         window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(shareUrl), '_blank');
       };
       document.getElementById('shareTW').onclick = function() {
-        window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText) + '&url=' + encodeURIComponent(shareUrl), '_blank');
+        const titleText = currentArticle ? (currentArticle.titleTa || currentArticle.titleEn) : document.title;
+        window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(titleText) + '&url=' + encodeURIComponent(shareUrl), '_blank');
       };
       document.getElementById('shareTG').onclick = function() {
-        window.open('https://t.me/share/url?url=' + encodeURIComponent(shareUrl) + '&text=' + encodeURIComponent(shareText), '_blank');
+        const titleText = currentArticle ? (currentArticle.titleTa || currentArticle.titleEn) : document.title;
+        window.open('https://t.me/share/url?url=' + encodeURIComponent(shareUrl) + '&text=' + encodeURIComponent(titleText), '_blank');
       };
       
       // Copy Link
@@ -562,70 +506,87 @@
         });
       };
 
-      // 3. Dynamic Comment Section posting
+      // 3. Dynamic Comment Section posting & retrieving
       const commentForm = document.getElementById('commentForm');
       const commentsList = document.getElementById('commentsList');
       const commentCountTitle = document.getElementById('commentCountTitle');
-      let commentsCount = 3;
 
-      commentForm.addEventListener('submit', function(e) {
+      async function fetchComments() {
+        try {
+          const res = await fetch(`${API_BASE}/api/v1/comments/article/${artId}`);
+          if (res.ok) {
+            const comments = await res.json();
+            commentCountTitle.textContent = comments.length + ' கருத்துக்கள்';
+            commentsList.innerHTML = '';
+            comments.forEach(c => {
+              const item = document.createElement('div');
+              item.className = 'comment-item';
+              const initial = (c.commentorName || 'K').charAt(0).toUpperCase();
+              const dateStr = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'இப்போது';
+              item.innerHTML = `
+                <div class="comment-avatar" style="background: var(--category-color, var(--primary)); color: white;">${initial}</div>
+                <div class="comment-content">
+                  <div class="comment-header">
+                    <h5>${c.commentorName}</h5>
+                    <span>${dateStr}</span>
+                  </div>
+                  <p class="comment-text">${c.commentText}</p>
+                </div>
+              `;
+              commentsList.appendChild(item);
+            });
+          }
+        } catch (e) {
+          console.warn('Failed to fetch comments', e);
+        }
+      }
+
+      // Initial comment fetch
+      fetchComments();
+
+      commentForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         const nameVal = document.getElementById('commentorName').value.trim();
+        const emailVal = document.getElementById('commentorEmail').value.trim();
         const textVal = document.getElementById('commentText').value.trim();
 
         if (!nameVal || !textVal) return;
 
-        // Create new comment item element
-        const commentItem = document.createElement('div');
-        commentItem.className = 'comment-item';
-        commentItem.style.opacity = '0';
-        commentItem.style.transform = 'translateY(10px)';
-        commentItem.style.transition = 'all 0.3s ease';
+        try {
+          const commentRes = await fetch(`${API_BASE}/api/v1/comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              articleId: artId,
+              commentorName: nameVal,
+              commentorEmail: emailVal,
+              commentText: textVal
+            })
+          });
 
-        const initial = nameVal.charAt(0).toUpperCase();
+          if (commentRes.ok) {
+            // Clear input form
+            document.getElementById('commentorName').value = '';
+            document.getElementById('commentorEmail').value = '';
+            document.getElementById('commentText').value = '';
+            
+            // Refresh comments list
+            fetchComments();
 
-        commentItem.innerHTML = `
-          <div class="comment-avatar" style="background: var(--category-color, var(--primary)); color: white;">${initial}</div>
-          <div class="comment-content">
-            <div class="comment-header">
-              <h5>${nameVal}</h5>
-              <span>இப்போது</span>
-            </div>
-            <p class="comment-text">${textVal}</p>
-          </div>
-        `;
-
-        commentsList.appendChild(commentItem);
-
-        // Animate append
-        setTimeout(function() {
-          commentItem.style.opacity = '1';
-          commentItem.style.transform = 'translateY(0)';
-        }, 50);
-
-        // Update comment counter
-        commentsCount++;
-        commentCountTitle.textContent = commentsCount + ' கருத்துக்கள்';
-
-        // Clear input form
-        document.getElementById('commentorName').value = '';
-        document.getElementById('commentorEmail').value = '';
-        document.getElementById('commentText').value = '';
-
-        // Trigger toast confirmation
-        const toast = document.getElementById('toastAlert');
-        toast.textContent = 'உங்கள் கருத்து வெற்றிகரமாக பகிரப்பட்டது!';
-        toast.style.background = '#10B981';
-        toast.classList.add('show');
-        setTimeout(function() {
-          toast.classList.remove('show');
-          toast.textContent = 'நகலெடுக்கப்பட்டது! (Link Copied!)';
-          toast.style.background = '#10B981';
-        }, 2500);
+            // Trigger toast confirmation
+            const toast = document.getElementById('toastAlert');
+            toast.textContent = 'உங்கள் கருத்து வெற்றிகரமாக பகிரப்பட்டது!';
+            toast.style.background = '#10B981';
+            toast.classList.add('show');
+            setTimeout(function() {
+              toast.classList.remove('show');
+            }, 2500);
+          }
+        } catch (err) {
+          console.error('Failed to post comment', err);
+        }
       });
-
     });
   </script>
-</body>
 
 </html>

@@ -9,8 +9,12 @@ const UserAvatar = ({ user, size = 36, onClick }) => {
   };
 
   const hasImage = user.profileImage && user.profileImage.trim() !== '';
+  const SERVER_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8080'
+    : window.location.origin;
+
   const imageUrl = hasImage 
-    ? (user.profileImage.startsWith('http') ? user.profileImage : `http://localhost:8080${user.profileImage}`)
+    ? (user.profileImage.startsWith('http') ? user.profileImage : `${SERVER_BASE}${user.profileImage}`)
     : null;
 
   const avatarStyle = {

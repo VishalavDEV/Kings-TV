@@ -40,10 +40,20 @@ document.addEventListener('DOMContentLoaded', function() {
     'agri', 'election', 'livetv', 'poll', 'digest', 'newsletter', 'district', 'business'
   ];
 
+  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8080'
+    : window.location.origin;
+
+  function getMediaUrl(url) {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return API_BASE + url;
+  }
+
   // ===== INTEGRATE HOME LAYOUT MANAGER WITH BACKEND =====
   async function syncHomepageLayout() {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/public/layout/web');
+      const response = await fetch(`${API_BASE}/api/v1/public/layout/web');
       if (!response.ok) return;
       const sections = await response.json();
       
@@ -1469,7 +1479,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // 1. Breaking News Ticker
   async function loadBreakingNews() {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/breaking-news/getAllWeb?size=10');
+      const response = await fetch(`${API_BASE}/api/v1/breaking-news/getAllWeb?size=10');
       if (!response.ok) return;
       const data = await response.json();
       const items = data.content || [];
@@ -1489,7 +1499,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // 2. Hero Section
   async function loadHeroSection() {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/public/news?limit=4');
+      const response = await fetch(`${API_BASE}/api/v1/public/news?limit=4');
       if (!response.ok) return;
       const articles = await response.json();
       if (!articles || articles.length === 0) return;
@@ -1502,7 +1512,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (featuredCard && mainArt) {
         const title = lang === 'ta' ? (mainArt.titleTa || mainArt.titleEn) : (mainArt.titleEn || mainArt.titleTa);
         const desc = lang === 'ta' ? (mainArt.shortDescTa || mainArt.contentTa) : (mainArt.shortDescEn || mainArt.contentEn);
-        const bgStyle = mainArt.imageUrl ? `background-image: url('${mainArt.imageUrl}'); background-size: cover; background-position: center;` : `background: linear-gradient(135deg, #1E40AF, #3B82F6);`;
+        const bgStyle = mainArt.imageUrl ? `background-image: url('${getMediaUrl(mainArt.imageUrl)}'); background-size: cover; background-position: center;` : `background: linear-gradient(135deg, #1E40AF, #3B82F6);`;
         
         featuredCard.innerHTML = `
           <div class="card-img" style="${bgStyle}"></div>
@@ -1523,7 +1533,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (heroStack && articles.length > 1) {
         const stackHTML = articles.slice(1, 4).map(art => {
           const title = lang === 'ta' ? (art.titleTa || art.titleEn) : (art.titleEn || art.titleTa);
-          const thumbStyle = art.imageUrl ? `background-image: url('${art.imageUrl}'); background-size: cover; background-position: center;` : `background: linear-gradient(135deg, #F59E0B, #D97706);`;
+          const thumbStyle = art.imageUrl ? `background-image: url('${getMediaUrl(art.imageUrl)}'); background-size: cover; background-position: center;` : `background: linear-gradient(135deg, #F59E0B, #D97706);`;
           return `
             <div class="hero-stack-card" onclick="window.location.href='article.html?id=${art.id}'" style="cursor: pointer;">
               <div class="info">
@@ -1545,7 +1555,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // 4. Latest News
   async function loadLatestNews() {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/articles/getAllWeb?size=6');
+      const response = await fetch(`${API_BASE}/api/v1/articles/getAllWeb?size=6');
       if (!response.ok) return;
       const data = await response.json();
       const articles = data.content || [];
@@ -1556,7 +1566,7 @@ document.addEventListener('DOMContentLoaded', function() {
       grid.innerHTML = articles.map(art => {
         const title = lang === 'ta' ? (art.titleTa || art.titleEn) : (art.titleEn || art.titleTa);
         const desc = lang === 'ta' ? (art.shortDescTa || art.contentTa) : (art.shortDescEn || art.contentEn);
-        const imgStyle = art.imageUrl ? `background-image: url('${art.imageUrl}'); background-size: cover; background-position: center;` : `background: linear-gradient(135deg, #1E40AF, #3B82F6);`;
+        const imgStyle = art.imageUrl ? `background-image: url('${getMediaUrl(art.imageUrl)}'); background-size: cover; background-position: center;` : `background: linear-gradient(135deg, #1E40AF, #3B82F6);`;
         return `
           <div class="news-card" onclick="window.location.href='article.html?id=${art.id}'" style="cursor: pointer;">
             <div class="card-img" style="${imgStyle}">
@@ -1581,7 +1591,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // 5. Video News
   async function loadVideoNews() {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/videos/getAllWeb?size=4');
+      const response = await fetch(`${API_BASE}/api/v1/videos/getAllWeb?size=4');
       if (!response.ok) return;
       const data = await response.json();
       const videos = data.content || [];
@@ -1589,7 +1599,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!container || videos.length === 0) return;
 
       container.innerHTML = videos.map(vid => {
-        const thumbUrl = vid.thumbnailUrl || `https://img.youtube.com/vi/${vid.youtubeUrl.split('v=')[1] || vid.youtubeUrl.split('/').pop()}/mqdefault.jpg`;
+        const thumbUrl = (vid.thumbnailUrl ? getMediaUrl(vid.thumbnailUrl) : null) || `https://img.youtube.com/vi/${vid.youtubeUrl.split('v=')[1] || vid.youtubeUrl.split('/').pop()}/mqdefault.jpg`;
         return `
           <div class="video-card" onclick="window.open('${vid.youtubeUrl}', '_blank')" style="cursor: pointer;">
             <div class="thumb-area">
@@ -1612,7 +1622,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // 6. Web Stories
   async function loadWebStories() {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/web-stories/getAllWeb?size=6');
+      const response = await fetch(`${API_BASE}/api/v1/web-stories/getAllWeb?size=6');
       if (!response.ok) return;
       const data = await response.json();
       const stories = data.content || [];
@@ -1642,7 +1652,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // 7. Trending Sidebar
   async function loadTrendingNews() {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/articles/getAllWeb?size=5&sortBy=viewsCount&direction=desc');
+      const response = await fetch(`${API_BASE}/api/v1/articles/getAllWeb?size=5&sortBy=viewsCount&direction=desc');
       if (!response.ok) return;
       const data = await response.json();
       const articles = data.content || [];
@@ -1680,7 +1690,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (token && user) {
       const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
       if (adminRoles.includes(user.role)) {
-        window.location.href = 'http://localhost:3000/admin/layout';
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          window.location.href = 'http://localhost:3000/admin/layout';
+        } else {
+          window.location.href = window.location.origin + '/admin/layout';
+        }
       }
     }
   }

@@ -122,6 +122,37 @@ public class DataInitializer {
             }
         }
 
+        // Ensure all 38 Tamil Nadu districts exist (always runs, even on servers with existing data)
+        String[][] allDistricts = {
+            {"Chennai", "சென்னை"}, {"Coimbatore", "கோயம்புத்தூர்"}, {"Madurai", "மதுரை"},
+            {"Trichy", "திருச்சிராப்பள்ளி"}, {"Salem", "சேலம்"}, {"Tirunelveli", "திருநெல்வேலி"},
+            {"Vellore", "வேலூர்"}, {"Erode", "ஈரோடு"}, {"Thoothukudi", "தூத்துக்குடி"},
+            {"Tiruppur", "திருப்பூர்"}, {"Tiruvallur", "திருவள்ளூர்"}, {"Kanchipuram", "காஞ்சிபுரம்"},
+            {"Chengalpattu", "செங்கல்பட்டு"}, {"Villupuram", "விழுப்புரம்"}, {"Cuddalore", "கடலூர்"},
+            {"Nagapattinam", "நாகப்பட்டினம்"}, {"Thanjavur", "தஞ்சாவூர்"}, {"Pudukkottai", "புதுக்கோட்டை"},
+            {"Sivaganga", "சிவகங்கை"}, {"Ramanathapuram", "ராமநாதபுரம்"}, {"Virudhunagar", "விருதுநகர்"},
+            {"Namakkal", "நாமக்கல்"}, {"Dharmapuri", "தருமபுரி"}, {"Krishnagiri", "கிருஷ்ணகிரி"},
+            {"Tiruvannamalai", "திருவண்ணாமலை"}, {"Ranipet", "ராணிப்பேட்டை"}, {"Tirupathur", "திருப்பத்தூர்"},
+            {"Kallakurichi", "கள்ளக்குறிச்சி"}, {"Ariyalur", "அரியலூர்"}, {"Perambalur", "பெரம்பலூர்"},
+            {"Karur", "கரூர்"}, {"Dindigul", "திண்டுக்கல்"}, {"Nilgiris", "நீலகிரி"},
+            {"Tiruvarur", "திருவாரூர்"}, {"Mayiladuthurai", "மயிலாடுதுறை"}, {"Theni", "தேனி"},
+            {"Tenkasi", "தென்காசி"}, {"Kanyakumari", "கன்னியாகுமரி"}
+        };
+        for (String[] dist : allDistricts) {
+            try {
+                boolean exists = districtRepository.findAll().stream()
+                    .anyMatch(d -> dist[0].equalsIgnoreCase(d.getNameEn()));
+                if (!exists) {
+                    District d = new District();
+                    d.setNameEn(dist[0]);
+                    d.setNameTa(dist[1]);
+                    districtRepository.save(d);
+                }
+            } catch (Exception e) {
+                System.out.println("Could not seed district " + dist[0] + ": " + e.getMessage());
+            }
+        }
+
         if (categoryRepository.count() > 0) {
             System.out.println("Database already has data. Skipping database seeding to preserve dynamic data.");
             return;
@@ -242,13 +273,46 @@ public class DataInitializer {
         seedSubCategory(intId, "World News", "உலக செய்திகள்", "world-news", 1);
         seedSubCategory(intId, "Neighboring Countries", "அண்டை நாடுகள்", "neighbors", 2);
 
-        // 3. Seed Districts
+        // 3. Seed Districts - All 38 Tamil Nadu Districts
         System.out.println("Seeding Districts...");
         seedDistrict("Chennai", "சென்னை");
         seedDistrict("Coimbatore", "கோயம்புத்தூர்");
         seedDistrict("Madurai", "மதுரை");
-        seedDistrict("Trichy", "திருச்சி");
+        seedDistrict("Trichy", "திருச்சிராப்பள்ளி");
         seedDistrict("Salem", "சேலம்");
+        seedDistrict("Tirunelveli", "திருநெல்வேலி");
+        seedDistrict("Vellore", "வேலூர்");
+        seedDistrict("Erode", "ஈரோடு");
+        seedDistrict("Thoothukudi", "தூத்துக்குடி");
+        seedDistrict("Tiruppur", "திருப்பூர்");
+        seedDistrict("Tiruvallur", "திருவள்ளூர்");
+        seedDistrict("Kanchipuram", "காஞ்சிபுரம்");
+        seedDistrict("Chengalpattu", "செங்கல்பட்டு");
+        seedDistrict("Villupuram", "விழுப்புரம்");
+        seedDistrict("Cuddalore", "கடலூர்");
+        seedDistrict("Nagapattinam", "நாகப்பட்டினம்");
+        seedDistrict("Thanjavur", "தஞ்சாவூர்");
+        seedDistrict("Pudukkottai", "புதுக்கோட்டை");
+        seedDistrict("Sivaganga", "சிவகங்கை");
+        seedDistrict("Ramanathapuram", "ராமநாதபுரம்");
+        seedDistrict("Virudhunagar", "விருதுநகர்");
+        seedDistrict("Namakkal", "நாமக்கல்");
+        seedDistrict("Dharmapuri", "தருமபுரி");
+        seedDistrict("Krishnagiri", "கிருஷ்ணகிரி");
+        seedDistrict("Tiruvannamalai", "திருவண்ணாமலை");
+        seedDistrict("Ranipet", "ராணிப்பேட்டை");
+        seedDistrict("Tirupathur", "திருப்பத்தூர்");
+        seedDistrict("Kallakurichi", "கள்ளக்குறிச்சி");
+        seedDistrict("Ariyalur", "அரியலூர்");
+        seedDistrict("Perambalur", "பெரம்பலூர்");
+        seedDistrict("Karur", "கரூர்");
+        seedDistrict("Dindigul", "திண்டுக்கல்");
+        seedDistrict("Nilgiris", "நீலகிரி");
+        seedDistrict("Tiruvarur", "திருவாரூர்");
+        seedDistrict("Mayiladuthurai", "மயிலாடுதுறை");
+        seedDistrict("Theni", "தேனி");
+        seedDistrict("Tenkasi", "தென்காசி");
+        seedDistrict("Kanyakumari", "கன்னியாகுமரி");
 
         // 4. Seed Articles
         System.out.println("Seeding Articles...");

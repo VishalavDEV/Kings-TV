@@ -13,6 +13,16 @@ const NewsEditor = () => {
   const navigate = useNavigate();
   const isEdit = !!id;
 
+  const getPreviewUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+    const serverBase = (api.defaults.baseURL || 'http://localhost:8080/api/v1')
+      .replace(/\/api\/v1\/?$/, '')
+      .replace(/\/api\/?$/, '');
+    const normalizedUrl = url.startsWith('/') ? url : '/' + url;
+    return serverBase + normalizedUrl;
+  };
+
   const [activeTab, setActiveTab] = useState(0);
   const [categories, setCategories] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -118,7 +128,10 @@ const NewsEditor = () => {
   // Dynamically load subcategories when category changes
   useEffect(() => {
     if (form.categoryId) {
-      api.get(`/subcategories/getAllWeb?categoryId=${form.categoryId}`)
+      // Reset subcategory when category changes
+      setForm(prev => ({ ...prev, subcategoryId: '' }));
+      // Load up to 200 subcategories to avoid pagination cutoff
+      api.get(`/subcategories/getAllWeb?categoryId=${form.categoryId}&size=200`)
         .then(r => {
           if (r.data && r.data.content) {
             setSubCategories(r.data.content);
@@ -975,7 +988,7 @@ const NewsEditor = () => {
                   <div key={idx} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
                     <div style={{ height: '90px', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                       {item.type.startsWith('image/') ? (
-                        <img src={item.url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={getPreviewUrl(item.url)} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
                         <Video size={32} style={{ color: '#fff' }} />
                       )}
@@ -984,34 +997,45 @@ const NewsEditor = () => {
                       <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.name}>
                         {item.name}
                       </span>
-                      <div style={{ display: 'flex', gap: '0.25rem' }}>
-                        <button 
-                          onClick={() => insertMediaIntoTinyMCE(item.url, item.type)}
-                          style={{ flex: 1, padding: '3px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '0.65rem', cursor: 'pointer', fontWeight: 'bold' }}
-                        >
-                          Insert
-                        </button>
-                        <button 
-                          onClick={() => {
-                            navigator.clipboard.writeText(item.url);
-                            showMsg('URL copied to clipboard!');
-                          }}
-                          style={{ padding: '3px 6px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '0.65rem', cursor: 'pointer', color: 'var(--text-secondary)' }}
-                          title="Copy Link"
-                        >
-                          <Copy size={10} />
-                        </button>
-                        <button 
-                          onClick={() => {
-                            if(window.confirm('Delete this media item?')) {
-                              setMediaList(mediaList.filter((_, i) => i !== idx));
-                            }
-                          }}
-                          style={{ padding: '3px 6px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '4px', fontSize: '0.65rem', cursor: 'pointer', color: '#EF4444' }}
-                          title="Remove from list"
-                        >
-                          ✕
-                        </button>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <div style={{ display: 'flex', gap: '0.25rem' }}>
+                          <button 
+                            onClick={() => insertMediaIntoTinyMCE(item.url, item.type)}
+                            style={{ flex: 1, padding: '3px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '0.65rem', cursor: 'pointer', fontWeight: 'bold' }}
+                          >
+                            Insert
+                          </button>
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard.writeText(item.url);
+                              showMsg('URL copied to clipboard!');
+                            }}
+                            style={{ padding: '3px 6px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '0.65rem', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                            title="Copy Link"
+                          >
+                            <Copy size={10} />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              if(window.confirm('Delete this media item?')) {
+                                setMediaList(mediaList.filter((_, i) => i !== idx));
+                              }
+                            }}
+                            style={{ padding: '3px 6px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '4px', fontSize: '0.65rem', cursor: 'pointer', color: '#EF4444' }}
+                            title="Remove from list"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        {item.type && item.type.startsWith('image/') && (
+                          <button 
+                            onClick={() => { set('imageUrl', item.url); showMsg('✅ Set as featured image!'); }}
+                            style={{ width: '100%', padding: '4px', background: form.imageUrl === item.url ? '#10B981' : 'rgba(16,185,129,0.15)', color: form.imageUrl === item.url ? '#fff' : '#10B981', border: '1px solid #10B981', borderRadius: '4px', fontSize: '0.65rem', cursor: 'pointer', fontWeight: 'bold' }}
+                            title="Set as Featured Image"
+                          >
+                            {form.imageUrl === item.url ? '✅ Featured' : '⭐ Set as Featured'}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1041,23 +1065,27 @@ const NewsEditor = () => {
             <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.categoryId} onChange={e => set('categoryId', e.target.value)}>
               <option value="" style={{ color: '#000000', backgroundColor: '#ffffff' }}>— Select Category —</option>
               {categories.map(c => (
-                <option key={c.id} value={c.id} style={{ color: '#000000', backgroundColor: '#ffffff' }}>{c.name}</option>
+                <option key={c.id} value={c.id} style={{ color: '#000000', backgroundColor: '#ffffff' }}>
+                  {c.icon ? c.icon + ' ' : ''}{c.nameTa ? `${c.nameTa} / ${c.name}` : c.name}
+                </option>
               ))}
             </select>
           </div>
 
           {/* Subcategory */}
           <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
-            <label style={labelStyle}>Subcategory</label>
+            <label style={labelStyle}>Subcategory {!form.categoryId && <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 400 }}>(select category first)</span>}</label>
             <select 
-              style={{ ...inputStyle, cursor: 'pointer' }} 
+              style={{ ...inputStyle, cursor: form.categoryId ? 'pointer' : 'not-allowed', opacity: form.categoryId ? 1 : 0.5 }} 
               value={form.subcategoryId} 
               onChange={e => set('subcategoryId', e.target.value)}
               disabled={!form.categoryId}
             >
               <option value="" style={{ color: '#000000', backgroundColor: '#ffffff' }}>— Select Subcategory —</option>
               {subCategories.map(sc => (
-                <option key={sc.subcategoryId} value={sc.subcategoryId} style={{ color: '#000000', backgroundColor: '#ffffff' }}>{sc.name}</option>
+                <option key={sc.subcategoryId} value={sc.subcategoryId} style={{ color: '#000000', backgroundColor: '#ffffff' }}>
+                  {sc.nameTa ? `${sc.nameTa} / ${sc.name}` : sc.name}
+                </option>
               ))}
             </select>
           </div>
@@ -1068,7 +1096,9 @@ const NewsEditor = () => {
             <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.districtId} onChange={e => set('districtId', e.target.value)}>
               <option value="" style={{ color: '#000000', backgroundColor: '#ffffff' }}>— Select District —</option>
               {districts.map(d => (
-                <option key={d.id} value={d.id} style={{ color: '#000000', backgroundColor: '#ffffff' }}>{d.nameEn}</option>
+                <option key={d.id} value={d.id} style={{ color: '#000000', backgroundColor: '#ffffff' }}>
+                  {d.nameTa ? `${d.nameTa} / ${d.nameEn}` : d.nameEn}
+                </option>
               ))}
             </select>
           </div>
@@ -1096,7 +1126,7 @@ const NewsEditor = () => {
               </label>
             </div>
             {form.imageUrl && (
-              <img src={form.imageUrl} alt="preview" onError={e => e.target.style.display = 'none'}
+              <img src={getPreviewUrl(form.imageUrl)} alt="preview" onError={e => e.target.style.display = 'none'}
                 style={{ width: '100%', borderRadius: '8px', marginTop: '0.75rem', maxHeight: '140px', objectFit: 'cover' }} />
             )}
           </div>

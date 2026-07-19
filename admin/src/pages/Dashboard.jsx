@@ -10,7 +10,7 @@ const StatCard = ({ label, value, icon: Icon, color, subLabel, subColor, sparkli
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
       <div>
         <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 600, marginBottom: "0.25rem" }}>{label}</div>
-        <div style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--text-primary)" }}>{value ?? "—"}</div>
+        <div style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--text-primary)" }}>{value ?? "-"}</div>
         {subLabel && <div style={{ fontSize: "0.75rem", color: subColor || "var(--text-muted)", marginTop: "0.25rem" }}>{subLabel}</div>}
       </div>
       <div style={{ color, padding: "0.6rem", background: `${color}22`, borderRadius: "10px" }}>
@@ -80,7 +80,7 @@ const QuickPublishWidget = ({ onPublished }) => {
         <input style={inputStyle} placeholder="English Headline (optional)" value={form.titleEn} onChange={e => setForm(f => ({ ...f, titleEn: e.target.value }))} />
         <div style={{ display: "flex", gap: "0.75rem" }}>
           <select style={{ ...inputStyle, flex: 1 }} value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))}>
-            <option value="">— Select Category —</option>
+            <option value="">Â— Select Category Â—</option>
             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.8rem", cursor: "pointer", color: form.isBreaking ? "#EF4444" : "var(--text-secondary)", fontWeight: form.isBreaking ? 700 : 400 }}>
@@ -129,7 +129,7 @@ const Dashboard = () => {
       <div style={{ marginBottom: "2rem", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <div>
           <h1 style={{ marginBottom: "0.25rem" }}>Newsroom Command Center</h1>
-          <p className="text-secondary">Welcome back, <strong>{user?.email?.split("@")[0]}</strong> · <span style={{ color: "var(--primary)" }}>{user?.role?.replace(/_/g, " ")}</span></p>
+          <p className="text-secondary">Welcome back, <strong>{user?.email?.split("@")[0]}</strong> Â· <span style={{ color: "var(--primary)" }}>{user?.role?.replace(/_/g, " ")}</span></p>
         </div>
         <div style={{ display: "flex", gap: "0.75rem" }}>
           <NavLink to="/admin/news/create" className="btn btn-primary" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Plus size={16} /> Full Editor</NavLink>
@@ -139,7 +139,7 @@ const Dashboard = () => {
       {loading ? (
         <div className="glass-panel" style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
           <Activity size={32} style={{ margin: "0 auto 1rem", display: "block", opacity: 0.4 }} />
-          Loading dashboard data…
+          Loading dashboard dataÂ…
         </div>
       ) : (
         <>
@@ -171,7 +171,7 @@ const Dashboard = () => {
                 ))}
               </div>
               
-              <h4 style={{ marginTop: "2rem", marginBottom: "1rem", color: "var(--text-secondary)" }}>?? Top Trending Articles</h4>
+              <h4 style={{ marginTop: "2rem", marginBottom: "1rem", color: "var(--text-secondary)" }}>ðŸ”¥ Top Trending Articles</h4>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 {(newsPerf?.topArticles?.slice(0,4) || []).map((art, i) => (
                   <div key={art.id} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "var(--bg-secondary)", borderRadius: "8px", border: "1px solid var(--border-color)" }}>
@@ -194,7 +194,7 @@ const Dashboard = () => {
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                   {["#TNBudget", "#Election2026", "#Cricket", "#ChennaiRain", "#StockMarket"].map((tag, i) => (
                     <span key={tag} style={{ padding: "0.3rem 0.6rem", background: i < 2 ? "var(--primary-glow)" : "var(--bg-secondary)", color: i < 2 ? "var(--primary)" : "var(--text-secondary)", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600, border: `1px solid ${i < 2 ? "var(--primary)" : "var(--border-color)"}` }}>
-                      {tag} {i < 2 && "??"}
+                      {tag} {i < 2 && "ðŸ”¥"}
                     </span>
                   ))}
                 </div>
@@ -206,7 +206,7 @@ const Dashboard = () => {
           <div className="glass-panel" style={{ padding: "1.5rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
               <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Clock size={18} /> Recent Newsroom Activity</h3>
-              <NavLink to="/admin/audit-logs" style={{ fontSize: "0.8rem", color: "var(--primary)", textDecoration: "none" }}>View All Logs ?</NavLink>
+              <NavLink to="/admin/audit-logs" style={{ fontSize: "0.8rem", color: "var(--primary)", textDecoration: "none" }}>View All Logs â†’</NavLink>
             </div>
             {recentLogs.length === 0 ? (
               <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", textAlign: "center", padding: "1rem" }}>No recent activity.</p>
@@ -232,4 +232,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Dashboard;
