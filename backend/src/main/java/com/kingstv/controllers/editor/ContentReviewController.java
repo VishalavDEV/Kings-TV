@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -61,6 +62,7 @@ public class ContentReviewController {
      */
     @PutMapping("/articles/{id}/approve")
     @RequiresPermission(Permission.ARTICLE_PUBLISH)
+    @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
     public ResponseEntity<?> approveArticle(@PathVariable Long id) {
         return articleRepository.findById(id).map(article -> {
             // Run profanity check before publishing if auto-flagging is enabled in config
@@ -95,6 +97,7 @@ public class ContentReviewController {
      */
     @PutMapping("/articles/{id}/reject")
     @RequiresPermission(Permission.ARTICLE_REVIEW)
+    @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
     public ResponseEntity<?> rejectArticle(@PathVariable Long id, @RequestBody Map<String, String> request) {
         return articleRepository.findById(id).map(article -> {
             article.setStatus("rejected");

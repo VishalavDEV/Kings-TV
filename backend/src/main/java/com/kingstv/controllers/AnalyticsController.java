@@ -147,7 +147,52 @@ public class AnalyticsController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentDispositionFormData("attachment", "kings_analytics_report.txt");
         headers.setContentType(MediaType.TEXT_PLAIN);
-        
         return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
+    }
+
+    @GetMapping("/trending-keywords")
+    public ResponseEntity<?> getTrendingKeywords() {
+        List<Article> articles = articleRepository.findByStatusOrderByPublishedAtDesc("published");
+        Map<String, Double> keywordScores = new HashMap<>();
+
+        for (Article art : articles) {
+            double views = art.getViewsCount() != null ? art.getViewsCount().doubleValue() : 0.0;
+            List<String> keywords = new ArrayList<>();
+            
+            if (art.getFocusKeywords() != null && !art.getFocusKeywords().trim().isEmpty()) {
+                for (String k : art.getFocusKeywords().split(",")) {
+                    keywords.add(k.trim().toLowerCase());
+                }
+            }
+            if (art.getMetaKeywords() != null && !art.getMetaKeywords().trim().isEmpty()) {
+                for (String k : art.getMetaKeywords().split(",")) {
+                    keywords.add(k.trim().toLowerCase());
+                }
+            }
+
+            for (String kw : keywords) {
+                if (kw.length() < 3) {
+                    continue;
+                }
+                // Weighted Trend Score = (Appearances * 100) + Sum of views count
+                keywordScores.put(kw, keywordScores.getOrDefault(kw, 0.0) + 100.0 + views);
+            }
+        }
+
+        List<Map<String, Object>> sortedKeywords = keywordScores.entrySet().stream()
+            .map(entry -> {
+                Map<String, Object> map = new HashMap<>();
+                // Capitalize first letter of each word for clean display
+                String original = entry.getKey();
+                String capitalized = original.substring(0, 1).toUpperCase() + original.substring(1);
+                map.put("keyword", capitalized);
+                map.put("score", entry.getValue().longValue());
+                return map;
+            })
+            .sorted((a, b) -> Long.compare((Long) b.get("score"), (Long) a.get("score")))
+            .limit(10)
+            .toList();
+
+        return ResponseEntity.ok(sortedKeywords);
     }
 }

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { fetchApi, getImageUrl } from '../utils/api';
+import AdWidget from '../components/AdWidget';
 
 const Home = () => {
   const { lang, t } = useContext(LanguageContext);
@@ -44,6 +45,7 @@ const Home = () => {
   });
 
   const [trendingNews, setTrendingNews] = useState([]);
+  const [aggregatedNews, setAggregatedNews] = useState([]);
   const [caseStudies, setCaseStudies] = useState([]);
 
   // Crowd Reporter States
@@ -240,6 +242,15 @@ const Home = () => {
         }
       })
       .catch(() => {});
+
+    // Fetch RSS Aggregated News
+    fetchApi('/rss-aggregator/latest?page=0&size=5')
+      .then(data => {
+        if (data && Array.isArray(data.content)) {
+          setAggregatedNews(data.content);
+        }
+      })
+      .catch(err => console.warn("Could not load RSS aggregated news", err));
 
     // 11. Fetch Institution News
     fetchApi('/articles/public/institution-news')
@@ -733,6 +744,42 @@ const Home = () => {
     );
   };
 
+  const renderRssAggregatedNews = () => {
+    return (
+      <div className="trending-list" style={{ marginBottom: '20px', padding: '15px', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+        <h4 style={{ margin: '0 0 15px', fontSize: '15px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <i className="fas fa-rss" style={{ color: '#F59E0B' }}></i>{' '}
+          {lang === 'en' ? 'From Other Sources' : 'இதர செய்தி ஊடகங்கள்'}
+        </h4>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {aggregatedNews && aggregatedNews.length > 0 ? (
+            aggregatedNews.slice(0, 5).map((item, idx) => (
+              <a href={item.externalLink} target="_blank" rel="noopener noreferrer noindex" key={item.id || idx} style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                  {item.sourceLogo && (
+                    <img src={item.sourceLogo} alt={item.sourceName} style={{ width: '22px', height: '22px', borderRadius: '4px', objectFit: 'contain', marginTop: '2px', background: '#f1f5f9', padding: '2px' }} />
+                  )}
+                  <div>
+                    <h5 style={{ margin: '0 0 4px', fontSize: '13px', fontWeight: '600', lineHeight: '1.4', color: 'var(--text-primary)' }}>{item.title}</h5>
+                    <div style={{ display: 'flex', gap: '8px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                      <span>{item.sourceName}</span>
+                      <span>•</span>
+                      <span>{new Date(item.publishedTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            ))
+          ) : (
+            <div style={{ padding: '10px 0', fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center' }}>
+              {lang === 'en' ? 'No recent external articles' : 'செய்திகள் எதுவும் இல்லை'}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderWeather = () => {
     return (
       <div className="weather-widget">
@@ -982,6 +1029,7 @@ const Home = () => {
       case 'crowd_reporter_highlight': return renderCrowdReporterHighlight();
       case 'institution_news': return renderInstitutionNews();
       case 'trending_sidebar': return renderTrendingSidebar();
+      case 'rss_aggregator': return renderRssAggregatedNews();
       case 'weather': return renderWeather();
       case 'live_tv': return renderLiveTv();
       case 'business_case': return renderBusinessCase();
@@ -1003,6 +1051,11 @@ const Home = () => {
         </React.Fragment>
       ))}
 
+      {/* HEADER BANNER SPONSORED AD */}
+      <div className="container" style={{ margin: '20px auto 0 auto', padding: '0 15px' }}>
+        <AdWidget placement="header" />
+      </div>
+
       {/* MAIN LAYOUT SPLIT */}
       <div className="container main-layout-container">
         <div className="left-content-column">
@@ -1014,7 +1067,8 @@ const Home = () => {
         </div>
 
         <aside className="trending-sidebar" style={{ maxWidth: `${widgetWidth}px` }}>
-          {getSortedSections(['trending_sidebar', 'weather', 'live_tv', 'business_case', 'crowd_reporter']).map(sec => (
+          <AdWidget placement="sidebar" />
+          {getSortedSections(['trending_sidebar', 'rss_aggregator', 'weather', 'live_tv', 'business_case', 'crowd_reporter']).map(sec => (
             <React.Fragment key={sec.sectionKey}>
               {getRenderedSection(sec.sectionKey)}
             </React.Fragment>

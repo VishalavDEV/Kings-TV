@@ -9,6 +9,7 @@ import com.kingstv.repository.UserRepository;
 import com.kingstv.services.SlugService;
 import com.kingstv.services.StorageService;
 import com.kingstv.services.SeoGeneratorService;
+import com.kingstv.services.TelegramBotService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -59,6 +60,12 @@ public class ArticleController {
 
     @Autowired
     private StorageService storageService;
+
+    @Autowired
+    private TelegramBotService telegramBotService;
+
+    @Autowired
+    private com.kingstv.services.SystemConfigService configService;
 
     // --- KEEP Existing Front-End Endpoint Map ---
     @GetMapping
@@ -129,6 +136,11 @@ public class ArticleController {
         }
         populateSeoFields(article, request);
         Article saved = articleRepository.save(article);
+        if ("published".equals(saved.getStatus()) && !saved.getTelegramSent()) {
+            telegramBotService.pushArticleToChannel(saved);
+            saved.setTelegramSent(true);
+            saved = articleRepository.save(saved);
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
@@ -234,6 +246,7 @@ public class ArticleController {
 
     @PostMapping("/saveUpdate")
     @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN})
+    @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
     public ResponseEntity<?> save(@RequestBody Article entity, HttpServletRequest request) {
         return createArticle(entity, request);
     }
@@ -274,6 +287,11 @@ public class ArticleController {
         
         populateSeoFields(article, request);
         Article updated = articleRepository.save(article);
+        if ("published".equals(updated.getStatus()) && !updated.getTelegramSent()) {
+            telegramBotService.pushArticleToChannel(updated);
+            updated.setTelegramSent(true);
+            updated = articleRepository.save(updated);
+        }
         return ResponseEntity.ok(updated);
     }
 
@@ -293,6 +311,10 @@ public class ArticleController {
         }
         Article existing = opt.get();
         existing.setStatus(status);
+        if ("published".equals(status) && !existing.getTelegramSent()) {
+            telegramBotService.pushArticleToChannel(existing);
+            existing.setTelegramSent(true);
+        }
         articleRepository.save(existing);
         return ResponseEntity.ok(Map.of("message", "Status updated successfully", "id", id, "status", status));
     }
@@ -449,5 +471,64 @@ public class ArticleController {
                 "facebook", "https://facebook.com/kingstv"
             ));
         }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Author profile not found")));
+    }
+
+    @GetMapping(value = "/public/news/{id}/amp", produces = "text/html;charset=UTF-8")
+    @ResponseBody
+    public String getAmpArticle(@PathVariable Long id, HttpServletRequest request) {
+        Optional<Article> artOpt = articleRepository.findById(id);
+        if (artOpt.isEmpty()) {
+            return "<html><body><h1>Article Not Found</h1></body></html>";
+        }
+        Article article = artOpt.get();
+        String title = article.getTitleTa() != null ? article.getTitleTa() : "";
+        String content = article.getContentTa() != null ? article.getContentTa() : "";
+        String author = article.getAuthorName() != null ? article.getAuthorName() : "Kings TV News Desk";
+        String date = article.getPublishedAt() != null ? article.getPublishedAt().toString() : LocalDateTime.now().toString();
+        
+        String appUrl = configService.getConfigValueOrDefault("app.web_url", "http://localhost:5173");
+        String canonicalUrl = appUrl + "/news/" + article.getId();
+        
+        // Convert standard images in content to amp-img
+        String processedContent = content;
+        processedContent = processedContent.replaceAll("<img([^>]+)>", "<amp-img$1 layout=\"responsive\" width=\"600\" height=\"400\"></amp-img>");
+
+        String ampImgTag = "";
+        if (article.getImageUrl() != null && !article.getImageUrl().isEmpty()) {
+            ampImgTag = "<amp-img src=\"" + article.getImageUrl() + "\" width=\"600\" height=\"400\" layout=\"responsive\" alt=\"" + title + "\"></amp-img>";
+        }
+
+        return "<!doctype html>\n" +
+                "<html amp lang=\"ta\">\n" +
+                "<head>\n" +
+                "  <meta charset=\"utf-8\">\n" +
+                "  <script async src=\"https://cdn.ampproject.org/v0.js\"></script>\n" +
+                "  <title>" + title + "</title>\n" +
+                "  <link rel=\"canonical\" href=\"" + canonicalUrl + "\">\n" +
+                "  <meta name=\"viewport\" content=\"width=device-width,minimum-scale=1,initial-scale=1\">\n" +
+                "  <style amp-boilerplate>body{-webkit-animation:-amp-start 8s steps(1,end) 0s 1 normal both;-moz-animation:-amp-start 8s steps(1,end) 0s 1 normal both;-ms-animation:-amp-start 8s steps(1,end) 0s 1 normal both;animation:-amp-start 8s steps(1,end) 0s 1 normal both}@-webkit-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-moz-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-ms-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-o-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}</style><noscript><style amp-boilerplate>body{-webkit-animation:none;-moz-animation:none;-ms-animation:none;animation:none}</style></noscript>\n" +
+                "  <style amp-custom>\n" +
+                "    body { font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #111827; background-color: #f9fafb; margin: 0; padding: 0; }\n" +
+                "    .header { background-color: #1e3a8a; color: white; padding: 16px; text-align: center; font-weight: bold; font-size: 20px; text-transform: uppercase; letter-spacing: 1px; }\n" +
+                "    .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }\n" +
+                "    h1 { font-size: 24px; color: #1e3a8a; margin-top: 10px; margin-bottom: 8px; }\n" +
+                "    .meta { font-size: 13px; color: #6b7280; margin-bottom: 20px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }\n" +
+                "    .content { font-size: 16px; color: #374151; }\n" +
+                "    .footer { text-align: center; padding: 24px; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb; margin-top: 40px; }\n" +
+                "  </style>\n" +
+                "</head>\n" +
+                "<body>\n" +
+                "  <div class=\"header\">KINGS 24x7 NEWS</div>\n" +
+                "  <div class=\"container\">\n" +
+                "    <h1>" + title + "</h1>\n" +
+                "    <div class=\"meta\">By " + author + " | Published: " + date + "</div>\n" +
+                "    " + ampImgTag + "\n" +
+                "    <div class=\"content\">\n" +
+                "      " + processedContent + "\n" +
+                "    </div>\n" +
+                "  </div>\n" +
+                "  <div class=\"footer\">&copy; 2026 Kings TV News Media. All rights reserved.</div>\n" +
+                "</body>\n" +
+                "</html>";
     }
 }

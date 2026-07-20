@@ -85,6 +85,11 @@
             <artifactId>auth</artifactId>
             <version>2.20.68</version>
         </dependency>
+        <dependency>
+            <groupId>org.sejda.imageio</groupId>
+            <artifactId>webp-imageio</artifactId>
+            <version>0.1.6</version>
+        </dependency>
 
         <!-- Spring Cache -->
         <dependency>
@@ -104,6 +109,23 @@
             <groupId>com.warrenstrange</groupId>
             <artifactId>googleauth</artifactId>
             <version>1.5.0</version>
+        </dependency>
+        <!-- ROME RSS Parser -->
+        <dependency>
+            <groupId>com.rometools</groupId>
+            <artifactId>rome</artifactId>
+            <version>2.1.0</version>
+        </dependency>
+        <!-- Spring Boot Starter Data Redis -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <!-- Spring Boot Starter Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

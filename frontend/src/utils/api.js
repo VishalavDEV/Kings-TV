@@ -56,7 +56,43 @@ const translateVideo = (vid, lang) => {
   };
 };
 
+const circuits = {}; // Maps base endpoint -> { status, failures, lastFailureTime }
+const COOL_DOWN_MS = 30000; // 30 seconds
+const MAX_FAILURES = 3;
+
 export const fetchApi = async (endpoint, options = {}) => {
+  const method = options.method || 'GET';
+  const cacheKey = `api_cache_${endpoint}`;
+  
+  // Strip query parameters to track circuit state per base endpoint
+  const basePath = endpoint.split('?')[0];
+  let circuit = circuits[basePath];
+  if (!circuit) {
+    circuit = { status: 'closed', failures: 0, lastFailureTime: 0 };
+    circuits[basePath] = circuit;
+  }
+
+  // Check if circuit is open
+  if (circuit.status === 'open') {
+    const elapsed = Date.now() - circuit.lastFailureTime;
+    if (elapsed > COOL_DOWN_MS) {
+      // Transition to half-open
+      circuit.status = 'half-open';
+      console.warn(`[Circuit Breaker] Half-opening connection for endpoint: ${basePath}`);
+    } else {
+      // Circuit is open, instantly return fallback cache if available
+      console.warn(`[Circuit Breaker] Blocked call to ${basePath} (Circuit is OPEN)`);
+      if (method === 'GET' || method === 'get') {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          console.info(`[Resilience] Serving fallback stale cache for blocked endpoint: ${endpoint}`);
+          return JSON.parse(cached);
+        }
+      }
+      throw new Error(`Circuit breaker open for endpoint: ${basePath}`);
+    }
+  }
+
   const session = JSON.parse(localStorage.getItem('king24x7_session') || 'null');
   const headers = {
     ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
@@ -64,25 +100,65 @@ export const fetchApi = async (endpoint, options = {}) => {
     ...options.headers
   };
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers
-  });
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers
+    });
 
-  if (!response.ok) {
-    throw new Error(`API error: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  const lang = localStorage.getItem('king24x7_lang') || 'en';
-
-  if (endpoint.startsWith('/videos') && lang === 'en') {
-    if (Array.isArray(data)) {
-      return data.map(v => translateVideo(v, lang));
-    } else if (data && typeof data === 'object') {
-      return translateVideo(data, lang);
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
     }
-  }
 
-  return data;
+    const data = await response.json();
+
+    // Success: reset circuit state
+    if (circuit.status !== 'closed') {
+      console.info(`[Circuit Breaker] Closing circuit for endpoint: ${basePath} after success`);
+    }
+    circuit.status = 'closed';
+    circuit.failures = 0;
+
+    // Cache successful GET responses
+    if (method === 'GET' || method === 'get') {
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(data));
+      } catch (e) {
+        console.warn('[Resilience] Failed to write API response to localStorage cache:', e);
+      }
+    }
+
+    const lang = localStorage.getItem('king24x7_lang') || 'en';
+
+    if (endpoint.startsWith('/videos') && lang === 'en') {
+      if (Array.isArray(data)) {
+        return data.map(v => translateVideo(v, lang));
+      } else if (data && typeof data === 'object') {
+        return translateVideo(data, lang);
+      }
+    }
+
+    return data;
+
+  } catch (error) {
+    // Failure: increment failure counts and trip circuit if limit reached
+    circuit.failures++;
+    circuit.lastFailureTime = Date.now();
+    
+    if (circuit.failures >= MAX_FAILURES) {
+      circuit.status = 'open';
+      console.error(`[Circuit Breaker] Tripped OPEN for endpoint: ${basePath} after ${circuit.failures} failures. Cool-down: 30s.`);
+    }
+
+    // Try serving fallback content from cache
+    if (method === 'GET' || method === 'get') {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        console.warn(`[Resilience] Network failed for ${endpoint}. Serving stale cache as fallback. Error: ${error.message}`);
+        return JSON.parse(cached);
+      }
+    }
+
+    throw error;
+  }
 };

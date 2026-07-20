@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
 import { fetchApi } from '../utils/api';
+import AdWidget from '../components/AdWidget';
 
 const ArticleDetail = () => {
   const { id } = useParams();
@@ -49,6 +50,25 @@ const ArticleDetail = () => {
       }
     } catch (e) {}
   }, [id]);
+
+  useEffect(() => {
+    if (article && article.id) {
+      let linkEl = document.querySelector('link[rel="amphtml"]');
+      if (!linkEl) {
+        linkEl = document.createElement('link');
+        linkEl.setAttribute('rel', 'amphtml');
+        document.head.appendChild(linkEl);
+      }
+      const baseApi = import.meta.env.VITE_API_BASE || 'http://localhost:8080/api/v1';
+      linkEl.setAttribute('href', `${baseApi}/articles/public/news/${article.id}/amp`);
+
+      return () => {
+        if (linkEl && linkEl.parentNode) {
+          linkEl.parentNode.removeChild(linkEl);
+        }
+      };
+    }
+  }, [article]);
 
   const toggleOfflineSave = () => {
     try {
@@ -830,6 +850,9 @@ const ArticleDetail = () => {
             style={{ fontSize: '16px', lineHeight: 1.8, color: 'var(--text-dark)' }}
             dangerouslySetInnerHTML={{ __html: lang === 'en' ? (article.contentEn || article.contentTa) : article.contentTa }}
           />
+
+          {/* MID-ARTICLE FEED AD WIDGET */}
+          <AdWidget placement="mid-article" />
 
           {/* Clickable Tags */}
           <div className="article-tags" id="articleTags" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '24px 0' }}>

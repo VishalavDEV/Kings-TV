@@ -69,6 +69,9 @@ public class SystemConfig {
     public static final String AI_LLM_API_KEY = "ai.llm_api_key";
     public static final String AI_LLM_API_URL = "ai.llm_api_url";
     public static final String AI_LLM_MODEL = "ai.llm_model";
+    public static final String TELEGRAM_BOT_TOKEN = "telegram.bot_token";
+    public static final String TELEGRAM_CHAT_ID = "telegram.chat_id";
+    public static final String TELEGRAM_ENABLED = "telegram.enabled";
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
