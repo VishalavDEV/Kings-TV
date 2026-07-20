@@ -2,6 +2,7 @@ package com.kingstv.controllers;
 
 import com.kingstv.models.*;
 import com.kingstv.services.WishService;
+import com.kingstv.services.StorageService;
 import com.kingstv.repository.DistrictRepository;
 import com.kingstv.repository.WishCategoryRepository;
 import com.kingstv.repository.WishFrameTemplateRepository;
@@ -32,6 +33,9 @@ public class WishController {
 
     @Autowired
     private WishService wishService;
+
+    @Autowired
+    private StorageService storageService;
 
     @Autowired
     private WishCategoryRepository wishCategoryRepository;
@@ -355,21 +359,9 @@ public class WishController {
             return ResponseEntity.badRequest().body(Map.of("message", "File is empty"));
         }
         try {
-            Path uploadPath = Paths.get("uploads/wishes");
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-            String contentType = file.getContentType();
-            String extension = ".jpg";
-            if (contentType != null && contentType.equals("image/png")) {
-                extension = ".png";
-            }
-            String fileName = "wish_" + System.currentTimeMillis() + "_" + (int)(Math.random() * 1000) + extension;
-            Path filePath = uploadPath.resolve(fileName);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            return ResponseEntity.ok(Map.of("url", "/uploads/wishes/" + fileName));
-        } catch (IOException e) {
+            String url = storageService.uploadFile(file, "wishes");
+            return ResponseEntity.ok(Map.of("url", url));
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Failed to upload image: " + e.getMessage()));
         }

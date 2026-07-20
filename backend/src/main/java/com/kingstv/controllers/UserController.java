@@ -3,6 +3,7 @@ package com.kingstv.controllers;
 import com.kingstv.models.User;
 import com.kingstv.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.kingstv.services.StorageService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,9 @@ public class UserController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private StorageService storageService;
 
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(Principal principal) {
@@ -105,30 +109,16 @@ public class UserController {
         User user = userOpt.get();
 
         try {
-            Path uploadPath = Paths.get("uploads/profile");
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-
-            String extension = ".jpg";
-            if (contentType.equals("image/png")) {
-                extension = ".png";
-            }
-            String fileName = user.getId() + "_" + System.currentTimeMillis() + extension;
-            Path filePath = uploadPath.resolve(fileName);
-
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            String relativeUrl = "/uploads/profile/" + fileName;
-            user.setProfileImage(relativeUrl);
+            String url = storageService.uploadFile(file, "profile");
+            user.setProfileImage(url);
             userRepository.save(user);
 
             return ResponseEntity.ok(Map.of(
-                "profileImage", relativeUrl,
+                "profileImage", url,
                 "message", "Profile picture updated successfully"
             ));
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Failed to store file: " + e.getMessage()));
         }

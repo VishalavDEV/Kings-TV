@@ -4,6 +4,7 @@ import com.kingstv.models.*;
 import com.kingstv.repository.*;
 import com.kingstv.security.RequiresPermission;
 import com.kingstv.services.ProfanityService;
+import com.kingstv.services.SystemConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -31,6 +33,7 @@ public class ContentReviewController {
     @Autowired private UgcSubmissionRepository ugcSubmissionRepository;
     @Autowired private ProfanityService profanityService;
     @Autowired private AuditLogRepository auditLogRepository;
+    @Autowired private SystemConfigService systemConfigService;
 
     /**
      * List pending articles for review (#25)
@@ -59,21 +62,26 @@ public class ContentReviewController {
      */
     @PutMapping("/articles/{id}/approve")
     @RequiresPermission(Permission.ARTICLE_PUBLISH)
+    @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
     public ResponseEntity<?> approveArticle(@PathVariable Long id) {
         return articleRepository.findById(id).map(article -> {
-            // Run profanity check before publishing
-            ProfanityService.ProfanityCheckResult check = profanityService.checkContent(
-                "ARTICLE", article.getId(), article.getTitleEn(),
-                null, null,
-                article.getTitleTa(), article.getTitleEn(),
-                article.getContentTa(), article.getContentEn()
-            );
+            // Run profanity check before publishing if auto-flagging is enabled in config
+            String autoFlagEnabledStr = systemConfigService.getConfigValueOrDefault("profanity.auto_flagging", "true");
+            boolean autoFlagEnabled = Boolean.parseBoolean(autoFlagEnabledStr);
+            if (autoFlagEnabled) {
+                ProfanityService.ProfanityCheckResult check = profanityService.checkContent(
+                    "ARTICLE", article.getId(), article.getTitleEn(),
+                    null, null,
+                    article.getTitleTa(), article.getTitleEn(),
+                    article.getContentTa(), article.getContentEn()
+                );
 
-            if (!check.isClean()) {
-                return ResponseEntity.badRequest().body(Map.of(
-                    "message", "Content contains profanity and cannot be published",
-                    "matchedTerms", check.getMatchedTerms()
-                ));
+                if (!check.isClean()) {
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "message", "Content contains profanity and cannot be published",
+                        "matchedTerms", check.getMatchedTerms()
+                    ));
+                }
             }
 
             article.setStatus("published");
@@ -89,6 +97,7 @@ public class ContentReviewController {
      */
     @PutMapping("/articles/{id}/reject")
     @RequiresPermission(Permission.ARTICLE_REVIEW)
+    @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
     public ResponseEntity<?> rejectArticle(@PathVariable Long id, @RequestBody Map<String, String> request) {
         return articleRepository.findById(id).map(article -> {
             article.setStatus("rejected");

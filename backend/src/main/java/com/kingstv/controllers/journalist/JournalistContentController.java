@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -69,6 +70,7 @@ public class JournalistContentController {
      */
     @PostMapping
     @RequiresPermission(Permission.ARTICLE_CREATE)
+    @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
     public ResponseEntity<?> createPost(@RequestBody Map<String, Object> request) {
         Long userId = getCallerId();
         String userRole = getCallerRole();
@@ -127,6 +129,7 @@ public class JournalistContentController {
      */
     @PutMapping("/{id}")
     @RequiresPermission(Permission.ARTICLE_UPDATE)
+    @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
     public ResponseEntity<?> editPost(@PathVariable Long id, @RequestBody Map<String, Object> request) {
         Long userId = getCallerId();
         String userRole = getCallerRole();

@@ -58,6 +58,7 @@ public class SystemConfig {
     public static final String CDN_API_KEY = "cdn.api_key";
     public static final String LIVE_STREAM_SERVER_URL = "livestream.server_url";
     public static final String LIVE_STREAM_BROADCAST_URL = "livestream.broadcast_url";
+    public static final String MAINTENANCE_MODE = "system.maintenance_mode";
     public static final String LIVE_STREAM_KEY = "livestream.stream_key";
     public static final String PWA_NAME = "pwa.name";
     public static final String PWA_SHORT_NAME = "pwa.short_name";
@@ -68,6 +69,9 @@ public class SystemConfig {
     public static final String AI_LLM_API_KEY = "ai.llm_api_key";
     public static final String AI_LLM_API_URL = "ai.llm_api_url";
     public static final String AI_LLM_MODEL = "ai.llm_model";
+    public static final String TELEGRAM_BOT_TOKEN = "telegram.bot_token";
+    public static final String TELEGRAM_CHAT_ID = "telegram.chat_id";
+    public static final String TELEGRAM_ENABLED = "telegram.enabled";
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

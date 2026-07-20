@@ -2,6 +2,7 @@ package com.kingstv.controllers;
 
 import com.kingstv.models.ReportNews;
 import com.kingstv.repository.ReportNewsRepository;
+import com.kingstv.services.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +23,9 @@ public class ReportNewsController {
 
     @Autowired
     private ReportNewsRepository reportNewsRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     @GetMapping("/getAll")
     public Page<ReportNews> getAll(
@@ -58,6 +62,23 @@ public class ReportNewsController {
             entity.setCreatedAt(LocalDateTime.now());
         }
         ReportNews saved = reportNewsRepository.save(entity);
+        try {
+            String emailText = String.format(
+                "A new crowd news report has been submitted.\n\n" +
+                "Reporter: %s\n" +
+                "Contact: %s\n" +
+                "Title: %s\n" +
+                "Details: %s\n" +
+                "Status: Pending Review\n",
+                saved.getReporterName(),
+                saved.getReporterContact(),
+                saved.getTitle(),
+                saved.getDetails()
+            );
+            emailService.sendSimpleMessage("editor@kingstv.com", "New Crowd News Report: " + saved.getTitle(), emailText);
+        } catch (Exception e) {
+            System.err.println("Failed to trigger email notification for news report submission: " + e.getMessage());
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 

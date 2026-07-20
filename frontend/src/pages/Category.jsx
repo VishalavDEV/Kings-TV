@@ -101,6 +101,7 @@ const Category = () => {
       breadTa: 'அரசியல்',
       breadEn: 'Politics',
       themeClass: 'theme-politics',
+      color: '#1D4ED8',
       subcatsTa: ['அனைத்தும்', 'மாநிலம்', 'தேசியம்', 'சர்வதேசம்', 'அரசு கொள்கைகள்'],
       subcatsEn: ['All', 'State', 'National', 'International', 'Governance'],
       articles: [
@@ -176,6 +177,7 @@ const Category = () => {
       breadTa: 'வணிகம்',
       breadEn: 'Business',
       themeClass: 'theme-business',
+      color: '#059669',
       subcatsTa: ['அனைத்தும்', 'சந்தை', 'நிறுவனங்கள்', 'முதலீடு', 'ஸ்டார்ட்அப்'],
       subcatsEn: ['All', 'Markets', 'Companies', 'Investment', 'Startups'],
       articles: [
@@ -235,6 +237,7 @@ const Category = () => {
       breadTa: 'விளையாட்டு',
       breadEn: 'Sports',
       themeClass: 'theme-sports',
+      color: '#EA580C',
       subcatsTa: ['அனைத்தும்', 'கிரிக்கெட்', 'கால்பந்து', 'டென்னிஸ்', 'உள்ளூர்'],
       subcatsEn: ['All', 'Cricket', 'Football', 'Tennis', 'Local Sports'],
       articles: [
@@ -278,6 +281,7 @@ const Category = () => {
       breadTa: 'பொழுதுபோக்கு',
       breadEn: 'Entertainment',
       themeClass: 'theme-cinema',
+      color: '#DB2777',
       subcatsTa: ['அனைத்தும்', 'கோலிவுட்', 'பாலிவுட்', 'விமர்சனங்கள்', 'இசை'],
       subcatsEn: ['All', 'Kollywood', 'Bollywood', 'Reviews', 'Music'],
       articles: [
@@ -321,6 +325,7 @@ const Category = () => {
       breadTa: 'தொழில்நுட்பம்',
       breadEn: 'Tech',
       themeClass: 'theme-tech',
+      color: '#7C3AED',
       subcatsTa: ['அனைத்தும்', 'ஸ்மார்ட்போன்', 'மென்பொருள்', 'AI', 'விண்வெளி'],
       subcatsEn: ['All', 'Smartphones', 'Software', 'AI', 'Space'],
       articles: [
@@ -364,6 +369,7 @@ const Category = () => {
       breadTa: 'சர்வதேசம்',
       breadEn: 'International',
       themeClass: 'theme-international',
+      color: '#0F172A',
       subcatsTa: ['அனைத்தும்', 'தேசியம்', 'சர்வதேசம்', 'உலக செய்திகள்'],
       subcatsEn: ['All', 'National', 'International', 'World News'],
       articles: [
@@ -391,6 +397,7 @@ const Category = () => {
       breadTa: 'சர்வதேசம்',
       breadEn: 'International',
       themeClass: 'theme-international',
+      color: '#0F172A',
       subcatsTa: ['அனைத்தும்', 'தேசியம்', 'சர்வதேசம்', 'உலக செய்திகள்'],
       subcatsEn: ['All', 'National', 'International', 'World News'],
       articles: [
@@ -453,8 +460,8 @@ const Category = () => {
             type: item.viewsCount > 100 ? 'featured' : 'recent',
             dateTa: '1 மணி நேரம்',
             dateEn: '1 Hr Ago',
-            readTimeTa: '3 நிமிட வாசிப்பு',
-            readTimeEn: '3 Min Read',
+            readTimeTa: `${item.readingTime || 1} நிமிட வாசிப்பு`,
+            readTimeEn: `${item.readingTime || 1} Min Read`,
             imageUrl: item.imageUrl,
             gradient: 'linear-gradient(135deg, #1E40AF, #3B82F6)'
           }));
@@ -517,9 +524,9 @@ const Category = () => {
   }
 
   return (
-    <main className="news-section" style={{ width: '100%' }}>
+    <main className="news-section" style={{ width: '100%', '--category-color': currentCat.color || 'var(--primary)' }}>
       {/* CATEGORY HEADER BLOCK */}
-      <div className="category-header">
+      <div className="category-header" style={{ padding: '30px 0', borderBottom: '1px solid var(--border-color)' }}>
         <div className="container">
           {/* Breadcrumbs */}
           <div className="breadcrumbs">
@@ -528,9 +535,49 @@ const Category = () => {
             <span>{lang === 'en' ? currentCat.breadEn : currentCat.breadTa}</span>
           </div>
 
-          <h1>{lang === 'en' ? currentCat.titleEn : currentCat.titleTa}</h1>
+          <h1 style={{ fontSize: '28px', fontWeight: 800, margin: '16px 0 20px 0' }}>
+            {lang === 'en' ? currentCat.titleEn : currentCat.titleTa}
+          </h1>
 
-
+          {/* Subcategory scroller tabs */}
+          <div className="subcategory-tabs" style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '12px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            {subcategories.map((sub, idx) => {
+              const isActive = selectedSubcat === sub;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedSubcat(sub)}
+                  style={{
+                    padding: '8px 20px',
+                    borderRadius: '30px',
+                    border: '1px solid',
+                    borderColor: isActive ? 'var(--category-color, var(--primary))' : 'var(--border-color)',
+                    background: isActive ? 'var(--category-color, var(--primary))' : 'transparent',
+                    color: isActive ? 'white' : 'var(--text-muted)',
+                    fontWeight: isActive ? 700 : 600,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.borderColor = 'var(--category-color, var(--primary))';
+                      e.currentTarget.style.color = 'var(--category-color, var(--primary))';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.borderColor = 'var(--border-color)';
+                      e.currentTarget.style.color = 'var(--text-muted)';
+                    }
+                  }}
+                >
+                  {sub}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 

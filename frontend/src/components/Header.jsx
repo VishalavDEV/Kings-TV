@@ -109,6 +109,7 @@ const Header = () => {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [navCategories, setNavCategories] = useState([]);
+  const [menuItems, setMenuItems] = useState([]);
   const [showHeaderSubcatDropdown, setShowHeaderSubcatDropdown] = useState(false);
   const [districtsList, setDistrictsList] = useState([]);
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -208,6 +209,26 @@ const Header = () => {
   };
 
   const getDynamicNavItems = () => {
+    if (menuItems && menuItems.length > 0) {
+      return menuItems.map(item => ({
+        id: item.id,
+        path: item.linkUrl,
+        label: lang === 'en' ? item.titleEn : item.titleTa,
+        subcategories: (item.subcategories || []).map(sub => ({
+          id: sub.id,
+          path: sub.linkUrl,
+          name: sub.titleEn,
+          nameTa: sub.titleTa,
+          subcategories: (sub.subcategories || []).map(subsub => ({
+            id: subsub.id,
+            path: subsub.linkUrl,
+            name: subsub.titleEn,
+            nameTa: subsub.titleTa
+          }))
+        }))
+      }));
+    }
+
     let dynamicItems = [];
     if (navCategories && navCategories.length > 0) {
       const dbItems = navCategories.map(cat => {
@@ -456,6 +477,14 @@ const Header = () => {
         }
       })
       .catch(err => console.warn("Header failed to load categories", err));
+
+    fetchApi('/public/menus')
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setMenuItems(data);
+        }
+      })
+      .catch(err => console.warn("Header failed to load public menus", err));
 
     fetchApi('/videos')
       .then(data => {

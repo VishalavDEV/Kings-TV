@@ -66,6 +66,9 @@ public class DataInitializer {
     private HomeLayoutConfigRepository homeLayoutConfigRepository;
 
     @Autowired
+    private NavigationMenuRepository navigationMenuRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -76,6 +79,9 @@ public class DataInitializer {
 
     @Autowired
     private NfcTapHistoryRepository nfcTapHistoryRepository;
+
+    @Autowired
+    private AdvertisementRepository adRepository;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -152,6 +158,8 @@ public class DataInitializer {
                 System.out.println("Could not seed district " + dist[0] + ": " + e.getMessage());
             }
         }
+
+        seedAdvertisements();
 
         if (categoryRepository.count() > 0) {
             System.out.println("Database already has data. Skipping database seeding to preserve dynamic data.");
@@ -535,11 +543,16 @@ public class DataInitializer {
         // 14. Seed System Configurations
         System.out.println("Seeding System Configs...");
         seedSystemConfig(SystemConfig.GPS_NEWS_RADIUS_KM, "15.0", "gps", "GPS news radius in km");
+        seedSystemConfig(SystemConfig.MAINTENANCE_MODE, "false", "system", "Whether the system is undergoing maintenance (true/false)");
         seedSystemConfig(SystemConfig.VIDEO_MAX_DURATION_SECONDS, "55", "video", "Maximum video duration in seconds");
         seedSystemConfig(SystemConfig.PWA_NAME, "KING24X7 News", "pwa", "PWA full application name");
         seedSystemConfig(SystemConfig.PWA_SHORT_NAME, "KING24X7", "pwa", "PWA short application name");
         seedSystemConfig(SystemConfig.PWA_THEME_COLOR, "#1e3a8a", "pwa", "PWA theme brand color");
         seedSystemConfig(SystemConfig.PWA_BACKGROUND_COLOR, "#ffffff", "pwa", "PWA background color");
+        seedSystemConfig(SystemConfig.CDN_BASE_URL, "", "s3", "CDN Base URL for AWS S3 Assets");
+        seedSystemConfig(SystemConfig.TELEGRAM_BOT_TOKEN, "", "telegram", "Telegram Bot API Auth Token");
+        seedSystemConfig(SystemConfig.TELEGRAM_CHAT_ID, "", "telegram", "Telegram Channel/Chat Target ID");
+        seedSystemConfig(SystemConfig.TELEGRAM_ENABLED, "false", "telegram", "Enable or disable automatic Telegram pushes (true/false)");
 
         // 15. Seed Profanity Words
         System.out.println("Seeding Profanity Words...");
@@ -561,9 +574,38 @@ public class DataInitializer {
         seedLayoutSection("business_case", "💼 Business Case Studies", 10, "WEB");
         seedLayoutSection("crowd_reporter", "📢 Crowd Reporter", 11, "WEB");
         seedLayoutSection("news_digest", "📑 News Digest", 12, "WEB");
+        seedLayoutSection("crowd_reporter_highlight", "📢 Crowd Reporter Highlights", 13, "WEB");
+        seedLayoutSection("institution_news", "🏫 Institution News", 14, "WEB");
         
         seedLayoutSection("mobile_hero", "Trending Stories Feed", 1, "MOBILE");
         seedLayoutSection("mobile_live_tv", "Live Broadcast", 2, "MOBILE");
+
+        if (navigationMenuRepository.count() == 0) {
+            System.out.println("Seeding Navigation Menu Links...");
+            seedMenu("முகப்பு", "Home", "/", 1, null);
+            seedMenu("அரசியல்", "Politics", "/category/politics", 2, null);
+            seedMenu("வணிகம்", "Business", "/category/business", 3, null);
+            seedMenu("விளையாட்டு", "Sports", "/category/sports", 4, null);
+            seedMenu("பொழுதுபோக்கு", "Cinema", "/category/cinema", 5, null);
+            seedMenu("தொழில்நுட்பம்", "Technology", "/category/tech", 6, null);
+
+            NavigationMenu regional = seedMenu("நம்ம ஊர்", "Regional", "/directory", 7, null);
+            seedMenu("நம்ம ஊர்", "Local Business Directory", "/directory", 1, regional.getId());
+            seedMenu("வாழ்த்து", "Wishes", "/wishes", 2, regional.getId());
+            seedMenu("இரங்கல்", "Obituaries", "/obituaries", 3, regional.getId());
+            seedMenu("வணிகம்", "Business Studies", "/business-studies", 4, regional.getId());
+            seedMenu("வேலை", "Jobs", "/jobs", 5, regional.getId());
+            seedMenu("தள்ளுபடி", "Classifieds", "/classifieds", 6, regional.getId());
+
+            seedMenu("சர்வதேசம்", "International", "/category/international", 8, null);
+
+            NavigationMenu videos = seedMenu("வீடியோ", "Videos", "/videos", 9, null);
+            seedMenu("மாநிலம்", "State", "/videos", 1, videos.getId());
+            seedMenu("தேசியம்", "National", "/videos", 2, videos.getId());
+            seedMenu("சினிமா", "Cinema", "/videos", 3, videos.getId());
+
+            seedMenu("வெப் ஸ்டோரிஸ்", "Web Stories", "/web-stories", 10, null);
+        }
 
         System.out.println("Database Seeding Check Complete!");
     }
@@ -579,6 +621,54 @@ public class DataInitializer {
         u.setIsVerified(true);
         u.setIsActive(true);
         userRepository.save(u);
+    }
+
+    private void seedAdvertisements() {
+        if (adRepository.count() == 0) {
+            System.out.println("Seeding Advertisements...");
+            
+            // 1. Header Banner Ad
+            Advertisement headerAd = new Advertisement();
+            headerAd.setTitle("Learn Java Coding - Premium Bootcamp");
+            headerAd.setImageUrl("https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1000");
+            headerAd.setLinkUrl("https://github.com/google/gemini-api");
+            headerAd.setStatus("active");
+            headerAd.setPlacement("header");
+            headerAd.setTargetDevice("all");
+            headerAd.setTargetGeo("all");
+            headerAd.setRemainingBudget(150.0);
+            headerAd.setCostPerClick(0.15);
+            headerAd.setCostPerImpression(0.01);
+            adRepository.save(headerAd);
+
+            // 2. Sidebar Ad
+            Advertisement sidebarAd = new Advertisement();
+            sidebarAd.setTitle("Develop Android Apps - Zero to Hero");
+            sidebarAd.setImageUrl("https://images.unsplash.com/photo-1607799279861-4dd421887fb3?q=80&w=1000");
+            sidebarAd.setLinkUrl("https://developer.android.com");
+            sidebarAd.setStatus("active");
+            sidebarAd.setPlacement("sidebar");
+            sidebarAd.setTargetDevice("all");
+            sidebarAd.setTargetGeo("all");
+            sidebarAd.setRemainingBudget(80.0);
+            sidebarAd.setCostPerClick(0.20);
+            sidebarAd.setCostPerImpression(0.02);
+            adRepository.save(sidebarAd);
+
+            // 3. Mid-Article Ad
+            Advertisement midAd = new Advertisement();
+            midAd.setTitle("Cloud Computing Solutions with AWS & Google Cloud");
+            midAd.setImageUrl("https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000");
+            midAd.setLinkUrl("https://cloud.google.com");
+            midAd.setStatus("active");
+            midAd.setPlacement("mid-article");
+            midAd.setTargetDevice("all");
+            midAd.setTargetGeo("all");
+            midAd.setRemainingBudget(200.0);
+            midAd.setCostPerClick(0.25);
+            midAd.setCostPerImpression(0.03);
+            adRepository.save(midAd);
+        }
     }
 
     private void seedSystemConfig(String key, String val, String group, String desc) {
@@ -761,5 +851,16 @@ public class DataInitializer {
         story.setSlidesJson(slidesJson);
         story.setStatus("published");
         webStoryRepository.save(story);
+    }
+
+    private NavigationMenu seedMenu(String titleTa, String titleEn, String linkUrl, int displayOrder, Long parentId) {
+        NavigationMenu menu = new NavigationMenu();
+        menu.setTitleTa(titleTa);
+        menu.setTitleEn(titleEn);
+        menu.setLinkUrl(linkUrl);
+        menu.setDisplayOrder(displayOrder);
+        menu.setParentId(parentId);
+        menu.setIsActive(true);
+        return navigationMenuRepository.save(menu);
     }
 }

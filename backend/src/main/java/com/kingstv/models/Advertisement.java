@@ -45,6 +45,30 @@ public class Advertisement {
         updatedAt = LocalDateTime.now();
     }
 
+    @Column(name = "placement")
+    private String placement = "sidebar"; // sidebar, header, mid-article
+
+    @Column(name = "impression_count")
+    private Integer impressionCount = 0;
+
+    @Column(name = "click_count")
+    private Integer clickCount = 0;
+
+    @Column(name = "target_device")
+    private String targetDevice = "all"; // all, mobile, desktop
+
+    @Column(name = "target_geo")
+    private String targetGeo = "all"; // all, or district name
+
+    @Column(name = "remaining_budget")
+    private Double remainingBudget = 100.0;
+
+    @Column(name = "cost_per_click")
+    private Double costPerClick = 0.10;
+
+    @Column(name = "cost_per_impression")
+    private Double costPerImpression = 0.005;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -77,4 +101,28 @@ public class Advertisement {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getPlacement() { return placement; }
+    public void setPlacement(String placement) { this.placement = placement; }
+
+    public Integer getImpressionCount() { return impressionCount; }
+    public void setImpressionCount(Integer impressionCount) { this.impressionCount = impressionCount; }
+
+    public Integer getClickCount() { return clickCount; }
+    public void setClickCount(Integer clickCount) { this.clickCount = clickCount; }
+
+    public String getTargetDevice() { return targetDevice; }
+    public void setTargetDevice(String targetDevice) { this.targetDevice = targetDevice; }
+
+    public String getTargetGeo() { return targetGeo; }
+    public void setTargetGeo(String targetGeo) { this.targetGeo = targetGeo; }
+
+    public Double getRemainingBudget() { return remainingBudget; }
+    public void setRemainingBudget(Double remainingBudget) { this.remainingBudget = remainingBudget; }
+
+    public Double getCostPerClick() { return costPerClick; }
+    public void setCostPerClick(Double costPerClick) { this.costPerClick = costPerClick; }
+
+    public Double getCostPerImpression() { return costPerImpression; }
+    public void setCostPerImpression(Double costPerImpression) { this.costPerImpression = costPerImpression; }
 }

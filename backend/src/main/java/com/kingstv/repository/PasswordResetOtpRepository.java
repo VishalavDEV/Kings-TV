@@ -11,4 +11,9 @@ public interface PasswordResetOtpRepository extends JpaRepository<PasswordResetO
     Optional<PasswordResetOtp> findByEmailAndOtpCode(String email, String otpCode);
     List<PasswordResetOtp> findByEmail(String email);
     void deleteByEmail(String email);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @org.springframework.data.jpa.repository.Query("DELETE FROM PasswordResetOtp p WHERE p.expiryTime < :now")
+    void deleteExpiredOtps(@org.springframework.data.repository.query.Param("now") java.time.LocalDateTime now);
 }

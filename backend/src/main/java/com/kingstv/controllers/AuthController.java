@@ -7,14 +7,21 @@ import com.kingstv.repository.UserRepository;
 import com.kingstv.repository.RefreshTokenRepository;
 import com.kingstv.repository.PasswordResetOtpRepository;
 import com.kingstv.security.JwtUtil;
+import com.kingstv.services.LoginAttemptService;
+import com.warrenstrange.googleauth.GoogleAuthenticator;
+import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 import com.kingstv.models.AuditLog;
@@ -44,6 +51,11 @@ public class AuthController {
 
     @Autowired
     private com.kingstv.repository.AuditLogRepository auditLogRepository;
+
+    @Autowired
+    private LoginAttemptService loginAttemptService;
+
+    private final Map<String, String> temp2faSessions = new ConcurrentHashMap<>();
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
 
@@ -132,9 +144,16 @@ public class AuthController {
         }
 
         email = email.trim();
+        String ipAddress = httpRequest != null ? httpRequest.getRemoteAddr() : "127.0.0.1";
+
+        if (loginAttemptService.isBlocked(email) || loginAttemptService.isBlocked(ipAddress)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of("message", "Account or IP address locked out due to multiple failed login attempts. Try again in 15 minutes."));
+        }
 
         Optional<User> userOpt = userRepository.findByEmail(email.toLowerCase());
         if (userOpt.isEmpty()) {
+            loginAttemptService.loginFailed(ipAddress);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid email or password"));
         }
 
@@ -144,8 +163,25 @@ public class AuthController {
         }
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid email or password"));
+            loginAttemptService.loginFailed(email);
+            loginAttemptService.loginFailed(ipAddress);
+            int remaining = loginAttemptService.getRemainingAttempts(email);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Invalid email or password. Remaining attempts: " + remaining));
         }
+
+        // Check if 2FA is enabled
+        if (Boolean.TRUE.equals(user.getTwoFactorEnabled())) {
+            String tempSessionId = UUID.randomUUID().toString();
+            temp2faSessions.put(tempSessionId, user.getEmail());
+            return ResponseEntity.ok(Map.of(
+                "twoFactorRequired", true,
+                "tempSessionId", tempSessionId
+            ));
+        }
+
+        loginAttemptService.loginSucceeded(email);
+        loginAttemptService.loginSucceeded(ipAddress);
 
         user.setLastLogin(LocalDateTime.now());
         User savedUser = userRepository.save(user);
@@ -163,7 +199,7 @@ public class AuthController {
             log.setEntityType("USER");
             log.setEntityId(savedUser.getId());
             log.setDetails("Logged in successfully via LOCAL credentials");
-            log.setIpAddress(httpRequest != null ? httpRequest.getRemoteAddr() : "127.0.0.1");
+            log.setIpAddress(ipAddress);
             auditLogRepository.save(log);
         } catch (Exception ex) {
             System.err.println("Audit log save failed: " + ex.getMessage());
@@ -367,5 +403,196 @@ public class AuthController {
         otpRepository.delete(otpOpt.get());
 
         return ResponseEntity.ok(Map.of("message", "Password reset successfully. Please log in with your new password."));
+    }
+
+    @PostMapping("/2fa/setup")
+    public ResponseEntity<?> setup2fa() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Authentication required"));
+        }
+        String email = (String) auth.getPrincipal();
+        Optional<User> userOpt = userRepository.findByEmail(email.toLowerCase());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "User not found"));
+        }
+        User user = userOpt.get();
+
+        GoogleAuthenticator gAuth = new GoogleAuthenticator();
+        GoogleAuthenticatorKey key = gAuth.createCredentials();
+        String secret = key.getKey();
+
+        user.setTwoFactorSecret(secret);
+        userRepository.save(user);
+
+        String qrCodeUrl = "otpauth://totp/KINGS24x7:" + email + "?secret=" + secret + "&issuer=KINGS24x7";
+
+        return ResponseEntity.ok(Map.of(
+            "secret", secret,
+            "qrCodeUrl", qrCodeUrl
+        ));
+    }
+
+    @PostMapping("/2fa/verify")
+    public ResponseEntity<?> verify2fa(@RequestBody Map<String, String> request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Authentication required"));
+        }
+        String codeStr = request.get("code");
+        if (codeStr == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Verification code is required"));
+        }
+
+        Optional<User> userOpt = userRepository.findByEmail(((String) auth.getPrincipal()).toLowerCase());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "User not found"));
+        }
+        User user = userOpt.get();
+
+        if (user.getTwoFactorSecret() == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "2FA setup has not been initiated. Call /2fa/setup first."));
+        }
+
+        try {
+            int code = Integer.parseInt(codeStr);
+            GoogleAuthenticator gAuth = new GoogleAuthenticator();
+            boolean isAuthorized = gAuth.authorize(user.getTwoFactorSecret(), code);
+            if (isAuthorized) {
+                user.setTwoFactorEnabled(true);
+                userRepository.save(user);
+                return ResponseEntity.ok(Map.of("message", "2FA enabled successfully"));
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid verification code"));
+            }
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Code must be a 6-digit number"));
+        }
+    }
+
+    @PostMapping("/2fa/disable")
+    public ResponseEntity<?> disable2fa(@RequestBody Map<String, String> request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Authentication required"));
+        }
+        String codeStr = request.get("code");
+        if (codeStr == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Verification code is required"));
+        }
+
+        Optional<User> userOpt = userRepository.findByEmail(((String) auth.getPrincipal()).toLowerCase());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "User not found"));
+        }
+        User user = userOpt.get();
+
+        if (!Boolean.TRUE.equals(user.getTwoFactorEnabled())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "2FA is not enabled"));
+        }
+
+        try {
+            int code = Integer.parseInt(codeStr);
+            GoogleAuthenticator gAuth = new GoogleAuthenticator();
+            boolean isAuthorized = gAuth.authorize(user.getTwoFactorSecret(), code);
+            if (isAuthorized) {
+                user.setTwoFactorEnabled(false);
+                user.setTwoFactorSecret(null);
+                userRepository.save(user);
+                return ResponseEntity.ok(Map.of("message", "2FA disabled successfully"));
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid verification code"));
+            }
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Code must be a 6-digit number"));
+        }
+    }
+
+    @PostMapping("/2fa/login")
+    public ResponseEntity<?> login2fa(@RequestBody Map<String, String> request, HttpServletRequest httpRequest) {
+        String tempSessionId = request.get("tempSessionId");
+        String codeStr = request.get("code");
+
+        if (tempSessionId == null || codeStr == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "tempSessionId and verification code are required"));
+        }
+
+        String email = temp2faSessions.get(tempSessionId);
+        if (email == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid or expired 2FA session"));
+        }
+
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "User not found"));
+        }
+
+        User user = userOpt.get();
+        String ipAddress = httpRequest != null ? httpRequest.getRemoteAddr() : "127.0.0.1";
+
+        if (loginAttemptService.isBlocked(user.getEmail()) || loginAttemptService.isBlocked(ipAddress)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of("message", "Account or IP address locked out due to multiple failed login attempts. Try again in 15 minutes."));
+        }
+
+        try {
+            int code = Integer.parseInt(codeStr);
+            GoogleAuthenticator gAuth = new GoogleAuthenticator();
+            boolean isAuthorized = gAuth.authorize(user.getTwoFactorSecret(), code);
+            if (!isAuthorized) {
+                loginAttemptService.loginFailed(user.getEmail());
+                loginAttemptService.loginFailed(ipAddress);
+                int remaining = loginAttemptService.getRemainingAttempts(user.getEmail());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Invalid verification code. Remaining attempts: " + remaining));
+            }
+
+            // Success! Generate final tokens
+            temp2faSessions.remove(tempSessionId);
+            loginAttemptService.loginSucceeded(user.getEmail());
+            loginAttemptService.loginSucceeded(ipAddress);
+
+            user.setLastLogin(LocalDateTime.now());
+            User savedUser = userRepository.save(user);
+
+            String accessToken = jwtUtil.generateToken(savedUser.getEmail(), savedUser.getRole(), savedUser.getId(), getUserPermissions(savedUser));
+            String refreshToken = createRefreshToken(savedUser);
+
+            // Record Audit Log entry for login action
+            try {
+                AuditLog log = new AuditLog();
+                log.setActorId(savedUser.getId());
+                log.setActorEmail(savedUser.getEmail());
+                log.setActorRole(savedUser.getRole());
+                log.setActionType("LOGIN");
+                log.setEntityType("USER");
+                log.setEntityId(savedUser.getId());
+                log.setDetails("Logged in successfully via 2FA verification");
+                log.setIpAddress(ipAddress);
+                auditLogRepository.save(log);
+            } catch (Exception ex) {
+                System.err.println("Audit log save failed: " + ex.getMessage());
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Login successful");
+            response.put("accessToken", accessToken);
+            response.put("refreshToken", refreshToken);
+            response.put("user", Map.of(
+                "id", savedUser.getId(),
+                "fullName", savedUser.getFullName(),
+                "email", savedUser.getEmail(),
+                "provider", savedUser.getProvider(),
+                "role", savedUser.getRole(),
+                "profileImage", savedUser.getProfileImage() != null ? savedUser.getProfileImage() : "",
+                "createdAt", savedUser.getCreatedAt() != null ? savedUser.getCreatedAt().toString().substring(0, 10) : LocalDateTime.now().toString().substring(0, 10),
+                "lastLogin", savedUser.getLastLogin() != null ? savedUser.getLastLogin().toString().substring(0, 10) : LocalDateTime.now().toString().substring(0, 10)
+            ));
+
+            return ResponseEntity.ok(response);
+
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Code must be a 6-digit number"));
+        }
     }
 }

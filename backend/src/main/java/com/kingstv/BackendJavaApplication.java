@@ -19,10 +19,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Optional;
 
 @SpringBootApplication
+@EnableCaching
+@EnableScheduling
 public class BackendJavaApplication implements CommandLineRunner {
 
     @Autowired
@@ -53,6 +57,8 @@ public class BackendJavaApplication implements CommandLineRunner {
     private CompanyRepository companyRepository;
 
     public static void main(String[] args) {
+        System.setOut(new com.kingstv.services.MaskingPrintStream(System.out, System.out));
+        System.setErr(new com.kingstv.services.MaskingPrintStream(System.err, System.err));
         SpringApplication.run(BackendJavaApplication.class, args);
     }
 

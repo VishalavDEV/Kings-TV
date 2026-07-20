@@ -692,4 +692,232 @@ We have successfully integrated the **Deals Listing** and **RFQ Marketplace** pa
 
 ![RFQ page with website header](file:///C:/Users/vishal%20AV/.gemini/antigravity-ide/brain/6b2ea00b-0b24-4230-a37e-b352cdd5b2f5/rfq_page_top_1784153334671.png)
 
+---
 
+# Walkthrough - Phase 1 Integration: S3 Upload Service, Caching & Swagger
+
+We have successfully completed all Tasks in **Phase 1 (Foundational data model & infra)**:
+
+1. **Verify Bilingual Title/Content Structure (Task 1.1)**:
+   - Confirmed that the `articles` database schema, the JPA entity `Article.java`, the `ArticleController` endpoint bindings, the React frontend (`ArticleDetail.jsx`), and the React admin panel (`PostEditor.jsx`) already support bilingual translation fields (`titleTa` / `titleEn`, `contentTa` / `contentEn`, `shortDescTa` / `shortDescEn`).
+
+2. **Unified Storage Service with S3 and Local Fallback (Tasks 1.2 & 1.3 & 1.4)**:
+   - Created the [StorageService.java](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/services/StorageService.java) interface and [StorageServiceImpl.java](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/services/StorageServiceImpl.java) implementation to handle uploads cleanly.
+   - Configured it to support any S3-compatible storage (AWS S3, Cloudflare R2, DigitalOcean Spaces, Backblaze B2) using credentials from `application.properties` with a fallback to local storage if disabled (`aws.s3.enabled=false`).
+   - Media directories are structured into `/{images,videos,audio,documents,webstories}/{year}/{month}/{uuid_filename}` depending on content MIME types and folders.
+   - Updated file upload endpoints to use the new `StorageService` across all controllers:
+     - `ArticleController` (`/api/v1/articles/upload`)
+     - `WishController` (`/api/v1/wishes/upload`)
+     - `ObituaryController` (`/api/v1/obituaries/upload`)
+     - `JobController` (`/api/v1/jobs/upload`)
+     - `UserController` (`/api/v1/user/profile-image`)
+
+3. **Article Caching Layer (Task 1.5)**:
+   - Integrated Spring's caching starter (`spring-boot-starter-cache`) and added `@EnableCaching` on `BackendJavaApplication`.
+   - Annotated read-heavy endpoints in `ArticleController` with `@Cacheable` (`getArticles`, `getAll`, `getAllWeb`).
+   - Wired `@CacheEvict` to flush caches on any modifications (`createArticle`, `update`, `changeStatus`, `deleteArticle`).
+
+4. **Swagger/OpenAPI Documentation (Task 1.6)**:
+   - Integrated `springdoc-openapi-starter-webmvc-ui` in `pom.xml`.
+   - Mapped endpoints to be browsable at `/swagger-ui.html` and documentation available at `/v3/api-docs`.
+
+## Verification
+
+- Ran Maven clean package build successfully (`backend-java-1.0.0.jar` created).
+- Verified that all S3/local file uploads, caching annotations, and Swagger imports compile without errors.
+
+---
+
+# Walkthrough - Phase 2 (Security & Access Control)
+
+We have successfully implemented the Phase 2 security enhancements and access control improvements:
+
+1. **Brute Force Lockout (Task 2.1 & 2.3):**
+   - Created a thread-safe [LoginAttemptService](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/services/LoginAttemptService.java) that tracks failed login attempts by both user email and calling IP address.
+   - Enforces a 15-minute lockout when 3 consecutive login failures occur, blocking further requests with HTTP 429.
+
+2. **Google Authenticator 2FA (Task 2.1 & 2.2 & 2.4):**
+   - Added `googleauth` dependency for RFC 6238 TOTP verification.
+   - Mapped `twoFactorSecret` and `twoFactorEnabled` fields onto the [User](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/models/User.java) database entity.
+   - Restructured the login endpoint in [AuthController](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/controllers/AuthController.java) to request a 2FA token verification challenge if enabled.
+   - Exposed 2FA setup (`/api/auth/2fa/setup`), verification enable (`/api/auth/2fa/verify`), disable (`/api/auth/2fa/disable`), and login verify (`/api/auth/2fa/login`) endpoints.
+
+3. **Secure Response Headers (Task 2.5):**
+   - Configured custom HTTP response headers inside [SecurityConfig](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/config/SecurityConfig.java): Content-Security-Policy (CSP whitelisting secure assets/scripts), X-Frame-Options (DENY to prevent Clickjacking), Referrer-Policy (strict-origin-when-cross-origin), and Permissions-Policy (disabling camera/microphone).
+
+4. **Daily Database Backups to S3 (Task 2.6):**
+   - Enabled task scheduling on the main [BackendJavaApplication](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/BackendJavaApplication.java) class.
+   - Implemented [DatabaseBackupService](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/services/DatabaseBackupService.java) to execute `mysqldump` and upload the archive to the S3 bucket's `/backups/` directory daily at 2:00 AM.
+   - Added robust exception fallbacks logging failures cleanly to fallback files when system paths are not present.
+
+5. **Editorial Control & Data Isolation (Task 2.7 & 2.8):**
+   - Restricted all modifying endpoints in [ArticleController](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/controllers/ArticleController.java) to Admins and Editors using the `@RequiresPermission` interceptor.
+   - Overloaded [SpecificationBuilder](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/repository/SpecificationBuilder.java) to support query filtering by `authorName`.
+   - Wired user details checks in `ArticleController` to lock Mobile Journalist queries strictly to their own author ID, preventing drafts data leaks.
+   - Connected profanity auto-flagging configs in [ContentReviewController](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/controllers/editor/ContentReviewController.java) to dynamically toggle profanity checking.
+
+## Verification
+
+- Completed clean compilation and packaging via `mvn clean compile` successfully (BUILD SUCCESS).
+
+---
+
+# Walkthrough - Phase 3 (Content Model & Article Page Completeness)
+
+We have successfully implemented the Phase 3 content model and article page completeness features:
+
+1. **Tamil-Aware Reading Time calculation (Task 3.1):**
+   - Added `reading_time` column to the `Article` entity.
+   - Wired a lifecycle `@PrePersist` and `@PreUpdate` calculation: Tamil words counted split by whitespace (at 130 WPM speed) and English words counted split by whitespace (at 200 WPM speed), choosing the maximum value (minimum 1 minute).
+   - Displayed the calculated minutes value on news cards, home feed lists, and detailed pages in both English and Tamil layouts.
+
+2. **Floating Social Share Sidebar & Reading Progress Bar (Task 3.2 & 3.4):**
+   - Embedded a floating share widget containing active links for WhatsApp, Facebook, Twitter, Telegram, and Copy Link inside [ArticleDetail.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/ArticleDetail.jsx).
+   - Added media query rules stacking the share bar horizontally on mobile viewport screens.
+   - Built scroll scroll-percentage listeners mapping page scrolls to a fixed progress bar (4px height) at the top of the viewport.
+
+3. **Clickable Tags Search System (Task 3.3 & 3.5):**
+   - Refactored breadcrumb navigation paths rendering Home -> Category -> Truncated Article Title.
+   - Overloaded search specifications to filter articles by `metaKeywords` tags matching parameter queries.
+   - Created a dynamic [TagArchive.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/TagArchive.jsx) component filtering and rendering news matching a tag, and mapped it in [App.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/App.jsx). Made details tags clickable.
+
+4. **Tag-Matching Related Articles Query (Task 3.6):**
+   - Exposed backend route `/api/v1/articles/{id}/related` querying top 10 articles in the same category and sorting them by shared tags count overlap to return the top 3 related articles.
+   - Cleaned up expensive client-side list downloads.
+
+5. **Author Byline Photos & Category Page Tabs (Task 3.7 & 3.8):**
+   - Looked up author profile photos from the `User` database by matching names on article details requests, mapping photos or custom letter monograms.
+   - Wired scroller filter buttons scroller layout on [Category.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/Category.jsx) with custom hex themes styling `--category-color` variables dynamically.
+
+## Verification
+
+- Completed clean compilation and packaging via `mvn clean compile` successfully (BUILD SUCCESS).
+
+---
+
+# Walkthrough - Phase 4 (Missing Pages)
+
+We have successfully implemented the Phase 4 missing pages and advanced filters:
+
+1. **Custom 404 & Active Maintenance Mode (Task 4.1 & 4.2):**
+   - Created [NotFound.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/NotFound.jsx) displaying a central search input and a sidebar with dynamic trending news cards.
+   - Declared `MAINTENANCE_MODE` config key constant in [SystemConfig.java](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/models/SystemConfig.java) and seeded it to database.
+   - Exposed public route `/api/v1/public/maintenance-status` in [PublicNewsController.java](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/controllers/PublicNewsController.java).
+   - Hooked up `AppContent` in [App.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/App.jsx) to query the maintenance state. If enabled, displays the [Maintenance.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/Maintenance.jsx) screen (while leaving `/login` accessible for admins to log in and turn maintenance mode off).
+
+2. **Compliance & Policy Pages (Task 4.3):**
+   - Built the public [DMCAPolicy.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/DMCAPolicy.jsx) guidelines document, mapping standard liability notices and officer email contact points. Mapped routes in `App.jsx`.
+
+3. **Public Crowd News Report form & Mailer (Task 4.4):**
+   - Added the Spring Mail dependency `spring-boot-starter-mail` inside [pom.xml](file:///c:/Users/vishal%20AV/Downloads/king/backend/pom.xml).
+   - Implemented [EmailService.java](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/services/EmailService.java) utilizing `JavaMailSender` (falling back cleanly to printing emails to standard output logs if SMTP credentials are blank).
+   - Wired `EmailService` inside [ReportNewsController.java](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/controllers/ReportNewsController.java) to send notification alerts to `editor@kingstv.com` upon report submission.
+   - Built the frontend submission form [CrowdReportForm.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/CrowdReportForm.jsx) and linked it in `App.jsx`.
+
+4. **Author Profiles & Advanced Multi-Filter Search (Task 4.5 & 4.6):**
+   - Exposed `GET /api/v1/articles/public/authors/{name}` in [ArticleController.java](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/controllers/ArticleController.java) to retrieve bio, location, and social links.
+   - Built [AuthorProfile.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/AuthorProfile.jsx) fetching profile data and listing matching publications.
+   - Overloaded [SpecificationBuilder.java](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/repository/SpecificationBuilder.java) to filter `publishedAt` date fields by `startDate`/`endDate` inputs.
+   - Built [AdvancedSearch.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/AdvancedSearch.jsx) mapping category selection, date ranges, and author strings.
+
+5. **Date-Based Archives Search (Task 4.7):**
+   - Configured `SpecificationBuilder` to extract Sql `YEAR` and `MONTH` values from DB rows to match archive filters.
+   - Built [ArchiveListing.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/ArchiveListing.jsx) with custom dropdown jumping navigators, mapped in `App.jsx`.
+
+## Verification
+
+- Completed clean compilation and packaging via `mvn clean compile` successfully (BUILD SUCCESS).
+
+---
+
+# Walkthrough - Phase 5 (Homepage & Navigation)
+
+We have successfully migrated the homepage layout and navigation headers to dynamic database configurations:
+
+1. **Configurable Navigation Menu (Task 5.1):**
+   - Created [NavigationMenu.java](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/models/NavigationMenu.java) entity with hierarchical `parentId` mapping.
+   - Built REST endpoints inside [NavigationMenuController.java](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/controllers/NavigationMenuController.java).
+   - Configured migrations inside [schema.sql](file:///c:/Users/vishal%20AV/Downloads/king/schema.sql) and [DataInitializer.java](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/DataInitializer.java).
+   - Replaced hardcoded links in [Header.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/components/Header.jsx) to fetch `/public/menus` dynamically on load.
+
+2. **Layout Modules Ordering (Task 5.2):**
+   - Refactored [Home.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/Home.jsx) to fetch homepage layout config parameters from the database, sort sections by `displayOrder`, and render them dynamically.
+
+3. **Homepage Highlights & Institution Sections (Task 5.3 & 5.4):**
+   - Mapped approved public crowd reporter submissions onto the homepage feed.
+   - Isolated and rendered press releases from users with role `INSTITUTION_LOGIN`.
+
+4. **Sidebar Metrics & Personalization (Task 5.5, 5.6 & 5.7):**
+   - Hooked trending sidebar lists to dynamic `/articles/public/trending` analytics calculations.
+   - Personalized feeds by checking selected district parameters or utilizing HTML5 geolocation coordinates.
+
+5. **Real-time Commodities Ticker (Task 5.8):**
+   - Developed a gold/silver/paddy prices ticker running on dynamic random walk generators.
+
+---
+
+# Walkthrough - Phase 6 (SEO, Google News & Discoverability)
+
+We have successfully implemented deep SEO automations, dynamic sitemaps, structured schema markup, and voice search:
+
+1. **SEO Meta Generation Service (Task 6.1):**
+   - Created [SeoGeneratorService.java](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/services/SeoGeneratorService.java) executing rule-based extractions for meta titles, descriptions, focus keywords, alt attributes, and canonical tags automatically on publish.
+
+2. **Keyword Density & Linking Widgets (Task 6.2 & 6.3):**
+   - Built a dynamic density percentage helper status card in the admin [NewsEditor.jsx](file:///c:/Users/vishal%20AV/Downloads/king/admin/src/pages/admin/NewsEditor.jsx) panel warning journalists about stuffing or missing focus keywords.
+   - Designed a keyword overlay suggester finding related publications and showing instant "Copy Link" buttons.
+
+3. **Dynamic XML Sitemaps (Task 6.4):**
+   - Updated [SeoController.java](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/controllers/SeoController.java) to dynamically output:
+     - `/sitemap.xml` (Static links + Categories + Articles)
+     - `/sitemap-news.xml` (rolling 48h Google News formatted updates)
+     - `/sitemap-video.xml` (indexed video content paths)
+     - `/sitemap-image.xml` (indexed article images)
+   - Linked all four sitemap configurations in the robots.txt output rules.
+
+4. **Schema Graphs & GA4 tracking (Task 6.5 & 6.6):**
+   - Configured combined `NewsArticle` + `BreadcrumbList` `@graph` schemas on article detail loads.
+   - Placed a `WebSite` search action tag on homepage mounts in [Home.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/Home.jsx).
+   - Hooked a dynamic location tracker script in [App.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/App.jsx) forwarding router changes to GA4.
+
+5. **AI Voice Search (Task 6.7):**
+   - Configured Web Speech API SpeechRecognition triggers inside search input fields of [AdvancedSearch.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/AdvancedSearch.jsx).
+
+---
+
+# Walkthrough - Phase 7 (Analytics & Dashboards)
+
+We have successfully implemented analytics controllers, database atomic counters, heatmaps, and frontend Recharts dashboards:
+
+1. **Atomic Views Tracking (Task 7.1):**
+   - Configured an atomic database increment query using `@Modifying` annotations inside [ArticleRepository.java](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/repository/ArticleRepository.java).
+   - Hooked [ArticleController.java](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/controllers/ArticleController.java) to update read views count atomically.
+
+2. **Metrics & Heatmaps Controller (Task 7.2 & 7.3):**
+   - Built [AnalyticsController.java](file:///c:/Users/vishal%20AV/Downloads/king/backend/src/main/java/com/kingstv/controllers/AnalyticsController.java) aggregating category performance views, mapping user coordinate vectors for geo heatmaps, tracking mock concurrent TV viewers, and reporting exception alerts.
+
+3. **Analytics Dashboard UI (Task 7.4 & 7.5):**
+   - Redesigned [AnalyticsDashboard.jsx](file:///c:/Users/vishal%20AV/Downloads/king/admin/src/pages/admin/AnalyticsDashboard.jsx) inside the admin client, linking Recharts graphs directly to endpoints.
+   - Built a downloadable report exporter downloading summary metrics as formatted text.
+
+---
+
+# Walkthrough - Phase 8 (Offline, PWA & HLS Video Stream)
+
+We have successfully integrated PWA standalone parameters, background offline caches, online check banners, local storage bookmarking, and dynamic adaptive HLS broadcasting:
+
+1. **PWA Shell Registration (Task 8.1, 8.2 & 8.3):**
+   - Created [manifest.json](file:///c:/Users/vishal%20AV/Downloads/king/frontend/public/manifest.json) detailing name configurations, startup endpoints, standalone displays, and brand theme colors.
+   - Built a Service Worker caching logic inside [sw.js](file:///c:/Users/vishal%20AV/Downloads/king/frontend/public/sw.js) pre-caching index shells and handling asset cache retrievals on network failures.
+   - Initialized and loaded the worker natively on startup inside [main.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/main.jsx).
+
+2. **Network Offline Banners (Task 8.4):**
+   - Developed [OfflineBanner.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/components/OfflineBanner.jsx) tracking online status dynamically and displaying absolute warning alerts when the network connection drops.
+   - Wired the banner sitewide inside the main [App.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/App.jsx) template shell.
+
+3. **LocalStorage Bookmarks (Task 8.5):**
+   - Configured save offline toggle buttons inside [ArticleDetail.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/ArticleDetail.jsx) bookmarking page details to `localStorage` buffers, allowing full offline reads when API queries fail.
+
+4. **Dynamic HLS Adaptive Player (Task 8.6):**
+   - Implemented [HlsPlayer.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/components/HlsPlayer.jsx) using `hls.js` supporting adaptive .m3u8 streams with customized resolution bitrate options.
+   - Upgraded [LiveTv.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/pages/LiveTv.jsx) to automatically stream via the HLS player whenever backend video feeds expose .m3u8 sources.

@@ -2,6 +2,7 @@ package com.kingstv.controllers;
 
 import com.kingstv.models.*;
 import com.kingstv.services.ObituaryService;
+import com.kingstv.services.StorageService;
 import com.kingstv.repository.DistrictRepository;
 import com.kingstv.repository.ObituaryFrameTemplateRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,9 @@ public class ObituaryController {
 
     @Autowired
     private ObituaryService obituaryService;
+
+    @Autowired
+    private StorageService storageService;
 
     @Autowired
     private ObituaryFrameTemplateRepository frameTemplateRepository;
@@ -111,21 +115,9 @@ public class ObituaryController {
             return ResponseEntity.badRequest().body(Map.of("message", "File is empty"));
         }
         try {
-            Path uploadPath = Paths.get("uploads/obituaries");
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-            String contentType = file.getContentType();
-            String extension = ".jpg";
-            if (contentType != null && contentType.equals("image/png")) {
-                extension = ".png";
-            }
-            String fileName = "obit_" + System.currentTimeMillis() + "_" + (int)(Math.random() * 1000) + extension;
-            Path filePath = uploadPath.resolve(fileName);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            return ResponseEntity.ok(Map.of("url", "/uploads/obituaries/" + fileName));
-        } catch (IOException e) {
+            String url = storageService.uploadFile(file, "obituaries");
+            return ResponseEntity.ok(Map.of("url", url));
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Failed to upload image: " + e.getMessage()));
         }

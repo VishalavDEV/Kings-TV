@@ -7,6 +7,19 @@ import java.util.List;
 
 public class SpecificationBuilder {
     public static <T> Specification<T> build(String search, String status, String categoryId, String districtId) {
+        return build(search, status, categoryId, districtId, null);
+    }
+
+    public static <T> Specification<T> build(String search, String status, String categoryId, String districtId, String authorId) {
+        return build(search, status, categoryId, districtId, authorId, null);
+    }
+
+    public static <T> Specification<T> build(String search, String status, String categoryId, String districtId, String authorId, String tag) {
+        return build(search, status, categoryId, districtId, authorId, tag, null, null, null, null);
+    }
+
+    public static <T> Specification<T> build(String search, String status, String categoryId, String districtId, String authorId, String tag,
+                                             java.time.LocalDateTime startDate, java.time.LocalDateTime endDate, Integer year, Integer month) {
         return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -18,6 +31,51 @@ public class SpecificationBuilder {
                     predicates.add(cb.notEqual(root.get("status"), "deleted"));
                 } catch (IllegalArgumentException e) {
                     // Entity doesn't have a status field, ignore
+                }
+            }
+
+            if (tag != null && !tag.isEmpty()) {
+                try {
+                    root.get("metaKeywords");
+                    predicates.add(cb.like(cb.lower(root.get("metaKeywords")), "%" + tag.toLowerCase() + "%"));
+                } catch (IllegalArgumentException e) {
+                    // Entity doesn't have metaKeywords, ignore
+                }
+            }
+
+            if (startDate != null) {
+                try {
+                    root.get("publishedAt");
+                    predicates.add(cb.greaterThanOrEqualTo(root.get("publishedAt"), startDate));
+                } catch (IllegalArgumentException e) {
+                    // ignore
+                }
+            }
+
+            if (endDate != null) {
+                try {
+                    root.get("publishedAt");
+                    predicates.add(cb.lessThanOrEqualTo(root.get("publishedAt"), endDate));
+                } catch (IllegalArgumentException e) {
+                    // ignore
+                }
+            }
+
+            if (year != null) {
+                try {
+                    root.get("publishedAt");
+                    predicates.add(cb.equal(cb.function("YEAR", Integer.class, root.get("publishedAt")), year));
+                } catch (IllegalArgumentException e) {
+                    // ignore
+                }
+            }
+
+            if (month != null) {
+                try {
+                    root.get("publishedAt");
+                    predicates.add(cb.equal(cb.function("MONTH", Integer.class, root.get("publishedAt")), month));
+                } catch (IllegalArgumentException e) {
+                    // ignore
                 }
             }
 
@@ -38,6 +96,17 @@ public class SpecificationBuilder {
                     // Entity doesn't have a districtId field, ignore
                 }
             }
+
+            if (authorId != null && !authorId.isEmpty()) {
+                try {
+                    root.get("authorName");
+                    predicates.add(cb.equal(root.get("authorName"), authorId));
+                } catch (IllegalArgumentException e) {
+                    // Entity doesn't have an authorName field, ignore
+                }
+            }
+
+
 
             if (search != null && !search.isEmpty()) {
                 String searchPattern = "%" + search.toLowerCase() + "%";
