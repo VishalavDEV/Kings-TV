@@ -29,7 +29,8 @@ public class SystemConfigService {
         SystemConfig.YOUTUBE_API_KEY,
         SystemConfig.CDN_API_KEY,
         SystemConfig.LIVE_STREAM_KEY,
-        SystemConfig.AI_LLM_API_KEY
+        SystemConfig.AI_LLM_API_KEY,
+        SystemConfig.TELEGRAM_BOT_TOKEN
     );
 
     public String getConfigValue(String key) {

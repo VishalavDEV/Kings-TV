@@ -52,6 +52,7 @@ const AdvancedSearch = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [trendingKeywords, setTrendingKeywords] = useState([]);
 
   const handleVoiceSearch = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -136,6 +137,16 @@ const AdvancedSearch = () => {
     executeSearch(q, category, author, start, end);
   }, [searchParams]);
 
+  useEffect(() => {
+    fetchApi('/analytics/trending-keywords')
+      .then(data => {
+        if (Array.isArray(data)) {
+          setTrendingKeywords(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const params = {};
@@ -205,6 +216,44 @@ const AdvancedSearch = () => {
                   <i className={isListening ? "fas fa-microphone-alt" : "fas fa-microphone"}></i>
                 </button>
               </div>
+              {/* Trending Tags cloud */}
+              {trendingKeywords.length > 0 && (
+                <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                    {lang === 'en' ? 'Trending:' : 'பிரபலமானவை:'}
+                  </span>
+                  {trendingKeywords.map((kwObj, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery(kwObj.keyword);
+                        const params = {};
+                        params.q = kwObj.keyword;
+                        if (categoryId) params.category = categoryId;
+                        if (authorName.trim()) params.author = authorName.trim();
+                        if (startDate) params.start = startDate;
+                        if (endDate) params.end = endDate;
+                        setSearchParams(params);
+                      }}
+                      style={{
+                        padding: '4px 8px',
+                        borderRadius: '16px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--body-bg)',
+                        color: 'var(--text-primary)',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        display: 'inline-block'
+                      }}
+                    >
+                      #{kwObj.keyword}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Category */}

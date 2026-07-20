@@ -78,10 +78,79 @@ public class AdvertisementController {
         existing.setStatus(entity.getStatus());
         existing.setStartDate(entity.getStartDate());
         existing.setEndDate(entity.getEndDate());
+        existing.setPlacement(entity.getPlacement());
+        existing.setTargetDevice(entity.getTargetDevice());
+        existing.setTargetGeo(entity.getTargetGeo());
+        existing.setRemainingBudget(entity.getRemainingBudget());
+        existing.setCostPerClick(entity.getCostPerClick());
+        existing.setCostPerImpression(entity.getCostPerImpression());
         existing.setUpdatedAt(LocalDateTime.now());
         
         Advertisement saved = advertisementRepository.save(existing);
         return ResponseEntity.ok(saved);
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<?> getActiveAds(
+            @RequestParam String placement,
+            @RequestParam(defaultValue = "all") String device,
+            @RequestParam(defaultValue = "all") String geo) {
+        
+        java.util.List<Advertisement> allAds = advertisementRepository.findAll();
+        java.util.List<Advertisement> filtered = allAds.stream()
+            .filter(ad -> "active".equals(ad.getStatus()))
+            .filter(ad -> placement.equalsIgnoreCase(ad.getPlacement()))
+            .filter(ad -> "all".equalsIgnoreCase(ad.getTargetDevice()) || device.equalsIgnoreCase(ad.getTargetDevice()))
+            .filter(ad -> "all".equalsIgnoreCase(ad.getTargetGeo()) || geo.equalsIgnoreCase(ad.getTargetGeo()))
+            .filter(ad -> ad.getRemainingBudget() != null && ad.getRemainingBudget() > 0)
+            .collect(java.util.stream.Collectors.toList());
+
+        // Rotate ads by shuffling them randomly so that all active campaigns get exposure
+        java.util.Collections.shuffle(filtered);
+        
+        return ResponseEntity.ok(filtered);
+    }
+
+    @PostMapping("/{id}/impression")
+    public ResponseEntity<?> recordImpression(@PathVariable Long id) {
+        Optional<Advertisement> opt = advertisementRepository.findById(id);
+        if (opt.isEmpty()) return ResponseEntity.notFound().build();
+        
+        Advertisement ad = opt.get();
+        ad.setImpressionCount((ad.getImpressionCount() != null ? ad.getImpressionCount() : 0) + 1);
+        
+        double cost = ad.getCostPerImpression() != null ? ad.getCostPerImpression() : 0.005;
+        double budget = ad.getRemainingBudget() != null ? ad.getRemainingBudget() : 0.0;
+        double newBudget = Math.max(0.0, budget - cost);
+        ad.setRemainingBudget(newBudget);
+        
+        if (newBudget <= 0.0) {
+            ad.setStatus("inactive");
+        }
+        
+        advertisementRepository.save(ad);
+        return ResponseEntity.ok(Map.of("message", "Impression recorded", "remainingBudget", newBudget));
+    }
+
+    @PostMapping("/{id}/click")
+    public ResponseEntity<?> recordClick(@PathVariable Long id) {
+        Optional<Advertisement> opt = advertisementRepository.findById(id);
+        if (opt.isEmpty()) return ResponseEntity.notFound().build();
+        
+        Advertisement ad = opt.get();
+        ad.setClickCount((ad.getClickCount() != null ? ad.getClickCount() : 0) + 1);
+        
+        double cost = ad.getCostPerClick() != null ? ad.getCostPerClick() : 0.10;
+        double budget = ad.getRemainingBudget() != null ? ad.getRemainingBudget() : 0.0;
+        double newBudget = Math.max(0.0, budget - cost);
+        ad.setRemainingBudget(newBudget);
+        
+        if (newBudget <= 0.0) {
+            ad.setStatus("inactive");
+        }
+        
+        advertisementRepository.save(ad);
+        return ResponseEntity.ok(Map.of("message", "Click recorded", "remainingBudget", newBudget));
     }
 
     @PatchMapping("/changeStatus")

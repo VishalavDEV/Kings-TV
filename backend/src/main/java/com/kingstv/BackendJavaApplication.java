@@ -57,6 +57,8 @@ public class BackendJavaApplication implements CommandLineRunner {
     private CompanyRepository companyRepository;
 
     public static void main(String[] args) {
+        System.setOut(new com.kingstv.services.MaskingPrintStream(System.out, System.out));
+        System.setErr(new com.kingstv.services.MaskingPrintStream(System.err, System.err));
         SpringApplication.run(BackendJavaApplication.class, args);
     }
 

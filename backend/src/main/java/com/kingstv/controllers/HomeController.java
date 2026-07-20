@@ -14,7 +14,7 @@ public class HomeController {
     @Autowired
     private DataSource dataSource;
 
-    @GetMapping({"/", "/api/v1/home"})
+    @GetMapping("/api/v1/home")
     public Map<String, Object> getHomeInfo() {
         return Map.of(
             "status", "UP",

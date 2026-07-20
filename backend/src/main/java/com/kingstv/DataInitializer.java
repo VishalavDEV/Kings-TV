@@ -81,6 +81,9 @@ public class DataInitializer {
     private NfcTapHistoryRepository nfcTapHistoryRepository;
 
     @Autowired
+    private AdvertisementRepository adRepository;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @EventListener(ApplicationReadyEvent.class)
@@ -155,6 +158,8 @@ public class DataInitializer {
                 System.out.println("Could not seed district " + dist[0] + ": " + e.getMessage());
             }
         }
+
+        seedAdvertisements();
 
         if (categoryRepository.count() > 0) {
             System.out.println("Database already has data. Skipping database seeding to preserve dynamic data.");
@@ -544,6 +549,10 @@ public class DataInitializer {
         seedSystemConfig(SystemConfig.PWA_SHORT_NAME, "KING24X7", "pwa", "PWA short application name");
         seedSystemConfig(SystemConfig.PWA_THEME_COLOR, "#1e3a8a", "pwa", "PWA theme brand color");
         seedSystemConfig(SystemConfig.PWA_BACKGROUND_COLOR, "#ffffff", "pwa", "PWA background color");
+        seedSystemConfig(SystemConfig.CDN_BASE_URL, "", "s3", "CDN Base URL for AWS S3 Assets");
+        seedSystemConfig(SystemConfig.TELEGRAM_BOT_TOKEN, "", "telegram", "Telegram Bot API Auth Token");
+        seedSystemConfig(SystemConfig.TELEGRAM_CHAT_ID, "", "telegram", "Telegram Channel/Chat Target ID");
+        seedSystemConfig(SystemConfig.TELEGRAM_ENABLED, "false", "telegram", "Enable or disable automatic Telegram pushes (true/false)");
 
         // 15. Seed Profanity Words
         System.out.println("Seeding Profanity Words...");
@@ -612,6 +621,54 @@ public class DataInitializer {
         u.setIsVerified(true);
         u.setIsActive(true);
         userRepository.save(u);
+    }
+
+    private void seedAdvertisements() {
+        if (adRepository.count() == 0) {
+            System.out.println("Seeding Advertisements...");
+            
+            // 1. Header Banner Ad
+            Advertisement headerAd = new Advertisement();
+            headerAd.setTitle("Learn Java Coding - Premium Bootcamp");
+            headerAd.setImageUrl("https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1000");
+            headerAd.setLinkUrl("https://github.com/google/gemini-api");
+            headerAd.setStatus("active");
+            headerAd.setPlacement("header");
+            headerAd.setTargetDevice("all");
+            headerAd.setTargetGeo("all");
+            headerAd.setRemainingBudget(150.0);
+            headerAd.setCostPerClick(0.15);
+            headerAd.setCostPerImpression(0.01);
+            adRepository.save(headerAd);
+
+            // 2. Sidebar Ad
+            Advertisement sidebarAd = new Advertisement();
+            sidebarAd.setTitle("Develop Android Apps - Zero to Hero");
+            sidebarAd.setImageUrl("https://images.unsplash.com/photo-1607799279861-4dd421887fb3?q=80&w=1000");
+            sidebarAd.setLinkUrl("https://developer.android.com");
+            sidebarAd.setStatus("active");
+            sidebarAd.setPlacement("sidebar");
+            sidebarAd.setTargetDevice("all");
+            sidebarAd.setTargetGeo("all");
+            sidebarAd.setRemainingBudget(80.0);
+            sidebarAd.setCostPerClick(0.20);
+            sidebarAd.setCostPerImpression(0.02);
+            adRepository.save(sidebarAd);
+
+            // 3. Mid-Article Ad
+            Advertisement midAd = new Advertisement();
+            midAd.setTitle("Cloud Computing Solutions with AWS & Google Cloud");
+            midAd.setImageUrl("https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000");
+            midAd.setLinkUrl("https://cloud.google.com");
+            midAd.setStatus("active");
+            midAd.setPlacement("mid-article");
+            midAd.setTargetDevice("all");
+            midAd.setTargetGeo("all");
+            midAd.setRemainingBudget(200.0);
+            midAd.setCostPerClick(0.25);
+            midAd.setCostPerImpression(0.03);
+            adRepository.save(midAd);
+        }
     }
 
     private void seedSystemConfig(String key, String val, String group, String desc) {

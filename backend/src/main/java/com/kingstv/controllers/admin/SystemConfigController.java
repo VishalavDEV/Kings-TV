@@ -3,6 +3,7 @@ package com.kingstv.controllers.admin;
 import com.kingstv.models.SystemConfig;
 import com.kingstv.security.RequiresPermission;
 import com.kingstv.services.SystemConfigService;
+import com.kingstv.services.DbCleanupService;
 import com.kingstv.models.Permission;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,9 @@ public class SystemConfigController {
 
     @Autowired
     private SystemConfigService configService;
+
+    @Autowired
+    private DbCleanupService dbCleanupService;
 
     @GetMapping
     @RequiresPermission(Permission.CONFIG_READ)
@@ -168,5 +172,23 @@ public class SystemConfigController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getDetails() instanceof Long) return (Long) auth.getDetails();
         return null;
+    }
+
+    // --- Telegram Config ---
+    @PutMapping("/telegram")
+    public ResponseEntity<?> updateTelegramConfig(@RequestBody Map<String, String> request) {
+        Long userId = getCallerId();
+        configService.setMultipleConfigs(Map.of(
+            SystemConfig.TELEGRAM_BOT_TOKEN, request.getOrDefault("botToken", ""),
+            SystemConfig.TELEGRAM_CHAT_ID, request.getOrDefault("chatId", ""),
+            SystemConfig.TELEGRAM_ENABLED, request.getOrDefault("enabled", "false")
+        ), "telegram", userId);
+        return ResponseEntity.ok(Map.of("message", "Telegram config updated"));
+    }
+
+    @PostMapping("/db-cleanup")
+    public ResponseEntity<?> runManualDbCleanup() {
+        dbCleanupService.executeCleanup();
+        return ResponseEntity.ok(Map.of("message", "Database cleanup routine executed successfully."));
     }
 }

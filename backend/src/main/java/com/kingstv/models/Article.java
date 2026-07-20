@@ -94,6 +94,9 @@ public class Article {
     @Column(name = "visibility_radius_km")
     private Double visibilityRadiusKm;
 
+    @Column(name = "telegram_sent")
+    private Boolean telegramSent = false;
+
     @Column(name = "reading_time")
     private Integer readingTime = 1;
 
@@ -177,6 +180,7 @@ public class Article {
     public void setCanonicalUrl(String canonicalUrl) { this.canonicalUrl = canonicalUrl; }
     public String getFeaturedImage() { return featuredImage; }
     public void setFeaturedImage(String featuredImage) { this.featuredImage = featuredImage; }
+
     public String getAuthorName() { return authorName; }
     public void setAuthorName(String authorName) { this.authorName = authorName; }
     public String getSeoStatus() { return seoStatus; }
@@ -199,4 +203,7 @@ public class Article {
 
     public String getAuthorProfileImage() { return authorProfileImage; }
     public void setAuthorProfileImage(String authorProfileImage) { this.authorProfileImage = authorProfileImage; }
+
+    public Boolean getTelegramSent() { return telegramSent != null && telegramSent; }
+    public void setTelegramSent(Boolean telegramSent) { this.telegramSent = telegramSent; }
 }

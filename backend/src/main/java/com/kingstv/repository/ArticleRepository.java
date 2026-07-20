@@ -31,4 +31,9 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
            "ORDER BY published_at DESC LIMIT :limit", nativeQuery = true)
     List<Article> findNearbyArticles(@Param("userLat") Double userLat, @Param("userLon") Double userLon, @Param("defaultRadius") Double defaultRadius, @Param("limit") int limit);
     List<Article> findTop10ByStatusAndCategoryIdAndIdNotOrderByPublishedAtDesc(String status, Long categoryId, Long id);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query("DELETE FROM Article a WHERE (a.status = 'draft' OR a.status = 'UGC_draft') AND a.updatedAt < :threshold")
+    void deleteOlderDrafts(@Param("threshold") java.time.LocalDateTime threshold);
 }
