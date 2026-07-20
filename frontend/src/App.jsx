@@ -36,6 +36,9 @@ import ContactUs from './pages/ContactUs';
 import Advertise from './pages/Advertise';
 import LiveTv from './pages/LiveTv';
 import Weather from './pages/Weather';
+import BizDirectoryRegister from './pages/BizDirectoryRegister';
+import BizDirectoryDashboard from './pages/BizDirectoryDashboard';
+import MyRfqs from './pages/MyRfqs';
 
 function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
@@ -82,6 +85,9 @@ function AppContent() {
           <Route path="/live-tv" element={<LiveTv />} />
           <Route path="/weather" element={<Weather />} />
           <Route path="/careers" element={<Careers />} />
+          <Route path="/directory/register" element={<BizDirectoryRegister />} />
+          <Route path="/directory/dashboard" element={<BizDirectoryDashboard />} />
+          <Route path="/my-rfqs" element={<MyRfqs />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-use" element={<TermsOfUse />} />
         </Routes>

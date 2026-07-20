@@ -1,11 +1,28 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
+import { AuthContext } from '../context/AuthContext';
 import { fetchApi } from '../utils/api';
 import './BizDirectoryMain.css';
 
 const BizDirectoryMain = () => {
   const { lang } = useContext(LanguageContext);
+  const { isAuthenticated } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const getCategoryLabel = (catName) => {
+    const labels = {
+      'Restaurant': lang === 'en' ? 'Restaurant' : 'உணவகம்',
+      'Health & Medical': lang === 'en' ? 'Health & Medical' : 'சுகாதாரம் & மருத்துவம்',
+      'Education': lang === 'en' ? 'Education' : 'கல்வி',
+      'Automotive': lang === 'en' ? 'Automotive' : 'வாகனங்கள்',
+      'Real Estate': lang === 'en' ? 'Real Estate' : 'ரியல் எஸ்டேட்',
+      'Beauty & Salon': lang === 'en' ? 'Beauty & Salon' : 'அழகு நிலையம்',
+      'Electronics': lang === 'en' ? 'Electronics' : 'மின்னணுவியல்',
+      'Shops': lang === 'en' ? 'Shops' : 'கடைகள்'
+    };
+    return labels[catName] || catName;
+  };
   
   // Data State
   const [businesses, setBusinesses] = useState([]);
@@ -305,7 +322,7 @@ const BizDirectoryMain = () => {
               <div className={`biz-cat-icon-circle ${c.color}`}>
                 <i className={`fas ${c.icon}`}></i>
               </div>
-              <span className="biz-cat-title-lbl">{c.name}</span>
+              <span className="biz-cat-title-lbl">{getCategoryLabel(c.name)}</span>
             </button>
           ))}
         </div>
@@ -318,10 +335,26 @@ const BizDirectoryMain = () => {
         <div className="flex-grow">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: '850' }}>
-              {selectedCategory === 'all' ? (lang === 'en' ? 'Featured Businesses' : 'சிறப்பு வணிகங்கள்') : `${selectedCategory}`}
+              {selectedCategory === 'all' ? (lang === 'en' ? 'Featured Businesses' : 'சிறப்பு வணிகங்கள்') : getCategoryLabel(selectedCategory)}
             </h2>
             <button 
-              onClick={() => setShowAddModal(true)}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  navigate('/login', { state: { from: '/directory/register' } });
+                } else {
+                  fetchApi('/directory/my-business')
+                    .then(res => {
+                      if (res && res.length > 0) {
+                        navigate('/directory/dashboard');
+                      } else {
+                        navigate('/directory/register');
+                      }
+                    })
+                    .catch(() => {
+                      navigate('/directory/register');
+                    });
+                }
+              }}
               style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '10px 20px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}
             >
               + {lang === 'en' ? 'Add Business' : 'வணிகத்தைச் சேர்'}
@@ -344,10 +377,10 @@ const BizDirectoryMain = () => {
               {filtered.map(biz => (
                 <div className="biz-listing-card" key={biz.id} onClick={() => handleBizClick(biz)}>
                   <div className="biz-card-image-cover" style={{ backgroundImage: `url(${biz.coverUrl})` }}>
-                    <span className="biz-card-tag">FEATURED</span>
+                    <span className="biz-card-tag">{lang === 'en' ? 'FEATURED' : 'சிறப்பு'}</span>
                     {biz.kycStatus === 'verified' && (
                       <span className="biz-card-kyc-badge">
-                        <i className="fas fa-check-circle"></i> Verified
+                        <i className="fas fa-check-circle"></i> {lang === 'en' ? 'Verified' : 'சரிபார்க்கப்பட்டது'}
                       </span>
                     )}
                   </div>
@@ -355,7 +388,7 @@ const BizDirectoryMain = () => {
                   <div className="biz-card-body">
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span className="biz-card-category">{biz.category}</span>
+                        <span className="biz-card-category">{getCategoryLabel(biz.category)}</span>
                         <div className="biz-card-rating">
                           <i className="fas fa-star"></i> {biz.ratingAvg || 5.0} <span>({biz.ratingCount || 0})</span>
                         </div>
@@ -380,7 +413,7 @@ const BizDirectoryMain = () => {
 
                     <div className="biz-card-footer">
                       <span className="biz-status-online">
-                        <span></span> Open Now
+                        <span></span> {lang === 'en' ? 'Open Now' : 'இப்போது திறந்துள்ளது'}
                       </span>
                       <span style={{ color: '#ef4444', fontWeight: 'bold' }}>
                         {lang === 'en' ? 'View Details' : 'விவரங்களைக் காண்க'} &rarr;
@@ -397,16 +430,16 @@ const BizDirectoryMain = () => {
         <div className="w-full lg:w-80 flex flex-col gap-6">
 
           <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '16px', padding: '20px' }}>
-            <h3 style={{ fontSize: '13.5px', fontWeight: '800', marginBottom: '12px' }}>Popular Locations</h3>
+            <h3 style={{ fontSize: '13.5px', fontWeight: '800', marginBottom: '12px' }}>{lang === 'en' ? 'Popular Locations' : 'பிரபலமான இடங்கள்'}</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12px', color: '#475569' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => setLocationQuery("Anna Nagar")}>
-                <span>Anna Nagar</span> <span>120+ listings</span>
+                <span>{lang === 'en' ? 'Anna Nagar' : 'அண்ணா நகர்'}</span> <span>120+ {lang === 'en' ? 'listings' : 'வணிகங்கள்'}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => setLocationQuery("T. Nagar")}>
-                <span>T. Nagar</span> <span>95+ listings</span>
+                <span>{lang === 'en' ? 'T. Nagar' : 'தி. நகர்'}</span> <span>95+ {lang === 'en' ? 'listings' : 'வணிகங்கள்'}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => setLocationQuery("Velachery")}>
-                <span>Velachery</span> <span>80+ listings</span>
+                <span>{lang === 'en' ? 'Velachery' : 'வேளச்சேரி'}</span> <span>80+ {lang === 'en' ? 'listings' : 'வணிகங்கள்'}</span>
               </div>
             </div>
           </div>
@@ -428,10 +461,10 @@ const BizDirectoryMain = () => {
               
               <div className="biz-details-info-map-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', background: '#f8fafc', padding: '16px', borderRadius: '12px', fontSize: '13px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'center' }}>
-                  <div><strong>Locality:</strong> {selectedBiz.addressLocality}</div>
-                  <div><strong>Street:</strong> {selectedBiz.addressStreet}</div>
-                  <div><strong>Timings:</strong> {selectedBiz.workingHours}</div>
-                  <div><strong>Phone:</strong> {selectedBiz.phoneNumber}</div>
+                  <div><strong>{lang === 'en' ? 'Locality:' : 'பகுதி:'}</strong> {selectedBiz.addressLocality}</div>
+                  <div><strong>{lang === 'en' ? 'Street:' : 'தெரு:'}</strong> {selectedBiz.addressStreet}</div>
+                  <div><strong>{lang === 'en' ? 'Timings:' : 'நேரம்:'}</strong> {selectedBiz.workingHours}</div>
+                  <div><strong>{lang === 'en' ? 'Phone:' : 'தொலைபேசி:'}</strong> {selectedBiz.phoneNumber}</div>
                 </div>
                 <div style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid #cbd5e1', height: '150px' }}>
                   <iframe 
@@ -447,13 +480,13 @@ const BizDirectoryMain = () => {
               </div>
 
               <div>
-                <h4 style={{ margin: '0 0 6px 0' }}>About Business</h4>
+                <h4 style={{ margin: '0 0 6px 0' }}>{lang === 'en' ? 'About Business' : 'வணிகம் பற்றி'}</h4>
                 <p style={{ fontSize: '13px', color: '#475569', margin: 0 }}>{selectedBiz.description}</p>
               </div>
 
               {/* Reviews Block */}
               <div>
-                <h4 style={{ margin: '0 0 10px 0' }}>Reviews ({bizReviews.length})</h4>
+                <h4 style={{ margin: '0 0 10px 0' }}>{lang === 'en' ? 'Reviews' : 'மதிப்புரைகள்'} ({bizReviews.length})</h4>
                 <div style={{ maxHeight: '180px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {bizReviews.map(r => (
                     <div key={r.id} style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
@@ -473,10 +506,10 @@ const BizDirectoryMain = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                     <input 
                       type="text" 
-                      placeholder="Your Name" 
+                      placeholder={lang === 'en' ? 'Your Name' : 'உங்கள் பெயர்'} 
                       value={newReviewName} 
                       onChange={(e) => setNewReviewName(e.target.value)} 
-                      required 
+                      required  
                       style={{ flexGrow: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: 'black', minWidth: '180px' }}
                     />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -501,7 +534,7 @@ const BizDirectoryMain = () => {
                   
                   <input 
                     type="text" 
-                    placeholder="Write your review message..." 
+                    placeholder={lang === 'en' ? 'Write your review message...' : 'உங்கள் மதிப்புரை செய்தியை எழுதுங்கள்...'} 
                     value={newReviewComment} 
                     onChange={(e) => setNewReviewComment(e.target.value)} 
                     required 
@@ -509,7 +542,7 @@ const BizDirectoryMain = () => {
                   />
                 </div>
                 <button type="submit" style={{ background: '#ef4444', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
-                  Submit Review
+                  {lang === 'en' ? 'Submit Review' : 'மதிப்புரையைச் சமர்ப்பி'}
                 </button>
               </form>
             </div>
@@ -529,38 +562,38 @@ const BizDirectoryMain = () => {
             <div className="modal-body">
               <form onSubmit={handleCreateBusiness} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div className="form-group">
-                  <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Business Name *</label>
+                  <label style={{ fontSize: '13px', fontWeight: 'bold' }}>{lang === 'en' ? 'Business Name *' : 'வணிகப் பெயர் *'}</label>
                   <input 
                     type="text" 
                     value={newBizName} 
                     onChange={(e) => setNewBizName(e.target.value)} 
                     required 
-                    placeholder="e.g. Kannan Coffee"
+                    placeholder={lang === 'en' ? 'e.g. Kannan Coffee' : 'எ.கா. கண்ணன் காபி'}
                     style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
                   />
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div className="form-group">
-                    <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Category *</label>
+                    <label style={{ fontSize: '13px', fontWeight: 'bold' }}>{lang === 'en' ? 'Category *' : 'வகை *'}</label>
                     <select 
                       value={newBizCat} 
                       onChange={(e) => setNewBizCat(e.target.value)}
                       style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
                     >
                       {categories.map((c, i) => (
-                        <option key={i} value={c.name}>{c.name}</option>
+                        <option key={i} value={c.name}>{getCategoryLabel(c.name)}</option>
                       ))}
                     </select>
                   </div>
                   <div className="form-group">
-                    <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Locality *</label>
+                    <label style={{ fontSize: '13px', fontWeight: 'bold' }}>{lang === 'en' ? 'Locality *' : 'பகுதி *'}</label>
                     <input 
                       type="text" 
                       value={newBizLoc} 
                       onChange={(e) => setNewBizLoc(e.target.value)} 
                       required 
-                      placeholder="e.g. Anna Nagar, Chennai"
+                      placeholder={lang === 'en' ? 'e.g. Anna Nagar, Chennai' : 'எ.கா. அண்ணா நகர், சென்னை'}
                       style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
                     />
                   </div>
@@ -568,18 +601,18 @@ const BizDirectoryMain = () => {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div className="form-group">
-                    <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Phone Number *</label>
+                    <label style={{ fontSize: '13px', fontWeight: 'bold' }}>{lang === 'en' ? 'Phone Number *' : 'தொலைபேசி எண் *'}</label>
                     <input 
                       type="text" 
                       value={newBizPhone} 
                       onChange={(e) => setNewBizPhone(e.target.value)} 
                       required 
-                      placeholder="e.g. 044-1234567"
+                      placeholder={lang === 'en' ? 'e.g. 044-1234567' : 'எ.கா. 044-1234567'}
                       style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
                     />
                   </div>
                   <div className="form-group">
-                    <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Working Hours</label>
+                    <label style={{ fontSize: '13px', fontWeight: 'bold' }}>{lang === 'en' ? 'Working Hours' : 'வேலை நேரம்'}</label>
                     <input 
                       type="text" 
                       value={newBizHours} 
@@ -629,19 +662,19 @@ const BizDirectoryMain = () => {
                 </div>
 
                 <div className="form-group">
-                  <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Description *</label>
+                  <label style={{ fontSize: '13px', fontWeight: 'bold' }}>{lang === 'en' ? 'Description *' : 'விளக்கம் *'}</label>
                   <textarea 
                     value={newBizDesc} 
                     onChange={(e) => setNewBizDesc(e.target.value)} 
                     required 
                     rows="3" 
-                    placeholder="Enter short details about business services..."
+                    placeholder={lang === 'en' ? 'Enter short details about business services...' : 'வணிக சேவைகளைப் பற்றிய சிறிய விளக்கத்தை உள்ளிடவும்...'}
                     style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
                   ></textarea>
                 </div>
 
                 <button type="submit" style={{ background: '#ef4444', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' }}>
-                  Register Business
+                  {lang === 'en' ? 'Register Business' : 'வணிகத்தைப் பதிவு செய்'}
                 </button>
               </form>
             </div>

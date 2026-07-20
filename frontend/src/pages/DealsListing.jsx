@@ -1,10 +1,30 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
 import { ThemeContext } from '../context/ThemeContext';
+import { AuthContext } from '../context/AuthContext';
 import { fetchApi } from '../utils/api';
+import './DealsListing.css';
+
 
 const DealsListing = () => {
   const { lang } = useContext(LanguageContext);
+  const { isAuthenticated } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const getCategoryLabel = (catName) => {
+    const labels = {
+      'Food & Beverages': lang === 'en' ? 'Food & Beverages' : 'உணவு & பானங்கள்',
+      'Fashion': lang === 'en' ? 'Fashion' : 'ஆடை & உடைகள்',
+      'Health & Wellness': lang === 'en' ? 'Health & Wellness' : 'சுகாதாரம் & நலம்',
+      'Automotive': lang === 'en' ? 'Automotive' : 'வாகனம்',
+      'Electronics': lang === 'en' ? 'Electronics' : 'மின்னணுவியல்',
+      'Home & Living': lang === 'en' ? 'Home & Living' : 'வீட்டு உபயோகம்',
+      'Beauty & Salon': lang === 'en' ? 'Beauty & Salon' : 'அழகு நிலையம்',
+      'Sports': lang === 'en' ? 'Sports' : 'விளையாட்டு'
+    };
+    return labels[catName] || catName;
+  };
   const { theme } = useContext(ThemeContext);
 
   // Mockup deals catalog matching mockup image exactly
@@ -187,22 +207,24 @@ const DealsListing = () => {
   });
 
   const categories = [
-    { name: 'Food & Beverages', count: 18 },
-    { name: 'Fashion', count: 12 },
-    { name: 'Health & Wellness', count: 8 },
-    { name: 'Automotive', count: 6 },
-    { name: 'Electronics', count: 5 },
-    { name: 'Home & Living', count: 4 },
-    { name: 'Beauty & Salon', count: 3 },
-    { name: 'Sports', count: 2 }
+    { name: 'Food & Beverages', nameTa: 'உணவு & பானங்கள்', count: 18 },
+    { name: 'Fashion', nameTa: 'ஆடை & உடைகள்', count: 12 },
+    { name: 'Health & Wellness', nameTa: 'சுகாதாரம் & நலம்', count: 8 },
+    { name: 'Automotive', nameTa: 'வாகனம்', count: 6 },
+    { name: 'Electronics', nameTa: 'மின்னணுவியல்', count: 5 },
+    { name: 'Home & Living', nameTa: 'வீட்டு உபயோகம்', count: 4 },
+    { name: 'Beauty & Salon', nameTa: 'அழகு நிலையம்', count: 3 },
+    { name: 'Sports', nameTa: 'விளையாட்டு', count: 2 }
   ];
   return (
-    <div className="container mx-auto px-4 py-8 deals-main-dashboard text-slate-800 dark:text-slate-100" style={{ paddingBottom: '60px' }}>
+    <div className="container mx-auto deals-module-container" style={{ paddingBottom: '60px', paddingTop: '20px' }}>
+
       
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+      <div className="deals-content-columns-grid">
         
         {/* COLUMN 1: Sidebar Filters */}
-        <div className="xl:col-span-1 flex flex-col gap-6">
+        <div className="deals-sidebar-filters-column">
+
           <div className={`p-6 rounded-2xl border shadow-sm ${
             theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-100'
           }`}>
@@ -228,10 +250,10 @@ const DealsListing = () => {
                     theme === 'dark' ? 'bg-[#1f2937] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'
                   }`}
                 >
-                  <option value="all">All Categories</option>
-                  {categories.map((c, idx) => (
-                    <option key={idx} value={c.name}>{c.name}</option>
-                  ))}
+                   <option value="all">{lang === 'en' ? 'All Categories' : 'அனைத்துப் பிரிவுகள்'}</option>
+                   {categories.map((c, idx) => (
+                     <option key={idx} value={c.name}>{getCategoryLabel(c.name)}</option>
+                   ))}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
                   <i className="fas fa-chevron-down text-[9px]"></i>
@@ -365,29 +387,27 @@ const DealsListing = () => {
         </div>
 
         {/* COLUMN 2-3: Middle Content Column */}
-        <div className="xl:col-span-2 flex flex-col gap-6">
+        <div className="deals-main-content-column">
           
           {/* Purple Hero Banner */}
-          <div className="relative rounded-3xl overflow-hidden p-6 md:p-8 bg-gradient-to-r from-[#5c2d91] via-[#6d28d9] to-[#7c3aed] text-white flex justify-between items-center gap-6 shadow-xl min-h-[220px]">
-            {/* Confetti vector background */}
-            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+          <div className="deals-hero-banner">
             
-            <div className="space-y-4 max-w-sm relative z-10">
-              <span className="bg-[#fbbf24] text-black text-[9px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5">
+            <div className="deals-hero-left">
+              <span className="bg-[#fbbf24] text-black text-[9px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5" style={{ width: 'fit-content' }}>
                 <i className="fas fa-fire"></i> Deal of the Day
               </span>
-              <h2 className="text-2xl md:text-3xl font-black leading-tight">Up to 50% OFF<br/><span className="text-[15px] font-bold opacity-90 leading-normal">On Fashion, Electronics &amp; More</span></h2>
-              <p className="text-[11px] opacity-80 leading-relaxed">Grab the best offers from verified local businesses</p>
+              <h2 className="deals-hero-title">Up to 50% OFF</h2>
+              <p className="deals-hero-subtitle">On Fashion, Electronics & More. Grab the best offers from verified local businesses.</p>
               <button 
                 onClick={() => alert("Opening today's best deals list...")}
-                className="bg-white text-[#5c2d91] font-bold px-5 py-2.5 rounded-xl text-xs shadow-md transition transform hover:scale-105 border-0 cursor-pointer flex items-center gap-1.5"
+                className="deals-hero-explore-btn"
               >
-                Explore Deals <i className="fas fa-arrow-right text-[10px]"></i>
+                Explore Deals <i className="fas fa-arrow-right"></i>
               </button>
             </div>
             
             {/* Illustration on the right */}
-            <div className="hidden md:flex relative z-10 w-44 h-40 items-center justify-center">
+            <div className="deals-hero-illustration">
               <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-2xl">
                 <path d="M60,80 L140,80 L130,170 L70,170 Z" fill="#4f46e5" opacity="0.85" />
                 <path d="M80,80 C80,50 120,50 120,80" stroke="#fbcfe8" strokeWidth="4" fill="none" />
@@ -402,15 +422,11 @@ const DealsListing = () => {
           </div>
 
           {/* Filters Tab Row */}
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="deals-filter-tabs-row">
             {['All Deals', 'Expiring Soon', 'Near Me', 'Saved Deals', 'Top Rated'].map((tab, idx) => (
               <button 
                 key={idx}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold border transition whitespace-nowrap cursor-pointer ${
-                  tab === 'All Deals'
-                    ? 'bg-[#f5f3ff] border-[#ddd6fe]/60 text-[#7c3aed]'
-                    : 'bg-white border-gray-150 text-gray-605 hover:bg-gray-50'
-                }`}
+                className={`deals-filter-tab-btn ${tab === 'All Deals' ? 'active' : ''}`}
               >
                 {tab}
               </button>
@@ -418,7 +434,8 @@ const DealsListing = () => {
           </div>
 
           {/* Sort and count Row */}
-          <div className="flex justify-between items-center text-xs text-gray-400 font-bold my-1">
+          <div className="flex flex-wrap justify-between items-center gap-2 text-xs text-gray-400 font-bold my-1">
+
             <span>Showing {filteredDeals.length} deals</span>
             <div className="flex items-center gap-1.5">
               <span>Sort by:</span>
@@ -431,7 +448,7 @@ const DealsListing = () => {
           </div>
 
           {/* Grid of Deals Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="deals-cards-grid">
             {filteredDeals.map(item => {
               const d = item.deal;
               const m = item.merchant || {};
@@ -456,35 +473,39 @@ const DealsListing = () => {
               return (
                 <div 
                   key={d.id}
-                  onClick={() => setSelectedDeal(d)}
-                  className={`rounded-2xl border overflow-hidden transition shadow-sm hover:shadow-md cursor-pointer flex flex-col justify-between ${
-                    theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-100'
-                  }`}
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      navigate('/login', { state: { from: '/deals' } });
+                    } else {
+                      setSelectedDeal(d);
+                    }
+                  }}
+                  className="deal-card"
                 >
-                  <div className="h-36 bg-cover bg-center relative" style={{ backgroundImage: `url(${d.bannerUrl})` }}>
-                    <span className={`absolute top-3 left-3 text-white text-[9px] font-black px-2 py-0.5 rounded ${badgeBg}`}>
+                  <div className="deal-card-img-box" style={{ backgroundImage: `url(${d.bannerUrl})` }}>
+                    <span className="deal-card-discount-badge">
                       {badgeText}
                     </span>
                     <button 
                       type="button" 
                       onClick={(e) => { e.stopPropagation(); alert("Saved to favorites!"); }}
-                      className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center text-gray-400 hover:text-red-500 border-0 cursor-pointer"
+                      className="deal-card-heart"
                     >
-                      <i className="far fa-heart text-xs"></i>
+                      <i className="far fa-heart"></i>
                     </button>
                   </div>
-                  <div className="p-4 flex flex-col justify-between flex-1">
+                  <div className="deal-card-body">
                     <div>
                       <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest block">{d.category}</span>
-                      <h4 className="font-extrabold text-xs text-gray-800 dark:text-white mt-1 leading-tight line-clamp-2 h-8">{d.title}</h4>
-                      <p className="text-[10px] text-gray-500 font-semibold mt-1.5">{m.businessName}</p>
-                      <p className="text-[9px] text-gray-400 mt-1 flex items-center gap-1">
+                      <h4 className="deal-card-title">{d.title}</h4>
+                      <p className="deal-card-seller">{m.businessName}</p>
+                      <p className="deal-card-loc">
                         <i className="fas fa-map-marker-alt text-[#6366f1]"></i> {m.addressLocality}
                       </p>
                     </div>
                     
                     <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100 dark:border-gray-800/10">
-                      <span className={`text-[9px] font-bold flex items-center gap-1 ${isBogo || isFlat ? 'text-green-600' : 'text-red-500'}`}>
+                      <span className="deal-card-validity">
                         <i className="far fa-clock"></i> Valid till {new Date(d.validUntil).getDate()} {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][new Date(d.validUntil).getMonth()]} {new Date(d.validUntil).getFullYear()}
                       </span>
                       <button 
@@ -617,7 +638,7 @@ const DealsListing = () => {
                       <span className={`w-7 h-7 rounded-lg flex items-center justify-center ${iconBg}`}>
                         <i className={iconClass}></i>
                       </span>
-                      <span className="font-semibold text-gray-700 dark:text-gray-300">{c.name}</span>
+                      <span className="font-semibold text-gray-700 dark:text-gray-300">{getCategoryLabel(c.name)}</span>
                     </div>
                     <span className="font-bold text-gray-400">{c.count}</span>
                   </div>
