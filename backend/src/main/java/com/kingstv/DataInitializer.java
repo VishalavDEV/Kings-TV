@@ -66,6 +66,9 @@ public class DataInitializer {
     private HomeLayoutConfigRepository homeLayoutConfigRepository;
 
     @Autowired
+    private NavigationMenuRepository navigationMenuRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -535,6 +538,7 @@ public class DataInitializer {
         // 14. Seed System Configurations
         System.out.println("Seeding System Configs...");
         seedSystemConfig(SystemConfig.GPS_NEWS_RADIUS_KM, "15.0", "gps", "GPS news radius in km");
+        seedSystemConfig(SystemConfig.MAINTENANCE_MODE, "false", "system", "Whether the system is undergoing maintenance (true/false)");
         seedSystemConfig(SystemConfig.VIDEO_MAX_DURATION_SECONDS, "55", "video", "Maximum video duration in seconds");
         seedSystemConfig(SystemConfig.PWA_NAME, "KING24X7 News", "pwa", "PWA full application name");
         seedSystemConfig(SystemConfig.PWA_SHORT_NAME, "KING24X7", "pwa", "PWA short application name");
@@ -561,9 +565,38 @@ public class DataInitializer {
         seedLayoutSection("business_case", "💼 Business Case Studies", 10, "WEB");
         seedLayoutSection("crowd_reporter", "📢 Crowd Reporter", 11, "WEB");
         seedLayoutSection("news_digest", "📑 News Digest", 12, "WEB");
+        seedLayoutSection("crowd_reporter_highlight", "📢 Crowd Reporter Highlights", 13, "WEB");
+        seedLayoutSection("institution_news", "🏫 Institution News", 14, "WEB");
         
         seedLayoutSection("mobile_hero", "Trending Stories Feed", 1, "MOBILE");
         seedLayoutSection("mobile_live_tv", "Live Broadcast", 2, "MOBILE");
+
+        if (navigationMenuRepository.count() == 0) {
+            System.out.println("Seeding Navigation Menu Links...");
+            seedMenu("முகப்பு", "Home", "/", 1, null);
+            seedMenu("அரசியல்", "Politics", "/category/politics", 2, null);
+            seedMenu("வணிகம்", "Business", "/category/business", 3, null);
+            seedMenu("விளையாட்டு", "Sports", "/category/sports", 4, null);
+            seedMenu("பொழுதுபோக்கு", "Cinema", "/category/cinema", 5, null);
+            seedMenu("தொழில்நுட்பம்", "Technology", "/category/tech", 6, null);
+
+            NavigationMenu regional = seedMenu("நம்ம ஊர்", "Regional", "/directory", 7, null);
+            seedMenu("நம்ம ஊர்", "Local Business Directory", "/directory", 1, regional.getId());
+            seedMenu("வாழ்த்து", "Wishes", "/wishes", 2, regional.getId());
+            seedMenu("இரங்கல்", "Obituaries", "/obituaries", 3, regional.getId());
+            seedMenu("வணிகம்", "Business Studies", "/business-studies", 4, regional.getId());
+            seedMenu("வேலை", "Jobs", "/jobs", 5, regional.getId());
+            seedMenu("தள்ளுபடி", "Classifieds", "/classifieds", 6, regional.getId());
+
+            seedMenu("சர்வதேசம்", "International", "/category/international", 8, null);
+
+            NavigationMenu videos = seedMenu("வீடியோ", "Videos", "/videos", 9, null);
+            seedMenu("மாநிலம்", "State", "/videos", 1, videos.getId());
+            seedMenu("தேசியம்", "National", "/videos", 2, videos.getId());
+            seedMenu("சினிமா", "Cinema", "/videos", 3, videos.getId());
+
+            seedMenu("வெப் ஸ்டோரிஸ்", "Web Stories", "/web-stories", 10, null);
+        }
 
         System.out.println("Database Seeding Check Complete!");
     }
@@ -761,5 +794,16 @@ public class DataInitializer {
         story.setSlidesJson(slidesJson);
         story.setStatus("published");
         webStoryRepository.save(story);
+    }
+
+    private NavigationMenu seedMenu(String titleTa, String titleEn, String linkUrl, int displayOrder, Long parentId) {
+        NavigationMenu menu = new NavigationMenu();
+        menu.setTitleTa(titleTa);
+        menu.setTitleEn(titleEn);
+        menu.setLinkUrl(linkUrl);
+        menu.setDisplayOrder(displayOrder);
+        menu.setParentId(parentId);
+        menu.setIsActive(true);
+        return navigationMenuRepository.save(menu);
     }
 }

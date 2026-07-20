@@ -160,6 +160,115 @@ public class SeoController {
         return xml.toString();
     }
 
+    @GetMapping(value = "/sitemap-news.xml", produces = MediaType.APPLICATION_XML_VALUE)
+    public String getNewsSitemap(HttpServletRequest request) {
+        String baseUrl = getFrontendBaseUrl(request);
+        StringBuilder xml = new StringBuilder();
+        xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        xml.append("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"\n");
+        xml.append("        xmlns:news=\"http://www.google.com/schemas/sitemap-news/0.9\">\n");
+
+        java.time.LocalDateTime limit = java.time.LocalDateTime.now().minusHours(48);
+        List<Article> articles = articleRepository.findByStatusOrderByPublishedAtDesc("published");
+        for (Article art : articles) {
+            java.time.LocalDateTime pubTime = art.getPublishedAt();
+            if (pubTime == null) {
+                pubTime = java.time.LocalDateTime.now();
+            }
+            if (pubTime.isAfter(limit)) {
+                String articleSlug = art.getSlug() != null ? art.getSlug() : String.valueOf(art.getId());
+                String title = (art.getTitleTa() != null ? art.getTitleTa() : (art.getTitleEn() != null ? art.getTitleEn() : "News"));
+                title = title.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+                String lang = art.getTitleTa() != null ? "ta" : "en";
+
+                xml.append("  <url>\n");
+                xml.append("    <loc>").append(baseUrl).append("/news/").append(articleSlug).append("</loc>\n");
+                xml.append("    <news:news>\n");
+                xml.append("      <news:publication>\n");
+                xml.append("        <news:name>KINGS 24x7</news:name>\n");
+                xml.append("        <news:language>").append(lang).append("</news:language>\n");
+                xml.append("      </news:publication>\n");
+                if (art.getPublishedAt() != null) {
+                    ZonedDateTime zdt = art.getPublishedAt().atZone(ZoneId.systemDefault());
+                    xml.append("      <news:publication_date>").append(zdt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)).append("</news:publication_date>\n");
+                } else {
+                    ZonedDateTime zdt = ZonedDateTime.now();
+                    xml.append("      <news:publication_date>").append(zdt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)).append("</news:publication_date>\n");
+                }
+                xml.append("      <news:title>").append(title).append("</news:title>\n");
+                xml.append("    </news:news>\n");
+                xml.append("  </url>\n");
+            }
+        }
+
+        xml.append("</urlset>");
+        return xml.toString();
+    }
+
+    @GetMapping(value = "/sitemap-video.xml", produces = MediaType.APPLICATION_XML_VALUE)
+    public String getVideoSitemap(HttpServletRequest request) {
+        String baseUrl = getFrontendBaseUrl(request);
+        StringBuilder xml = new StringBuilder();
+        xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        xml.append("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"\n");
+        xml.append("        xmlns:video=\"http://www.google.com/schemas/sitemap-video/1.1\">\n");
+
+        List<VideoContent> videos = videoRepository.findAll();
+        for (VideoContent vid : videos) {
+            String title = vid.getTitle() != null ? vid.getTitle().replace("&", "&amp;") : "Video News";
+            String desc = vid.getDescription() != null ? vid.getDescription().replace("&", "&amp;") : "Video news coverage";
+            String thumb = vid.getThumbnailUrl() != null ? vid.getThumbnailUrl() : (baseUrl + "/assets/images/default-video.png");
+            if (thumb.startsWith("/")) {
+                thumb = baseUrl + thumb;
+            }
+
+            xml.append("  <url>\n");
+            xml.append("    <loc>").append(baseUrl).append("/videos</loc>\n");
+            xml.append("    <video:video>\n");
+            xml.append("      <video:thumbnail_loc>").append(thumb).append("</video:thumbnail_loc>\n");
+            xml.append("      <video:title>").append(title).append("</video:title>\n");
+            xml.append("      <video:description>").append(desc).append("</video:description>\n");
+            xml.append("      <video:content_loc>").append(vid.getYoutubeUrl()).append("</video:content_loc>\n");
+            xml.append("    </video:video>\n");
+            xml.append("  </url>\n");
+        }
+
+        xml.append("</urlset>");
+        return xml.toString();
+    }
+
+    @GetMapping(value = "/sitemap-image.xml", produces = MediaType.APPLICATION_XML_VALUE)
+    public String getImageSitemap(HttpServletRequest request) {
+        String baseUrl = getFrontendBaseUrl(request);
+        StringBuilder xml = new StringBuilder();
+        xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        xml.append("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"\n");
+        xml.append("        xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\">\n");
+
+        List<Article> articles = articleRepository.findByStatusOrderByPublishedAtDesc("published");
+        for (Article art : articles) {
+            if (art.getImageUrl() != null && !art.getImageUrl().trim().isEmpty()) {
+                String imgUrl = art.getImageUrl();
+                if (imgUrl.startsWith("/")) {
+                    imgUrl = baseUrl + imgUrl;
+                }
+                String title = (art.getTitleTa() != null ? art.getTitleTa() : (art.getTitleEn() != null ? art.getTitleEn() : "News")).replace("&", "&amp;");
+                String articleSlug = art.getSlug() != null ? art.getSlug() : String.valueOf(art.getId());
+
+                xml.append("  <url>\n");
+                xml.append("    <loc>").append(baseUrl).append("/news/").append(articleSlug).append("</loc>\n");
+                xml.append("    <image:image>\n");
+                xml.append("      <image:loc>").append(imgUrl).append("</image:loc>\n");
+                xml.append("      <image:title>").append(title).append("</image:title>\n");
+                xml.append("    </image:image>\n");
+                xml.append("  </url>\n");
+            }
+        }
+
+        xml.append("</urlset>");
+        return xml.toString();
+    }
+
     @GetMapping(value = "/robots.txt", produces = MediaType.TEXT_PLAIN_VALUE)
     public String getRobotsTxt(HttpServletRequest request) {
         String baseUrl = getFrontendBaseUrl(request);
@@ -167,6 +276,9 @@ public class SeoController {
                 "Allow: /\n" +
                 "Disallow: /api/v1/auth/\n" +
                 "Disallow: /admin/\n\n" +
-                "Sitemap: " + baseUrl + "/sitemap.xml\n";
+                "Sitemap: " + baseUrl + "/sitemap.xml\n" +
+                "Sitemap: " + baseUrl + "/sitemap-news.xml\n" +
+                "Sitemap: " + baseUrl + "/sitemap-video.xml\n" +
+                "Sitemap: " + baseUrl + "/sitemap-image.xml\n";
     }
 }

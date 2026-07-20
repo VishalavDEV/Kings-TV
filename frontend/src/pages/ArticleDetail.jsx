@@ -13,6 +13,19 @@ const ArticleDetail = () => {
   const [related, setRelated] = useState([]);
   const [trending, setTrending] = useState([]);
   const [showAllComments, setShowAllComments] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (totalHeight > 0) {
+        const progress = (window.scrollY / totalHeight) * 100;
+        setScrollProgress(progress);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Form states
   const [commentor, setCommentor] = useState('');
@@ -24,6 +37,35 @@ const ArticleDetail = () => {
   const [showToast, setShowToast] = useState(false);
 
   const [sidebarWeather, setSidebarWeather] = useState({ temp: '32°C', condition: 'Partly Cloudy', conditionTa: 'மேகமூட்டம்', humidity: '72%', wind: '18 km/h' });
+
+  const [isBookmarkedOffline, setIsBookmarkedOffline] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('kings_offline_bookmarks');
+      if (stored) {
+        const list = JSON.parse(stored);
+        setIsBookmarkedOffline(list.some(a => String(a.id) === String(id)));
+      }
+    } catch (e) {}
+  }, [id]);
+
+  const toggleOfflineSave = () => {
+    try {
+      const stored = localStorage.getItem('kings_offline_bookmarks');
+      let list = stored ? JSON.parse(stored) : [];
+      if (isBookmarkedOffline) {
+        list = list.filter(a => String(a.id) !== String(id));
+        setIsBookmarkedOffline(false);
+        triggerToast(lang === 'en' ? 'Removed from offline storage' : 'ஆஃப்லைன் சேமிப்பகத்திலிருந்து நீக்கப்பட்டது');
+      } else {
+        list.push(article);
+        setIsBookmarkedOffline(true);
+        triggerToast(lang === 'en' ? 'Saved for offline reading!' : 'ஆஃப்லைன் வாசிப்பிற்காகச் சேமிக்கப்பட்டது!');
+      }
+      localStorage.setItem('kings_offline_bookmarks', JSON.stringify(list));
+    } catch (e) {}
+  };
 
   useEffect(() => {
     const baseApi = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api/v1';
@@ -457,8 +499,8 @@ const ArticleDetail = () => {
             authorRoleEn: 'Chief News Reporter',
             pubDate: data.publishedAt ? new Date(data.publishedAt).toLocaleDateString() : '20 மே 2025',
             updDate: data.updatedAt ? new Date(data.updatedAt).toLocaleDateString() : '21 மே 2025',
-            readTime: '3 நிமிட வாசிப்பு',
-            readTimeEn: '3 Min Read',
+            readTime: `${data.readingTime || 1} நிமிட வாசிப்பு`,
+            readTimeEn: `${data.readingTime || 1} Min Read`,
             categoryName: cat.nameTa,
             categoryNameEn: cat.name,
             categorySlug: cat.slug,
@@ -466,27 +508,25 @@ const ArticleDetail = () => {
               ? data.metaKeywords.split(',').map(s => s.trim()).filter(Boolean)
               : ['செய்திகள்', 'தமிழகம்'],
             imageUrl: data.imageUrl,
+            authorProfileImage: data.authorProfileImage,
             gradient: 'linear-gradient(135deg, #1E3A8A, #3B82F6)'
           });
 
-          // Fetch related articles for the same category
-          fetchApi('/articles')
-            .then(allArts => {
-              const list = Array.isArray(allArts)
-                ? allArts
-                    .filter(item => item.categoryId === currentCategoryId && (item.id || item.article_id) !== (data.id || data.article_id))
-                    .slice(0, 3)
-                    .map(item => ({
-                      id: item.id || item.article_id,
-                      titleTa: item.titleTa,
-                      titleEn: item.titleEn,
-                      descTa: item.shortDescTa,
-                      descEn: item.shortDescEn,
-                      subcatTa: item.districtId ? 'மாநிலம்' : 'தேசியம்',
-                      subcatEn: item.districtId ? 'State' : 'National',
-                      imageUrl: item.imageUrl,
-                      gradient: 'linear-gradient(135deg, #3B82F6, #1D4ED8)'
-                    }))
+          // Fetch related articles from backend
+          fetchApi(`/articles/${data.id || data.article_id}/related`)
+            .then(relatedArts => {
+              const list = Array.isArray(relatedArts)
+                ? relatedArts.map(item => ({
+                    id: item.id || item.article_id,
+                    titleTa: item.titleTa,
+                    titleEn: item.titleEn,
+                    descTa: item.shortDescTa,
+                    descEn: item.shortDescEn,
+                    subcatTa: item.districtId ? 'மாநிலம்' : 'தேசியம்',
+                    subcatEn: item.districtId ? 'State' : 'National',
+                    imageUrl: item.imageUrl,
+                    gradient: 'linear-gradient(135deg, #3B82F6, #1D4ED8)'
+                  }))
                 : [];
               setRelated(list.length > 0 ? list : fallbackRelated);
             })
@@ -500,7 +540,22 @@ const ArticleDetail = () => {
         fetchComments(currentCategoryId);
       })
       .catch(err => {
-        console.warn("Could not load article from API, using fallback", err);
+        console.warn("Could not load article from API, checking local storage offline cache", err);
+        try {
+          const stored = localStorage.getItem('kings_offline_bookmarks');
+          if (stored) {
+            const list = JSON.parse(stored);
+            const found = list.find(a => String(a.id) === String(id));
+            if (found) {
+              setArticle(found);
+              setRelated(fallbackRelated);
+              fetchComments(currentCategoryId);
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn("Error parsing offline bookmarks", e);
+        }
         setArticle(fallbackArticle);
         setRelated(fallbackRelated);
         fetchComments(currentCategoryId);
@@ -651,21 +706,90 @@ const ArticleDetail = () => {
 
   return (
     <div className="container" style={{ marginTop: '20px', marginBottom: '40px' }}>
+      {/* Reading Progress Bar */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: `${scrollProgress}%`,
+        height: '4px',
+        background: 'var(--category-color, var(--primary))',
+        zIndex: 1000,
+        transition: 'width 0.1s ease'
+      }} />
+
+      {/* Floating Share Sidebar */}
+      <div className="share-sidebar-floating">
+        <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer" style={{ color: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(37, 211, 102, 0.1)' }} title="Share on WhatsApp">
+          <i className="fab fa-whatsapp"></i>
+        </a>
+        <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer" style={{ color: '#1877F2', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(24, 119, 242, 0.1)' }} title="Share on Facebook">
+          <i className="fab fa-facebook-f"></i>
+        </a>
+        <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer" style={{ color: '#1DA1F2', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(29, 161, 242, 0.1)' }} title="Share on Twitter">
+          <i className="fab fa-twitter"></i>
+        </a>
+        <a href={`https://telegram.me/share/url?url=${encodeURIComponent(window.location.href)}`} target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(0, 136, 204, 0.1)' }} title="Share on Telegram">
+          <i className="fab fa-telegram-plane"></i>
+        </a>
+        <button onClick={toggleOfflineSave} style={{ border: 'none', cursor: 'pointer', color: isBookmarkedOffline ? '#10B981' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '50%', background: isBookmarkedOffline ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.05)' }} title={lang === 'en' ? 'Save Offline' : 'ஆஃப்லைனில் சேமி'}>
+          <i className={isBookmarkedOffline ? "fas fa-bookmark" : "far fa-bookmark"}></i>
+        </button>
+        <button onClick={handleCopyLink} style={{ border: 'none', cursor: 'pointer', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary-light)' }} title="Copy Link">
+          <i className="fas fa-link"></i>
+        </button>
+      </div>
+
+      <style>{`
+        .share-sidebar-floating {
+          position: fixed;
+          left: 20px;
+          top: 50%;
+          transform: translateY(-50%);
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          z-index: 100;
+          background: var(--card-bg);
+          padding: 12px;
+          border-radius: 30px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          border: 1px solid var(--border-color);
+        }
+        @media (max-width: 1024px) {
+          .share-sidebar-floating {
+            position: static;
+            transform: none;
+            flex-direction: row;
+            justify-content: center;
+            margin: 20px auto;
+            box-shadow: none;
+            background: transparent;
+            border: none;
+            padding: 0;
+            max-width: 300px;
+          }
+        }
+      `}</style>
+
       <div className="article-container">
         
-        {/* Floating Share Sidebar deleted completely */}
-
         {/* Main Article Column */}
         <main className="article-main">
           {/* Breadcrumbs */}
-          <div className="breadcrumbs">
-            <Link to="/">{lang === 'en' ? 'Home' : 'முகப்பு'}</Link>
-            <i className="fas fa-chevron-right" style={{ fontSize: '10px', margin: '0 8px' }}></i>
-            <Link to={`/category/${article.categorySlug}`}>
+          <div className="breadcrumbs" style={{ display: 'flex', alignItems: 'center', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+            <Link to="/" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>{lang === 'en' ? 'Home' : 'முகப்பு'}</Link>
+            <i className="fas fa-chevron-right" style={{ fontSize: '8px', margin: '0 8px', opacity: 0.5 }}></i>
+            <Link to={`/category/${article.categorySlug}`} style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
               {lang === 'en' ? article.categoryNameEn : article.categoryName}
             </Link>
-            <i className="fas fa-chevron-right" style={{ fontSize: '10px', margin: '0 8px' }}></i>
-            <span>{lang === 'en' ? 'Article' : 'கட்டுரை'}</span>
+            <i className="fas fa-chevron-right" style={{ fontSize: '8px', margin: '0 8px', opacity: 0.5 }}></i>
+            <span style={{ color: 'var(--text-secondary)' }}>
+              {lang === 'en' 
+                ? ((article.titleEn || article.titleTa).length > 40 ? (article.titleEn || article.titleTa).substring(0, 40) + '...' : (article.titleEn || article.titleTa))
+                : (article.titleTa.length > 45 ? article.titleTa.substring(0, 45) + '...' : article.titleTa)
+              }
+            </span>
           </div>
 
           {/* Headlines */}
@@ -707,7 +831,7 @@ const ArticleDetail = () => {
             dangerouslySetInnerHTML={{ __html: lang === 'en' ? (article.contentEn || article.contentTa) : article.contentTa }}
           />
 
-          {/* Tags */}
+          {/* Clickable Tags */}
           <div className="article-tags" id="articleTags" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '24px 0' }}>
             {article.tags.map((tg, i) => {
               const tagTranslations = {
@@ -718,9 +842,25 @@ const ArticleDetail = () => {
               };
               const tagLabel = lang === 'en' ? (tagTranslations[tg] || tg) : tg;
               return (
-                <span className="article-tag" key={i} style={{ background: 'var(--primary-light)', color: 'var(--primary)', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: 700 }}>
+                <Link 
+                  to={`/tag/${tg}`} 
+                  key={i} 
+                  className="article-tag" 
+                  style={{ 
+                    background: 'var(--primary-light)', 
+                    color: 'var(--primary)', 
+                    padding: '4px 12px', 
+                    borderRadius: '4px', 
+                    fontSize: '12px', 
+                    fontWeight: 700, 
+                    textDecoration: 'none', 
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.color = 'white'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--primary-light)'; e.currentTarget.style.color = 'var(--primary)'; }}
+                >
                   {tagLabel}
-                </span>
+                </Link>
               );
             })}
           </div>
@@ -737,9 +877,17 @@ const ArticleDetail = () => {
             marginBottom: '20px'
           }}>
             <div className="author-profile">
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--category-color, var(--primary)), #000000)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700 }}>
-                {(lang === 'en' ? getAuthorNameEn() : (article.authorName || 'கே')).charAt(0)}
-              </div>
+              {article.authorProfileImage ? (
+                <img 
+                  src={article.authorProfileImage} 
+                  alt={lang === 'en' ? getAuthorNameEn() : article.authorName} 
+                  style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', marginRight: '12px' }}
+                />
+              ) : (
+                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--category-color, var(--primary)), #000000)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, marginRight: '12px' }}>
+                  {(lang === 'en' ? getAuthorNameEn() : (article.authorName || 'கே')).charAt(0)}
+                </div>
+              )}
               <div className="author-details">
                 <h4 id="authorName" style={{ fontWeight: 800, fontSize: '14px', margin: 0 }}>
                   {lang === 'en' ? getAuthorNameEn() : article.authorName}

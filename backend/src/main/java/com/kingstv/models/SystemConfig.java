@@ -58,6 +58,7 @@ public class SystemConfig {
     public static final String CDN_API_KEY = "cdn.api_key";
     public static final String LIVE_STREAM_SERVER_URL = "livestream.server_url";
     public static final String LIVE_STREAM_BROADCAST_URL = "livestream.broadcast_url";
+    public static final String MAINTENANCE_MODE = "system.maintenance_mode";
     public static final String LIVE_STREAM_KEY = "livestream.stream_key";
     public static final String PWA_NAME = "pwa.name";
     public static final String PWA_SHORT_NAME = "pwa.short_name";

@@ -15,12 +15,20 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
     List<Article> findTop50ByStatusOrderByPublishedAtDesc(String status);
     Optional<Article> findBySlug(String slug);
     org.springframework.data.domain.Page<Article> findByStatus(String status, org.springframework.data.domain.Pageable pageable);
+    List<Article> findTop5ByStatusOrderByViewsCountDesc(String status);
+    List<Article> findByAuthorNameInAndStatusOrderByPublishedAtDesc(List<String> authorNames, String status);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query("UPDATE Article a SET a.viewsCount = COALESCE(a.viewsCount, 0) + 1 WHERE a.id = :id")
+    void incrementViewsCount(@Param("id") Long id);
 
     @Query(value = "SELECT * FROM articles WHERE status = 'published' AND (" +
-           "latitude IS NULL OR longitude IS NULL OR visibility_radius_km IS NULL OR " +
+           "latitude IS NULL OR longitude IS NULL OR " +
            "(6371 * acos(cos(radians(:userLat)) * cos(radians(latitude)) * " +
            "cos(radians(longitude) - radians(:userLon)) + " +
-           "sin(radians(:userLat)) * sin(radians(latitude)))) <= visibility_radius_km) " +
+           "sin(radians(:userLat)) * sin(radians(latitude)))) <= COALESCE(visibility_radius_km, :defaultRadius)) " +
            "ORDER BY published_at DESC LIMIT :limit", nativeQuery = true)
-    List<Article> findNearbyArticles(@Param("userLat") Double userLat, @Param("userLon") Double userLon, @Param("limit") int limit);
+    List<Article> findNearbyArticles(@Param("userLat") Double userLat, @Param("userLon") Double userLon, @Param("defaultRadius") Double defaultRadius, @Param("limit") int limit);
+    List<Article> findTop10ByStatusAndCategoryIdAndIdNotOrderByPublishedAtDesc(String status, Long categoryId, Long id);
 }

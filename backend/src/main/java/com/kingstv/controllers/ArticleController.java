@@ -2,9 +2,13 @@ package com.kingstv.controllers;
 
 import com.kingstv.models.Article;
 import com.kingstv.models.Comment;
+import com.kingstv.models.User;
 import com.kingstv.repository.ArticleRepository;
 import com.kingstv.repository.CommentRepository;
+import com.kingstv.repository.UserRepository;
 import com.kingstv.services.SlugService;
+import com.kingstv.services.StorageService;
+import com.kingstv.services.SeoGeneratorService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -21,11 +25,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.io.IOException;
+import com.kingstv.security.RequiresPermission;
+import com.kingstv.models.Role;
 
 @RestController
 @RequestMapping("/api/v1/articles")
@@ -35,19 +43,44 @@ public class ArticleController {
     private ArticleRepository articleRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private CommentRepository commentRepository;
 
     @Autowired
     private SlugService slugService;
 
     @Autowired
+    private SeoGeneratorService seoGeneratorService;
+
+    @Autowired
     private com.kingstv.services.AiAssistService aiAssistService;
+
+    @Autowired
+    private StorageService storageService;
 
     // --- KEEP Existing Front-End Endpoint Map ---
     @GetMapping
+    @Cacheable(value = "articles", key = "#status != null ? #status : 'published'")
     public List<Article> getArticles(@RequestParam(required = false) String status) {
         String activeStatus = status != null ? status : "published";
         return articleRepository.findTop50ByStatusOrderByPublishedAtDesc(activeStatus);
+    }
+
+    @GetMapping("/public/trending")
+    public List<Article> getTrendingArticles() {
+        return articleRepository.findTop5ByStatusOrderByViewsCountDesc("published");
+    }
+
+    @GetMapping("/public/institution-news")
+    public List<Article> getInstitutionNews() {
+        List<User> institutions = userRepository.findByRole("INSTITUTION_LOGIN");
+        List<String> names = institutions.stream().map(User::getFullName).toList();
+        if (names.isEmpty()) {
+            return articleRepository.findTop50ByStatusOrderByPublishedAtDesc("published").stream().limit(6).toList();
+        }
+        return articleRepository.findByAuthorNameInAndStatusOrderByPublishedAtDesc(names, "published");
     }
 
     @GetMapping("/{idOrSlug}")
@@ -69,8 +102,14 @@ public class ArticleController {
         }
 
         Article article = artOpt.get();
-        article.setViewsCount(article.getViewsCount() + 1);
-        articleRepository.save(article);
+        articleRepository.incrementViewsCount(article.getId());
+        article.setViewsCount((article.getViewsCount() != null ? article.getViewsCount() : 0) + 1);
+
+        if (article.getAuthorName() != null) {
+            userRepository.findByFullName(article.getAuthorName()).ifPresent(user -> {
+                article.setAuthorProfileImage(user.getProfileImage());
+            });
+        }
 
         // Dynamic JSON-LD structured data attachment
         article.setStructuredDataJson(generateJsonLd(article, request));
@@ -79,6 +118,8 @@ public class ArticleController {
     }
 
     @PostMapping
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN})
+    @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
     public ResponseEntity<?> createArticle(@RequestBody Article article, HttpServletRequest request) {
         if (article.getTitleTa() == null || article.getContentTa() == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Title (Tamil) and Content (Tamil) are required"));
@@ -93,41 +134,113 @@ public class ArticleController {
 
     // --- NEW Standardized API Standard Endpoints ---
     @GetMapping("/getAll")
+    @Cacheable(value = "articles_all", key = "T(java.util.Objects).hash(#search, #status, #categoryId, #districtId, #authorId, #tag, #startDateStr, #endDateStr, #year, #month, #page, #size, #sortBy, #direction)")
     public Page<Article> getAll(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String categoryId,
             @RequestParam(required = false) String districtId,
+            @RequestParam(required = false) String authorId,
+            @RequestParam(required = false) String tag,
+            @RequestParam(required = false) String startDateStr,
+            @RequestParam(required = false) String endDateStr,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "publishedAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+            String role = auth.getAuthorities().stream()
+                .filter(a -> a.getAuthority().startsWith("ROLE_")).map(a -> a.getAuthority().substring(5))
+                .findFirst().orElse("READER");
+            if ("MOBILE_JOURNALIST".equals(role) || "INSTITUTION_LOGIN".equals(role)) {
+                authorId = String.valueOf(auth.getDetails());
+            }
+        }
+
+        LocalDateTime startDate = null;
+        LocalDateTime endDate = null;
+        if (startDateStr != null && !startDateStr.isEmpty()) {
+            try {
+                startDate = java.time.LocalDate.parse(startDateStr).atStartOfDay();
+            } catch (Exception e) {}
+        }
+        if (endDateStr != null && !endDateStr.isEmpty()) {
+            try {
+                endDate = java.time.LocalDate.parse(endDateStr).atTime(23, 59, 59);
+            } catch (Exception e) {}
+        }
+
         Sort sort = Sort.by(direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
-        Specification<Article> spec = SpecificationBuilder.build(search, status, categoryId, districtId);
+        Specification<Article> spec = SpecificationBuilder.build(search, status, categoryId, districtId, authorId, tag, startDate, endDate, year, month);
         return articleRepository.findAll(spec, pageable);
     }
 
     @GetMapping("/getAllWeb")
+    @Cacheable(value = "articles_web", key = "T(java.util.Objects).hash(#search, #categoryId, #districtId, #tag, #startDateStr, #endDateStr, #year, #month, #page, #size, #sortBy, #direction)")
     public Page<Article> getAllWeb(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String categoryId,
             @RequestParam(required = false) String districtId,
+            @RequestParam(required = false) String tag,
+            @RequestParam(required = false) String startDateStr,
+            @RequestParam(required = false) String endDateStr,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "publishedAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         
-        return getAll(search, "published", categoryId, districtId, page, size, sortBy, direction);
+        return getAll(search, "published", categoryId, districtId, null, tag, startDateStr, endDateStr, year, month, page, size, sortBy, direction);
+    }
+
+    @GetMapping("/{id}/related")
+    public ResponseEntity<?> getRelatedArticles(@PathVariable Long id) {
+        return articleRepository.findById(id).map(article -> {
+            Long categoryId = article.getCategoryId();
+            List<Article> sameCategory = articleRepository.findTop10ByStatusAndCategoryIdAndIdNotOrderByPublishedAtDesc("published", categoryId, id);
+            
+            List<String> targetTags = parseKeywords(article.getMetaKeywords());
+            
+            sameCategory.sort((a, b) -> {
+                long overlapA = countOverlap(parseKeywords(a.getMetaKeywords()), targetTags);
+                long overlapB = countOverlap(parseKeywords(b.getMetaKeywords()), targetTags);
+                if (overlapA != overlapB) {
+                    return Long.compare(overlapB, overlapA); // descending by overlap
+                }
+                return b.getPublishedAt().compareTo(a.getPublishedAt()); // descending by date
+            });
+            
+            List<Article> result = sameCategory.subList(0, Math.min(3, sameCategory.size()));
+            return ResponseEntity.ok(result);
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    private List<String> parseKeywords(String keywords) {
+        if (keywords == null || keywords.trim().isEmpty()) {
+            return List.of();
+        }
+        return List.of(keywords.toLowerCase().split("\\s*,\\s*"));
+    }
+
+    private long countOverlap(List<String> tagsA, List<String> tagsB) {
+        return tagsA.stream().filter(tagsB::contains).count();
     }
 
     @PostMapping("/saveUpdate")
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN})
     public ResponseEntity<?> save(@RequestBody Article entity, HttpServletRequest request) {
         return createArticle(entity, request);
     }
 
     @PutMapping("/saveUpdate")
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN})
+    @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
     public ResponseEntity<?> update(@RequestBody Article entity, HttpServletRequest request) {
         if (entity.getId() == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Id is required for update"));
@@ -165,6 +278,8 @@ public class ArticleController {
     }
 
     @PatchMapping("/changeStatus")
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN})
+    @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
     public ResponseEntity<?> changeStatus(@RequestBody Map<String, Object> request) {
         if (!request.containsKey("id") || !request.containsKey("status")) {
             return ResponseEntity.badRequest().body(Map.of("message", "id and status are required"));
@@ -183,6 +298,8 @@ public class ArticleController {
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR})
+    @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
     public ResponseEntity<?> deleteArticle(@PathVariable Long id) {
         Optional<Article> artOpt = articleRepository.findById(id);
         if (artOpt.isEmpty()) {
@@ -219,34 +336,7 @@ public class ArticleController {
 
     // Helper methods for SEO
     private void populateSeoFields(Article article, HttpServletRequest request) {
-        slugService.generateAndSetSlug(article);
-        
-        if (article.getMetaTitle() == null || article.getMetaTitle().trim().isEmpty()) {
-            article.setMetaTitle(article.getTitleTa() != null ? article.getTitleTa() : article.getTitleEn());
-        }
-        if (article.getMetaDescription() == null || article.getMetaDescription().trim().isEmpty()) {
-            String desc = article.getShortDescTa() != null ? article.getShortDescTa() : article.getShortDescEn();
-            if (desc == null) {
-                desc = article.getContentTa();
-            }
-            if (desc != null && desc.length() > 160) {
-                desc = desc.substring(0, 157) + "...";
-            }
-            article.setMetaDescription(desc);
-        }
-        if (article.getMetaKeywords() == null || article.getMetaKeywords().trim().isEmpty()) {
-            article.setMetaKeywords("news, Tamil news, Kings TV, " + (article.getTitleEn() != null ? article.getTitleEn() : ""));
-        }
-        if (article.getFeaturedImage() == null || article.getFeaturedImage().trim().isEmpty()) {
-            article.setFeaturedImage(article.getImageUrl());
-        }
-        if (article.getCanonicalUrl() == null || article.getCanonicalUrl().trim().isEmpty()) {
-            String scheme = request.getScheme();
-            String serverName = request.getServerName();
-            int port = request.getServerPort();
-            String portStr = (port == 8080) ? ":5173" : ((port != 80 && port != 443) ? ":" + port : "");
-            article.setCanonicalUrl(scheme + "://" + serverName + portStr + "/news/" + article.getSlug());
-        }
+        seoGeneratorService.populateSeoFields(article, request);
     }
 
     private String generateJsonLd(Article article, HttpServletRequest request) {
@@ -273,26 +363,45 @@ public class ArticleController {
         
         return "{\n" +
                 "  \"@context\": \"https://schema.org\",\n" +
-                "  \"@type\": \"NewsArticle\",\n" +
-                "  \"headline\": \"" + headline + "\",\n" +
-                "  \"description\": \"" + description + "\",\n" +
-                "  \"image\": [\n" +
-                "    \"" + imageUrl + "\"\n" +
-                "  ],\n" +
-                "  \"datePublished\": \"" + pubDate + "\",\n" +
-                "  \"dateModified\": \"" + modDate + "\",\n" +
-                "  \"author\": [{\n" +
-                "    \"@type\": \"Person\",\n" +
-                "    \"name\": \"" + author + "\"\n" +
-                "  }],\n" +
-                "  \"publisher\": {\n" +
-                "    \"@type\": \"Organization\",\n" +
-                "    \"name\": \"KINGS 24x7\",\n" +
-                "    \"logo\": {\n" +
-                "      \"@type\": \"ImageObject\",\n" +
-                "      \"url\": \"" + baseUrl + "/assets/icons/logo.png\"\n" +
+                "  \"@graph\": [\n" +
+                "    {\n" +
+                "      \"@type\": \"NewsArticle\",\n" +
+                "      \"headline\": \"" + headline + "\",\n" +
+                "      \"description\": \"" + description + "\",\n" +
+                "      \"image\": [\"" + imageUrl + "\"],\n" +
+                "      \"datePublished\": \"" + pubDate + "\",\n" +
+                "      \"dateModified\": \"" + modDate + "\",\n" +
+                "      \"author\": [{\n" +
+                "        \"@type\": \"Person\",\n" +
+                "        \"name\": \"" + author + "\"\n" +
+                "      }],\n" +
+                "      \"publisher\": {\n" +
+                "        \"@type\": \"Organization\",\n" +
+                "        \"name\": \"KINGS 24x7\",\n" +
+                "        \"logo\": {\n" +
+                "          \"@type\": \"ImageObject\",\n" +
+                "          \"url\": \"" + baseUrl + "/assets/icons/logo.png\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"@type\": \"BreadcrumbList\",\n" +
+                "      \"itemListElement\": [\n" +
+                "        {\n" +
+                "          \"@type\": \"ListItem\",\n" +
+                "          \"position\": 1,\n" +
+                "          \"name\": \"Home\",\n" +
+                "          \"item\": \"" + baseUrl + "/\"\n" +
+                "        },\n" +
+                "        {\n" +
+                "          \"@type\": \"ListItem\",\n" +
+                "          \"position\": 2,\n" +
+                "          \"name\": \"News\",\n" +
+                "          \"item\": \"" + baseUrl + "/article/" + article.getSlug() + "\"\n" +
+                "        }\n" +
+                "      ]\n" +
                 "    }\n" +
-                "  }\n" +
+                "  ]\n" +
                 "}";
     }
 
@@ -319,38 +428,26 @@ public class ArticleController {
             return ResponseEntity.badRequest().body(Map.of("message", "File is empty"));
         }
         try {
-            Path uploadPath = Paths.get("uploads/articles");
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-            String contentType = file.getContentType();
-            String extension = ".jpg";
-            if (contentType != null) {
-                if (contentType.equals("image/png")) {
-                    extension = ".png";
-                } else if (contentType.equals("image/gif")) {
-                    extension = ".gif";
-                } else if (contentType.equals("image/webp")) {
-                    extension = ".webp";
-                } else if (contentType.startsWith("video/")) {
-                    if (contentType.equals("video/mp4")) {
-                        extension = ".mp4";
-                    } else if (contentType.equals("video/webm")) {
-                        extension = ".webm";
-                    } else {
-                        extension = ".mp4"; // fallback
-                    }
-                }
-            }
-            String prefix = contentType != null && contentType.startsWith("video/") ? "video_" : "article_";
-            String fileName = prefix + System.currentTimeMillis() + "_" + (int)(Math.random() * 1000) + extension;
-            Path filePath = uploadPath.resolve(fileName);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            return ResponseEntity.ok(Map.of("url", "/uploads/articles/" + fileName));
-        } catch (IOException e) {
+            String url = storageService.uploadFile(file, "articles");
+            return ResponseEntity.ok(Map.of("url", url));
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Failed to upload file: " + e.getMessage()));
         }
+    }
+
+    @GetMapping("/public/authors/{name}")
+    public ResponseEntity<?> getPublicAuthorProfile(@PathVariable String name) {
+        return userRepository.findByFullName(name).map(user -> {
+            return ResponseEntity.ok(Map.of(
+                "fullName", user.getFullName(),
+                "role", user.getRole(),
+                "profileImage", user.getProfileImage() != null ? user.getProfileImage() : "",
+                "bio", "Experienced journalist covering news and updates at Kings TV.",
+                "location", "Chennai, India",
+                "twitter", "https://twitter.com/kingstv",
+                "facebook", "https://facebook.com/kingstv"
+            ));
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Author profile not found")));
     }
 }

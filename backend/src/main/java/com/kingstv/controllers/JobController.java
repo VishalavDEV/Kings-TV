@@ -2,6 +2,7 @@ package com.kingstv.controllers;
 
 import com.kingstv.models.*;
 import com.kingstv.services.JobService;
+import com.kingstv.services.StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +28,9 @@ public class JobController {
 
     @Autowired
     private JobService jobService;
+
+    @Autowired
+    private StorageService storageService;
 
     @GetMapping
     public ResponseEntity<?> getJobs(
@@ -109,16 +113,9 @@ public class JobController {
             return ResponseEntity.badRequest().body(Map.of("message", "File is empty"));
         }
         try {
-            Path uploadPath = Paths.get("uploads/jobs");
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-            String fileName = "job_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            Path filePath = uploadPath.resolve(fileName);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            return ResponseEntity.ok(Map.of("url", "/uploads/jobs/" + fileName));
-        } catch (IOException e) {
+            String url = storageService.uploadFile(file, "jobs");
+            return ResponseEntity.ok(Map.of("url", url));
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Failed to upload file: " + e.getMessage()));
         }

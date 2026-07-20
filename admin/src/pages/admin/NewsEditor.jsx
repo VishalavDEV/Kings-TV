@@ -44,6 +44,7 @@ const NewsEditor = () => {
   // AI SEO Assistant state
   const [aiSeoLoading, setAiSeoLoading] = useState(false);
   const [aiSeoSuggestions, setAiSeoSuggestions] = useState(null);
+  const [linkSuggestions, setLinkSuggestions] = useState([]);
 
   const [form, setForm] = useState({
     titleTa: '', titleEn: '', contentTa: '', contentEn: '',
@@ -146,6 +147,26 @@ const NewsEditor = () => {
       setSubCategories([]);
     }
   }, [form.categoryId]);
+
+  // Dynamic Internal Linking Suggestions
+  useEffect(() => {
+    if (form.focusKeywords) {
+      api.get('/articles')
+        .then(res => {
+          const list = Array.isArray(res.data) ? res.data : (res.data && Array.isArray(res.data.content) ? res.data.content : []);
+          const matchKeywords = form.focusKeywords.toLowerCase().split(/[\s,]+/);
+          const suggestions = list.filter(art => {
+            if (art.id === parseInt(id)) return false;
+            const title = ((art.titleEn || '') + ' ' + (art.titleTa || '')).toLowerCase();
+            return matchKeywords.some(kw => kw.length > 2 && title.includes(kw));
+          }).slice(0, 4);
+          setLinkSuggestions(suggestions);
+        })
+        .catch(() => {});
+    } else {
+      setLinkSuggestions([]);
+    }
+  }, [form.focusKeywords, id]);
 
   // Initialize TinyMCE editors
   useEffect(() => {
@@ -608,6 +629,36 @@ const NewsEditor = () => {
     return { words, chars, readingTime };
   };
 
+  const getDensity = () => {
+    const kw = form.focusKeywords ? form.focusKeywords.trim().toLowerCase() : '';
+    if (!kw) return { count: 0, percent: 0, status: 'Neutral', color: 'gray' };
+    const text = ((form.contentTa || '') + ' ' + (form.contentEn || '')).toLowerCase();
+    const cleanText = text.replace(/<[^>]*>/g, ' ');
+    const words = cleanText.split(/\s+/).filter(Boolean);
+    const wordCount = words.length || 1;
+    
+    let count = 0;
+    let pos = cleanText.indexOf(kw);
+    while (pos !== -1) {
+      count++;
+      pos = cleanText.indexOf(kw, pos + kw.length);
+    }
+    
+    const percent = parseFloat(((count / wordCount) * 100).toFixed(2));
+    let status = 'Good';
+    let color = '#10B981';
+    if (percent < 0.5) {
+      status = 'Too Low (<0.5%)';
+      color = '#F59E0B';
+    } else if (percent > 2.5) {
+      status = 'Keyword Stuffing (>2.5%)';
+      color = '#EF4444';
+    }
+    return { count, percent, status, color, wordCount };
+  };
+
+  const density = getDensity();
+
   const inputStyle = {
     width: '100%', padding: '0.75rem 1rem', borderRadius: '8px',
     border: '1px solid var(--border-color)', background: 'var(--bg-surface)',
@@ -877,6 +928,42 @@ const NewsEditor = () => {
                 <label style={labelStyle}>Focus Keywords</label>
                 <input style={inputStyle} value={form.focusKeywords}
                   onChange={e => set('focusKeywords', e.target.value)} placeholder="e.g. புதிய இந்திய அணி, இளம் வீரர்கள்..." />
+                {form.focusKeywords && (
+                  <div style={{ marginTop: '0.75rem', padding: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
+                      <span style={{ fontWeight: 600 }}>Focus Keyword Density:</span>
+                      <span style={{ color: density.color, fontWeight: 'bold' }}>{density.percent}% ({density.status})</span>
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                      Found {density.count} occurrences in {density.wordCount} words. Target: 0.5% - 2.5%
+                    </div>
+                  </div>
+                )}
+                {linkSuggestions.length > 0 && (
+                  <div style={{ marginTop: '0.75rem', padding: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '6px' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Suggested Internal Links:</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {linkSuggestions.map(art => (
+                        <div key={art.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem' }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '280px', color: 'var(--text-primary)' }}>
+                            {art.titleEn || art.titleTa}
+                          </span>
+                          <button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigator.clipboard.writeText(`/news/${art.slug}`);
+                              showMsg('Internal link copied to clipboard!');
+                            }}
+                            className="btn btn-secondary" 
+                            style={{ padding: '2px 6px', fontSize: '0.65rem' }}
+                          >
+                            Copy Link
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <label style={labelStyle}>URL Slug</label>

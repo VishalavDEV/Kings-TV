@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { fetchApi } from './utils/api';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Customizer from './components/Customizer';
@@ -9,6 +10,7 @@ import MobileBottomNav from './components/MobileBottomNav';
 import ScrollToTop from './components/ScrollToTop';
 import { AuthProvider } from './context/AuthContext';
 import DashboardLayout from './components/DashboardLayout';
+import OfflineBanner from './components/OfflineBanner';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -26,7 +28,15 @@ import Jobs from './pages/Jobs';
 import BusinessStudies from './pages/BusinessStudies';
 import ArticleDetail from './pages/ArticleDetail';
 import Category from './pages/Category';
+import TagArchive from './pages/TagArchive';
 import Videos from './pages/Videos';
+import NotFound from './pages/NotFound';
+import Maintenance from './pages/Maintenance';
+import DMCAPolicy from './pages/DMCAPolicy';
+import CrowdReportForm from './pages/CrowdReportForm';
+import AuthorProfile from './pages/AuthorProfile';
+import AdvancedSearch from './pages/AdvancedSearch';
+import ArchiveListing from './pages/ArchiveListing';
 import WebStories from './pages/WebStories';
 import AboutUs from './pages/AboutUs';
 import Careers from './pages/Careers';
@@ -43,9 +53,35 @@ import MyRfqs from './pages/MyRfqs';
 function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
   const location = useLocation();
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+
+  useEffect(() => {
+    fetchApi('/public/maintenance-status')
+      .then(res => {
+        if (res && res.maintenance) {
+          setMaintenanceMode(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (window.gtag) {
+      window.gtag('config', 'G-XXXXXXX', {
+        page_path: location.pathname + location.search
+      });
+    } else {
+      console.log(`[GA4 Stub] Page View Tracked: ${location.pathname + location.search}`);
+    }
+  }, [location]);
+
+  if (maintenanceMode && location.pathname !== '/login') {
+    return <Maintenance />;
+  }
 
   return (
     <div className="app-container">
+      <OfflineBanner />
       {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
       <Header />
       
@@ -79,6 +115,7 @@ function AppContent() {
           <Route path="/article/:id" element={<ArticleDetail />} />
           <Route path="/article" element={<Navigate to="/" replace />} />
           <Route path="/news/:id" element={<ArticleDetail />} />
+          <Route path="/tag/:tagName" element={<TagArchive />} />
           <Route path="/about-us" element={<AboutUs />} />
           <Route path="/contact" element={<ContactUs />} />
           <Route path="/advertise" element={<Advertise />} />
@@ -88,8 +125,16 @@ function AppContent() {
           <Route path="/directory/register" element={<BizDirectoryRegister />} />
           <Route path="/directory/dashboard" element={<BizDirectoryDashboard />} />
           <Route path="/my-rfqs" element={<MyRfqs />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-use" element={<TermsOfUse />} />
+          <Route path="/maintenance" element={<Maintenance />} />
+          <Route path="/submit-report" element={<CrowdReportForm />} />
+          <Route path="/author/:authorName" element={<AuthorProfile />} />
+          <Route path="/search" element={<AdvancedSearch />} />
+          <Route path="/archive/:year/:month" element={<ArchiveListing />} />
+          <Route path="/archive/:year" element={<ArchiveListing />} />
+          <Route path="/dmca-policy" element={<DMCAPolicy />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
 

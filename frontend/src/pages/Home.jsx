@@ -12,6 +12,15 @@ const Home = () => {
   const [liveVideo, setLiveVideo] = useState(null);
   const [tickerIndex, setTickerIndex] = useState(0);
   const [categoriesMap, setCategoriesMap] = useState({});
+  const [layoutSections, setLayoutSections] = useState([]);
+  const [crowdReports, setCrowdReports] = useState([]);
+  const [institutionNews, setInstitutionNews] = useState([]);
+  const [commodityPrices, setCommodityPrices] = useState([
+    { nameEn: 'Gold (24K/10g)', nameTa: 'தங்கம் (24K/10g)', price: '₹72,450', change: '+₹150' },
+    { nameEn: 'Silver (1kg)', nameTa: 'வெள்ளி (1kg)', price: '₹91,200', change: '-₹450' },
+    { nameEn: 'Paddy (Quintal)', nameTa: 'நெல் (குவிண்டால்)', price: '₹2,300', change: '+₹75' },
+    { nameEn: 'Cotton (Candy)', nameTa: 'பருத்தி (கேண்டி)', price: '₹57,500', change: '₹0' }
+  ]);
   const initialTickers = [
     lang === 'en' ? "Paddy procurement price increased - farmers express delight!" : "🌾 நெல் கொள்முதல் விலை உயர்வு - விவசாயிகள் மகிழ்ச்சி",
     lang === 'en' ? "Vijay 69th movie announcement sends fans into celebration mode!" : "🎬 விஜய் 69-வது படம் அறிவிப்பு - ரசிகர்கள் கொண்டாட்டம்",
@@ -205,17 +214,7 @@ const Home = () => {
       })
       .catch(err => console.warn("Weather fetch failed, using default info", err));
 
-    // 8. Fetch Trending News (top 3 most viewed articles)
-    fetchApi('/articles/getAll?sortBy=viewsCount&direction=desc&size=3')
-      .then(data => {
-        const list = data && Array.isArray(data.content) ? data.content : [];
-        if (list.length > 0) {
-          setTrendingNews(list);
-        }
-      })
-      .catch(err => console.warn("Could not load trending articles", err));
-
-    // 9. Fetch Business Case Studies (PDFs)
+    // 8. Fetch Business Case Studies (PDFs)
     fetchApi('/pdfs')
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
@@ -223,6 +222,78 @@ const Home = () => {
         }
       })
       .catch(err => console.warn("Could not load PDFs", err));
+
+    // 9. Fetch Layout Sections
+    fetchApi('/public/layout/web')
+      .then(data => {
+        if (Array.isArray(data)) {
+          setLayoutSections(data);
+        }
+      })
+      .catch(() => {});
+
+    // 10. Fetch Real Trending News
+    fetchApi('/articles/public/trending')
+      .then(data => {
+        if (Array.isArray(data)) {
+          setTrendingNews(data);
+        }
+      })
+      .catch(() => {});
+
+    // 11. Fetch Institution News
+    fetchApi('/articles/public/institution-news')
+      .then(data => {
+        if (Array.isArray(data)) {
+          setInstitutionNews(data);
+        }
+      })
+      .catch(() => {});
+
+    // 12. Fetch Approved Crowd Reports
+    fetchApi('/report-news/getAllWeb?size=4')
+      .then(res => {
+        if (res && Array.isArray(res.content)) {
+          setCrowdReports(res.content);
+        }
+      })
+      .catch(() => {});
+
+    // 13. Geolocation Personalized Articles
+    const selectedDistId = localStorage.getItem('selectedDistrictId');
+    let newsUrl = '/public/news?limit=12';
+    if (selectedDistId) {
+      newsUrl = `/articles/getAllWeb?districtId=${selectedDistId}&size=12`;
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          fetchApi(`${newsUrl}&lat=${latitude}&lon=${longitude}`)
+            .then(data => {
+              const list = data && Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
+              if (list.length > 0) setArticles(list);
+            })
+            .catch(() => {});
+        },
+        () => {
+          fetchApi(newsUrl)
+            .then(data => {
+              const list = data && Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
+              if (list.length > 0) setArticles(list);
+            })
+            .catch(() => {});
+        }
+      );
+    } else {
+      fetchApi(newsUrl)
+        .then(data => {
+          const list = data && Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
+          if (list.length > 0) setArticles(list);
+        })
+        .catch(() => {});
+    }
   }, [lang]);
 
   useEffect(() => {
@@ -231,6 +302,67 @@ const Home = () => {
     }, slideSpeed * 1000);
     return () => clearInterval(timer);
   }, [slideSpeed, tickers.length]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCommodityPrices(prev => prev.map(item => {
+        const numericStr = item.price.replace(/[^\d]/g, '');
+        const currentPrice = parseInt(numericStr);
+        const changeVal = Math.floor(Math.random() * 21) - 10;
+        const newPrice = currentPrice + changeVal;
+        const changeSign = changeVal >= 0 ? '+' : '';
+        return {
+          ...item,
+          price: `₹${newPrice.toLocaleString('en-IN')}`,
+          change: `${changeSign}₹${changeVal}`
+        };
+      }));
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const baseUrl = window.location.origin;
+    const websiteSchema = {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "url": `${baseUrl}/`,
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": `${baseUrl}/search?q={search_term_string}`
+        },
+        "query-input": "required name=search_term_string"
+      }
+    };
+
+    let script = document.getElementById('jsonld-website-schema');
+    if (!script) {
+      script = document.createElement('script');
+      script.id = 'jsonld-website-schema';
+      script.type = 'application/ld+json';
+      document.head.appendChild(script);
+    }
+    script.innerHTML = JSON.stringify(websiteSchema);
+
+    return () => {
+      const existingScript = document.getElementById('jsonld-website-schema');
+      if (existingScript) {
+        existingScript.remove();
+      }
+    };
+  }, []);
+
+  const getSortedSections = (keys) => {
+    if (layoutSections.length === 0) {
+      // Fallback order matching standard design
+      return keys.map((k, idx) => ({ sectionKey: k, isVisible: true, displayOrder: idx }));
+    }
+    return layoutSections
+      .filter(s => keys.includes(s.sectionKey) && s.isVisible)
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+  };
 
   const handleSubmitReport = (e) => {
     e.preventDefault();
@@ -283,99 +415,133 @@ const Home = () => {
     "linear-gradient(135deg, #16A34A, #4ADE80)"
   ];
 
-  return (
-    <div style={{ width: '100%' }}>
-      {/* BREAKING NEWS */}
-      {sections.news_ticker !== false && sections.ticker !== false && (
-        <div className="breaking-news">
-          <div className="container">
-            <div className="breaking-label" style={{ backgroundColor: '#FFD700', color: '#000' }}>
-              <i className="fas fa-bolt"></i> BREAKING NEWS
+  const renderCommodityTicker = () => {
+    return (
+      <div style={{
+        background: '#1F2937',
+        color: 'white',
+        padding: '10px 0',
+        fontSize: '13px',
+        fontWeight: 600,
+        overflow: 'hidden',
+        borderBottom: '1px solid #374151'
+      }}>
+        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#FFD700', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '1px', fontWeight: 800 }}>
+            <span style={{ display: 'inline-block', width: '8px', height: '8px', background: '#22C55E', borderRadius: '50%' }}></span>
+            {lang === 'en' ? 'Live Markets' : 'நேரடி சந்தை'}
+          </div>
+          <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', scrollbarWidth: 'none', padding: '0 10px', flex: 1 }}>
+            {commodityPrices.map((item, idx) => {
+              const isUp = item.change.startsWith('+');
+              return (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.7)' }}>{lang === 'en' ? item.nameEn : item.nameTa}:</span>
+                  <span style={{ color: 'white', fontWeight: 700 }}>{item.price}</span>
+                  <span style={{ color: isUp ? '#22C55E' : '#EF4444', fontSize: '11px', fontWeight: 700 }}>{item.change}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderNewsTicker = () => {
+    return (
+      <div className="breaking-news">
+        <div className="container">
+          <div className="breaking-label" style={{ backgroundColor: '#FFD700', color: '#000' }}>
+            <i className="fas fa-bolt"></i> BREAKING NEWS
+          </div>
+          <div className="breaking-ticker">
+            <div className="breaking-track" id="breakTrack">
+              <a href="#">{tickers[tickerIndex]}</a>
             </div>
-            <div className="breaking-ticker">
-              <div className="breaking-track" id="breakTrack">
-                <a href="#">{tickers[tickerIndex]}</a>
+          </div>
+          <div className="breaking-controls">
+            <button onClick={() => setTickerIndex(prev => (prev - 1 + tickers.length) % tickers.length)}>
+              <i className="fas fa-chevron-left"></i>
+            </button>
+            <button onClick={() => setTickerIndex(prev => (prev + 1) % tickers.length)}>
+              <i className="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderHero = () => {
+    if (!featured) return null;
+    return (
+      <section className="hero-section" id="section-hero">
+        <div className="container">
+          <div className="hero-grid">
+            <div className={`featured-card theme-${featuredCat.slug}`}>
+              <div 
+                className="card-img" 
+                style={{ 
+                  background: featured.imageUrl ? `url(${getImageUrl(featured.imageUrl)}) center/cover` : 'linear-gradient(135deg, #1E40AF, #3B82F6)' 
+                }}
+              ></div>
+              <div className="card-overlay">
+                <span className="category-badge" style={{ background: 'var(--category-color, var(--primary))' }}>
+                  {lang === 'en' ? featuredCat.en : featuredCat.ta}
+                </span>
+                <h2>
+                  <Link to={`/article/${featured.id || featured.article_id}`} style={{ color: 'white', textDecoration: 'none' }}>
+                    {lang === 'en' ? featured.titleEn : featured.titleTa}
+                  </Link>
+                </h2>
+                <p>
+                  {lang === 'en' ? featured.shortDescEn : featured.shortDescTa}
+                </p>
+                <div className="meta">
+                  <span><i className="far fa-calendar-alt"></i> 20 May 2025</span>
+                  <span><i className="far fa-clock"></i> {lang === 'en' ? `${featured.readingTime || 1} Min Read` : `${featured.readingTime || 1} நிமிட வாசிப்பு`}</span>
+                </div>
               </div>
             </div>
-            <div className="breaking-controls">
-              <button onClick={() => setTickerIndex(prev => (prev - 1 + tickers.length) % tickers.length)}>
-                <i className="fas fa-chevron-left"></i>
-              </button>
-              <button onClick={() => setTickerIndex(prev => (prev + 1) % tickers.length)}>
-                <i className="fas fa-chevron-right"></i>
-              </button>
+
+            <div className="hero-stack">
+              {sideArticles.map((art, idx) => {
+                const stackCat = getCategoryDetails(art.categoryId);
+                return (
+                  <div className={`hero-stack-card theme-${stackCat.slug}`} key={art.id || art.article_id}>
+                    <div className="info">
+                      <span className="category-badge" style={{ background: 'var(--category-color, var(--primary))' }}>
+                        {lang === 'en' ? stackCat.en : stackCat.ta}
+                      </span>
+                      <h4>
+                        <Link to={`/article/${art.id || art.article_id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                          {lang === 'en' ? art.titleEn : art.titleTa}
+                        </Link>
+                      </h4>
+                      <div className="meta">
+                        <span><i className="far fa-calendar-alt"></i> 20 May 2025</span>
+                      </div>
+                    </div>
+                    <div 
+                      className="thumb" 
+                      style={{ 
+                        background: art.imageUrl ? `url(${getImageUrl(art.imageUrl)}) center/cover` : gradients[(idx + 1) % gradients.length] 
+                      }}
+                    ></div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
-      )}
+      </section>
+    );
+  };
 
-      {/* HERO SECTION */}
-      {sections.hero !== false && featured && (
-        <section className="hero-section" id="section-hero">
-          <div className="container">
-            <div className="hero-grid">
-              <div className={`featured-card theme-${featuredCat.slug}`}>
-                <div 
-                  className="card-img" 
-                  style={{ 
-                    background: featured.imageUrl ? `url(${getImageUrl(featured.imageUrl)}) center/cover` : 'linear-gradient(135deg, #1E40AF, #3B82F6)' 
-                  }}
-                ></div>
-                <div className="card-overlay">
-                  <span className="category-badge" style={{ background: 'var(--category-color, var(--primary))' }}>
-                    {lang === 'en' ? featuredCat.en : featuredCat.ta}
-                  </span>
-                  <h2>
-                    <Link to={`/article/${featured.id || featured.article_id}`} style={{ color: 'white', textDecoration: 'none' }}>
-                      {lang === 'en' ? featured.titleEn : featured.titleTa}
-                    </Link>
-                  </h2>
-                  <p>
-                    {lang === 'en' ? featured.shortDescEn : featured.shortDescTa}
-                  </p>
-                  <div className="meta">
-                    <span><i className="far fa-calendar-alt"></i> 20 May 2025</span>
-                    <span><i className="far fa-clock"></i> 3 Min Read</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="hero-stack">
-                {sideArticles.map((art, idx) => {
-                  const stackCat = getCategoryDetails(art.categoryId);
-                  return (
-                    <div className={`hero-stack-card theme-${stackCat.slug}`} key={art.id || art.article_id}>
-                      <div className="info">
-                        <span className="category-badge" style={{ background: 'var(--category-color, var(--primary))' }}>
-                          {lang === 'en' ? stackCat.en : stackCat.ta}
-                        </span>
-                        <h4>
-                          <Link to={`/article/${art.id || art.article_id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                            {lang === 'en' ? art.titleEn : art.titleTa}
-                          </Link>
-                        </h4>
-                        <div className="meta">
-                          <span><i className="far fa-calendar-alt"></i> 20 May 2025</span>
-                        </div>
-                      </div>
-                      <div 
-                        className="thumb" 
-                        style={{ 
-                          background: art.imageUrl ? `url(${getImageUrl(art.imageUrl)}) center/cover` : gradients[(idx + 1) % gradients.length] 
-                        }}
-                      ></div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* QUICK ACCESS ICONS */}
-      {sections.quick_access !== false && (
-        <section className="quick-access">
+  const renderQuickAccess = () => {
+    return (
+      <section className="quick-access">
         <div className="container">
           <div className="quick-grid">
             <Link to="/category/politics" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -398,9 +564,9 @@ const Home = () => {
               <div className="icon cat-technology"><i className="fas fa-microchip"></i></div>
               <span>{lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்'}</span>
             </Link>
-            <Link to="/category/regional" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link to="/directory" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="icon cat-education"><i className="fas fa-map-marker-alt"></i></div>
-              <span>{lang === 'en' ? 'State' : 'மாநிலம்'}</span>
+              <span>{lang === 'en' ? 'Regional' : 'நம்ம ஊர்'}</span>
             </Link>
             <Link to="/category/international" className="quick-card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="icon cat-weather"><i className="fas fa-globe"></i></div>
@@ -409,335 +575,459 @@ const Home = () => {
           </div>
         </div>
       </section>
-      )}
+    );
+  };
 
-      {/* MAIN CONTAINER */}
-      <div className="container main-layout-container">
-        <div className="left-content-column">
-          {/* LATEST NEWS */}
-          {sections.latest_news !== false && (
-            <section className="news-section">
-            <div className="section-title">
-              <h2><i className="fas fa-newspaper"></i> {lang === 'en' ? 'Latest News' : 'சமீபத்திய செய்திகள்'}</h2>
-              <a href="#" className="view-all">{lang === 'en' ? 'View All' : 'அனைத்தும் காண'} <i className="fas fa-arrow-right"></i></a>
+  const renderLatestNews = () => {
+    return (
+      <section className="news-section">
+        <div className="section-title">
+          <h2><i className="fas fa-newspaper"></i> {lang === 'en' ? 'Latest News' : 'சமீபத்திய செய்திகள்'}</h2>
+        </div>
+        <div className="news-grid-3" id="newsGrid">
+          {latestGrid.length === 0 ? (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#64748B' }}>
+              <i className="fas fa-inbox fa-3x" style={{ marginBottom: '15px', opacity: 0.5 }}></i>
+              <h3>{lang === 'en' ? 'No news published yet' : 'இன்னும் செய்திகள் வெளியிடப்படவில்லை'}</h3>
             </div>
-            <div className="news-grid-3" id="newsGrid">
-              {latestGrid.length === 0 ? (
-                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#64748B' }}>
-                  <i className="fas fa-inbox fa-3x" style={{ marginBottom: '15px', opacity: 0.5 }}></i>
-                  <h3>{lang === 'en' ? 'No news published yet' : 'இன்னும் செய்திகள் வெளியிடப்படவில்லை'}</h3>
-                  <p>{lang === 'en' ? 'Check back later for updates.' : 'சற்று நேரம் கழித்து மீண்டும் பார்க்கவும்.'}</p>
+          ) : latestGrid.map((art, idx) => {
+            const gridCat = getCategoryDetails(art.categoryId);
+            return (
+              <div className={`news-card theme-${gridCat.slug}`} key={art.id || art.article_id}>
+                <div 
+                  className="card-img" 
+                  style={{ 
+                    background: art.imageUrl ? `url(${getImageUrl(art.imageUrl)}) center/cover` : gradients[idx % gradients.length] 
+                  }}
+                >
+                  <span className="cat-badge" style={{ background: 'var(--category-color, var(--primary))' }}>
+                    {lang === 'en' ? gridCat.en : gridCat.ta}
+                  </span>
                 </div>
-              ) : latestGrid.map((art, idx) => {
-                const gridCat = getCategoryDetails(art.categoryId);
-                return (
-                  <div className={`news-card theme-${gridCat.slug}`} key={art.id || art.article_id}>
-                    <div 
-                      className="card-img" 
-                      style={{ 
-                        background: art.imageUrl ? `url(${getImageUrl(art.imageUrl)}) center/cover` : gradients[idx % gradients.length] 
-                      }}
-                    >
-                      <span className="cat-badge" style={{ background: 'var(--category-color, var(--primary))' }}>
-                        {lang === 'en' ? gridCat.en : gridCat.ta}
-                      </span>
-                    </div>
-                    <div className="card-body">
-                      <h3>
-                        <Link to={`/article/${art.id || art.article_id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                          {lang === 'en' ? art.titleEn : art.titleTa}
-                        </Link>
-                      </h3>
-                      <p>
-                        {lang === 'en' ? art.shortDescEn : art.shortDescTa}
-                      </p>
-                      <div className="card-meta">
-                        <span><i className="far fa-clock"></i> 1 Hr Ago</span>
-                        <span><i className="far fa-eye"></i> {art.viewsCount || 340}</span>
-                        <span><i className="far fa-clock"></i> 3 Min Read</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-          )}
-
-          {/* VIDEO NEWS */}
-          {sections.video !== false && (
-            <section className="video-section" id="section-video">
-              <div className="section-title">
-                <h2><i className="fas fa-video" style={{ color: '#EF4444' }}></i> {lang === 'en' ? 'Video News' : 'வீடியோ செய்திகள்'}</h2>
-                <Link to="/videos" className="view-all">{lang === 'en' ? 'More Videos' : 'மேலும் வீடியோக்கள்'} <i className="fas fa-arrow-right"></i></Link>
-              </div>
-              <div className="video-categories">
-                <button className="video-cat-btn active">{lang === 'en' ? 'All' : 'அனைத்தும்'}</button>
-                <button className="video-cat-btn">{lang === 'en' ? 'Politics' : 'அரசியல்'}</button>
-                <button className="video-cat-btn">{lang === 'en' ? 'Sports' : 'விளையாட்டு'}</button>
-                <button className="video-cat-btn">{lang === 'en' ? 'Agriculture' : 'விவசாயம்'}</button>
-              </div>
-              <div className="video-grid-4">
-                {videos.length === 0 ? (
-                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#64748B' }}>
-                    <i className="fas fa-video-slash fa-3x" style={{ marginBottom: '15px', opacity: 0.5 }}></i>
-                    <h3>{lang === 'en' ? 'No videos published yet' : 'இன்னும் வீடியோக்கள் வெளியிடப்படவில்லை'}</h3>
-                  </div>
-                ) : videos.slice(0, 4).map((vid, idx) => (
-                  <div className="video-card" key={vid.id || vid.videoId || idx}>
-                    <div className="thumb-area">
-                      {vid.thumbnailUrl ? (
-                        <img src={getImageUrl(vid.thumbnailUrl)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={vid.title} />
-                      ) : (
-                        <div style={{ background: gradients[idx % gradients.length], width: '100%', height: '100%' }}></div>
-                      )}
-                      <div className="play-overlay"><i className="fas fa-play"></i></div>
-                      <span className="duration">{vid.duration || '3:15'}</span>
-                    </div>
-                    <div className="body">
-                      <h5>{vid.title}</h5>
-                      <div className="meta">
-                        <span><i className="far fa-eye"></i> {vid.viewsCount || '15K'} {lang === 'en' ? 'views' : 'பார்வைகள்'}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* STORIES SECTION */}
-          {sections.stories !== false && (
-            <section className="stories-section" id="section-stories">
-              <div className="section-title">
-                <h2><i className="fas fa-sticky-note"></i> {lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்'}</h2>
-                <Link to="/web-stories" className="view-all">{lang === 'en' ? 'View All' : 'அனைத்தும் காண'} <i className="fas fa-arrow-right"></i></Link>
-              </div>
-              <div className="stories-track">
-                {stories.map(story => {
-                  const catSlug = story.cat === 'tech' ? 'technology' : story.cat === 'agri' ? 'agriculture' : story.cat;
-                  const catNames = {
-                    sports: { en: 'Sports', ta: 'விளையாட்டு' },
-                    cinema: { en: 'Cinema', ta: 'சினிமா' },
-                    politics: { en: 'Politics', ta: 'அரசியல்' },
-                    tech: { en: 'Technology', ta: 'தொழில்நுட்பம்' },
-                    agri: { en: 'Agriculture', ta: 'விவசாயம்' },
-                    business: { en: 'Business', ta: 'வணிகம்' }
-                  }[story.cat] || { en: story.cat, ta: story.cat };
-
-                  return (
-                    <Link to="/web-stories" className="story-card" style={{ background: story.gradient, textDecoration: 'none' }} key={story.id}>
-                      <span className="badge-tag" style={{ background: story.badge === 'NEW' ? '#EF4444' : '#F97316' }}>{story.badge}</span>
-                      <div className="story-overlay">
-                        <span className={`story-cat cat-${catSlug}`}>
-                          {lang === 'en' ? catNames.en : catNames.ta}
-                        </span>
-                        <h5>{lang === 'en' ? story.titleEn : story.titleTa}</h5>
-                        <span className="views"><i className="far fa-eye"></i> {story.views}</span>
-                      </div>
+                <div className="card-body">
+                  <h3>
+                    <Link to={`/article/${art.id || art.article_id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                      {lang === 'en' ? art.titleEn : art.titleTa}
                     </Link>
-                  );
-                })}
+                  </h3>
+                  <p>
+                    {lang === 'en' ? art.shortDescEn : art.shortDescTa}
+                  </p>
+                  <div className="card-meta">
+                    <span><i className="far fa-clock"></i> 1 Hr Ago</span>
+                    <span><i className="far fa-eye"></i> {art.viewsCount || 340}</span>
+                    <span><i className="far fa-clock"></i> {lang === 'en' ? `${art.readingTime || 1} Min Read` : `${art.readingTime || 1} நிமிட வாசிப்பு`}</span>
+                  </div>
+                </div>
               </div>
-            </section>
+            );
+          })}
+        </div>
+      </section>
+    );
+  };
+
+  const renderVideoNews = () => {
+    return (
+      <section className="video-section" id="section-video">
+        <div className="section-title">
+          <h2><i className="fas fa-video" style={{ color: '#EF4444' }}></i> {lang === 'en' ? 'Video News' : 'வீடியோ செய்திகள்'}</h2>
+          <Link to="/videos" className="view-all">{lang === 'en' ? 'More Videos' : 'மேலும் வீடியோக்கள்'} <i className="fas fa-arrow-right"></i></Link>
+        </div>
+        <div className="video-categories">
+          <button className="video-cat-btn active">{lang === 'en' ? 'All' : 'அனைத்தும்'}</button>
+          <button className="video-cat-btn">{lang === 'en' ? 'Politics' : 'அரசியல்'}</button>
+          <button className="video-cat-btn">{lang === 'en' ? 'Sports' : 'விளையாட்டு'}</button>
+          <button className="video-cat-btn">{lang === 'en' ? 'Agriculture' : 'விவசாயம்'}</button>
+        </div>
+        <div className="video-grid-4">
+          {videos.length === 0 ? (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#64748B' }}>
+              <i className="fas fa-video-slash fa-3x" style={{ marginBottom: '15px', opacity: 0.5 }}></i>
+              <h3>{lang === 'en' ? 'No videos published yet' : 'இன்னும் வீடியோக்கள் வெளியிடப்படவில்லை'}</h3>
+            </div>
+          ) : videos.slice(0, 4).map((vid, idx) => (
+            <div className="video-card" key={vid.id || vid.videoId || idx}>
+              <div className="thumb-area">
+                {vid.thumbnailUrl ? (
+                  <img src={getImageUrl(vid.thumbnailUrl)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={vid.title} />
+                ) : (
+                  <div style={{ background: gradients[idx % gradients.length], width: '100%', height: '100%' }}></div>
+                )}
+                <div className="play-overlay"><i className="fas fa-play"></i></div>
+                <span className="duration">{vid.duration || '3:15'}</span>
+              </div>
+              <div className="body">
+                <h5>{vid.title}</h5>
+                <div className="meta">
+                  <span><i className="far fa-eye"></i> {vid.viewsCount || '15K'} {lang === 'en' ? 'views' : 'பார்வைகள்'}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  };
+
+  const renderWebStories = () => {
+    return (
+      <section className="stories-section" id="section-stories">
+        <div className="section-title">
+          <h2><i className="fas fa-sticky-note"></i> {lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்'}</h2>
+          <Link to="/web-stories" className="view-all">{lang === 'en' ? 'View All' : 'அனைத்தும் காண'} <i className="fas fa-arrow-right"></i></Link>
+        </div>
+        <div className="stories-track">
+          {stories.map(story => {
+            const catSlug = story.cat === 'tech' ? 'technology' : story.cat === 'agri' ? 'agriculture' : story.cat;
+            const catNames = {
+              sports: { en: 'Sports', ta: 'விளையாட்டு' },
+              cinema: { en: 'Cinema', ta: 'சினிமா' },
+              politics: { en: 'Politics', ta: 'அரசியல்' },
+              tech: { en: 'Technology', ta: 'தொழில்நுட்பம்' },
+              agri: { en: 'Agriculture', ta: 'விவசாயம்' },
+              business: { en: 'Business', ta: 'வணிகம்' }
+            }[story.cat] || { en: story.cat, ta: story.cat };
+
+            return (
+              <Link to="/web-stories" className="story-card" style={{ background: story.gradient, textDecoration: 'none' }} key={story.id}>
+                <span className="badge-tag" style={{ background: story.badge === 'NEW' ? '#EF4444' : '#F97316' }}>{story.badge}</span>
+                <div className="story-overlay">
+                  <span className={`story-cat cat-${catSlug}`}>
+                    {lang === 'en' ? catNames.en : catNames.ta}
+                  </span>
+                  <h5>{lang === 'en' ? story.titleEn : story.titleTa}</h5>
+                  <span className="views"><i className="far fa-eye"></i> {story.views}</span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+    );
+  };
+
+  const renderTrendingSidebar = () => {
+    return (
+      <div className="trending-list" style={{ marginBottom: '20px' }}>
+        <h4>
+          <i className="fas fa-fire" style={{ color: '#EF4444' }}></i>{' '}
+          {lang === 'en' ? 'Trending News' : 'ட்ரெண்டிங் செய்திகள்'}
+        </h4>
+        {trendingNews.slice(0, 5).map((art, idx) => (
+          <div className="trending-item" key={art.id || art.article_id || idx} style={{ cursor: 'pointer' }}>
+            <span className="rank top3">{idx + 1}</span>
+            <div className="info">
+              <h5>
+                <Link to={`/article/${art.id || art.article_id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                  {lang === 'en' ? art.titleEn : art.titleTa}
+                </Link>
+              </h5>
+              <div className="meta">
+                <span><i className="far fa-eye"></i> {art.viewsCount || '0'} {lang === 'en' ? 'reads' : 'வாசிப்புகள்'}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderWeather = () => {
+    return (
+      <div className="weather-widget">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <i className="fas fa-cloud-sun" style={{ color: 'var(--primary)' }}></i>{' '}
+            {lang === 'en' ? 'Chennai Weather' : 'சென்னை வானிலை'}
+          </h4>
+          <Link 
+            to="/weather" 
+            style={{ 
+              fontSize: '12px', 
+              color: 'var(--primary, #B3732A)', 
+              textDecoration: 'none', 
+              fontWeight: '700',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            {lang === 'en' ? 'View All' : 'மேலும் பார்'} <i className="fas fa-arrow-right" style={{ fontSize: '10px' }}></i>
+          </Link>
+        </div>
+        <div className="weather-current">
+          <div className="temp" id="weatherTemp">{weatherData.temp}</div>
+          <div className="details">
+            <strong>{weatherData.condition}</strong>
+            <span>{lang === 'en' ? `Humidity: ${weatherData.humidity}` : `ஈரப்பதம்: ${weatherData.humidity}`}</span>
+            <span>{lang === 'en' ? `Wind: ${weatherData.wind}` : `காற்று: ${weatherData.wind}`}</span>
+          </div>
+        </div>
+        <div className="weather-forecast-grid">
+          {weatherData.forecast.map((f, idx) => (
+            <div className="weather-forecast-col" key={idx}>
+              <div className="day">{f.day}</div>
+              <div className="icon">{f.icon}</div>
+              <div className="temp">{f.temp}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderLiveTv = () => {
+    return (
+      <div className="weather-widget" style={{ marginTop: '20px' }}>
+        <h4 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <i className="fas fa-tv" style={{ color: '#EF4444' }}></i>{' '}
+          {lang === 'en' ? 'Live Broadcast' : 'நேரலை ஒளிபரப்பு'}
+        </h4>
+        <div style={{ width: '100%', height: '180px', background: 'black', borderRadius: '8px', overflow: 'hidden' }}>
+          {liveVideo ? (
+            <iframe 
+              src={liveVideo.videoUrl} 
+              title="Live Stream" 
+              style={{ width: '100%', height: '100%', border: 'none' }}
+              allowFullScreen
+            />
+          ) : (
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B', fontSize: '13px', flexDirection: 'column', gap: '8px' }}>
+              <i className="fas fa-play-circle fa-2x"></i>
+              <span>{lang === 'en' ? '[ LIVE TV STREAM WINDOW ]' : '[ நேரலை டிவி ஒளிபரப்பு ]'}</span>
+            </div>
           )}
         </div>
+      </div>
+    );
+  };
 
-        {/* RIGHT SIDEBAR */}
-        <aside className="trending-sidebar" style={{ maxWidth: `${widgetWidth}px` }}>
-          {/* Trending list */}
-          {sections.trending_sidebar !== false && (
-            <div className="trending-list" style={{ marginBottom: '20px' }}>
-            <h4>
-              <i className="fas fa-fire" style={{ color: '#EF4444' }}></i>{' '}
-              {lang === 'en' ? 'Trending News' : 'ட்ரெண்டிங் செய்திகள்'}
-            </h4>
-            {(() => {
-              const fallbackTrending = [
-                { rank: 1, title: lang === 'en' ? 'New Metro expansion announced in Chennai' : 'சென்னை பெருநகரில் புதிய மெட்ரோ ரயில் திட்டம் அறிவிப்பு', views: '45.2K', score: '+2.4K/hr' },
-                { rank: 2, title: lang === 'en' ? 'Supreme Court updates on Cauvery water management' : 'காவிரி நீர் மேலாண்மை குறித்த உச்சநீதிமன்றம் முக்கிய உத்தரவு', views: '38.7K', score: '+1.8K/hr' },
-                { rank: 3, title: lang === 'en' ? 'Indian economy records 8% growth - World Bank' : 'இந்திய பொருளாதாரம் 8% வளர்ச்சி - உலக வங்கி அறிக்கை', views: '32.1K', score: '+1.5K/hr' }
-              ];
-              const displayList = trendingNews.length > 0 ? trendingNews : fallbackTrending;
-              return displayList.map((art, idx) => (
-                <div className="trending-item" key={art.id || art.article_id || idx}>
-                  <span className="rank top3">{idx + 1}</span>
-                  <div className="info">
-                    <h5>
-                      {art.titleEn || art.title
-                        ? (lang === 'en' ? (art.titleEn || art.title) : (art.titleTa || art.title))
-                        : art.title}
-                    </h5>
-                    <div className="meta">
-                      <span><i className="far fa-eye"></i> {art.viewsCount ? `${(art.viewsCount/1000).toFixed(1)}K` : (art.views || '0K')}</span>
-                      <span className="trend-score">{art.score || `+${Math.floor(Math.random() * 5) + 1}K/hr`}</span>
-                    </div>
-                  </div>
-                </div>
-              ));
-            })()}
-          </div>
-          )}
+  const renderBusinessCase = () => {
+    return (
+      <div className="case-studies-widget" style={{ marginTop: '20px' }}>
+        <div className="case-studies-header">
+          <h4><i className="fas fa-briefcase" style={{ color: '#0057FF' }}></i> {lang === 'en' ? 'Business Case Studies' : 'வணிகக் கேஸ் ஸ்டடிஸ்'}</h4>
+          <Link to="/business-studies" className="view-all">
+            {lang === 'en' ? 'All' : 'அனைத்தும்'} <i className="fas fa-chevron-right" style={{ fontSize: '8px' }}></i>
+          </Link>
+        </div>
+        <div className="case-studies-grid">
+          {caseStudies.map((study, idx) => (
+            <div className="case-study-col" key={study.id || idx}>
+              <div className="company-logo">
+                <i className={study.iconClass || "fas fa-file-pdf"} style={{ color: study.iconColor || "#0057FF" }}></i>{' '}
+                {study.company || (study.titleEn || study.title || '').split(':')[0]}
+              </div>
+              <span className="tag">{study.tag || (lang === 'en' ? 'Document' : 'ஆவணம்')}</span>
+              <h5>{lang === 'en' ? (study.titleEn || study.title) : (study.titleTa || study.title)}</h5>
+              <a href={study.pdfUrl || '#'} className="pdf-btn" target="_blank" rel="noreferrer">
+                <i className="fas fa-file-pdf"></i> PDF
+              </a>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
-          {/* Weather Widget */}
-          {sections.weather !== false && (
-            <div className="weather-widget">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-              <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <i className="fas fa-cloud-sun" style={{ color: 'var(--primary)' }}></i>{' '}
-                {lang === 'en' ? 'Chennai Weather' : 'சென்னை வானிலை'}
-              </h4>
-              <Link 
-                to="/weather" 
+  const renderCrowdReporterWidget = () => {
+    return (
+      <div className="crowd-reporter-widget" style={{ marginTop: '20px' }}>
+        <h4><i className="fas fa-bullhorn"></i> {lang === 'en' ? 'Crowd Reporter' : 'மக்கள் செய்தியாளர்'}</h4>
+        <p>
+          {lang === 'en' 
+            ? 'Share news and happenings in your area with us. Let your voice be heard.' 
+            : 'உங்கள் பகுதியில் நடக்கும் நிகழ்வுகளை எங்களோடு பகிர்ந்து கொள்ளுங்கள்! உங்கள் குரல் நாடாகட்டும்.'}
+        </p>
+        <button 
+          onClick={() => setShowReportModal(true)} 
+          className="report-btn"
+          style={{ border: 'none', cursor: 'pointer' }}
+        >
+          <i className="fas fa-pen-fancy"></i> {lang === 'en' ? 'Send Report' : 'செய்தி அனுப்பவும்'}
+        </button>
+      </div>
+    );
+  };
+
+  const renderCrowdReporterHighlight = () => {
+    return (
+      <section className="news-section" style={{ marginTop: '30px' }}>
+        <div className="section-title">
+          <h2><i className="fas fa-bullhorn" style={{ color: '#F59E0B' }}></i> {lang === 'en' ? 'Crowd Reports (Public Submissions)' : 'மக்கள் செய்தியாளர் பதிவுகள்'}</h2>
+          <Link to="/submit-report" className="view-all">{lang === 'en' ? 'Submit Report' : 'செய்தி அனுப்ப'} <i className="fas fa-arrow-right"></i></Link>
+        </div>
+        <div className="news-grid-3">
+          {crowdReports.length === 0 ? (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
+              {lang === 'en' ? 'No crowd reports approved yet.' : 'மக்கள் செய்தியாளர் பதிவுகள் இன்னும் இல்லை.'}
+            </div>
+          ) : crowdReports.slice(0, 3).map((report, idx) => (
+            <div 
+              className="news-card" 
+              key={report.id || idx}
+              style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '12px' }}
+            >
+              <div 
+                className="card-img" 
                 style={{ 
-                  fontSize: '12px', 
-                  color: 'var(--primary, #B3732A)', 
-                  textDecoration: 'none', 
-                  fontWeight: '700',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px'
+                  background: report.imageUrl ? `url(${getImageUrl(report.imageUrl)}) center/cover` : gradients[idx % gradients.length]
                 }}
               >
-                {lang === 'en' ? 'View All' : 'மேலும் பார்'} <i className="fas fa-arrow-right" style={{ fontSize: '10px' }}></i>
-              </Link>
-            </div>
-            <div className="weather-current">
-              <div className="temp" id="weatherTemp">{weatherData.temp}</div>
-              <div className="details">
-                <strong>{weatherData.condition}</strong>
-                <span>{lang === 'en' ? `Humidity: ${weatherData.humidity}` : `ஈரப்பதம்: ${weatherData.humidity}`}</span>
-                <span>{lang === 'en' ? `Wind: ${weatherData.wind}` : `காற்று: ${weatherData.wind}`}</span>
+                <span className="cat-badge" style={{ background: '#F59E0B' }}>
+                  {lang === 'en' ? 'Public Report' : 'பொது மக்கள்'}
+                </span>
+              </div>
+              <div className="card-body">
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                  <i className="far fa-user"></i> {report.reporterName} ({report.location || (lang === 'en' ? 'Tamil Nadu' : 'தமிழகம்')})
+                </span>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 8px 0' }}>
+                  {report.title}
+                </h3>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                  {report.details}
+                </p>
               </div>
             </div>
-            <div className="weather-forecast-grid">
-              {weatherData.forecast.map((f, idx) => (
-                <div className="weather-forecast-col" key={idx}>
-                  <div className="day">{f.day}</div>
-                  <div className="icon">{f.icon}</div>
-                  <div className="temp">{f.temp}</div>
+          ))}
+        </div>
+      </section>
+    );
+  };
+
+  const renderInstitutionNews = () => {
+    return (
+      <section className="news-section" style={{ marginTop: '30px' }}>
+        <div className="section-title">
+          <h2><i className="fas fa-university" style={{ color: '#1E40AF' }}></i> {lang === 'en' ? 'Institution & Press Releases' : 'நிறுவனங்களின் செய்திகள்'}</h2>
+        </div>
+        <div className="news-grid-3">
+          {institutionNews.length === 0 ? (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
+              {lang === 'en' ? 'No institutional announcements published yet.' : 'நிறுவனங்களின் செய்திகள் இன்னும் இல்லை.'}
+            </div>
+          ) : institutionNews.slice(0, 3).map((art, idx) => {
+            const gridCat = getCategoryDetails(art.categoryId);
+            return (
+              <div className={`news-card theme-${gridCat.slug}`} key={art.id || art.article_id}>
+                <div 
+                  className="card-img" 
+                  style={{ 
+                    background: art.imageUrl ? `url(${getImageUrl(art.imageUrl)}) center/cover` : gradients[(idx + 4) % gradients.length]
+                  }}
+                >
+                  <span className="cat-badge" style={{ background: '#1E40AF' }}>
+                    {lang === 'en' ? 'Press Release' : 'பத்திரிகை செய்தி'}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div>
-          )}
+                <div className="card-body">
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                    <i className="far fa-building"></i> {art.authorName}
+                  </span>
+                  <h3>
+                    <Link to={`/article/${art.id || art.article_id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                      {lang === 'en' ? art.titleEn : art.titleTa}
+                    </Link>
+                  </h3>
+                  <p>
+                    {lang === 'en' ? art.shortDescEn : art.shortDescTa}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    );
+  };
 
-          {/* Live TV Widget */}
-          {sections.livetv !== false && (
-            <div className="weather-widget" style={{ marginTop: '20px' }}>
-              <h4 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <i className="fas fa-tv" style={{ color: '#EF4444' }}></i>{' '}
-                {lang === 'en' ? 'Live Broadcast' : 'நேரலை ஒளிபரப்பு'}
+  const renderNewsDigest = () => {
+    return (
+      <section className="digest-section" id="section-digest">
+        <div className="container">
+          <div className="section-title">
+            <h2><i className="fas fa-rss" style={{ color: '#F97316' }}></i> {lang === 'en' ? 'News Digest (Other Media)' : 'தமிழ் செய்தி சுருக்கம் (இதர ஊடகங்கள்)'}</h2>
+          </div>
+          <div className="digest-row">
+            <div className="digest-card" style={{ borderLeft: '3px solid #EF4444', background: 'var(--white)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)' }}>
+              <div className="logo" style={{ color: '#EF4444', fontWeight: 800, fontSize: '15px' }}><i className="fas fa-newspaper"></i> {lang === 'en' ? 'Dinamalar' : 'தினமலர்'}</div>
+              <h4 style={{ fontSize: '13px', margin: '8px 0', fontWeight: 700 }}>
+                {lang === 'en' ? 'Tamil Nadu budget 2026 key highlights summary' : 'தமிழக பட்ஜெட் 2026 முக்கிய சிறப்பம்சங்கள் முழு தொகுப்பு'}
               </h4>
-              <div style={{ width: '100%', height: '180px', background: 'black', borderRadius: '8px', overflow: 'hidden' }}>
-                {liveVideo ? (
-                  <iframe 
-                    src={liveVideo.videoUrl} 
-                    title="Live Stream" 
-                    style={{ width: '100%', height: '100%', border: 'none' }}
-                    allowFullScreen
-                  />
-                ) : (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B', fontSize: '13px', flexDirection: 'column', gap: '8px' }}>
-                    <i className="fas fa-play-circle fa-2x"></i>
-                    <span>{lang === 'en' ? '[ LIVE TV STREAM WINDOW ]' : '[ நேரலை டிவி ஒளிபரப்பு ]'}</span>
-                  </div>
-                )}
-              </div>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>1 Hr Ago</span>
             </div>
-          )}
-
-          {/* Newsletter Signup */}
-          {sections.newsletter !== false && (
-            <div className="sidebar-newsletter" style={{ marginTop: '20px' }}>
-              <h4>{lang === 'en' ? 'Newsletter Subscription' : 'செய்திமடல் சந்தா'}</h4>
-              <p>{lang === 'en' ? 'Get latest news updates straight to your inbox' : 'முக்கிய செய்திகள் உங்கள் இமெயிலில் பெறுங்கள்'}</p>
-              <form onSubmit={(e) => { e.preventDefault(); alert(lang === 'en' ? 'Thank you for subscribing!' : 'நன்றி! செய்திமடலில் இணைந்தமைக்கு.'); }}>
-                <input type="email" placeholder={lang === 'en' ? 'Your email address' : 'உங்கள் இமெயில் முகவரி'} required />
-                <button type="submit">{lang === 'en' ? 'Subscribe Now' : 'சந்தா சேர்க்கவும்'}</button>
-              </form>
+            <div className="digest-card" style={{ borderLeft: '3px solid #F59E0B', background: 'var(--white)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)' }}>
+              <div className="logo" style={{ color: '#F59E0B', fontWeight: 800, fontSize: '15px' }}><i className="fas fa-newspaper"></i> {lang === 'en' ? 'Daily Thanthi' : 'தினத்தந்தி'}</div>
+              <h4 style={{ fontSize: '13px', margin: '8px 0', fontWeight: 700 }}>
+                {lang === 'en' ? 'Government increases paddy procurement price: farmers welcome' : 'நெல் கொள்முதல் விலையை உயர்த்திய அரசு: விவசாயிகள் வரவேற்பு'}
+              </h4>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>2 Hr Ago</span>
             </div>
-          )}
-
-          {/* Business Case Studies */}
-          {sections.business !== false && (
-            <div className="case-studies-widget" style={{ marginTop: '20px' }}>
-              <div className="case-studies-header">
-                <h4><i className="fas fa-briefcase" style={{ color: '#0057FF' }}></i> {lang === 'en' ? 'Business Case Studies' : 'வணிகக் கேஸ் ஸ்டடிஸ்'}</h4>
-                <Link to="/business-studies" className="view-all">
-                  {lang === 'en' ? 'All' : 'அனைத்தும்'} <i className="fas fa-chevron-right" style={{ fontSize: '8px' }}></i>
-                </Link>
-              </div>
-              <div className="case-studies-grid">
-                {(() => {
-                  const fallbackCaseStudies = [
-                    { id: 1, title: lang === 'en' ? 'Infosys: Digital Transformation Journey' : 'Infosys: டிஜிட்டல் மாற்றுப் பயணம்', company: 'Infosys', tag: lang === 'en' ? 'Tech' : 'தொழில்நுட்பம்', iconClass: 'fas fa-building', iconColor: '#0057FF', pdfUrl: '#' },
-                    { id: 2, title: lang === 'en' ? 'TVS Motor: Sustainable Growth Journey' : 'TVS Motor: நிலையான வளர்ச்சி', company: 'TVS Motor', tag: lang === 'en' ? 'Automobile' : 'ஆட்டோமொபைல்', iconClass: 'fas fa-car', iconColor: '#EF4444', pdfUrl: '#' }
-                  ];
-                  const displayStudies = caseStudies.length > 0 ? caseStudies : fallbackCaseStudies;
-                  return displayStudies.map((study, idx) => (
-                    <div className="case-study-col" key={study.id || idx}>
-                      <div className="company-logo">
-                        <i className={study.iconClass || "fas fa-file-pdf"} style={{ color: study.iconColor || "#0057FF" }}></i>{' '}
-                        {study.company || (study.titleEn || study.title || '').split(':')[0]}
-                      </div>
-                      <span className="tag">{study.tag || (lang === 'en' ? 'Document' : 'ஆவணம்')}</span>
-                      <h5>{lang === 'en' ? (study.titleEn || study.title) : (study.titleTa || study.title)}</h5>
-                      <a href={study.pdfUrl || '#'} className="pdf-btn" target="_blank" rel="noreferrer">
-                        <i className="fas fa-file-pdf"></i> PDF
-                      </a>
-                    </div>
-                  ));
-                })()}
-              </div>
-            </div>
-          )}
-
-          {/* Crowd Reporter */}
-          <div className="crowd-reporter-widget" style={{ marginTop: '20px' }}>
-            <h4><i className="fas fa-bullhorn"></i> {lang === 'en' ? 'Crowd Reporter' : 'மக்கள் செய்தியாளர்'}</h4>
-            <p>
-              {lang === 'en' 
-                ? 'Share news and happenings in your area with us. Let your voice be heard.' 
-                : 'உங்கள் பகுதியில் நடக்கும் நிகழ்வுகளை எங்களோடு பகிர்ந்து கொள்ளுங்கள்! உங்கள் குரல் நாடாகட்டும்.'}
-            </p>
-            <button 
-              onClick={() => setShowReportModal(true)} 
-              className="report-btn"
-              style={{ border: 'none', cursor: 'pointer' }}
-            >
-              <i className="fas fa-pen-fancy"></i> {lang === 'en' ? 'Send Report' : 'செய்தி அனுப்பவும்'}
-            </button>
           </div>
+        </div>
+      </section>
+    );
+  };
+
+  const getRenderedSection = (key) => {
+    switch (key) {
+      case 'news_ticker': return renderNewsTicker();
+      case 'hero': return renderHero();
+      case 'quick_access': return renderQuickAccess();
+      case 'latest_news': return renderLatestNews();
+      case 'video_news': return renderVideoNews();
+      case 'web_stories': return renderWebStories();
+      case 'crowd_reporter_highlight': return renderCrowdReporterHighlight();
+      case 'institution_news': return renderInstitutionNews();
+      case 'trending_sidebar': return renderTrendingSidebar();
+      case 'weather': return renderWeather();
+      case 'live_tv': return renderLiveTv();
+      case 'business_case': return renderBusinessCase();
+      case 'crowd_reporter': return renderCrowdReporterWidget();
+      case 'news_digest': return renderNewsDigest();
+      default: return null;
+    }
+  };
+
+  return (
+    <div style={{ width: '100%' }}>
+      {/* COMMODITY TICKER */}
+      {renderCommodityTicker()}
+
+      {/* FULL-WIDTH TOP SECTIONS */}
+      {getSortedSections(['news_ticker', 'hero', 'quick_access']).map(sec => (
+        <React.Fragment key={sec.sectionKey}>
+          {getRenderedSection(sec.sectionKey)}
+        </React.Fragment>
+      ))}
+
+      {/* MAIN LAYOUT SPLIT */}
+      <div className="container main-layout-container">
+        <div className="left-content-column">
+          {getSortedSections(['latest_news', 'video_news', 'web_stories', 'crowd_reporter_highlight', 'institution_news']).map(sec => (
+            <React.Fragment key={sec.sectionKey}>
+              {getRenderedSection(sec.sectionKey)}
+            </React.Fragment>
+          ))}
+        </div>
+
+        <aside className="trending-sidebar" style={{ maxWidth: `${widgetWidth}px` }}>
+          {getSortedSections(['trending_sidebar', 'weather', 'live_tv', 'business_case', 'crowd_reporter']).map(sec => (
+            <React.Fragment key={sec.sectionKey}>
+              {getRenderedSection(sec.sectionKey)}
+            </React.Fragment>
+          ))}
         </aside>
       </div>
 
-      {/* DIGEST SECTION */}
-      {sections.digest !== false && (
-        <section className="digest-section" id="section-digest">
-          <div className="container">
-            <div className="section-title">
-              <h2><i className="fas fa-rss" style={{ color: '#F97316' }}></i> {lang === 'en' ? 'News Digest (Other Media)' : 'தமிழ் செய்தி சுருக்கம் (இதர ஊடகங்கள்)'}</h2>
-            </div>
-            <div className="digest-row">
-              <div className="digest-card" style={{ borderLeft: '3px solid #EF4444', background: 'var(--white)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)' }}>
-                <div className="logo" style={{ color: '#EF4444', fontWeight: 800, fontSize: '15px' }}><i className="fas fa-newspaper"></i> {lang === 'en' ? 'Dinamalar' : 'தினமலர்'}</div>
-                <h4 style={{ fontSize: '13px', margin: '8px 0', fontWeight: 700 }}>
-                  {lang === 'en' ? 'Tamil Nadu budget 2026 key highlights summary' : 'தமிழக பட்ஜெட் 2026 முக்கிய சிறப்பம்சங்கள் முழு தொகுப்பு'}
-                </h4>
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>1 Hr Ago</span>
-              </div>
-              <div className="digest-card" style={{ borderLeft: '3px solid #F59E0B', background: 'var(--white)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)' }}>
-                <div className="logo" style={{ color: '#F59E0B', fontWeight: 800, fontSize: '15px' }}><i className="fas fa-newspaper"></i> {lang === 'en' ? 'Daily Thanthi' : 'தினத்தந்தி'}</div>
-                <h4 style={{ fontSize: '13px', margin: '8px 0', fontWeight: 700 }}>
-                  {lang === 'en' ? 'Government increases paddy procurement price: farmers welcome' : 'நெல் கொள்முதல் விலையை உயர்த்திய அரசு: விவசாயிகள் வரவேற்பு'}
-                </h4>
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>2 Hr Ago</span>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* FULL-WIDTH BOTTOM SECTIONS */}
+      {getSortedSections(['news_digest']).map(sec => (
+        <React.Fragment key={sec.sectionKey}>
+          {getRenderedSection(sec.sectionKey)}
+        </React.Fragment>
+      ))}
 
       {/* CROWD REPORTER MODAL */}
       {showReportModal && (

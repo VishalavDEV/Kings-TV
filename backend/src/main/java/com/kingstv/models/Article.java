@@ -94,12 +94,41 @@ public class Article {
     @Column(name = "visibility_radius_km")
     private Double visibilityRadiusKm;
 
+    @Column(name = "reading_time")
+    private Integer readingTime = 1;
+
+    @Transient
+    private String authorProfileImage;
+
     @Transient
     private String structuredDataJson;
 
+    @PrePersist
+    protected void onCreate() {
+        this.publishedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+        this.readingTime = calculateReadingTime();
+    }
+
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+        this.readingTime = calculateReadingTime();
+    }
+
+    private int calculateReadingTime() {
+        int wordsTa = 0;
+        int wordsEn = 0;
+        if (contentTa != null && !contentTa.trim().isEmpty()) {
+            wordsTa = contentTa.trim().split("\\s+").length;
+        }
+        if (contentEn != null && !contentEn.trim().isEmpty()) {
+            wordsEn = contentEn.trim().split("\\s+").length;
+        }
+        double timeTa = wordsTa / 130.0;
+        double timeEn = wordsEn / 200.0;
+        double maxTime = Math.max(timeTa, timeEn);
+        return Math.max(1, (int) Math.ceil(maxTime));
     }
 
     public Long getId() { return id; }
@@ -164,4 +193,10 @@ public class Article {
 
     public String getStructuredDataJson() { return structuredDataJson; }
     public void setStructuredDataJson(String structuredDataJson) { this.structuredDataJson = structuredDataJson; }
+
+    public Integer getReadingTime() { return readingTime; }
+    public void setReadingTime(Integer readingTime) { this.readingTime = readingTime; }
+
+    public String getAuthorProfileImage() { return authorProfileImage; }
+    public void setAuthorProfileImage(String authorProfileImage) { this.authorProfileImage = authorProfileImage; }
 }

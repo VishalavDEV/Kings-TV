@@ -3,6 +3,7 @@ package com.kingstv.controllers;
 import com.kingstv.models.Article;
 import com.kingstv.repository.ArticleRepository;
 import com.kingstv.repository.HomeLayoutConfigRepository;
+import com.kingstv.services.SystemConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,12 +14,14 @@ import java.util.List;
 @RequestMapping("/api/v1/public")
 @CrossOrigin(origins = "*") // Public API
 public class PublicNewsController {
-
     @Autowired
     private ArticleRepository articleRepository;
 
     @Autowired
     private HomeLayoutConfigRepository layoutRepository;
+
+    @Autowired
+    private SystemConfigService systemConfigService;
 
     /**
      * Get news articles filtered by GPS location (Geo-fencing)
@@ -34,7 +37,16 @@ public class PublicNewsController {
         List<Article> articles;
         
         if (lat != null && lon != null) {
-            articles = articleRepository.findNearbyArticles(lat, lon, limit);
+            double defaultRadius = 50.0;
+            try {
+                String radiusVal = systemConfigService.getConfigValue("gps.news_radius_km");
+                if (radiusVal != null && !radiusVal.trim().isEmpty()) {
+                    defaultRadius = Double.parseDouble(radiusVal);
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to read gps.news_radius_km: " + e.getMessage());
+            }
+            articles = articleRepository.findNearbyArticles(lat, lon, defaultRadius, limit);
         } else {
             // Fallback for users who deny location permissions
             articles = articleRepository.findTop50ByStatusOrderByPublishedAtDesc("published");
@@ -49,6 +61,20 @@ public class PublicNewsController {
     @GetMapping("/layout/web")
     public ResponseEntity<?> getWebLayout() {
         return ResponseEntity.ok(layoutRepository.findByLayoutTypeOrderByDisplayOrderAsc("WEB"));
+    }
+
+    @GetMapping("/maintenance-status")
+    public ResponseEntity<?> getMaintenanceStatus() {
+        boolean maintenance = false;
+        try {
+            String val = systemConfigService.getConfigValue("system.maintenance_mode");
+            if (val != null) {
+                maintenance = Boolean.parseBoolean(val);
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to read system.maintenance_mode: " + e.getMessage());
+        }
+        return ResponseEntity.ok(java.util.Map.of("maintenance", maintenance));
     }
 }
 

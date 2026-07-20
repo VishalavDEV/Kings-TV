@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
 import { fetchApi } from '../utils/api';
+import HlsPlayer from '../components/HlsPlayer';
 
 const LiveTv = () => {
   const { lang } = useContext(LanguageContext);
@@ -57,17 +58,21 @@ const LiveTv = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Video Player */}
-          <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '12px', boxShadow: '0 8px 30px rgba(0,0,0,0.15)', background: '#000' }}>
-            {embedUrl ? (
-              <iframe
-                title="Live Broadcast"
-                src={embedUrl}
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
+          <div style={{ borderRadius: '12px', boxShadow: '0 8px 30px rgba(0,0,0,0.15)', background: '#000', overflow: 'hidden' }}>
+            {liveVideo?.videoUrl?.includes('.m3u8') || liveVideo?.youtubeUrl?.includes('.m3u8') ? (
+              <HlsPlayer src={liveVideo?.videoUrl || liveVideo?.youtubeUrl} poster="/assets/images/live-tv-poster.jpg" autoPlay={true} />
+            ) : embedUrl ? (
+              <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden' }}>
+                <iframe
+                  title="Live Broadcast"
+                  src={embedUrl}
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              </div>
             ) : (
-              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
                 {lang === 'en' ? 'Live Stream Offline' : 'நேரலை தற்போது நடைபெறவில்லை'}
               </div>
             )}

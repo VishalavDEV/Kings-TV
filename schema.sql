@@ -475,3 +475,18 @@ CREATE TABLE IF NOT EXISTS `job_application` (
     INDEX `idx_job` (`job_id`),
     INDEX `idx_seeker` (`seeker_id`)
 ) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `navigation_menus`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `navigation_menus` (
+    `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `title_ta` VARCHAR(255) NOT NULL,
+    `title_en` VARCHAR(255) NOT NULL,
+    `link_url` VARCHAR(255) NOT NULL,
+    `display_order` INT DEFAULT 0,
+    `parent_id` BIGINT NULL,
+    `is_active` BOOLEAN DEFAULT TRUE,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
