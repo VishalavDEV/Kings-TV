@@ -121,7 +121,7 @@ const Header = () => {
     if (parent && navElement) {
       const navRect = navElement.getBoundingClientRect();
       const parentRect = parent.getBoundingClientRect();
-      
+
       const dropdownWidth = 220;
       const maxLeft = window.innerWidth - dropdownWidth - 16;
       const leftOffset = Math.max(16, Math.min(maxLeft, parentRect.left - navRect.left));
@@ -190,11 +190,11 @@ const Header = () => {
   const activeCat = navCategories.find(c => c.slug === activeCategorySlug);
   const resolvedSubcategories = activeCat
     ? (lang === 'en'
-        ? ['All', ...activeCat.subcategories.map(s => getSubcatEn(s))]
-        : ['அனைத்தும்', ...activeCat.subcategories.map(s => s.nameTa)])
+      ? ['All', ...activeCat.subcategories.map(s => getSubcatEn(s))]
+      : ['அனைத்தும்', ...activeCat.subcategories.map(s => s.nameTa)])
     : (fallbackSubcats[activeCategorySlug]
-        ? (lang === 'en' ? fallbackSubcats[activeCategorySlug].en : fallbackSubcats[activeCategorySlug].ta)
-        : []);
+      ? (lang === 'en' ? fallbackSubcats[activeCategorySlug].en : fallbackSubcats[activeCategorySlug].ta)
+      : []);
 
   const searchParams = new URLSearchParams(location.search);
   const selectedSubcat = searchParams.get('subcat') || (lang === 'en' ? 'All' : 'அனைத்தும்');
@@ -252,8 +252,8 @@ const Header = () => {
           'web-stories': 'Web Stories'
         };
 
-        const labelVal = lang === 'en' 
-          ? (enTranslations[cat.slug.toLowerCase()] || cat.name) 
+        const labelVal = lang === 'en'
+          ? (enTranslations[cat.slug.toLowerCase()] || cat.name)
           : cat.nameTa;
 
         return {
@@ -298,11 +298,11 @@ const Header = () => {
       // Regional Directory (with dropdown chevron containing all items)
       const regional = findDbItem('regional');
       const regionalSubcategories = [
-        { 
-          id: 'reg-dir', 
-          slug: 'directory', 
-          path: '/directory', 
-          name: 'Local Business Directory', 
+        {
+          id: 'reg-dir',
+          slug: 'directory',
+          path: '/directory',
+          name: 'Local Business Directory',
           nameTa: 'நம்ம ஊர்',
           subcategories: [
             { id: 'reg-deals', slug: 'deals', path: '/deals', name: 'Deals', nameTa: 'சலுகைகள்' },
@@ -351,45 +351,47 @@ const Header = () => {
     }
 
     return dynamicItems.length > 0 ? dynamicItems : [
-          { path: '/', label: lang === 'en' ? 'Home' : 'முகப்பு', subcategories: [] },
-          { path: '/category/politics', label: lang === 'en' ? 'Politics' : 'அரசியல்', subcategories: [ { id: 'fp-1', slug: 'state', name: 'State', nameTa: 'மாநிலம்' } ] },
-          { path: '/category/business', label: lang === 'en' ? 'Business' : 'வணிகம்', subcategories: [ { id: 'fb-1', slug: 'markets', name: 'Markets', nameTa: 'சந்தை' } ] },
-          { path: '/category/sports', label: lang === 'en' ? 'Sports' : 'விளையாட்டு', subcategories: [ { id: 'fs-1', slug: 'cricket', name: 'Cricket', nameTa: 'கிரிக்கெட்' } ] },
-          { path: '/category/cinema', label: lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு', subcategories: [ { id: 'fc-1', slug: 'kollywood', name: 'Kollywood', nameTa: 'கோலிவுட்' } ] },
-          { path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்', subcategories: [ { id: 'ft-1', slug: 'smartphones', name: 'Smartphones', nameTa: 'ஸ்மார்ட் போன்' } ] },
+      { path: '/', label: lang === 'en' ? 'Home' : 'முகப்பு', subcategories: [] },
+      { path: '/category/politics', label: lang === 'en' ? 'Politics' : 'அரசியல்', subcategories: [{ id: 'fp-1', slug: 'state', name: 'State', nameTa: 'மாநிலம்' }] },
+      { path: '/category/business', label: lang === 'en' ? 'Business' : 'வணிகம்', subcategories: [{ id: 'fb-1', slug: 'markets', name: 'Markets', nameTa: 'சந்தை' }] },
+      { path: '/category/sports', label: lang === 'en' ? 'Sports' : 'விளையாட்டு', subcategories: [{ id: 'fs-1', slug: 'cricket', name: 'Cricket', nameTa: 'கிரிக்கெட்' }] },
+      { path: '/category/cinema', label: lang === 'en' ? 'Cinema' : 'பொழுதுபோக்கு', subcategories: [{ id: 'fc-1', slug: 'kollywood', name: 'Kollywood', nameTa: 'கோலிவுட்' }] },
+      { path: '/category/tech', label: lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்', subcategories: [{ id: 'ft-1', slug: 'smartphones', name: 'Smartphones', nameTa: 'ஸ்மார்ட் போன்' }] },
 
-          { 
-            id: 'regional',
-            path: '/directory', 
-            label: lang === 'en' ? 'Regional' : 'நம்ம ஊர்', 
+      {
+        id: 'regional',
+        path: '/directory',
+        label: lang === 'en' ? 'Regional' : 'நம்ம ஊர்',
+        subcategories: [
+          {
+            id: 'reg-dir',
+            slug: 'directory',
+            path: '/directory',
+            name: 'Local Business Directory',
+            nameTa: 'நம்ம ஊர்',
             subcategories: [
-              { 
-                id: 'reg-dir', 
-                slug: 'directory', 
-                path: '/directory', 
-                name: 'Local Business Directory', 
-                nameTa: 'நம்ம ஊர்',
-                subcategories: [
-                  { id: 'reg-deals', slug: 'deals', path: '/deals', name: 'Deals', nameTa: 'சலுகைகள்' },
-                  { id: 'reg-rfq', slug: 'rfq', path: '/rfq', name: 'RFQ', nameTa: 'கோரிக்கைகள்' },
-                  { id: 'reg-nfc', slug: 'nfc', path: '/nfc', name: 'NFC Card', nameTa: 'என்எஃப்சி கார்டு' }
-                ]
-              },
-              { id: 'reg-wishes', slug: 'wishes', path: '/wishes', name: 'Wishes', nameTa: 'வாழ்த்து' },
-              { id: 'reg-obituaries', slug: 'obituaries', path: '/obituaries', name: 'Obituaries', nameTa: 'இரங்கல்' },
-              { id: 'reg-business', slug: 'business-studies', path: '/business-studies', name: 'Business', nameTa: 'வணிகம்' },
-              { id: 'reg-jobs', slug: 'jobs', path: '/jobs', name: 'Jobs', nameTa: 'வேலை' },
-              { id: 'reg-classifieds', slug: 'classifieds', path: '/classifieds', name: 'Classifieds', nameTa: 'தள்ளுபடி' }
-            ] 
+              { id: 'reg-deals', slug: 'deals', path: '/deals', name: 'Deals', nameTa: 'சலுகைகள்' },
+              { id: 'reg-rfq', slug: 'rfq', path: '/rfq', name: 'RFQ', nameTa: 'கோரிக்கைகள்' },
+              { id: 'reg-nfc', slug: 'nfc', path: '/nfc', name: 'NFC Card', nameTa: 'என்எஃப்சி கார்டு' }
+            ]
           },
-          { path: '/category/international', label: lang === 'en' ? 'International' : 'சர்வதேசம்', subcategories: [ { id: 'fi-1', slug: 'world-news', name: 'World News', nameTa: 'உலக செய்திகள்' } ] },
-          { path: '/videos', label: lang === 'en' ? 'Video' : 'வீடியோ', subcategories: [
-            { id: 'v-state', slug: 'v-state', name: 'State', nameTa: 'மாநிலம்' },
-            { id: 'v-national', slug: 'v-national', name: 'National', nameTa: 'தேசியம்' },
-            { id: 'v-cinema', slug: 'v-cinema', name: 'Cinema', nameTa: 'சினிமா' }
-          ] },
-          { path: '/web-stories', label: lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்', subcategories: [] }
-        ];
+          { id: 'reg-wishes', slug: 'wishes', path: '/wishes', name: 'Wishes', nameTa: 'வாழ்த்து' },
+          { id: 'reg-obituaries', slug: 'obituaries', path: '/obituaries', name: 'Obituaries', nameTa: 'இரங்கல்' },
+          { id: 'reg-business', slug: 'business-studies', path: '/business-studies', name: 'Business', nameTa: 'வணிகம்' },
+          { id: 'reg-jobs', slug: 'jobs', path: '/jobs', name: 'Jobs', nameTa: 'வேலை' },
+          { id: 'reg-classifieds', slug: 'classifieds', path: '/classifieds', name: 'Classifieds', nameTa: 'தள்ளுபடி' }
+        ]
+      },
+      { path: '/category/international', label: lang === 'en' ? 'International' : 'சர்வதேசம்', subcategories: [{ id: 'fi-1', slug: 'world-news', name: 'World News', nameTa: 'உலக செய்திகள்' }] },
+      {
+        path: '/videos', label: lang === 'en' ? 'Video' : 'வீடியோ', subcategories: [
+          { id: 'v-state', slug: 'v-state', name: 'State', nameTa: 'மாநிலம்' },
+          { id: 'v-national', slug: 'v-national', name: 'National', nameTa: 'தேசியம்' },
+          { id: 'v-cinema', slug: 'v-cinema', name: 'Cinema', nameTa: 'சினிமா' }
+        ]
+      },
+      { path: '/web-stories', label: lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்', subcategories: [] }
+    ];
   };
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -536,8 +538,8 @@ const Header = () => {
   const getFilteredResults = () => {
     if (!searchQuery.trim()) return { articles: [], videos: [], businesses: [] };
     const query = searchQuery.toLowerCase().trim();
-    
-    const filteredArts = allArticles.filter(art => 
+
+    const filteredArts = allArticles.filter(art =>
       (art.titleEn || '').toLowerCase().includes(query) ||
       (art.titleTa || '').toLowerCase().includes(query) ||
       (art.shortDescEn || '').toLowerCase().includes(query) ||
@@ -678,11 +680,11 @@ const Header = () => {
     const logoUrl = isDark ? "assets/images/logo-banner-dark.png" : "assets/images/logo-banner-light.png";
     return (
       <Link to="/" className="logo-link" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-        <img 
-          src={logoUrl} 
-          alt="KING 24x7" 
+        <img
+          src={logoUrl}
+          alt="KING 24x7"
           className="header-logo-img"
-          style={{ height: size === 'small' ? '30px' : '55px', width: 'auto', objectFit: 'contain', display: 'block' }} 
+          style={{ height: size === 'small' ? '30px' : '55px', width: 'auto', objectFit: 'contain', display: 'block' }}
         />
       </Link>
     );
@@ -748,26 +750,26 @@ const Header = () => {
       return (
         <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
           <UserAvatar user={user} size={30} onClick={() => setShowUserDropdown(!showUserDropdown)} />
-          <UserDropdown 
-            isOpen={showUserDropdown} 
-            onClose={() => setShowUserDropdown(false)} 
-            onLogout={handleLogout} 
+          <UserDropdown
+            isOpen={showUserDropdown}
+            onClose={() => setShowUserDropdown(false)}
+            onLogout={handleLogout}
           />
         </div>
       );
     }
-    
+
     return (
       <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-        <button 
-          onClick={() => setShowUserDropdown(!showUserDropdown)} 
-          style={{ background: 'transparent', border: 'none', color: '#ffffff', fontSize: '20px', display: 'inline-flex', alignItems: 'center', cursor: 'pointer', padding: '2px' }} 
+        <button
+          onClick={() => setShowUserDropdown(!showUserDropdown)}
+          style={{ background: 'transparent', border: 'none', color: '#ffffff', fontSize: '20px', display: 'inline-flex', alignItems: 'center', cursor: 'pointer', padding: '2px' }}
           aria-label="User Account"
         >
           <i className="fas fa-user-circle"></i>
         </button>
         {showUserDropdown && (
-          <div 
+          <div
             ref={unauthDropdownRef}
             style={{
               position: 'absolute',
@@ -784,8 +786,8 @@ const Header = () => {
               overflow: 'hidden'
             }}
           >
-            <Link 
-              to="/login" 
+            <Link
+              to="/login"
               onClick={() => setShowUserDropdown(false)}
               style={{
                 display: 'block',
@@ -807,8 +809,8 @@ const Header = () => {
             >
               Login
             </Link>
-            <Link 
-              to="/register" 
+            <Link
+              to="/register"
               onClick={() => setShowUserDropdown(false)}
               style={{
                 display: 'block',
@@ -839,7 +841,7 @@ const Header = () => {
 
   const renderDistrictSelector = (isHeader = false) => (
     <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-      <button 
+      <button
         onClick={() => setShowDistrictDropdown(!showDistrictDropdown)}
         className="header-district-btn"
         style={{
@@ -917,10 +919,10 @@ const Header = () => {
 
   const renderSocials = () => (
     <div style={{ display: 'flex', gap: '8px' }}>
-      <a href="#" className="social-icon" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
-      <a href="#" className="social-icon" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
-      <a href="#" className="social-icon" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
-      <a href="#" className="social-icon" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
+      <a href="https://www.facebook.com/profile.php?id=61551357861905" className="social-icon" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
+      <a href=" https://x.com/onlinethamizhan" className="social-icon" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
+      <a href="https://www.instagram.com/king24x7/" className="social-icon" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
+      <a href="https://www.youtube.com/@king24x7" className="social-icon" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
     </div>
   );
 
@@ -932,8 +934,8 @@ const Header = () => {
             <i className="fas fa-user-circle" style={{ color: roleColors[session.role] || '#64748B' }}></i>
             {session.username}
           </span>
-          <button 
-            onClick={logout} 
+          <button
+            onClick={logout}
             style={{
               background: 'transparent',
               border: 'none',
@@ -968,7 +970,7 @@ const Header = () => {
     );
   };
 
-  const renderScrollNavMenu = (onLinkClick = () => {}) => {
+  const renderScrollNavMenu = (onLinkClick = () => { }) => {
     const navItems = getDynamicNavItems();
 
     return (
@@ -1003,9 +1005,9 @@ const Header = () => {
             <div
               key={idx}
               className="nav-item-wrapper"
-              style={{ 
-                position: 'relative', 
-                display: 'inline-flex', 
+              style={{
+                position: 'relative',
+                display: 'inline-flex',
                 alignItems: 'center',
                 borderBottom: isActive ? '3px solid var(--primary, #B3732A)' : '3px solid transparent'
               }}
@@ -1014,8 +1016,8 @@ const Header = () => {
                 to={item.path}
                 onClick={handleLinkClick}
                 style={{
-                  color: isActive 
-                    ? (theme === 'dark' ? '#FFFFFF' : '#000000') 
+                  color: isActive
+                    ? (theme === 'dark' ? '#FFFFFF' : '#000000')
                     : (theme === 'dark' ? '#94A3B8' : '#71717A'),
                   background: 'transparent',
                   padding: '8px 4px 6px 12px',
@@ -1043,8 +1045,8 @@ const Header = () => {
                     alignItems: 'center',
                     padding: '8px 12px 6px 4px',
                     cursor: 'pointer',
-                    color: isActive 
-                      ? (theme === 'dark' ? '#FFFFFF' : '#000000') 
+                    color: isActive
+                      ? (theme === 'dark' ? '#FFFFFF' : '#000000')
                       : (theme === 'dark' ? '#94A3B8' : '#71717A'),
                     transition: 'all 0.2s'
                   }}
@@ -1056,7 +1058,7 @@ const Header = () => {
 
               {/* Subcategories Dropdown directly below this link */}
               {activeDropdown === item.id && item.subcategories && item.subcategories.length > 0 && (
-                <div 
+                <div
                   className="category-dropdown-menu"
                   style={{
                     position: 'absolute',
@@ -1129,7 +1131,7 @@ const Header = () => {
                   `}</style>
                   {/* Prepend 'All' option */}
                   <div className="dropdown-sub-container">
-                    <Link 
+                    <Link
                       to={item.path}
                       onClick={() => setActiveDropdown(null)}
                       className="dropdown-sub-link"
@@ -1145,7 +1147,7 @@ const Header = () => {
                     const subcatLinkPath = sub.path || `/category/${catSlug}?subcat=${subcatName}`;
                     return (
                       <div key={sub.id} className="dropdown-sub-container">
-                        <Link 
+                        <Link
                           to={subcatLinkPath}
                           onClick={() => setActiveDropdown(null)}
                           className="dropdown-sub-link"
@@ -1190,7 +1192,7 @@ const Header = () => {
     );
   };
 
-  const renderNavMenuVertical = (onLinkClick = () => {}) => {
+  const renderNavMenuVertical = (onLinkClick = () => { }) => {
     const navItems = getDynamicNavItems();
 
     return (
@@ -1210,9 +1212,9 @@ const Header = () => {
           return (
             <li key={idx} style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Link 
-                  to={item.path} 
-                  onClick={hasSubs ? toggleExpand : onLinkClick} 
+                <Link
+                  to={item.path}
+                  onClick={hasSubs ? toggleExpand : onLinkClick}
                   style={{
                     color: isActive ? 'var(--primary, #B3732A)' : 'inherit',
                     textDecoration: 'none',
@@ -1226,7 +1228,7 @@ const Header = () => {
                   {item.label}
                 </Link>
                 {hasSubs && (
-                  <button 
+                  <button
                     onClick={toggleExpand}
                     style={{ background: 'transparent', border: 'none', color: 'inherit', padding: '6px 12px', cursor: 'pointer' }}
                   >
@@ -1240,7 +1242,7 @@ const Header = () => {
                 <ul style={{ paddingLeft: '16px', listStyle: 'none', margin: '4px 0', display: 'flex', flexDirection: 'column', gap: '10px', borderLeft: '1px solid var(--border-color)' }}>
                   {item.subcategories.map(sub => (
                     <li key={sub.id}>
-                      <Link 
+                      <Link
                         to={sub.path || `/category/${sub.slug}`}
                         onClick={onLinkClick}
                         style={{
@@ -1337,16 +1339,16 @@ const Header = () => {
       ) : (
         <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            <button 
+            <button
               onClick={() => setDrawerOpen(true)}
-              style={{ 
-                background: 'transparent', 
-                border: 'none', 
-                fontSize: '20px', 
-                color: '#ffffff', 
-                cursor: 'pointer', 
-                paddingRight: '6px', 
-                display: 'flex', 
+              style={{
+                background: 'transparent',
+                border: 'none',
+                fontSize: '20px',
+                color: '#ffffff',
+                cursor: 'pointer',
+                paddingRight: '6px',
+                display: 'flex',
                 alignItems: 'center'
               }}
               aria-label="Open side drawer menu"
@@ -1359,14 +1361,14 @@ const Header = () => {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            <button 
+            <button
               onClick={() => setIsSearchOpen(true)}
               style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#ffffff', padding: '4px' }}
               aria-label="Search"
             >
               <i className="fas fa-search"></i>
             </button>
-            <button 
+            <button
               onClick={() => setLang(lang === 'en' ? 'ta' : 'en')}
               style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', display: 'inline-flex', alignItems: 'center' }}
               title={lang === 'en' ? 'Switch to Tamil' : 'தமிழுக்கு மாற்றவும்'}
@@ -1374,23 +1376,23 @@ const Header = () => {
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
                 {/* Top Left Circle */}
-                <circle cx="9.5" cy="9.5" r="6.5" fill="#ffffff" stroke="#ffffff" strokeWidth="1"/>
+                <circle cx="9.5" cy="9.5" r="6.5" fill="#ffffff" stroke="#ffffff" strokeWidth="1" />
                 <text x="9.5" y="12.5" fontSize="9.5" fontFamily="Inter, system-ui, sans-serif" fontWeight="800" fill="#000000" textAnchor="middle">A</text>
-                
+
                 {/* Bottom Right Circle */}
-                <circle cx="15.5" cy="15.5" r="6.5" fill="#000000" stroke="#ffffff" strokeWidth="1"/>
+                <circle cx="15.5" cy="15.5" r="6.5" fill="#000000" stroke="#ffffff" strokeWidth="1" />
                 <text x="15.5" y="18.5" fontSize="8.5" fontFamily="Inter, system-ui, sans-serif" fontWeight="800" fill="#ffffff" textAnchor="middle">அ</text>
 
                 {/* Bottom Arrow */}
-                <path d="M 8 14.5 C 8 17.5, 10 18.5, 12 17.5" stroke="#ffffff" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
-                <path d="M 10.5 18.5 L 12.5 17.5 L 12 15.5" stroke="#ffffff" strokeWidth="1.2" fill="none" strokeLinejoin="round"/>
+                <path d="M 8 14.5 C 8 17.5, 10 18.5, 12 17.5" stroke="#ffffff" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+                <path d="M 10.5 18.5 L 12.5 17.5 L 12 15.5" stroke="#ffffff" strokeWidth="1.2" fill="none" strokeLinejoin="round" />
 
                 {/* Top Arrow */}
-                <path d="M 16 9.5 C 16 6.5, 14 5.5, 12 6.5" stroke="#ffffff" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
-                <path d="M 13.5 5.5 L 11.5 6.5 L 12 8.5" stroke="#ffffff" strokeWidth="1.2" fill="none" strokeLinejoin="round"/>
+                <path d="M 16 9.5 C 16 6.5, 14 5.5, 12 6.5" stroke="#ffffff" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+                <path d="M 13.5 5.5 L 11.5 6.5 L 12 8.5" stroke="#ffffff" strokeWidth="1.2" fill="none" strokeLinejoin="round" />
               </svg>
             </button>
-            <button 
+            <button
               onClick={toggleTheme}
               style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#ffffff', padding: '4px', display: 'inline-flex', alignItems: 'center' }}
               aria-label="Toggle Theme"
@@ -1590,23 +1592,23 @@ const Header = () => {
           }
         }
       `}</style>
-      <nav 
-        className={`main-nav ${isRegionalPage ? 'regional-theme' : ''}`} 
-        style={{ 
+      <nav
+        className={`main-nav ${isRegionalPage ? 'regional-theme' : ''}`}
+        style={{
           position: 'relative',
-          overflow: 'visible', 
-          whiteSpace: 'nowrap', 
+          overflow: 'visible',
+          whiteSpace: 'nowrap',
           borderTop: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #E5E7EB',
           borderBottom: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #E5E7EB',
           background: theme === 'dark' ? '#000000' : '#FFFFFF'
         }}
       >
-        <div 
-          className="container main-nav-container-desktop" 
-          style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            width: '100%', 
+        <div
+          className="container main-nav-container-desktop"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            width: '100%',
             padding: '0 16px',
             overflowX: 'auto',
             scrollbarWidth: 'none',
@@ -1618,8 +1620,8 @@ const Header = () => {
       </nav>
 
       {/* Side Drawer Panel */}
-      <div 
-        className={`side-drawer-container ${drawerOpen ? 'open' : ''}`} 
+      <div
+        className={`side-drawer-container ${drawerOpen ? 'open' : ''}`}
         style={{
           position: 'fixed',
           top: 0,
@@ -1632,7 +1634,7 @@ const Header = () => {
         }}
       >
         {/* Overlay */}
-        <div 
+        <div
           onClick={() => setDrawerOpen(false)}
           style={{
             position: 'absolute',
@@ -1671,10 +1673,10 @@ const Header = () => {
           </div>
 
           {/* Profile section below the logo */}
-          <div style={{ 
-            marginTop: '5px', 
-            padding: '12px', 
-            borderRadius: '8px', 
+          <div style={{
+            marginTop: '5px',
+            padding: '12px',
+            borderRadius: '8px',
             background: theme === 'dark' ? '#1E293B' : '#F8FAFC',
             display: 'flex',
             alignItems: 'center',
@@ -1686,14 +1688,14 @@ const Header = () => {
                 setDrawerOpen(false);
               }} />
             ) : (
-              <Link 
-                to="/login" 
+              <Link
+                to="/login"
                 onClick={() => setDrawerOpen(false)}
-                style={{ 
-                  color: theme === 'dark' ? '#ffffff' : '#1e293b', 
-                  fontSize: '28px', 
-                  display: 'inline-flex', 
-                  alignItems: 'center' 
+                style={{
+                  color: theme === 'dark' ? '#ffffff' : '#1e293b',
+                  fontSize: '28px',
+                  display: 'inline-flex',
+                  alignItems: 'center'
                 }}
                 aria-label="User Account"
               >
@@ -1705,7 +1707,7 @@ const Header = () => {
                 <>
                   <span style={{ fontSize: '14px', fontWeight: '700', color: theme === 'dark' ? '#ffffff' : '#1e293b' }}>{user.fullName}</span>
                   <div style={{ display: 'flex', gap: '10px', marginTop: '2px' }}>
-                    <Link 
+                    <Link
                       to="/profile"
                       onClick={() => setDrawerOpen(false)}
                       style={{
@@ -1718,11 +1720,11 @@ const Header = () => {
                       {lang === 'en' ? 'Profile' : 'சுயவிவரம்'}
                     </Link>
                     <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '11px' }}>|</span>
-                    <button 
+                    <button
                       onClick={() => {
                         handleLogout();
                         setDrawerOpen(false);
-                      }} 
+                      }}
                       style={{
                         background: 'transparent',
                         border: 'none',
@@ -1739,12 +1741,12 @@ const Header = () => {
                   </div>
                 </>
               ) : (
-                <Link 
-                  to="/login" 
+                <Link
+                  to="/login"
                   onClick={() => setDrawerOpen(false)}
-                  style={{ 
-                    fontSize: '14px', 
-                    fontWeight: '700', 
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: '700',
                     color: 'var(--primary, #B3732A)',
                     textDecoration: 'none'
                   }}

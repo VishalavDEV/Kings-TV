@@ -20,12 +20,12 @@ const Footer = () => {
               {lang === 'en' ? 'Truth. Responsibility. In Tamil.' : 'உண்மை. பொறுப்புடன். தமிழ்.'}
             </div>
             <p style={{ marginTop: '12px' }}>
-              {lang === 'en' 
+              {lang === 'en'
                 ? 'KING 24x7 is a leading Tamil news portal. We deliver instant, reliable news from Tamil Nadu, India, and across the globe.'
                 : 'KING 24x7 ஒரு முன்னணி தமிழ் செய்தி போர்டல். தமிழகம், இந்தியா மற்றும் உலகம் முழுவதும் இருந்து தமிழில் உடனடி, நம்பகமான செய்திகளை வழங்குகிறோம்.'}
             </p>
           </div>
-          
+
           <div className="footer-col">
             <h5>{lang === 'en' ? 'News' : 'செய்திகள்'}</h5>
             <Link to="/category/politics">{lang === 'en' ? 'Politics' : 'அரசியல்'}</Link>
@@ -46,10 +46,10 @@ const Footer = () => {
           <div className="footer-col">
             <h5>{lang === 'en' ? 'Followers' : 'பின்தொடர'}</h5>
             <div className="footer-social" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
-              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
+              <a href="https://www.facebook.com/profile.php?id=61551357861905" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
+              <a href="https://x.com/onlinethamizhan" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
+              <a href="https://www.instagram.com/king24x7/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
+              <a href="https://www.youtube.com/@king24x7" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
               <a href="https://whatsapp.com" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><i className="fab fa-whatsapp"></i></a>
               <a href="https://telegram.org" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i className="fab fa-telegram-plane"></i></a>
             </div>
