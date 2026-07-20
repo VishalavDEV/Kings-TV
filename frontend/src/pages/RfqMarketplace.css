@@ -9,6 +9,11 @@
   color: #1e293b !important;
 }
 
+.rfq-module-container.container {
+  max-width: 1440px !important;
+}
+
+
 /* Sidebar & Main Grid Layout */
 .rfq-layout-grid {
   display: grid !important;

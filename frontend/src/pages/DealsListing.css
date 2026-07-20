@@ -9,6 +9,11 @@
   color: #1e293b !important;
 }
 
+.deals-module-container.container {
+  max-width: 1440px !important;
+}
+
+
 /* Sidebar & Main Grid Layout */
 .deals-layout-grid {
   display: grid !important;
