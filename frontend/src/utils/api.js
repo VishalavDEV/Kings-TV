@@ -1,4 +1,4 @@
-const SERVER_BASE = import.meta.env.VITE_SERVER_BASE || 'http://localhost:8080';
+const SERVER_BASE = import.meta.env.VITE_SERVER_BASE || `http://${window.location.hostname}:8080`;
 const API_BASE = import.meta.env.VITE_API_BASE || `${SERVER_BASE}/api/v1`;
 
 export const getImageUrl = (path) => {
