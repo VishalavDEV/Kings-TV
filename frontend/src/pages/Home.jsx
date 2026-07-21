@@ -673,8 +673,12 @@ const Home = () => {
     const homeCatIdMap = {
       'all': null,
       'politics': 1,
+      'business': 2,
       'sports': 3,
-      'agriculture': 2
+      'cinema': 4,
+      'tech': 5,
+      'regional': 6,
+      'international': 7
     };
 
     const filteredHomeVideos = videoTab === 'all'
@@ -687,17 +691,22 @@ const Home = () => {
           <h2><i className="fas fa-video" style={{ color: '#EF4444' }}></i> {lang === 'en' ? 'Video News' : 'வீடியோ செய்திகள்'}</h2>
           <Link to="/videos" className="view-all">{lang === 'en' ? 'More Videos' : 'மேலும் வீடியோக்கள்'} <i className="fas fa-arrow-right"></i></Link>
         </div>
-        <div className="video-categories">
-          {['all', 'politics', 'sports', 'agriculture'].map(tab => (
+        <div className="video-categories" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '10px', scrollbarWidth: 'none' }}>
+          {['all', 'politics', 'business', 'sports', 'cinema', 'tech', 'regional', 'international'].map(tab => (
             <button 
               key={tab} 
               className={`video-cat-btn ${videoTab === tab ? 'active' : ''}`}
               onClick={() => setVideoTab(tab)}
+              style={{ whiteSpace: 'nowrap' }}
             >
               {tab === 'all' && (lang === 'en' ? 'All' : 'அனைத்தும்')}
               {tab === 'politics' && (lang === 'en' ? 'Politics' : 'அரசியல்')}
+              {tab === 'business' && (lang === 'en' ? 'Business' : 'வணிகம்')}
               {tab === 'sports' && (lang === 'en' ? 'Sports' : 'விளையாட்டு')}
-              {tab === 'agriculture' && (lang === 'en' ? 'Agriculture' : 'விவசாயம்')}
+              {tab === 'cinema' && (lang === 'en' ? 'Cinema' : 'திரைப்படம்')}
+              {tab === 'tech' && (lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்')}
+              {tab === 'regional' && (lang === 'en' ? 'Regional' : 'மாநிலம்')}
+              {tab === 'international' && (lang === 'en' ? 'International' : 'சர்வதேசம்')}
             </button>
           ))}
         </div>

@@ -55,6 +55,7 @@ const NewsEditor = () => {
     metaTitle: '', metaDescription: '', metaKeywords: '', focusKeywords: '', slug: '', canonicalUrl: '',
     latitude: '', longitude: '', visibilityRadiusKm: '',
     publishedAt: '',
+    showRightColumn: true, isPluggedIn: false, featuredCategory: '',
   });
 
   const formRef = useRef(form);
@@ -112,6 +113,9 @@ const NewsEditor = () => {
           latitude: a.latitude || '', longitude: a.longitude || '',
           visibilityRadiusKm: a.visibilityRadiusKm || '',
           publishedAt: a.publishedAt ? a.publishedAt.substring(0, 16) : '',
+          showRightColumn: a.showRightColumn !== false,
+          isPluggedIn: a.isPluggedIn === true,
+          featuredCategory: a.featuredCategory || '',
         };
         setForm(formObj);
         
@@ -1093,6 +1097,32 @@ const NewsEditor = () => {
                     <label style={{ ...labelStyle, fontSize: '0.75rem' }}>Radius (km)</label>
                     <input type="number" style={inputStyle} value={form.visibilityRadiusKm}
                       onChange={e => set('visibilityRadiusKm', e.target.value)} placeholder="50" />
+                  </div>
+                </div>
+              </div>
+              <div style={{ padding: '1.25rem', background: 'var(--bg-surface)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <label style={{ ...labelStyle, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
+                  Layout & Featured Controls
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+                    <input type="checkbox" checked={form.showRightColumn}
+                      onChange={e => set('showRightColumn', e.target.checked)} />
+                    Show Right Sidebar (Ads & Widgets)
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+                    <input type="checkbox" checked={form.isPluggedIn}
+                      onChange={e => set('isPluggedIn', e.target.checked)} />
+                    Plug into Homepage Top Banner
+                  </label>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: '0.75rem' }}>Featured Section Override (Optional)</label>
+                    <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.featuredCategory} onChange={e => set('featuredCategory', e.target.value)}>
+                      <option value="">None</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>{c.nameTa ? `${c.nameTa} / ${c.name}` : c.name}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>

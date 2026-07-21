@@ -74,6 +74,13 @@ public class SystemConfig {
     public static final String TELEGRAM_ENABLED = "telegram.enabled";
     public static final String RENDER_API_KEY = "hosting.render_api_key";
     public static final String VERCEL_API_KEY = "hosting.vercel_api_key";
+    public static final String FONT_PRIMARY = "font.primary";
+    public static final String FONT_SECONDARY = "font.secondary";
+    public static final String FONT_TERTIARY = "font.tertiary";
+    public static final String NOTIFY_EMAIL_BREAKING = "notify.email.breaking";
+    public static final String NOTIFY_EMAIL_DAILY = "notify.email.daily";
+    public static final String NOTIFY_SMS_BREAKING = "notify.sms.breaking";
+    public static final String NOTIFY_SMS_OTP = "notify.sms.otp";
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
