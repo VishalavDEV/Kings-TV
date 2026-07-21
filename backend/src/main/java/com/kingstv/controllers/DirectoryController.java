@@ -25,6 +25,7 @@ import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Objects;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -62,13 +63,18 @@ public class DirectoryController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createListing(@RequestBody DirectoryListing listing) {
+    public ResponseEntity<?> createListing(@RequestBody DirectoryListing listing, Principal principal) {
         if (listing.getBusinessName() == null || listing.getCategory() == null || listing.getPhoneNumber() == null || listing.getAddressLocality() == null || listing.getAddressStreet() == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Required fields are missing"));
         }
         if (listing.getCreatedAt() == null) {
             listing.setCreatedAt(LocalDateTime.now());
         }
+        if (principal != null) {
+            Optional<User> uOpt = userRepository.findByEmail(principal.getName());
+            uOpt.ifPresent(user -> listing.setCreatedBy((long) user.getId()));
+        }
+        listing.setKycStatus("pending");
         DirectoryListing saved = directoryRepository.save(listing);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
@@ -100,13 +106,26 @@ public class DirectoryController {
         return getAll(search, "active", page, size, sortBy, direction);
     }
 
+    @GetMapping("/my-business")
+    public ResponseEntity<?> getMyBusiness(Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
+        }
+        Optional<User> uOpt = userRepository.findByEmail(principal.getName());
+        if (uOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "User not found"));
+        }
+        List<DirectoryListing> listings = directoryRepository.findByCreatedBy((long) uOpt.get().getId());
+        return ResponseEntity.ok(listings);
+    }
+
     @PostMapping("/saveUpdate")
-    public ResponseEntity<?> save(@RequestBody DirectoryListing entity) {
-        return createListing(entity);
+    public ResponseEntity<?> save(@RequestBody DirectoryListing entity, Principal principal) {
+        return createListing(entity, principal);
     }
 
     @PutMapping("/saveUpdate")
-    public ResponseEntity<?> update(@RequestBody DirectoryListing entity) {
+    public ResponseEntity<?> update(@RequestBody DirectoryListing entity, Principal principal) {
         if (entity.getId() == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Id is required for update"));
         }
@@ -115,6 +134,12 @@ public class DirectoryController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Directory listing not found"));
         }
         DirectoryListing listing = listingOpt.get();
+        if (principal != null) {
+            Optional<User> uOpt = userRepository.findByEmail(principal.getName());
+            if (uOpt.isEmpty() || !Objects.equals(listing.getCreatedBy(), (long) uOpt.get().getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You do not own this business listing"));
+            }
+        }
         listing.setBusinessName(entity.getBusinessName());
         listing.setCategory(entity.getCategory());
         listing.setAddressLocality(entity.getAddressLocality());
@@ -125,9 +150,54 @@ public class DirectoryController {
         listing.setCoverUrl(entity.getCoverUrl());
         listing.setLogoUrl(entity.getLogoUrl());
         listing.setDescription(entity.getDescription());
+        if (entity.getKycDocumentUrl() != null) {
+            listing.setKycDocumentUrl(entity.getKycDocumentUrl());
+        }
         
         DirectoryListing updated = directoryRepository.save(listing);
         return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/{id}/approve-kyc")
+    public ResponseEntity<?> simulateApproveKyc(@PathVariable Long id) {
+        Optional<DirectoryListing> listingOpt = directoryRepository.findById(id);
+        if (listingOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Directory listing not found"));
+        }
+        DirectoryListing listing = listingOpt.get();
+        listing.setKycStatus("approved");
+        listing.setStatus("active");
+        directoryRepository.save(listing);
+        return ResponseEntity.ok(Map.of("message", "KYC Approved"));
+    }
+
+    @PatchMapping("/{id}/kyc")
+    @com.kingstv.security.RequiresPermission(anyOf = {com.kingstv.models.Role.SUPER_ADMIN, com.kingstv.models.Role.CHIEF_EDITOR})
+    public ResponseEntity<?> updateKycStatus(@PathVariable Long id, @RequestBody Map<String, String> request, Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
+        }
+        Optional<DirectoryListing> listingOpt = directoryRepository.findById(id);
+        if (listingOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Directory listing not found"));
+        }
+        String newStatus = request.get("status");
+        if (newStatus == null || (!newStatus.equalsIgnoreCase("approved") && !newStatus.equalsIgnoreCase("rejected") && !newStatus.equalsIgnoreCase("pending"))) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid KYC status. Must be approved, rejected, or pending"));
+        }
+        Optional<User> uOpt = userRepository.findByEmail(principal.getName());
+        Long adminId = uOpt.map(user -> (long) user.getId()).orElse(null);
+        DirectoryListing listing = listingOpt.get();
+        listing.setKycStatus(newStatus.toLowerCase());
+        listing.setApprovedBy(adminId);
+        listing.setApprovedAt(LocalDateTime.now());
+        if ("approved".equalsIgnoreCase(newStatus)) {
+            listing.setStatus("active");
+        } else {
+            listing.setStatus("inactive");
+        }
+        DirectoryListing saved = directoryRepository.save(listing);
+        return ResponseEntity.ok(saved);
     }
 
     @PostMapping("/upload")

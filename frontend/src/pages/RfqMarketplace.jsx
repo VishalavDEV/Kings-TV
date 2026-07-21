@@ -55,6 +55,8 @@ const RfqMarketplace = () => {
   const [newLoc, setNewLoc] = useState('');
   const [newDeadline, setNewDeadline] = useState('');
   const [newDesc, setNewDesc] = useState('');
+  const [hover1, setHover1] = useState(false);
+  const [hover2, setHover2] = useState(false);
 
   const loadData = () => {
     setLoading(true);
@@ -210,7 +212,150 @@ const RfqMarketplace = () => {
   ];
 
   return (
-    <div className="container mx-auto rfq-module-container" style={{ paddingBottom: '60px', paddingTop: '20px' }}>
+    <div style={{ background: '#f8fafc', minHeight: '100vh', width: '100%', paddingBottom: '60px' }}>
+      
+      {/* Standalone Dashboard Header */}
+      <div style={{
+        background: '#ffffff',
+        borderBottom: '1px solid #e2e8f0',
+        padding: '16px 40px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
+        boxSizing: 'border-box',
+        marginBottom: '28px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <button style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <i className="fas fa-bars"></i>
+          </button>
+          <div>
+            <h1 style={{ fontSize: '18px', fontWeight: '850', color: '#0f172a', margin: '0 0 4px 0', letterSpacing: '-0.3px' }}>RFQ - Request for Quote</h1>
+            <p style={{ fontSize: '11px', color: '#64748b', margin: 0, fontWeight: '500' }}>Post what you need. Get multiple quotes from verified businesses.</p>
+          </div>
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Location button */}
+          <button 
+            style={{
+              padding: '8px 18px',
+              borderRadius: '24px',
+              border: '1px solid #e2e8f0',
+              backgroundColor: '#ffffff',
+              fontSize: '12px',
+              fontWeight: '700',
+              color: '#334155',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+            }}
+          >
+            <i className="fas fa-map-marker-alt text-gray-400"></i> Chennai, Tamil Nadu <i className="fas fa-chevron-down text-[8px] text-gray-400"></i>
+          </button>
+          
+          {/* Notification Button */}
+          <button 
+            style={{
+              position: 'relative',
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              border: '1px solid #e2e8f0',
+              backgroundColor: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#64748b',
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+            }}
+          >
+            <i className="far fa-bell" style={{ fontSize: '14px' }}></i>
+            <span style={{
+              position: 'absolute',
+              top: '-2px',
+              right: '-2px',
+              backgroundColor: '#ef4444',
+              color: '#ffffff',
+              fontSize: '8px',
+              fontWeight: '900',
+              borderRadius: '50%',
+              width: '15px',
+              height: '15px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>3</span>
+          </button>
+          
+          {/* Chat Button */}
+          <button 
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              border: '1px solid #e2e8f0',
+              backgroundColor: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#64748b',
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+            }}
+          >
+            <i className="far fa-comment-alt" style={{ fontSize: '14px' }}></i>
+          </button>
+          
+          {/* User profile info */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '6px 14px 6px 6px',
+            borderRadius: '24px',
+            border: '1px solid #e2e8f0',
+            backgroundColor: '#ffffff',
+            cursor: 'pointer',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+          }}>
+            <span style={{
+              width: '26px',
+              height: '26px',
+              borderRadius: '50%',
+              backgroundColor: '#8b5cf6',
+              color: '#ffffff',
+              fontWeight: '800',
+              fontSize: '11px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>SJ</span>
+            <div style={{ textAlign: 'left', lineHeight: '1.2' }}>
+              <span style={{ fontSize: '11px', fontWeight: '800', color: '#1e293b', display: 'block' }}>Sharmitha J</span>
+              <span style={{ fontSize: '9px', fontWeight: '700', color: '#d97706', display: 'block' }}>Premium</span>
+            </div>
+            <i className="fas fa-chevron-down" style={{ fontSize: '8px', color: '#94a3b8', marginLeft: '4px' }}></i>
+          </div>
+        </div>
+      </div>
+
+      <div 
+        className="rfq-module-container" 
+        style={{ 
+          maxWidth: '1280px',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          paddingLeft: '20px',
+          paddingRight: '20px',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}
+      >
 
       <div className="rfq-content-columns-grid">
         
@@ -221,90 +366,150 @@ const RfqMarketplace = () => {
           <div className="rfq-hero-banner">
             <div className="rfq-hero-left">
               <h2 className="rfq-hero-title">Get the best quotes<br/>from <span className="text-[#6366f1]">verified businesses</span></h2>
-              <div className="rfq-hero-pills">
-                <div className="rfq-hero-pill-badge">
-                  <i className="fas fa-check-circle"></i>
-                  <span>Verified Businesses - KYC verified & trusted</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12.5px', color: '#e2e8f0', fontWeight: '600' }}>
+                  <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>
+                    <i className="fas fa-check"></i>
+                  </span>
+                  <span><strong>Verified Businesses</strong> <span style={{ opacity: 0.75, fontWeight: 'normal', marginLeft: '6px' }}>| KYC verified & trusted</span></span>
                 </div>
-                <div className="rfq-hero-pill-badge">
-                  <i className="fas fa-check-circle"></i>
-                  <span>Compare Quotes - Choose the best deal</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12.5px', color: '#e2e8f0', fontWeight: '600' }}>
+                  <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>
+                    <i className="fas fa-check"></i>
+                  </span>
+                  <span><strong>Compare Quotes</strong> <span style={{ opacity: 0.75, fontWeight: 'normal', marginLeft: '6px' }}>| Choose the best deal</span></span>
                 </div>
-                <div className="rfq-hero-pill-badge">
-                  <i className="fas fa-check-circle"></i>
-                  <span>Save Time & Money - Competitive pricing</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12.5px', color: '#e2e8f0', fontWeight: '600' }}>
+                  <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>
+                    <i className="fas fa-check"></i>
+                  </span>
+                  <span><strong>Save Time & Money</strong> <span style={{ opacity: 0.75, fontWeight: 'normal', marginLeft: '6px' }}>| Competitive pricing</span></span>
                 </div>
               </div>
             </div>
             
-            {/* Quote Graphic Illustration overlay */}
-            <div className="rfq-hero-graphic-wrap">
-              <div className="rfq-hero-graphic-card">
-                <span>Quote</span>
-                <strong>₹45,000</strong>
+            {/* Quote Graphic Clipboard Illustration overlay */}
+            <div className="rfq-hero-graphic-wrap" style={{
+              background: '#4f46e5',
+              borderRadius: '24px',
+              padding: '24px 18px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              boxShadow: '0 12px 30px rgba(0,0,0,0.15)',
+              border: '2px solid rgba(255, 255, 255, 0.1)',
+              width: '200px',
+              position: 'absolute',
+              right: '40px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              boxSizing: 'border-box'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <span style={{ fontSize: '15px', fontWeight: '900', color: '#ffffff', letterSpacing: '0.5px' }}>RFQ</span>
+                <span style={{
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  background: '#fbbf24',
+                  color: '#1e1b4b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '9px',
+                  fontWeight: '900'
+                }}>✓</span>
               </div>
-              <div className="rfq-hero-graphic-card best">
-                <span>Quote</span>
-                <strong style={{ color: '#6366f1' }}>₹38,500</strong>
+              
+              <div style={{
+                background: '#ffffff',
+                borderRadius: '12px',
+                padding: '8px 12px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
+              }}>
+                <span style={{ fontSize: '9px', fontWeight: '700', color: '#94a3b8' }}>Quote</span>
+                <strong style={{ fontSize: '11px', fontWeight: '800', color: '#10b981' }}>₹45,000</strong>
               </div>
-              <div className="rfq-hero-graphic-card">
-                <span>Quote</span>
-                <strong>₹50,200</strong>
+              
+              <div style={{
+                background: '#ffffff',
+                borderRadius: '12px',
+                padding: '8px 12px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                border: '2px solid #6366f1',
+                boxShadow: '0 8px 16px rgba(99,102,241,0.15)',
+                transform: 'scale(1.05)'
+              }}>
+                <span style={{ fontSize: '9px', fontWeight: '700', color: '#6366f1' }}>Quote</span>
+                <strong style={{ fontSize: '11px', fontWeight: '900', color: '#6366f1' }}>₹38,500</strong>
+              </div>
+              
+              <div style={{
+                background: '#ffffff',
+                borderRadius: '12px',
+                padding: '8px 12px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
+              }}>
+                <span style={{ fontSize: '9px', fontWeight: '700', color: '#94a3b8' }}>Quote</span>
+                <strong style={{ fontSize: '11px', fontWeight: '800', color: '#64748b' }}>₹50,200</strong>
               </div>
             </div>
           </div>
 
           {/* Floating Search Card */}
-          <div className={`p-4 rounded-2xl border shadow-lg -mt-8 relative z-20 mx-4 ${
-            theme === 'dark' ? 'bg-[#1f2937] border-gray-800' : 'bg-white border-gray-100'
-          }`}>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-              <div className="md:col-span-2 flex items-center px-3 bg-gray-50 dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800">
-                <i className="fas fa-search text-gray-400 mr-2.5"></i>
-                <input 
-                  type="text" 
-                  placeholder="Search RFQ by title, category, or keyword..." 
-                  className="w-full bg-transparent py-2.5 text-xs focus:outline-none text-gray-800 dark:text-white"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              
-              <div className="relative">
-                <select 
-                  value={selectedCat}
-                  onChange={(e) => setSelectedCat(e.target.value)}
-                  className={`w-full p-2.5 pr-8 rounded-xl border text-xs focus:outline-none appearance-none cursor-pointer ${
-                    theme === 'dark' ? 'bg-[#111827] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'
-                  }`}
-                >
-                  <option value="all">{lang === 'en' ? 'All Categories' : 'அனைத்துப் பிரிவுகள்'}</option>
-                  <option value="Printing">{lang === 'en' ? 'Printing' : 'அச்சிடுதல்'}</option>
-                  <option value="Interior">{lang === 'en' ? 'Interior' : 'உள் அலங்காரம்'}</option>
-                  <option value="Services">{lang === 'en' ? 'Services' : 'சேவைகள்'}</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-450">
-                  <i className="fas fa-chevron-down text-[8px]"></i>
-                </div>
-              </div>
-
-              <div className="relative">
-                <select 
-                  value={selectedLoc}
-                  onChange={(e) => setSelectedLoc(e.target.value)}
-                  className={`w-full p-2.5 pr-8 rounded-xl border text-xs focus:outline-none appearance-none cursor-pointer ${
-                    theme === 'dark' ? 'bg-[#111827] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'
-                  }`}
-                >
-                  <option value="all">All Locations</option>
-                  <option value="Chennai">Chennai</option>
-                  <option value="TN">Tamil Nadu</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-450">
-                  <i className="fas fa-chevron-down text-[8px]"></i>
-                </div>
+          <div className="rfq-search-bar-pill">
+            <div className="rfq-search-field-pill">
+              <i className="fas fa-search"></i>
+              <input 
+                type="text" 
+                placeholder="Search RFQ by title, category, or keyword..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            
+            <div className="rfq-search-field-pill" style={{ paddingLeft: '12px' }}>
+              <select 
+                value={selectedCat}
+                onChange={(e) => setSelectedCat(e.target.value)}
+                style={{ paddingLeft: '8px' }}
+              >
+                <option value="all">{lang === 'en' ? 'All Categories' : 'அனைத்துப் பிரிவுகள்'}</option>
+                <option value="Printing">{lang === 'en' ? 'Printing' : 'அச்சிடுதல்'}</option>
+                <option value="Interior">{lang === 'en' ? 'Interior' : 'உள் அலங்காரம்'}</option>
+                <option value="Services">{lang === 'en' ? 'Services' : 'சேவைகள்'}</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center px-1 text-gray-400">
+                <i className="fas fa-chevron-down text-[8px]"></i>
               </div>
             </div>
+
+            <div className="rfq-search-field-pill" style={{ paddingLeft: '12px' }}>
+              <select 
+                value={selectedLoc}
+                onChange={(e) => setSelectedLoc(e.target.value)}
+                style={{ paddingLeft: '8px' }}
+              >
+                <option value="all">All Locations</option>
+                <option value="Chennai">Chennai</option>
+                <option value="TN">Tamil Nadu</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center px-1 text-gray-400">
+                <i className="fas fa-chevron-down text-[8px]"></i>
+              </div>
+            </div>
+            
+            <button className="rfq-search-btn-pill" style={{ background: '#6366f1' }}>
+              {lang === 'en' ? 'Search' : 'தேடுக'}
+            </button>
           </div>
 
           {/* Categories Row */}
@@ -312,90 +517,161 @@ const RfqMarketplace = () => {
             <button 
               onClick={() => { setSelectedCat('all'); setSelectedLoc('all'); }}
               className={`rfq-quick-cat-card-btn ${selectedCat === 'all' ? 'active' : ''}`}
+              style={{
+                background: selectedCat === 'all' ? '#f5f3ff' : '#ffffff',
+                borderColor: selectedCat === 'all' ? '#6366f1' : '#e2e8f0',
+                color: '#6366f1',
+                padding: '12px 18px',
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
             >
-              <h4 className="rfq-quick-cat-card-name">All Categories</h4>
-              <p className="rfq-quick-cat-card-count">All Types</p>
+              <div>
+                <h4 className="rfq-quick-cat-card-name" style={{ margin: 0, fontSize: '11px', fontWeight: '800' }}>All Categories</h4>
+                <p className="rfq-quick-cat-card-count" style={{ margin: 0, fontSize: '9px', color: '#8b5cf6', fontWeight: '700' }}>All Types</p>
+              </div>
             </button>
             
             <button 
               onClick={() => setSelectedCat('Construction')} 
               className={`rfq-quick-cat-card-btn ${selectedCat === 'Construction' ? 'active' : ''}`}
+              style={{
+                background: selectedCat === 'Construction' ? '#ffedd5' : '#fff7ed',
+                borderColor: selectedCat === 'Construction' ? '#ea580c' : '#ffedd5',
+                color: '#c2410c',
+                padding: '12px 18px',
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
             >
-              <span className="rfq-quick-cat-card-icon-box text-orange-500">
+              <span className="rfq-quick-cat-card-icon-box" style={{ background: '#ffedd5', color: '#ea580c' }}>
                 <i className="fas fa-building text-xs"></i>
               </span>
               <div>
-                <h4 className="rfq-quick-cat-card-name">Construction</h4>
-                <p className="rfq-quick-cat-card-count">125 RFQs</p>
+                <h4 className="rfq-quick-cat-card-name" style={{ margin: 0, fontSize: '11px', fontWeight: '800', color: '#431407' }}>Construction</h4>
+                <p className="rfq-quick-cat-card-count" style={{ margin: 0, fontSize: '9px', color: '#ea580c', fontWeight: '700' }}>125 RFQs</p>
               </div>
             </button>
 
             <button 
               onClick={() => setSelectedCat('Printing')} 
               className={`rfq-quick-cat-card-btn ${selectedCat === 'Printing' ? 'active' : ''}`}
+              style={{
+                background: selectedCat === 'Printing' ? '#dbeafe' : '#eff6ff',
+                borderColor: selectedCat === 'Printing' ? '#2563eb' : '#dbeafe',
+                color: '#1d4ed8',
+                padding: '12px 18px',
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
             >
-              <span className="rfq-quick-cat-card-icon-box text-blue-500">
+              <span className="rfq-quick-cat-card-icon-box" style={{ background: '#dbeafe', color: '#2563eb' }}>
                 <i className="fas fa-print text-xs"></i>
               </span>
               <div>
-                <h4 className="rfq-quick-cat-card-name">Printing</h4>
-                <p className="rfq-quick-cat-card-count">84 RFQs</p>
+                <h4 className="rfq-quick-cat-card-name" style={{ margin: 0, fontSize: '11px', fontWeight: '800', color: '#172554' }}>Printing</h4>
+                <p className="rfq-quick-cat-card-count" style={{ margin: 0, fontSize: '9px', color: '#2563eb', fontWeight: '700' }}>84 RFQs</p>
               </div>
             </button>
 
             <button 
               onClick={() => setSelectedCat('Fabrication')} 
               className={`rfq-quick-cat-card-btn ${selectedCat === 'Fabrication' ? 'active' : ''}`}
+              style={{
+                background: selectedCat === 'Fabrication' ? '#dcfce7' : '#f0fdf4',
+                borderColor: selectedCat === 'Fabrication' ? '#16a34a' : '#dcfce7',
+                color: '#15803d',
+                padding: '12px 18px',
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
             >
-              <span className="rfq-quick-cat-card-icon-box text-green-500">
+              <span className="rfq-quick-cat-card-icon-box" style={{ background: '#dcfce7', color: '#16a34a' }}>
                 <i className="fas fa-tools text-xs"></i>
               </span>
               <div>
-                <h4 className="rfq-quick-cat-card-name">Fabrication</h4>
-                <p className="rfq-quick-cat-card-count">67 RFQs</p>
+                <h4 className="rfq-quick-cat-card-name" style={{ margin: 0, fontSize: '11px', fontWeight: '800', color: '#052e16' }}>Fabrication</h4>
+                <p className="rfq-quick-cat-card-count" style={{ margin: 0, fontSize: '9px', color: '#16a34a', fontWeight: '700' }}>67 RFQs</p>
               </div>
             </button>
 
             <button 
               onClick={() => setSelectedCat('Events')} 
               className={`rfq-quick-cat-card-btn ${selectedCat === 'Events' ? 'active' : ''}`}
+              style={{
+                background: selectedCat === 'Events' ? '#fce7f3' : '#fdf2f8',
+                borderColor: selectedCat === 'Events' ? '#db2777' : '#fce7f3',
+                color: '#be185d',
+                padding: '12px 18px',
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
             >
-              <span className="rfq-quick-cat-card-icon-box text-pink-500">
+              <span className="rfq-quick-cat-card-icon-box" style={{ background: '#fce7f3', color: '#db2777' }}>
                 <i className="fas fa-birthday-cake text-xs"></i>
               </span>
               <div>
-                <h4 className="rfq-quick-cat-card-name">Events</h4>
-                <p className="rfq-quick-cat-card-count">53 RFQs</p>
+                <h4 className="rfq-quick-cat-card-name" style={{ margin: 0, fontSize: '11px', fontWeight: '800', color: '#4c0519' }}>Events</h4>
+                <p className="rfq-quick-cat-card-count" style={{ margin: 0, fontSize: '9px', color: '#db2777', fontWeight: '700' }}>53 RFQs</p>
               </div>
             </button>
 
             <button 
               onClick={() => setSelectedCat('Services')} 
               className={`rfq-quick-cat-card-btn ${selectedCat === 'Services' ? 'active' : ''}`}
+              style={{
+                background: selectedCat === 'Services' ? '#e0e7ff' : '#eef2ff',
+                borderColor: selectedCat === 'Services' ? '#4f46e5' : '#e0e7ff',
+                color: '#4338ca',
+                padding: '12px 18px',
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
             >
-              <span className="rfq-quick-cat-card-icon-box text-indigo-500">
+              <span className="rfq-quick-cat-card-icon-box" style={{ background: '#e0e7ff', color: '#4f46e5' }}>
                 <i className="fas fa-laptop text-xs"></i>
               </span>
               <div>
-                <h4 className="rfq-quick-cat-card-name">IT Services</h4>
-                <p className="rfq-quick-cat-card-count">41 RFQs</p>
+                <h4 className="rfq-quick-cat-card-name" style={{ margin: 0, fontSize: '11px', fontWeight: '800', color: '#1e1b4b' }}>IT Services</h4>
+                <p className="rfq-quick-cat-card-count" style={{ margin: 0, fontSize: '9px', color: '#4f46e5', fontWeight: '700' }}>41 RFQs</p>
               </div>
             </button>
 
             <button 
               onClick={() => alert("Opening all marketplace categories...")} 
               className="rfq-quick-cat-card-btn"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '100px' }}
+              style={{
+                background: '#ffffff',
+                borderColor: '#e2e8f0',
+                color: '#1e293b',
+                padding: '12px 18px',
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '100px'
+              }}
             >
-              <span className="rfq-quick-cat-card-name" style={{ margin: 0 }}>More</span>
+              <span className="rfq-quick-cat-card-name" style={{ margin: 0, fontSize: '11px', fontWeight: '800' }}>More</span>
               <i className="fas fa-chevron-right text-[10px] text-gray-400 ml-1"></i>
             </button>
           </div>
 
           {/* Tab List Header */}
-          <div className="flex flex-wrap justify-between items-center gap-4 text-xs mt-4">
-            <div className="flex flex-wrap gap-2">
-
+          <div className="flex flex-wrap justify-between items-center border-b border-gray-150" style={{ marginTop: '20px' }}>
+            <div className="rfq-tabs-container" style={{ width: 'auto', borderBottom: 'none', marginTop: 0 }}>
               {['Open RFQs', 'My RFQs', 'Quotes Received', 'Closed / Awarded'].map((t, idx) => (
                 <button 
                   key={idx} 
@@ -407,26 +683,35 @@ const RfqMarketplace = () => {
                       navigate('/my-rfqs');
                     }
                   }}
-                  className={`px-4 py-2.5 rounded-xl font-bold border transition whitespace-nowrap cursor-pointer ${
-                    t === 'Open RFQs' 
-                      ? 'bg-[#f5f3ff] border-[#ddd6fe]/60 text-[#7c3aed]' 
-                      : 'bg-white border-gray-150 text-gray-600 hover:bg-gray-50'
-                  }`}
+                  className={`rfq-tab-btn ${t === 'Open RFQs' ? 'active' : ''}`}
                 >
                   {t}
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
+            <div className="flex items-center gap-5 py-2 text-xs">
+              <div className="flex items-center gap-1.5">
                 <span className="text-gray-400 font-bold">Sort by:</span>
-                <select className="bg-transparent border-0 font-extrabold text-gray-700 dark:text-gray-300 focus:outline-none cursor-pointer">
+                <select className="bg-transparent border-0 font-extrabold text-gray-700 dark:text-gray-300 focus:outline-none cursor-pointer px-1">
                   <option>Latest</option>
                   <option>Budget: High to Low</option>
                   <option>Quotes: Most to Least</option>
                 </select>
               </div>
-              <button className="px-3 py-2 rounded-xl border border-gray-150 bg-white hover:bg-gray-50 font-bold flex items-center gap-1.5 cursor-pointer">
+              <button 
+                className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border-color, #e2e8f0)',
+                  backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  color: theme === 'dark' ? '#cbd5e1' : '#475569'
+                }}
+              >
                 <i className="fas fa-sliders-h text-[11px] text-gray-500"></i> Filters
               </button>
             </div>
@@ -463,55 +748,78 @@ const RfqMarketplace = () => {
                   labelBg = 'bg-blue-100 text-blue-700';
                 }
 
+                const catColors = {
+                  printing: { bg: '#f5f3ff', text: '#7c3aed' },
+                  interior: { bg: '#eff6ff', text: '#2563eb' },
+                  services: { bg: '#ecfdf5', text: '#059669' },
+                  construction: { bg: '#fff7ed', text: '#ea580c' },
+                };
+                const currentCatColor = catColors[r.category.toLowerCase()] || { bg: '#f1f5f9', text: '#475569' };
+
                 return (
                   <div 
                     key={r.id}
                     onClick={() => handleRfqClick(item)}
                     className="rfq-listing-row-card"
+                    style={{ position: 'relative', background: '#ffffff', borderRadius: '16px', border: '1px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)', padding: '20px 24px', display: 'flex', gap: '20px', marginBottom: '16px', cursor: 'pointer', transition: 'all 0.2s ease' }}
                   >
+                    <button 
+                      type="button" 
+                      onClick={(e) => { e.stopPropagation(); alert("Saved RFQ!"); }}
+                      className="text-gray-400 hover:text-[#6366f1] bg-transparent border-0 cursor-pointer p-0"
+                      style={{ position: 'absolute', top: '20px', right: '20px' }}
+                    >
+                      <i className="far fa-bookmark text-sm"></i>
+                    </button>
+
                     <div className="flex gap-4 flex-1">
-                      <div className="rfq-listing-row-img" style={{ backgroundImage: `url(${bannerImg})` }}></div>
-                      <div className="rfq-listing-row-details">
+                      <div className="rfq-listing-row-img" style={{ backgroundImage: `url(${bannerImg})`, width: '100px', height: '100px', borderRadius: '12px', backgroundSize: 'cover', backgroundPosition: 'center', flexShrink: 0 }}></div>
+                      <div className="rfq-listing-row-details" style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
                         <div className="flex justify-between items-start">
-                          <span className={`rfq-listing-row-header-badge ${isPrinting ? 'printing' : isInterior ? 'interior' : 'services'}`}>
+                          <span 
+                            style={{
+                              background: currentCatColor.bg,
+                              color: currentCatColor.text,
+                              fontSize: '9px',
+                              fontWeight: '800',
+                              letterSpacing: '0.6px',
+                              textTransform: 'uppercase',
+                              padding: '4px 10px',
+                              borderRadius: '20px',
+                              display: 'inline-block'
+                            }}
+                          >
                             {r.category}
                           </span>
-                          <button 
-                            type="button" 
-                            onClick={(e) => { e.stopPropagation(); alert("Saved RFQ!"); }}
-                            className="text-gray-400 hover:text-[#6366f1] bg-transparent border-0 cursor-pointer p-0"
-                          >
-                            <i className="far fa-bookmark text-xs"></i>
-                          </button>
                         </div>
-                        <h4 className="rfq-listing-row-title">{r.title}</h4>
-                        <p className="rfq-listing-row-desc">{r.description}</p>
+                        <h4 className="rfq-listing-row-title" style={{ fontSize: '15px', fontWeight: '800', color: '#0f172a', margin: '4px 0 2px 0' }}>{r.title}</h4>
+                        <p className="rfq-listing-row-desc" style={{ fontSize: '12px', color: '#64748b', margin: '0 0 8px 0', lineHeight: '1.4' }}>{r.description}</p>
                         
-                        <div className="rfq-listing-row-tags">
-                          <span>
-                            <i className="fas fa-box text-indigo-500"></i> {r.quantity} {r.category === 'Interior' ? 'Project' : 'Units'}
+                        <div className="rfq-listing-row-tags" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '11px', color: '#475569', fontWeight: '600' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <i className="fas fa-box text-gray-400"></i> {r.quantity} {r.category === 'Interior' ? 'Project' : 'Units'}
                           </span>
-                          <span>
-                            <i className="fas fa-wallet text-indigo-500"></i> ₹{r.budget}
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <i className="fas fa-wallet text-gray-400"></i> ₹{r.budget}
                           </span>
-                          <span>
-                            <i className="fas fa-map-marker-alt text-indigo-500"></i> {r.location}
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <i className="fas fa-map-marker-alt text-gray-400"></i> {r.location}
                           </span>
                         </div>
-                        <div className="flex gap-4 text-[9px] text-red-500 font-bold" style={{ marginTop: '8px' }}>
-                          <span className="flex items-center gap-1"><i className="far fa-clock"></i> Response by {new Date(r.deadline).getDate()} {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][new Date(r.deadline).getMonth()]} {new Date(r.deadline).getFullYear()}</span>
-                          <span className="text-gray-400 flex items-center gap-1"><i className="far fa-user"></i> Posted {r.id === 1 ? '2 hours ago' : r.id === 2 ? '5 hours ago' : '1 day ago'}</span>
+                        <div className="flex gap-4 text-[10px] text-gray-400 font-medium" style={{ marginTop: '10px', borderTop: '1px solid #f1f5f9', paddingTop: '8px' }}>
+                          <span className="flex items-center gap-1.5"><i className="far fa-clock text-gray-400"></i> Response by {new Date(r.deadline).getDate()} {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][new Date(r.deadline).getMonth()]} {new Date(r.deadline).getFullYear()}</span>
+                          <span className="flex items-center gap-1.5"><i className="far fa-user text-gray-400"></i> Posted {r.id === 1 ? '2 hours ago' : r.id === 2 ? '5 hours ago' : '1 day ago'}</span>
                         </div>
                       </div>
                     </div>
                     
                     {/* Right hand quotes summary */}
-                    <div className="flex flex-row md:flex-col justify-between md:justify-center items-center text-center px-4 md:border-l border-gray-100 dark:border-gray-855/10 min-w-[120px]">
+                    <div className="flex flex-row md:flex-col justify-between md:justify-center items-center text-center px-4 md:border-l border-gray-100 dark:border-gray-800/20 min-w-[140px]">
                       <div>
-                        <h3 className="text-lg font-black text-slate-800 dark:text-white leading-none">{item.quotesCount}</h3>
-                        <p className="text-[9px] text-gray-400 uppercase tracking-wider font-bold mt-1">Quotes Received</p>
+                        <h3 className="text-xl font-black text-slate-800 dark:text-white leading-none" style={{ margin: 0 }}>{item.quotesCount}</h3>
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mt-1.5">Quotes Received</p>
                       </div>
-                      <button className="mt-3 py-2 px-4 rounded-xl border border-[#6366f1]/20 text-[#6366f1] hover:bg-[#6366f1] hover:text-white text-[10px] font-bold transition bg-transparent cursor-pointer">
+                      <button className="mt-3.5 py-2 px-5 rounded-xl border border-[#6366f1] text-[#6366f1] hover:bg-[#6366f1] hover:text-white text-[10px] font-bold transition bg-transparent cursor-pointer">
                         View Quotes
                       </button>
                     </div>
@@ -535,7 +843,7 @@ const RfqMarketplace = () => {
           <div className={`p-5 rounded-2xl border shadow-sm ${
             theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-100'
           }`}>
-            <h3 className="font-extrabold text-xs text-gray-400 uppercase tracking-wider mb-4">Quick Actions</h3>
+            <h3 className="font-black text-sm text-slate-800 dark:text-white mb-4">Quick Actions</h3>
             
             <div className="flex flex-col gap-3">
               <button 
@@ -546,7 +854,27 @@ const RfqMarketplace = () => {
                     setShowRfqModal(true);
                   }
                 }}
+                onMouseEnter={() => setHover1(true)}
+                onMouseLeave={() => setHover1(false)}
                 className="rfq-quick-action-link-card primary"
+                style={{
+                  width: '100%',
+                  border: 'none',
+                  outline: 'none',
+                  textAlign: 'left',
+                  padding: '20px 24px',
+                  borderRadius: '18px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                  color: '#ffffff',
+                  boxShadow: hover1 ? '0 8px 24px rgba(99, 102, 241, 0.35)' : '0 4px 18px rgba(99, 102, 241, 0.25)',
+                  transform: hover1 ? 'translateY(-3px) scale(1.01)' : 'none',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  marginBottom: '4px'
+                }}
               >
                 <div className="flex items-center gap-3.5">
                   <span className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-sm">
@@ -562,7 +890,27 @@ const RfqMarketplace = () => {
 
               <button 
                 onClick={() => alert("Navigating to Browse requirements...")}
+                onMouseEnter={() => setHover2(true)}
+                onMouseLeave={() => setHover2(false)}
                 className="rfq-quick-action-link-card secondary"
+                style={{
+                  width: '100%',
+                  border: '1px solid var(--border-color, #e2e8f0)',
+                  outline: 'none',
+                  textAlign: 'left',
+                  padding: '20px 24px',
+                  borderRadius: '18px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  background: theme === 'dark' ? '#111827' : '#ffffff',
+                  color: theme === 'dark' ? '#ffffff' : '#1e293b',
+                  boxShadow: hover2 ? '0 8px 20px rgba(99, 102, 241, 0.08)' : '0 4px 10px rgba(0, 0, 0, 0.02)',
+                  transform: hover2 ? 'translateY(-3px) scale(1.01)' : 'none',
+                  borderColor: hover2 ? '#6366f1' : 'var(--border-color, #e2e8f0)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
               >
                 <div className="flex items-center gap-3.5">
                   <span className="w-8 h-8 rounded-full bg-[#f3f4f6] dark:bg-[#111827] flex items-center justify-center text-gray-500">
@@ -583,7 +931,7 @@ const RfqMarketplace = () => {
             theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-100'
           }`}>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-extrabold text-xs text-gray-400 uppercase tracking-wider">RFQ Stats</h3>
+              <h3 className="font-black text-sm text-slate-800 dark:text-white">RFQ Stats</h3>
               <select className="bg-transparent border-0 font-bold text-xs text-gray-500 focus:outline-none cursor-pointer">
                 <option>This Month</option>
                 <option>This Year</option>
@@ -591,21 +939,21 @@ const RfqMarketplace = () => {
             </div>
 
             <div className="rfq-stats-grid">
-              <div className="rfq-stat-badge-box">
-                <h4 className="rfq-stat-badge-num">12</h4>
-                <p className="rfq-stat-badge-lbl">RFQs Posted</p>
+              <div className="rfq-stat-badge-box" style={{ background: '#f5f3ff', border: '1px solid #ede9fe', borderRadius: '12px' }}>
+                <h4 className="rfq-stat-badge-num" style={{ color: '#6d28d9' }}>12</h4>
+                <p className="rfq-stat-badge-lbl" style={{ color: '#7c3aed' }}>RFQs Posted</p>
               </div>
-              <div className="rfq-stat-badge-box">
-                <h4 className="rfq-stat-badge-num">18</h4>
-                <p className="rfq-stat-badge-lbl">Quotes Received</p>
+              <div className="rfq-stat-badge-box" style={{ background: '#eff6ff', border: '1px solid #dbeafe', borderRadius: '12px' }}>
+                <h4 className="rfq-stat-badge-num" style={{ color: '#1d4ed8' }}>18</h4>
+                <p className="rfq-stat-badge-lbl" style={{ color: '#2563eb' }}>Quotes Received</p>
               </div>
-              <div className="rfq-stat-badge-box">
-                <h4 className="rfq-stat-badge-num" style={{ color: '#10b981' }}>2</h4>
-                <p className="rfq-stat-badge-lbl">Awarded</p>
+              <div className="rfq-stat-badge-box" style={{ background: '#ecfdf5', border: '1px solid #d1fae5', borderRadius: '12px' }}>
+                <h4 className="rfq-stat-badge-num" style={{ color: '#047857' }}>2</h4>
+                <p className="rfq-stat-badge-lbl" style={{ color: '#059669' }}>Awarded</p>
               </div>
-              <div className="rfq-stat-badge-box">
-                <h4 className="rfq-stat-badge-num" style={{ color: '#d97706' }}>1</h4>
-                <p className="rfq-stat-badge-lbl">In Progress</p>
+              <div className="rfq-stat-badge-box" style={{ background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: '12px' }}>
+                <h4 className="rfq-stat-badge-num" style={{ color: '#b45309' }}>1</h4>
+                <p className="rfq-stat-badge-lbl" style={{ color: '#d97706' }}>In Progress</p>
               </div>
             </div>
 
@@ -620,6 +968,7 @@ const RfqMarketplace = () => {
                 }
               }} 
               className="text-xs text-[#6366f1] hover:underline font-bold block text-center"
+              style={{ marginTop: '8px' }}
             >
               View All My RFQs &rarr;
             </a>
@@ -630,71 +979,71 @@ const RfqMarketplace = () => {
             theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-100'
           }`}>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-extrabold text-xs text-gray-400 uppercase tracking-wider">Recent RFQs</h3>
+              <h3 className="font-black text-sm text-slate-800 dark:text-white">Recent RFQs</h3>
               <a href="#" onClick={(e) => { e.preventDefault(); alert("Viewing all recent RFQs..."); }} className="text-xs text-[#6366f1] hover:underline font-bold">View All</a>
             </div>
 
             <div className="flex flex-col gap-3.5 text-xs">
-              <div className="flex justify-between items-start">
-                <div className="flex gap-2.5">
-                  <span className="w-6 h-6 rounded bg-emerald-500/10 text-emerald-500 flex items-center justify-center flex-shrink-0">
-                    <i className="fas fa-lightbulb text-[10px]"></i>
+              <div className="flex justify-between items-center">
+                <div className="flex gap-2.5 items-center">
+                  <span className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center flex-shrink-0">
+                    <i className="far fa-file-alt text-xs"></i>
                   </span>
                   <div>
-                    <h4 className="font-bold text-gray-700 dark:text-gray-300">Need LED Sign Board</h4>
+                    <h4 className="font-bold text-gray-700 dark:text-gray-300" style={{ fontSize: '11px' }}>Need LED Sign Board</h4>
                     <p className="text-[9px] text-gray-400 mt-0.5">T. Nagar, Chennai</p>
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <span className="text-[9.5px] font-bold text-orange-500 block">2 Quotes</span>
+                  <span className="text-[10px] font-bold text-orange-500 block">2 Quotes</span>
                   <span className="text-[8px] text-gray-400">2h ago</span>
                 </div>
               </div>
 
-              <div className="flex justify-between items-start">
-                <div className="flex gap-2.5">
-                  <span className="w-6 h-6 rounded bg-[#6366f1]/10 text-[#6366f1] flex items-center justify-center flex-shrink-0">
-                    <i className="fas fa-broom text-[10px]"></i>
+              <div className="flex justify-between items-center">
+                <div className="flex gap-2.5 items-center">
+                  <span className="w-8 h-8 rounded-lg bg-[#6366f1]/10 text-[#6366f1] flex items-center justify-center flex-shrink-0">
+                    <i className="far fa-file-alt text-xs"></i>
                   </span>
                   <div>
-                    <h4 className="font-bold text-gray-700 dark:text-gray-300">Office Cleaning Services</h4>
+                    <h4 className="font-bold text-gray-700 dark:text-gray-300" style={{ fontSize: '11px' }}>Office Cleaning Services</h4>
                     <p className="text-[9px] text-gray-400 mt-0.5">Anna Nagar, Chennai</p>
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <span className="text-[9.5px] font-bold text-[#6366f1] block">4 Quotes</span>
+                  <span className="text-[10px] font-bold text-[#6366f1] block">4 Quotes</span>
                   <span className="text-[8px] text-gray-400">5h ago</span>
                 </div>
               </div>
 
-              <div className="flex justify-between items-start">
-                <div className="flex gap-2.5">
-                  <span className="w-6 h-6 rounded bg-purple-500/10 text-purple-500 flex items-center justify-center flex-shrink-0">
-                    <i className="fas fa-pencil-alt text-[10px]"></i>
+              <div className="flex justify-between items-center">
+                <div className="flex gap-2.5 items-center">
+                  <span className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center flex-shrink-0">
+                    <i className="far fa-file-alt text-xs"></i>
                   </span>
                   <div>
-                    <h4 className="font-bold text-gray-700 dark:text-gray-300">Bulk Office Stationery</h4>
+                    <h4 className="font-bold text-gray-700 dark:text-gray-300" style={{ fontSize: '11px' }}>Bulk Office Stationery</h4>
                     <p className="text-[9px] text-gray-400 mt-0.5">Guindy, Chennai</p>
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <span className="text-[9.5px] font-bold text-[#6366f1] block">3 Quotes</span>
+                  <span className="text-[10px] font-bold text-[#6366f1] block">3 Quotes</span>
                   <span className="text-[8px] text-gray-400">1d ago</span>
                 </div>
               </div>
 
-              <div className="flex justify-between items-start">
-                <div className="flex gap-2.5">
-                  <span className="w-6 h-6 rounded bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0">
-                    <i className="fas fa-cookie-bite text-[10px]"></i>
+              <div className="flex justify-between items-center">
+                <div className="flex gap-2.5 items-center">
+                  <span className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0">
+                    <i className="far fa-file-alt text-xs"></i>
                   </span>
                   <div>
-                    <h4 className="font-bold text-gray-700 dark:text-gray-300">Catering for Event</h4>
+                    <h4 className="font-bold text-gray-700 dark:text-gray-300" style={{ fontSize: '11px' }}>Catering for Event</h4>
                     <p className="text-[9px] text-gray-400 mt-0.5">ECR, Chennai</p>
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <span className="text-[9.5px] font-bold text-[#6366f1] block">6 Quotes</span>
+                  <span className="text-[10px] font-bold text-[#6366f1] block">6 Quotes</span>
                   <span className="text-[8px] text-gray-400">1d ago</span>
                 </div>
               </div>
@@ -704,12 +1053,12 @@ const RfqMarketplace = () => {
           {/* For Businesses */}
           <div className="p-5 rounded-2xl border shadow-sm bg-gradient-to-br from-[#e0e7ff] to-[#f5f3ff] dark:from-slate-900 dark:to-purple-950/20 border-indigo-100/50 flex items-center justify-between gap-4">
             <div className="space-y-2">
-              <h4 className="font-extrabold text-xs text-indigo-950 dark:text-indigo-200">For Businesses</h4>
-              <p className="text-[10px] text-indigo-750 dark:text-indigo-400 leading-normal">Respond to RFQs and grow your business</p>
+              <h4 className="font-black text-sm text-indigo-950 dark:text-indigo-200" style={{ margin: '0 0 4px 0' }}>For Businesses</h4>
+              <p className="text-[10px] text-indigo-750 dark:text-indigo-400 leading-normal" style={{ margin: '0 0 10px 0' }}>Respond to RFQs and grow your business</p>
               <button 
                 type="button" 
                 onClick={() => alert("Opening seller dashboard panel...")}
-                className="py-1.5 px-3 bg-white text-indigo-650 hover:bg-[#6366f1] hover:text-white border border-[#6366f1]/20 font-bold text-[10px] rounded-lg transition cursor-pointer shadow-sm"
+                className="py-2 px-3 bg-white text-indigo-650 hover:bg-[#6366f1] hover:text-white border border-[#6366f1]/20 font-bold text-[10px] rounded-lg transition cursor-pointer shadow-sm"
               >
                 View RFQs for Businesses
               </button>
@@ -753,7 +1102,20 @@ const RfqMarketplace = () => {
                     <p className="text-xs text-gray-500 italic">No quotes submitted yet. Submit your bid below!</p>
                   ) : (
                     quotesList.map((q, idx) => (
-                      <div key={idx} className="p-4 rounded-xl border border-gray-700/20 bg-gray-500/5 space-y-3">
+                      <div 
+                        key={idx} 
+                        style={{
+                          padding: '20px',
+                          borderRadius: '16px',
+                          border: theme === 'dark' ? '1px solid #1e293b' : '1px solid #e2e8f0',
+                          backgroundColor: theme === 'dark' ? '#1e293b' : '#f8fafc',
+                          marginBottom: '16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.01)'
+                        }}
+                      >
                         <div className="flex justify-between items-start text-xs">
                           <div>
                             <h4 className="font-bold text-sm text-indigo-500">{q.seller.businessName}</h4>
@@ -766,7 +1128,18 @@ const RfqMarketplace = () => {
                         </div>
                         <p className="text-xs text-gray-500 leading-relaxed">{q.quote.notes}</p>
                         
-                        <div className="flex justify-between items-center text-xs">
+                        <div 
+                          style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: '12px',
+                            paddingTop: '16px',
+                            borderTop: theme === 'dark' ? '1px solid #334155' : '1px solid #e2e8f0',
+                            marginTop: '4px'
+                          }}
+                        >
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold capitalize ${
                             q.quote.status === 'shortlisted' ? 'bg-amber-600/10 text-amber-500' : 
                             q.quote.status === 'accepted' ? 'bg-green-600/10 text-green-500' : 'bg-gray-600/10 text-gray-500'
@@ -774,11 +1147,11 @@ const RfqMarketplace = () => {
                             {q.quote.status}
                           </span>
                           
-                          <div className="flex gap-2">
+                          <div className="flex flex-wrap gap-2 justify-end">
                             {q.quote.status === 'pending' && (
                               <button 
                                 onClick={() => handleQuoteStatusChange(q.quote.id, 'shortlisted')}
-                                className="bg-amber-500 text-white font-bold py-1 px-3 rounded text-[10px] hover:bg-amber-600 transition"
+                                className="bg-amber-500 text-white font-bold py-1.5 px-3 rounded-lg text-[10px] hover:bg-amber-600 transition cursor-pointer shadow-sm"
                               >
                                 Shortlist
                               </button>
@@ -786,7 +1159,7 @@ const RfqMarketplace = () => {
                             {(q.quote.status === 'pending' || q.quote.status === 'shortlisted') && (
                               <button 
                                 onClick={() => handleQuoteStatusChange(q.quote.id, 'accepted')}
-                                className="bg-green-600 text-white font-bold py-1 px-3 rounded text-[10px] hover:bg-green-700 transition"
+                                className="bg-green-600 text-white font-bold py-1.5 px-3 rounded-lg text-[10px] hover:bg-green-700 transition cursor-pointer shadow-sm"
                               >
                                 Accept &amp; Award
                               </button>
@@ -914,6 +1287,7 @@ const RfqMarketplace = () => {
       )}
 
     </div>
+  </div>
   );
 };
 

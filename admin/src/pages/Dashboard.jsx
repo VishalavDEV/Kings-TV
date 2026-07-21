@@ -2,34 +2,21 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { NavLink } from "react-router-dom";
 import api from "../api";
-import { Users, FileText, Activity, TrendingUp, BarChart2, Plus, Radio, Clock, Eye, AlertCircle, Send } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
+import { Users, FileText, Activity, TrendingUp, BarChart2, Plus, Radio, Clock, Eye, AlertCircle, Send, Inbox, ShieldAlert } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid, Legend } from "recharts";
 
-const StatCard = ({ label, value, icon: Icon, color, subLabel, subColor, sparklineData }) => (
-  <div className="glass-panel stat-card" style={{ padding: "1.25rem" }}>
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
-      <div>
-        <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 600, marginBottom: "0.25rem" }}>{label}</div>
-        <div style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--text-primary)" }}>{value ?? "-"}</div>
-        {subLabel && <div style={{ fontSize: "0.75rem", color: subColor || "var(--text-muted)", marginTop: "0.25rem" }}>{subLabel}</div>}
-      </div>
-      <div style={{ color, padding: "0.6rem", background: `${color}22`, borderRadius: "10px" }}>
-        <Icon size={22} />
+const StatCard = ({ label, value, icon: Icon, color, subLabel, subColor }) => (
+  <div className="glass-panel stat-card" style={{ padding: "1.5rem", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 600 }}>{label}</div>
+      <div style={{ color, padding: "0.5rem", background: `${color}15`, borderRadius: "8px" }}>
+        <Icon size={20} />
       </div>
     </div>
-    {sparklineData && (
-      <div style={{ height: "40px", marginTop: "0.5rem" }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={sparklineData}>
-            <defs>
-              <linearGradient id={`color${label.replace(/\s+/g, "")}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
-                <stop offset="95%" stopColor={color} stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <Area type="monotone" dataKey="value" stroke={color} fillOpacity={1} fill={`url(#color${label.replace(/\s+/g, "")})`} />
-          </AreaChart>
-        </ResponsiveContainer>
+    <div style={{ fontSize: "2rem", fontWeight: 800, color: "var(--text-primary)" }}>{value ?? "-"}</div>
+    {subLabel && (
+      <div style={{ fontSize: "0.75rem", color: subColor || "var(--text-muted)", fontWeight: 500 }}>
+        {subLabel}
       </div>
     )}
   </div>
@@ -80,12 +67,12 @@ const QuickPublishWidget = ({ onPublished }) => {
         <input style={inputStyle} placeholder="English Headline (optional)" value={form.titleEn} onChange={e => setForm(f => ({ ...f, titleEn: e.target.value }))} />
         <div style={{ display: "flex", gap: "0.75rem" }}>
           <select style={{ ...inputStyle, flex: 1 }} value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))}>
-            <option value=""> Select Category </option>
+            <option value="">— Select Category —</option>
             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.8rem", cursor: "pointer", color: form.isBreaking ? "#EF4444" : "var(--text-secondary)", fontWeight: form.isBreaking ? 700 : 400 }}>
             <input type="checkbox" checked={form.isBreaking} onChange={e => setForm(f => ({ ...f, isBreaking: e.target.checked }))} style={{ accentColor: "#EF4444" }} />
-            Set as Breaking
+            Breaking
           </label>
         </div>
         <button type="submit" disabled={loading} className="btn btn-primary" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.5rem", padding: "0.6rem", background: form.isBreaking ? "#EF4444" : "var(--primary)", border: "none" }}>
@@ -101,67 +88,120 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [kpis, setKpis] = useState(null);
   const [newsPerf, setNewsPerf] = useState(null);
+  const [categoryData, setCategoryData] = useState([]);
   const [recentLogs, setRecentLogs] = useState([]);
+  const [counts, setCounts] = useState({ pendingArticles: 0, pendingUgc: 0, activeBreaking: 0, pendingProfanity: 0 });
   const [loading, setLoading] = useState(true);
 
   const fetchAll = async () => {
     try {
-      const [kpiRes, perfRes, logsRes] = await Promise.allSettled([
+      const [kpiRes, perfRes, catRes, logsRes, countsRes] = await Promise.allSettled([
         api.get("/admin/analytics/dashboard"),
         api.get("/admin/analytics/news-performance"),
+        api.get("/admin/analytics/content-by-category"),
         api.get("/admin/audit-logs?page=0&size=6&sortBy=timestamp&direction=desc"),
+        api.get("/admin/sidebar/counts")
       ]);
       if (kpiRes.status === "fulfilled") setKpis(kpiRes.value.data);
       if (perfRes.status === "fulfilled") setNewsPerf(perfRes.value.data);
+      if (catRes.status === "fulfilled") setCategoryData(catRes.value.data || []);
       if (logsRes.status === "fulfilled") setRecentLogs(Array.isArray(logsRes.value.data) ? logsRes.value.data : (logsRes.value.data?.content || []));
-    } catch (err) { console.error("Dashboard fetch error:", err); }
-    finally { setLoading(false); }
+      if (countsRes.status === "fulfilled") setCounts(countsRes.value.data || {});
+    } catch (err) {
+      console.error("Dashboard fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => {
+    fetchAll();
+  }, []);
 
-  const isAdmin = user?.role === "SUPER_ADMIN" || user?.role === "CHIEF_EDITOR";
-  const viewsSparkline = [{v:120},{v:150},{v:110},{v:180},{v:220},{v:190},{v:280}].map((d,i)=>({name:i, value:d.v}));
-  const articlesSparkline = [{v:5},{v:8},{v:4},{v:12},{v:9},{v:15},{v:11}].map((d,i)=>({name:i, value:d.v}));
+  const topCategoryData = [...categoryData]
+    .sort((a, b) => b.totalViews - a.totalViews)
+    .slice(0, 7);
 
   return (
-    <div className="animate-fade-in">
-      <div style={{ marginBottom: "2rem", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+    <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <div>
           <h1 style={{ marginBottom: "0.25rem" }}>Newsroom Command Center</h1>
-          <p className="text-secondary">Welcome back, <strong>{user?.email?.split("@")[0]}</strong> · <span style={{ color: "var(--primary)" }}>{user?.role?.replace(/_/g, " ")}</span></p>
+          <p className="text-secondary">Welcome back, <strong>{user?.email?.split("@")[0]}</strong> · <span style={{ color: "var(--primary)", fontWeight: 'bold' }}>{user?.role?.replace(/_/g, " ")}</span></p>
         </div>
         <div style={{ display: "flex", gap: "0.75rem" }}>
-          <NavLink to="/admin/news/create" className="btn btn-primary" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Plus size={16} /> Full Editor</NavLink>
+          <NavLink to="/admin/news/create" className="btn btn-primary" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Plus size={16} /> Write Article</NavLink>
         </div>
       </div>
 
       {loading ? (
         <div className="glass-panel" style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
-          <Activity size={32} style={{ margin: "0 auto 1rem", display: "block", opacity: 0.4 }} />
-          Loading dashboard data
+          <Activity size={32} style={{ margin: "0 auto 1rem", display: "block", opacity: 0.4 }} className="animate-pulse" />
+          Loading dashboard data…
         </div>
       ) : (
         <>
-          <div className="stats-grid" style={{ marginBottom: "2rem" }}>
-            <StatCard label="Total Views (7 Days)" value={newsPerf?.totalViews?.toLocaleString() || "42,850"} icon={Eye} color="#3B82F6" subLabel="Up 12% from last week" subColor="var(--success)" sparklineData={viewsSparkline} />
-            <StatCard label="Published Articles" value={newsPerf?.publishedCount?.toLocaleString() || "142"} icon={FileText} color="var(--primary)" subLabel="11 published today" subColor="var(--success)" sparklineData={articlesSparkline} />
-            <StatCard label="Active Reporters" value={kpis?.activeUsers || "24"} icon={Users} color="#10B981" subLabel="4 online right now" subColor="var(--success)" />
-            <StatCard label="Pending UGC" value="12" icon={AlertCircle} color="#F59E0B" subLabel="Awaiting editor review" subColor="#F59E0B" />
+          {/* KPI Stat Cards Grid */}
+          <div className="stats-grid">
+            <StatCard label="Total Views" value={newsPerf?.totalViews?.toLocaleString() || "0"} icon={Eye} color="#3B82F6" subLabel="Total video & article views" />
+            <StatCard label="Published News" value={newsPerf?.publishedCount?.toLocaleString() || "0"} icon={FileText} color="var(--primary)" subLabel="Articles live on portal" />
+            <StatCard label="Pending Review" value={counts.pendingArticles || "0"} icon={Inbox} color="#F59E0B" subLabel="Submitted for approval" />
+            <StatCard label="Active Authors" value={kpis?.activeUsers || "0"} icon={Users} color="#10B981" subLabel="Content creators online" />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "1.5rem", marginBottom: "2rem" }}>
+          {/* Charts & Graphs Row */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "1.5rem" }}>
+            {/* Category Performance Chart */}
+            <div className="glass-panel" style={{ padding: "1.5rem", borderRadius: "12px", minHeight: "350px" }}>
+              <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.5rem" }}><TrendingUp size={18} color="var(--primary)" /> Category Traffic Distribution</h3>
+              <div style={{ width: "100%", height: "260px" }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={topCategoryData}>
+                    <defs>
+                      <linearGradient id="viewsGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+                    <XAxis dataKey="categoryName" stroke="var(--text-muted)" fontSize={11} />
+                    <YAxis stroke="var(--text-muted)" fontSize={11} />
+                    <Tooltip contentStyle={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', borderRadius: '8px' }} />
+                    <Area type="monotone" dataKey="totalViews" stroke="var(--primary)" fillOpacity={1} fill="url(#viewsGrad)" name="Views" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Articles Count per Category Chart */}
+            <div className="glass-panel" style={{ padding: "1.5rem", borderRadius: "12px", minHeight: "350px" }}>
+              <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.5rem" }}><BarChart2 size={18} color="#3B82F6" /> Articles by Category</h3>
+              <div style={{ width: "100%", height: "260px" }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={topCategoryData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+                    <XAxis dataKey="categoryName" stroke="var(--text-muted)" fontSize={11} />
+                    <YAxis stroke="var(--text-muted)" fontSize={11} />
+                    <Tooltip contentStyle={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', borderRadius: '8px' }} />
+                    <Bar dataKey="articleCount" fill="#3B82F6" radius={[4, 4, 0, 0]} name="Articles" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "1.5rem" }}>
             {/* Status Board */}
             <div className="glass-panel" style={{ padding: "1.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
                 <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Activity size={18} color="var(--primary)" /> Editorial Status Board</h3>
-                <NavLink to="/admin/editorial-calendar" style={{ fontSize: "0.8rem", color: "var(--primary)", textDecoration: "none" }}>View Calendar ?</NavLink>
+                <NavLink to="/admin/editorial-calendar" style={{ fontSize: "0.8rem", color: "var(--primary)", textDecoration: "none" }}>View Calendar →</NavLink>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
                 {[
-                  { label: "In Draft", value: 45, color: "#8B5CF6", desc: "Being written by reporters" },
-                  { label: "In Review", value: 18, color: "#F59E0B", desc: "Awaiting editor approval" },
-                  { label: "Scheduled", value: 7, color: "#3B82F6", desc: "Queued for publication" }
+                  { label: "Pending Reviews", value: counts.pendingArticles || 0, color: "#F59E0B", desc: "Awaiting approval" },
+                  { label: "UGC Submissions", value: counts.pendingUgc || 0, color: "#8B5CF6", desc: "Citizen reports queue" },
+                  { label: "Active Breaking", value: counts.activeBreaking || 0, color: "#EF4444", desc: "Currently live tickers" }
                 ].map(s => (
                   <div key={s.label} style={{ padding: "1rem", borderRadius: "10px", background: `${s.color}11`, border: `1px solid ${s.color}33`, textAlign: "center" }}>
                     <div style={{ fontSize: "2rem", fontWeight: 800, color: s.color, marginBottom: "0.25rem" }}>{s.value}</div>
@@ -171,32 +211,35 @@ const Dashboard = () => {
                 ))}
               </div>
               
-              <h4 style={{ marginTop: "2rem", marginBottom: "1rem", color: "var(--text-secondary)" }}>🔥 Top Trending Articles</h4>
+              <h4 style={{ marginTop: "2rem", marginBottom: "1rem", color: "var(--text-secondary)" }}>🔥 Top Performing Articles</h4>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                {(newsPerf?.topArticles?.slice(0,4) || []).map((art, i) => (
+                {(newsPerf?.topArticles?.slice(0, 4) || []).map((art, i) => (
                   <div key={art.id} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "var(--bg-secondary)", borderRadius: "8px", border: "1px solid var(--border-color)" }}>
                     <div style={{ width: "24px", height: "24px", background: i === 0 ? "#F59E0B" : i === 1 ? "#9CA3AF" : i === 2 ? "#D97706" : "var(--border-color)", color: i < 3 ? "#fff" : "var(--text-muted)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
                     <div style={{ flex: 1, overflow: "hidden" }}>
-                      <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{art.title || art.titleTa}</div>
+                      <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{art.title || art.titleTa || `Article #${art.id}`}</div>
                     </div>
-                    <div style={{ fontSize: "0.8rem", color: "var(--primary)", fontWeight: 700 }}>{(art.views || 0).toLocaleString()} <Eye size={12} style={{ display: "inline" }}/></div>
+                    <div style={{ fontSize: "0.8rem", color: "var(--primary)", fontWeight: 700 }}>{(art.views || 0).toLocaleString()} <Eye size={12} style={{ display: "inline", marginLeft: '2px' }}/></div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Right Column */}
+            {/* Right Column Widget / Tags */}
             <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
               <QuickPublishWidget onPublished={fetchAll} />
 
               <div className="glass-panel" style={{ padding: "1.25rem" }}>
-                <h3 style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}><TrendingUp size={16} /> Trending Tags</h3>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                  {["#TNBudget", "#Election2026", "#Cricket", "#ChennaiRain", "#StockMarket"].map((tag, i) => (
-                    <span key={tag} style={{ padding: "0.3rem 0.6rem", background: i < 2 ? "var(--primary-glow)" : "var(--bg-secondary)", color: i < 2 ? "var(--primary)" : "var(--text-secondary)", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600, border: `1px solid ${i < 2 ? "var(--primary)" : "var(--border-color)"}` }}>
-                      {tag} {i < 2 && "🔥"}
-                    </span>
-                  ))}
+                <h3 style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}><TrendingUp size={16} /> Platform Alerts</h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  {counts.pendingProfanity > 0 ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '0.75rem', borderRadius: '8px', color: '#EF4444', fontSize: '0.8rem' }}>
+                      <ShieldAlert size={16} />
+                      <span>{counts.pendingProfanity} violations need moderate review</span>
+                    </div>
+                  ) : (
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center' }}>No current platform violations.</div>
+                  )}
                 </div>
               </div>
             </div>

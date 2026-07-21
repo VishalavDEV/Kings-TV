@@ -280,7 +280,8 @@ const BizDirectoryRegister = () => {
       latitude,
       longitude,
       logoUrl: logoUrl || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100",
-      coverUrl: coverUrl || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600"
+      coverUrl: coverUrl || "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600",
+      kycDocumentUrl: kycDocName
     };
 
     try {

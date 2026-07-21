@@ -30,7 +30,9 @@ public class SystemConfigService {
         SystemConfig.CDN_API_KEY,
         SystemConfig.LIVE_STREAM_KEY,
         SystemConfig.AI_LLM_API_KEY,
-        SystemConfig.TELEGRAM_BOT_TOKEN
+        SystemConfig.TELEGRAM_BOT_TOKEN,
+        SystemConfig.RENDER_API_KEY,
+        SystemConfig.VERCEL_API_KEY
     );
 
     public String getConfigValue(String key) {

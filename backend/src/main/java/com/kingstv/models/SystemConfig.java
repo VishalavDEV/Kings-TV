@@ -72,6 +72,8 @@ public class SystemConfig {
     public static final String TELEGRAM_BOT_TOKEN = "telegram.bot_token";
     public static final String TELEGRAM_CHAT_ID = "telegram.chat_id";
     public static final String TELEGRAM_ENABLED = "telegram.enabled";
+    public static final String RENDER_API_KEY = "hosting.render_api_key";
+    public static final String VERCEL_API_KEY = "hosting.vercel_api_key";
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

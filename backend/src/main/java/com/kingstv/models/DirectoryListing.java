@@ -72,6 +72,9 @@ public class DirectoryListing {
     @Column(name = "kyc_status")
     private String kycStatus = "pending";
 
+    @Column(name = "kyc_document_url")
+    private String kycDocumentUrl;
+
     @Column(name = "subscription_status")
     private String subscriptionStatus = "free";
 
@@ -145,4 +148,7 @@ public class DirectoryListing {
     public void setApprovedAt(LocalDateTime approvedAt) { this.approvedAt = approvedAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getKycDocumentUrl() { return kycDocumentUrl; }
+    public void setKycDocumentUrl(String kycDocumentUrl) { this.kycDocumentUrl = kycDocumentUrl; }
 }

@@ -18,7 +18,6 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Directory from './pages/Directory';
 import BizDirectoryMain from './pages/BizDirectoryMain';
-import NfcCardDashboard from './pages/NfcCardDashboard';
 import DealsListing from './pages/DealsListing';
 import RfqMarketplace from './pages/RfqMarketplace';
 import Classifieds from './pages/Classifieds';
@@ -83,7 +82,7 @@ function AppContent() {
     <div className="app-container">
       <OfflineBanner />
       {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
-      <Header />
+      {!location.pathname.startsWith('/rfq') && <Header />}
       
       <main className="main-content">
         <Routes>
@@ -95,7 +94,7 @@ function AppContent() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/directory" element={<BizDirectoryMain />} />
           <Route path="/directory.html" element={<Navigate to="/directory" replace />} />
-          <Route path="/nfc" element={<NfcCardDashboard />} />
+          <Route path="/nfc" element={<Navigate to="/directory/dashboard" replace />} />
           <Route path="/deals" element={<DealsListing />} />
           <Route path="/rfq" element={<RfqMarketplace />} />
           <Route path="/classifieds" element={<Classifieds />} />
@@ -138,7 +137,7 @@ function AppContent() {
         </Routes>
       </main>
 
-      <Footer />
+      {!location.pathname.startsWith('/rfq') && <Footer />}
       <MobileBottomNav />
       <Customizer />
       <AiAssistant />

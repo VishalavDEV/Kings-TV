@@ -213,6 +213,139 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
 }
 
+/* ─── Collapsible Sidebar Sections ─── */
+.sidebar-section {
+  margin-bottom: 0.125rem;
+}
+
+.sidebar-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.625rem 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--font-sans);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.sidebar-section-header:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+}
+
+.sidebar-section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sidebar-section-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sidebar-section-icon {
+  opacity: 0.6;
+}
+
+.sidebar-section-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Chevron rotation animation */
+.sidebar-chevron {
+  transition: transform 0.2s ease;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.sidebar-chevron--open {
+  transform: rotate(180deg);
+}
+
+/* Section body – animated collapse */
+.sidebar-section-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.2s ease;
+  opacity: 0;
+}
+
+.sidebar-section-body--open {
+  max-height: 600px;
+  opacity: 1;
+}
+
+/* ─── Sidebar Badges ─── */
+.sidebar-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  background: var(--primary);
+  color: #fff;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+.sidebar-badge--inline {
+  margin-left: auto;
+  font-size: 0.6rem;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: var(--danger);
+}
+
+@keyframes badgePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ─── Sidebar Divider ─── */
+.sidebar-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 0.5rem 1rem;
+}
+
+/* ─── External link style ─── */
+.nav-link--external {
+  color: var(--primary) !important;
+}
+
+.nav-link-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Light mode adjustments for sidebar section headers */
+[data-theme="light"] .sidebar-section-header:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
 /* Forms & Inputs styling */
 .form-group {
   margin-bottom: 1.25rem;

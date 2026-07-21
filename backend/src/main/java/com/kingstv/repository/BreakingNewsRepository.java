@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface BreakingNewsRepository extends JpaRepository<BreakingNews, Long>, JpaSpecificationExecutor<BreakingNews> {
+    long countByStatus(String status);
 }

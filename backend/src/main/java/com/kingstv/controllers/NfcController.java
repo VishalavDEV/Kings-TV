@@ -88,6 +88,16 @@ public class NfcController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Business listing not found"));
         }
 
+        DirectoryListing listing = listingOpt.get();
+        Optional<User> uOpt = userRepository.findByEmail(principal.getName());
+        if (uOpt.isEmpty() || !Objects.equals(listing.getCreatedBy(), (long) uOpt.get().getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You do not own this business listing"));
+        }
+
+        if (!"approved".equalsIgnoreCase(listing.getKycStatus())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "NFC Card can only be requested after KYC approval of the business"));
+        }
+
         // Check if card is already requested
         Optional<NfcCard> existing = nfcCardRepository.findByListingId(listingId);
         if (existing.isPresent()) {
@@ -184,7 +194,23 @@ public class NfcController {
 
     // --- Analytics & Tap Statistics ---
     @GetMapping("/api/v1/nfc/stats")
-    public ResponseEntity<?> getCardStats(@RequestParam Long listingId) {
+    public ResponseEntity<?> getCardStats(@RequestParam Long listingId, Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
+        }
+        Optional<User> uOpt = userRepository.findByEmail(principal.getName());
+        if (uOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "User not found"));
+        }
+        Optional<DirectoryListing> listingOpt = directoryRepository.findById(listingId);
+        if (listingOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Business listing not found"));
+        }
+        DirectoryListing listing = listingOpt.get();
+        if (!Objects.equals(listing.getCreatedBy(), (long) uOpt.get().getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Access denied"));
+        }
+
         Optional<NfcCard> cardOpt = nfcCardRepository.findByListingId(listingId);
         if (cardOpt.isEmpty()) {
             return ResponseEntity.ok(Map.of(

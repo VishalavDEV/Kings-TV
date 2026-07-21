@@ -621,12 +621,21 @@ const NewsEditor = () => {
   };
 
   const calcStats = (html) => {
-    if (!html) return { words: 0, chars: 0, readingTime: 0 };
+    if (!html) return { words: 0, chars: 0, readingTime: 0, readability: { score: 0, label: 'N/A', color: 'gray' } };
     const text = html.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
     const words = text ? text.split(' ').length : 0;
     const chars = text.length;
     const readingTime = Math.ceil(words / 200); // 200 words per minute avg
-    return { words, chars, readingTime };
+
+    const sentences = text.split(/[.!?]+/).length || 1;
+    const syllables = text.length / 3; // rough estimate
+    const score = 206.835 - 1.015 * (words / sentences) - 84.6 * (syllables / (words || 1));
+    const normalized = Math.max(0, Math.min(100, score));
+    let readability = { score: Math.round(normalized), label: 'Difficult', color: '#EF4444' };
+    if (normalized > 70) readability = { score: Math.round(normalized), label: 'Easy to Read', color: '#10B981' };
+    else if (normalized > 50) readability = { score: Math.round(normalized), label: 'Standard', color: '#F59E0B' };
+
+    return { words, chars, readingTime, readability };
   };
 
   const getDensity = () => {
@@ -667,6 +676,42 @@ const NewsEditor = () => {
   };
   const taStyle = { ...inputStyle, minHeight: '140px', resize: 'vertical', fontFamily: 'inherit' };
   const labelStyle = { fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' };
+
+  const [mediaModalOpen, setMediaModalOpen] = useState(false);
+
+  const renderPipeline = () => {
+    const steps = [
+      { id: 'draft', label: 'Draft' },
+      { id: 'pending', label: 'Review' },
+      { id: 'published', label: 'Published' }
+    ];
+    let currentStepIdx = steps.findIndex(s => s.id === form.status);
+    if (currentStepIdx === -1) currentStepIdx = 0;
+
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+        {steps.map((step, idx) => (
+          <React.Fragment key={step.id}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem', zIndex: 2 }}>
+              <div style={{ 
+                width: '28px', height: '28px', borderRadius: '50%', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: idx <= currentStepIdx ? 'var(--primary)' : 'var(--bg-secondary)',
+                color: idx <= currentStepIdx ? '#fff' : 'var(--text-muted)',
+                fontSize: '12px', fontWeight: 'bold', border: `2px solid ${idx <= currentStepIdx ? 'var(--primary)' : 'var(--border-color)'}`
+              }}>
+                {idx < currentStepIdx ? '✓' : idx + 1}
+              </div>
+              <span style={{ fontSize: '0.7rem', fontWeight: 600, color: idx <= currentStepIdx ? 'var(--text-primary)' : 'var(--text-muted)' }}>{step.label}</span>
+            </div>
+            {idx < steps.length - 1 && (
+              <div style={{ flex: 1, height: '3px', background: idx < currentStepIdx ? 'var(--primary)' : 'var(--border-color)', margin: '0 -4px', alignSelf: 'center', marginBottom: '18px', zIndex: 1 }} />
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="animate-fade-in" style={{ padding: '1.5rem 0' }}>
@@ -772,6 +817,7 @@ const NewsEditor = () => {
                   <span>📊 {calcStats(form.contentTa).words} words</span>
                   <span>📖 ~{calcStats(form.contentTa).readingTime} min read</span>
                   <span>🔤 {calcStats(form.contentTa).chars} characters</span>
+                  <span style={{ color: calcStats(form.contentTa).readability.color, fontWeight: 600 }}>🧠 {calcStats(form.contentTa).readability.label}</span>
                 </div>
               </div>
             </div>
@@ -811,6 +857,7 @@ const NewsEditor = () => {
                   <span>📊 {calcStats(form.contentEn).words} words</span>
                   <span>📖 ~{calcStats(form.contentEn).readingTime} min read</span>
                   <span>🔤 {calcStats(form.contentEn).chars} characters</span>
+                  <span style={{ color: calcStats(form.contentEn).readability.color, fontWeight: 600 }}>🧠 {calcStats(form.contentEn).readability.label}</span>
                 </div>
               </div>
             </div>
@@ -903,6 +950,25 @@ const NewsEditor = () => {
                 )}
               </div>
 
+              <div>
+                <label style={labelStyle}>Live Google Search Preview</label>
+                <div style={{ padding: '1rem', background: document.documentElement.classList.contains('dark') ? '#202124' : '#fff', border: '1px solid var(--border-color)', borderRadius: '8px', boxShadow: '0 1px 6px rgba(32,33,36,.1)', width: '600px', maxWidth: '100%', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                    <div style={{ width: '28px', height: '28px', background: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>K</div>
+                    <div>
+                      <div style={{ fontSize: '14px', color: document.documentElement.classList.contains('dark') ? '#dadce0' : '#202124', lineHeight: '1.2' }}>King 24x7</div>
+                      <div style={{ fontSize: '12px', color: document.documentElement.classList.contains('dark') ? '#bdc1c6' : '#5f6368', lineHeight: '1.2' }}>https://king24x7.com › news › {form.slug || 'article-slug'}</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '20px', color: document.documentElement.classList.contains('dark') ? '#8ab4f8' : '#1a0dab', textDecoration: 'none', marginBottom: '0.25rem', fontWeight: 400 }}>
+                    {form.metaTitle || form.titleEn || form.titleTa || 'SEO Title Preview'}
+                  </div>
+                  <div style={{ fontSize: '14px', color: document.documentElement.classList.contains('dark') ? '#bdc1c6' : '#4d5156', lineHeight: '1.58' }}>
+                    {form.metaDescription || 'Meta description preview will appear here. This gives users a summary of what they will find when they click the link in search results.'}
+                  </div>
+                </div>
+              </div>
+              
               <div>
                 <label style={labelStyle}>SEO Title <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(max 60 chars)</span></label>
                 <input style={inputStyle} value={form.metaTitle}
@@ -1033,109 +1099,134 @@ const NewsEditor = () => {
             </div>
           </div>
 
-          {/* Media Assets Library Panel for Journalists */}
-          <div className="glass-panel" style={{ padding: '1.75rem', borderRadius: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Image size={18} style={{ color: 'var(--primary)' }} /> Media Helper Library
-                </h3>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
-                  Upload article-specific multiple images & videos, then insert them directly at the editor cursor.
-                </p>
-              </div>
-              <div>
-                <label htmlFor="media-helper-upload" className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', cursor: 'pointer', padding: '0.5rem 1rem', borderRadius: '8px' }}>
-                  <Plus size={14} /> Add Media Files
-                </label>
-                <input 
-                  type="file" 
-                  multiple 
-                  accept="image/*,video/*" 
-                  onChange={handleMediaUpload} 
-                  style={{ display: 'none' }} 
-                  id="media-helper-upload" 
-                />
-              </div>
-            </div>
-
-            {uploadProgress !== null && (
-              <div style={{ width: '100%', background: 'var(--border-color)', height: '6px', borderRadius: '3px', marginBottom: '1rem', overflow: 'hidden' }}>
-                <div style={{ width: `${uploadProgress}%`, background: 'var(--primary)', height: '100%', transition: 'width 0.2s' }} />
-              </div>
-            )}
-
-            {mediaList.length === 0 ? (
-              <div style={{ border: '2px dashed var(--border-color)', borderRadius: '8px', padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                No additional media files uploaded yet. Add multiple images & videos for news composition.
-              </div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }}>
-                {mediaList.map((item, idx) => (
-                  <div key={idx} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                    <div style={{ height: '90px', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                      {item.type.startsWith('image/') ? (
-                        <img src={getPreviewUrl(item.url)} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <Video size={32} style={{ color: '#fff' }} />
-                      )}
-                    </div>
-                    <div style={{ padding: '0.5rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '0.5rem' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.name}>
-                        {item.name}
-                      </span>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <div style={{ display: 'flex', gap: '0.25rem' }}>
-                          <button 
-                            onClick={() => insertMediaIntoTinyMCE(item.url, item.type)}
-                            style={{ flex: 1, padding: '3px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '0.65rem', cursor: 'pointer', fontWeight: 'bold' }}
-                          >
-                            Insert
-                          </button>
-                          <button 
-                            onClick={() => {
-                              navigator.clipboard.writeText(item.url);
-                              showMsg('URL copied to clipboard!');
-                            }}
-                            style={{ padding: '3px 6px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '0.65rem', cursor: 'pointer', color: 'var(--text-secondary)' }}
-                            title="Copy Link"
-                          >
-                            <Copy size={10} />
-                          </button>
-                          <button 
-                            onClick={() => {
-                              if(window.confirm('Delete this media item?')) {
-                                setMediaList(mediaList.filter((_, i) => i !== idx));
-                              }
-                            }}
-                            style={{ padding: '3px 6px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '4px', fontSize: '0.65rem', cursor: 'pointer', color: '#EF4444' }}
-                            title="Remove from list"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                        {item.type && item.type.startsWith('image/') && (
-                          <button 
-                            onClick={() => { set('imageUrl', item.url); showMsg('✅ Set as featured image!'); }}
-                            style={{ width: '100%', padding: '4px', background: form.imageUrl === item.url ? '#10B981' : 'rgba(16,185,129,0.15)', color: form.imageUrl === item.url ? '#fff' : '#10B981', border: '1px solid #10B981', borderRadius: '4px', fontSize: '0.65rem', cursor: 'pointer', fontWeight: 'bold' }}
-                            title="Set as Featured Image"
-                          >
-                            {form.imageUrl === item.url ? '✅ Featured' : '⭐ Set as Featured'}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+          </div>
+          
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
+            <button 
+              onClick={() => setMediaModalOpen(true)}
+              className="btn btn-primary"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', borderRadius: '8px' }}
+            >
+              <Image size={18} /> Open Media Insert Library
+            </button>
           </div>
         </div>
+
+        {/* Media Assets Library Modal */}
+        {mediaModalOpen && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+            <div className="glass-panel" style={{ padding: '1.75rem', borderRadius: '12px', width: '100%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto', background: 'var(--bg-surface)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                    <Image size={20} style={{ color: 'var(--primary)' }} /> Insert Media
+                  </h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
+                    Upload images & videos, then insert them into your article content.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div>
+                    <label htmlFor="media-helper-upload" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem', cursor: 'pointer', padding: '0.5rem 1rem', borderRadius: '8px' }}>
+                      <Plus size={14} /> Upload Files
+                    </label>
+                    <input 
+                      type="file" 
+                      multiple 
+                      accept="image/*,video/*" 
+                      onChange={handleMediaUpload} 
+                      style={{ display: 'none' }} 
+                      id="media-helper-upload" 
+                    />
+                  </div>
+                  <button onClick={() => setMediaModalOpen(false)} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', borderRadius: '8px' }}>
+                    Close
+                  </button>
+                </div>
+              </div>
+
+              {uploadProgress !== null && (
+                <div style={{ width: '100%', background: 'var(--border-color)', height: '6px', borderRadius: '3px', marginBottom: '1rem', overflow: 'hidden' }}>
+                  <div style={{ width: `${uploadProgress}%`, background: 'var(--primary)', height: '100%', transition: 'width 0.2s' }} />
+                </div>
+              )}
+
+              {mediaList.length === 0 ? (
+                <div style={{ border: '2px dashed var(--border-color)', borderRadius: '8px', padding: '4rem 1rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                  No media files available. Upload files to use them in the editor.
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem' }}>
+                  {mediaList.map((item, idx) => (
+                    <div key={idx} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                      <div style={{ height: '120px', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        {item.type.startsWith('image/') ? (
+                          <img src={getPreviewUrl(item.url)} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <Video size={32} style={{ color: '#fff' }} />
+                        )}
+                      </div>
+                      <div style={{ padding: '0.75rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '0.75rem' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.name}>
+                          {item.name}
+                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                          <div style={{ display: 'flex', gap: '0.35rem' }}>
+                            <button 
+                              onClick={() => {
+                                insertMediaIntoTinyMCE(item.url, item.type);
+                                setMediaModalOpen(false);
+                              }}
+                              style={{ flex: 1, padding: '4px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 'bold' }}
+                            >
+                              Insert
+                            </button>
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText(item.url);
+                                showMsg('URL copied to clipboard!');
+                              }}
+                              style={{ padding: '4px 8px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                              title="Copy Link"
+                            >
+                              <Copy size={12} />
+                            </button>
+                            <button 
+                              onClick={() => {
+                                if(window.confirm('Delete this media item?')) {
+                                  setMediaList(mediaList.filter((_, i) => i !== idx));
+                                }
+                              }}
+                              style={{ padding: '4px 8px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer', color: '#EF4444' }}
+                              title="Remove from list"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                          {item.type && item.type.startsWith('image/') && (
+                            <button 
+                              onClick={() => { set('imageUrl', item.url); showMsg('✅ Set as featured image!'); }}
+                              style={{ width: '100%', padding: '6px', background: form.imageUrl === item.url ? '#10B981' : 'rgba(16,185,129,0.15)', color: form.imageUrl === item.url ? '#fff' : '#10B981', border: '1px solid #10B981', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 'bold' }}
+                              title="Set as Featured Image"
+                            >
+                              {form.imageUrl === item.url ? '✅ Featured Image' : '⭐ Set as Featured Image'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Status */}
           <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
+            {renderPipeline()}
             <label style={labelStyle}>Status</label>
             <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.status} onChange={e => set('status', e.target.value)}>
               <option value="draft" style={{ color: '#000000', backgroundColor: '#ffffff' }}>📝 Draft</option>
@@ -1312,8 +1403,7 @@ const NewsEditor = () => {
           </div>
         )}
       </div>
-    </div>
-  );
+    );
 };
 
 export default NewsEditor;

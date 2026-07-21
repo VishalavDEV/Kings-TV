@@ -59,6 +59,9 @@ public class CommentController {
         comment.setCommentorName(commentDetails.getCommentorName());
         comment.setCommentorEmail(commentDetails.getCommentorEmail());
         comment.setCommentText(commentDetails.getCommentText());
+        if (commentDetails.getStatus() != null) {
+            comment.setStatus(commentDetails.getStatus());
+        }
         
         Comment updated = commentRepository.save(comment);
         return ResponseEntity.ok(updated);

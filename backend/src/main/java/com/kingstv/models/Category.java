@@ -25,6 +25,9 @@ public class Category {
     @Column(name = "icon")
     private String icon;
 
+    @Column(name = "color")
+    private String color = "#3B82F6";
+
     @Column(name = "is_nav")
     private Boolean isNav = true;
 
@@ -44,6 +47,8 @@ public class Category {
     public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }
     public String getIcon() { return icon; }
     public void setIcon(String icon) { this.icon = icon; }
+    public String getColor() { return color; }
+    public void setColor(String color) { this.color = color; }
     public Boolean getIsNav() { return isNav; }
     public void setIsNav(Boolean isNav) { this.isNav = isNav; }
     public Boolean getIsActive() { return isActive; }

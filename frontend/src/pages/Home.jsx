@@ -5,6 +5,7 @@ import { ThemeContext } from '../context/ThemeContext';
 import { fetchApi, getImageUrl } from '../utils/api';
 import AdWidget from '../components/AdWidget';
 import SkeletonLoader from '../components/SkeletonLoader';
+import { resolveHandleToChannelId, fetchChannelVideos } from '../services/youtubeService';
 
 const Home = () => {
   const { lang, t } = useContext(LanguageContext);
@@ -13,6 +14,7 @@ const Home = () => {
   const [error, setError] = useState(null);
   const [articles, setArticles] = useState([]);
   const [videos, setVideos] = useState([]);
+  const [videoTab, setVideoTab] = useState('all');
   const [liveVideo, setLiveVideo] = useState(null);
   const [tickerIndex, setTickerIndex] = useState(0);
   const [categoriesMap, setCategoriesMap] = useState({});
@@ -142,35 +144,54 @@ const Home = () => {
         setStories(storiesList);
       });
 
-    const pVideos = fetchApi('/videos')
-      .then(data => {
-        const list = Array.isArray(data) ? data : [];
-        const translated = list.map(vid => {
-          const rawTitle = vid.title || '';
-          let titleVal = rawTitle;
-          if (lang === 'en') {
-            if (rawTitle.includes('Rain Update') || rawTitle.includes('கனமழை')) {
-              titleVal = 'Rain Update in Tamil Nadu | Heavy Rain Alert in Chennai and Districts';
-            } else if (rawTitle.includes('Gold Rate') || rawTitle.includes('தங்க விலை')) {
-              titleVal = 'Gold Rate Drops Sharply | Today\'s Gold Price details in Chennai';
-            } else if (rawTitle.includes('Vijay TVK') || rawTitle.includes('விஜய் மாநாடு')) {
-              titleVal = 'Vijay TVK First State Conference | Massive crowd gathers in Vikravandi';
-            } else if (rawTitle.includes('IPL') || rawTitle.includes('ஐபிஎல்')) {
-              titleVal = 'IPL Final Highlights: Thrilling last over finish';
-            } else if (rawTitle.includes('Gaganyaan') || rawTitle.includes('ககன்யான்')) {
-              titleVal = 'ISRO Gaganyaan Test Success | Indian Astronaut Space Mission Updates';
-            } else if (rawTitle.includes('Metro') || rawTitle.includes('சென்னை மெட்ரோ')) {
-              titleVal = 'Chennai Metro Phase 2 updates | Driverless train tests began';
-            }
+    const categorizeVideo = (title = '', description = '') => {
+      const text = `${title} ${description}`.toLowerCase();
+      if (text.includes('tvk') || text.includes('dmk') || text.includes('admk') || text.includes('bjp') || text.includes('election') || text.includes('politics') || text.includes('அரசியல்') || text.includes('தேர்தல்') || text.includes('அமைச்சர்')) {
+        return 1; // politics
+      }
+      if (text.includes('gold') || text.includes('rate') || text.includes('price') || text.includes('market') || text.includes('budget') || text.includes('business') || text.includes('தங்கம்') || text.includes('விலை') || text.includes('வணிகம்') || text.includes('agri') || text.includes('farmer') || text.includes('நெல்') || text.includes('விவசாயம்')) {
+        return 2; // business / agriculture
+      }
+      if (text.includes('ipl') || text.includes('csk') || text.includes('cricket') || text.includes('match') || text.includes('sports') || text.includes('dhoni') || text.includes('விளையாட்டு') || text.includes('கிரிக்கெட்')) {
+        return 3; // sports
+      }
+      if (text.includes('cinema') || text.includes('movie') || text.includes('teaser') || text.includes('trailer') || text.includes('actor') || text.includes('திரைப்படம்') || text.includes('சினிமா')) {
+        return 4; // cinema
+      }
+      if (text.includes('isro') || text.includes('gaganyaan') || text.includes('space') || text.includes('tech') || text.includes('metro') || text.includes('train') || text.includes('தொழில்நுட்பம்')) {
+        return 5; // tech
+      }
+      if (text.includes('tamil nadu') || text.includes('chennai') || text.includes('rain') || text.includes('alert') || text.includes('கனமழை') || text.includes('சென்னை')) {
+        return 6; // regional
+      }
+      if (text.includes('us') || text.includes('china') || text.includes('global') || text.includes('world') || text.includes('international') || text.includes('சர்வதேசம்') || text.includes('உலகம்')) {
+        return 7; // international
+      }
+      return 6; 
+    };
+
+    const pVideos = (async () => {
+      try {
+        const channelId = await resolveHandleToChannelId('@king24x7');
+        const fetched = await fetchChannelVideos(channelId, 12);
+        const mapped = fetched.map(vid => ({
+          ...vid,
+          categoryId: categorizeVideo(vid.title, vid.description)
+        }));
+        setVideos(mapped);
+      } catch (err) {
+        console.warn("Could not load YouTube videos for home page, trying fallback", err);
+        try {
+          const fallbackData = await fetchApi('/videos');
+          if (Array.isArray(fallbackData)) {
+            setVideos(fallbackData);
           }
-          return { ...vid, title: titleVal };
-        });
-        setVideos(translated);
-      })
-      .catch(err => {
-        console.warn("Could not load videos from API", err);
-        setVideos([]);
-      });
+        } catch (fallbackErr) {
+          console.error("Local videos fallback failed:", fallbackErr);
+          setVideos([]);
+        }
+      }
+    })();
 
     const pLiveVideo = fetchApi('/videos/live')
       .then(data => {
@@ -649,6 +670,17 @@ const Home = () => {
   };
 
   const renderVideoNews = () => {
+    const homeCatIdMap = {
+      'all': null,
+      'politics': 1,
+      'sports': 3,
+      'agriculture': 2
+    };
+
+    const filteredHomeVideos = videoTab === 'all'
+      ? videos
+      : videos.filter(vid => vid.categoryId === homeCatIdMap[videoTab]);
+
     return (
       <section className="video-section" id="section-video">
         <div className="section-title">
@@ -656,19 +688,33 @@ const Home = () => {
           <Link to="/videos" className="view-all">{lang === 'en' ? 'More Videos' : 'மேலும் வீடியோக்கள்'} <i className="fas fa-arrow-right"></i></Link>
         </div>
         <div className="video-categories">
-          <button className="video-cat-btn active">{lang === 'en' ? 'All' : 'அனைத்தும்'}</button>
-          <button className="video-cat-btn">{lang === 'en' ? 'Politics' : 'அரசியல்'}</button>
-          <button className="video-cat-btn">{lang === 'en' ? 'Sports' : 'விளையாட்டு'}</button>
-          <button className="video-cat-btn">{lang === 'en' ? 'Agriculture' : 'விவசாயம்'}</button>
+          {['all', 'politics', 'sports', 'agriculture'].map(tab => (
+            <button 
+              key={tab} 
+              className={`video-cat-btn ${videoTab === tab ? 'active' : ''}`}
+              onClick={() => setVideoTab(tab)}
+            >
+              {tab === 'all' && (lang === 'en' ? 'All' : 'அனைத்தும்')}
+              {tab === 'politics' && (lang === 'en' ? 'Politics' : 'அரசியல்')}
+              {tab === 'sports' && (lang === 'en' ? 'Sports' : 'விளையாட்டு')}
+              {tab === 'agriculture' && (lang === 'en' ? 'Agriculture' : 'விவசாயம்')}
+            </button>
+          ))}
         </div>
         <div className="video-grid-4">
-          {videos.length === 0 ? (
+          {filteredHomeVideos.length === 0 ? (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#64748B' }}>
               <i className="fas fa-video-slash fa-3x" style={{ marginBottom: '15px', opacity: 0.5 }}></i>
               <h3>{lang === 'en' ? 'No videos published yet' : 'இன்னும் வீடியோக்கள் வெளியிடப்படவில்லை'}</h3>
             </div>
-          ) : videos.slice(0, 4).map((vid, idx) => (
-            <div className="video-card" key={vid.id || vid.videoId || idx}>
+          ) : filteredHomeVideos.slice(0, 4).map((vid, idx) => (
+            <Link 
+              to="/videos" 
+              state={{ selectVideoId: vid.id }} 
+              className="video-card" 
+              key={vid.id || vid.videoId || idx}
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
               <div className="thumb-area">
                 {vid.thumbnailUrl ? (
                   <img src={getImageUrl(vid.thumbnailUrl)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={vid.title} />
@@ -676,15 +722,23 @@ const Home = () => {
                   <div style={{ background: gradients[idx % gradients.length], width: '100%', height: '100%' }}></div>
                 )}
                 <div className="play-overlay"><i className="fas fa-play"></i></div>
-                <span className="duration">{vid.duration || '3:15'}</span>
+                {vid.isLive ? (
+                  <span className="duration" style={{ backgroundColor: '#EF4444' }}>LIVE</span>
+                ) : (
+                  <span className="duration">{vid.duration || '3:15'}</span>
+                )}
               </div>
               <div className="body">
                 <h5>{vid.title}</h5>
                 <div className="meta">
-                  <span><i className="far fa-eye"></i> {vid.viewsCount || '15K'} {lang === 'en' ? 'views' : 'பார்வைகள்'}</span>
+                  {vid.isLive ? (
+                    <span style={{ color: '#EF4444', fontWeight: 700 }}><i className="fas fa-circle" style={{ fontSize: '8px', animation: 'pulse-live 1.5s infinite' }}></i> Live Now</span>
+                  ) : (
+                    <span><i className="far fa-calendar-alt"></i> {new Date(vid.publishedAt).toLocaleDateString()}</span>
+                  )}
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
