@@ -114,7 +114,7 @@ const Header = () => {
   // Available page links to quick jump to
   const getNavigablePages = () => {
     const pages = [
-      { name: 'Dashboard', path: '/dashboard', roles: ['SUPER_ADMIN', 'CHIEF_EDITOR', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'] },
+      { name: 'Dashboard', path: '/admin/dashboard', roles: ['SUPER_ADMIN', 'CHIEF_EDITOR', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'] },
       { name: 'Editorial Calendar', path: '/admin/editorial-calendar', roles: ['SUPER_ADMIN', 'CHIEF_EDITOR'] },
       { name: 'News Management', path: '/admin/news', roles: ['SUPER_ADMIN', 'CHIEF_EDITOR'] },
       { name: 'Create Article', path: '/admin/news/create', roles: ['SUPER_ADMIN', 'CHIEF_EDITOR'] },
