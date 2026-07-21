@@ -97,33 +97,8 @@ const Login = () => {
       
       const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
       if (res.user && adminRoles.includes(res.user.role)) {
-        setTimeout(() => {
-          window.location.href = 'http://localhost:3000/admin/layout';
-        }, 1200);
-      } else {
-        const from = location.state?.from || '/';
-        const redirectState = location.state?.jobRole ? { openJobRole: location.state.jobRole } : null;
-        setTimeout(() => navigate(from, { state: redirectState }), 1200);
-      }
-    } catch (err) {
-      triggerToast(err.message, '#EF4444');
-    }
-  };
-
-  const handleManualAuth = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await authService.login(email, pwd);
-      login(res.user, res.accessToken, res.refreshToken, rememberMe);
-      triggerToast(lang === 'en' ? 'Successfully logged in!' : 'வெற்றிகரமாக உள்நுழைந்துவிட்டீர்கள்!');
-      
-      const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
-      if (res.user && adminRoles.includes(res.user.role)) {
         const getAdminPortalUrl = () => {
-          const host = window.location.hostname;
-          return (host === 'localhost' || host === '127.0.0.1')
-            ? 'http://localhost:3000/admin/layout'
-            : 'https://king-tv.test-technoprint.online/admin/layout';
+          return `${window.location.origin}/admin/layout`;
         };
         setTimeout(() => {
           window.location.href = getAdminPortalUrl();
@@ -168,10 +143,7 @@ const Login = () => {
       const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
       if (res.user && adminRoles.includes(res.user.role)) {
         const getAdminPortalUrl = () => {
-          const host = window.location.hostname;
-          return (host === 'localhost' || host === '127.0.0.1')
-            ? 'http://localhost:3000/admin/layout'
-            : 'https://king-tv.test-technoprint.online/admin/layout';
+          return `${window.location.origin}/admin/layout`;
         };
         setTimeout(() => {
           window.location.href = getAdminPortalUrl();

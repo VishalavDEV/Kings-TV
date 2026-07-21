@@ -40,7 +40,7 @@ This document contains a comprehensive audit and resolution log for all identifi
 
 ---
 
-## Phase 1 — Systematic UI Audit
+## Phase 1 — Systematic UI & Spacing Audit
 
 ### BUG-005: Layout Controls Misalignment in News Editor
 - **BUG**: News creation/editor form layout controls wrapping incorrectly on smaller screen sizes.
@@ -49,6 +49,22 @@ This document contains a comprehensive audit and resolution log for all identifi
 - **FIX**: Added flexible wrap containers and responsive input sizing.
 - **STATUS**: Fixed
 - **VERIFIED**: Inspected layout at 375px, 768px, and 1280px breakpoints.
+
+### BUG-010: Hardcoded Localhost Admin Redirect in Frontend Login
+- **BUG**: Logging in as Admin/Editor from the Frontend Portal attempted to redirect the user to `http://localhost:3000/admin/layout`, which failed in production environments.
+- **WHERE FOUND**: Frontend Login Page (`frontend/src/pages/Login.jsx`).
+- **ROOT CAUSE**: Static string assignment `window.location.href = 'http://localhost:3000/admin/layout'`.
+- **FIX**: Replaced static localhost string with dynamic origin resolution: `${window.location.origin}/admin/layout`.
+- **STATUS**: Fixed
+- **VERIFIED**: Admin/Staff logins from frontend portal resolve to `{origin}/admin/layout` cleanly on live domains.
+
+### BUG-011: Outdated Localhost Fallback API Endpoints
+- **BUG**: API utilities fell back to `http://localhost:8080` or `http://localhost:5000` when build-time environment variables were unpopulated, resulting in silent API failures on production.
+- **WHERE FOUND**: Frontend Utilities (`frontend/src/utils/api.js`, `authService.js`, `userService.js`).
+- **ROOT CAUSE**: Legacy local development default constants.
+- **FIX**: Updated fallback constants to production Render endpoint `https://kings-tv.onrender.com/api/v1`.
+- **STATUS**: Fixed
+- **VERIFIED**: Inspected build output; API calls target `https://kings-tv.onrender.com` when environment variable fallback triggers.
 
 ---
 
@@ -100,4 +116,4 @@ This document contains a comprehensive audit and resolution log for all identifi
 
 ---
 
-**Summary**: All identified bugs across Phase 0 to Phase 4 have been reproduced, fixed at the root layer, and verified with empirical evidence.
+**Summary**: Phase 0 and Phase 1 findings have been fully audited, logged, fixed at the root layer, and verified.
