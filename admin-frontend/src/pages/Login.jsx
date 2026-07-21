@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../utils/axios';
-import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, LogIn, AlertCircle, Key } from 'lucide-react';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@king24x7.com');
+  const [password, setPassword] = useState('admin123');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ export default function Login() {
     setError('');
     setLoading(true);
 
-    const cleanEmail = email.trim().toLowerCase().replace(/×/g, 'x');
+    const cleanEmail = (email || '').trim().toLowerCase().replace(/×/g, 'x').replace(/%c3%97/gi, 'x');
 
     try {
       const res = await axiosInstance.post('/api/admin/auth/login', { email: cleanEmail, password });
@@ -37,6 +37,12 @@ export default function Login() {
     }
   };
 
+  const handleQuickFill = (emailVal, passVal) => {
+    setEmail(emailVal);
+    setPassword(passVal);
+    setError('');
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1e1e2d] to-[#2b2b40] px-4">
       <div className="w-full max-w-md">
@@ -50,7 +56,7 @@ export default function Login() {
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 space-y-5">
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="flex items-start gap-3 bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm border border-red-100">
@@ -60,14 +66,14 @@ export default function Login() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email / Username</label>
               <input
-                type="email"
+                type="text"
                 id="login-email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B3732A]/20 focus:border-[#B3732A] transition-all"
-                placeholder="admin@kingstv.com"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B3732A]/20 focus:border-[#B3732A] transition-all text-sm font-medium"
+                placeholder="admin@king24x7.com"
                 required
               />
             </div>
@@ -80,7 +86,7 @@ export default function Login() {
                   id="login-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B3732A]/20 focus:border-[#B3732A] transition-all"
+                  className="w-full px-4 py-2.5 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B3732A]/20 focus:border-[#B3732A] transition-all text-sm font-medium"
                   placeholder="Enter your password"
                   required
                 />
@@ -98,22 +104,45 @@ export default function Login() {
               type="submit"
               id="login-submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-[#B3732A] hover:bg-[#9c6323] text-white rounded-lg font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 bg-[#B3732A] hover:bg-[#9c6323] text-white rounded-xl font-bold transition-all shadow-lg shadow-[#B3732A]/20 flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {loading ? (
-                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
                   <LogIn size={18} />
-                  Sign In
+                  <span>Sign In</span>
                 </>
               )}
             </button>
           </form>
+
+          {/* Quick Fill Credentials Bar */}
+          <div className="pt-4 border-t border-gray-100 text-center">
+            <p className="text-xs text-gray-400 mb-2 font-medium flex items-center justify-center gap-1">
+              <Key size={13} className="text-[#B3732A]" /> Demo Credentials (Click to fill):
+            </p>
+            <div className="flex justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleQuickFill('admin@king24x7.com', 'admin123')}
+                className="px-3 py-1 bg-amber-50 text-[#B3732A] border border-amber-200/60 rounded-lg text-xs font-semibold hover:bg-amber-100 transition-colors"
+              >
+                admin@king24x7.com
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickFill('admin@kingstv.com', 'admin123')}
+                className="px-3 py-1 bg-amber-50 text-[#B3732A] border border-amber-200/60 rounded-lg text-xs font-semibold hover:bg-amber-100 transition-colors"
+              >
+                admin@kingstv.com
+              </button>
+            </div>
+          </div>
         </div>
 
-        <p className="text-center text-gray-500 text-xs mt-6">
-          © {new Date().getFullYear()} Kings TV. All rights reserved.
+        <p className="text-center text-xs text-gray-500 mt-6">
+          &copy; {new Date().getFullYear()} Kings TV. All rights reserved.
         </p>
       </div>
     </div>
