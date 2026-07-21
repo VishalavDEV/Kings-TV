@@ -14,11 +14,15 @@ import PushNotifications from './pages/admin/PushNotifications';
 import HomeLayoutBuilder from './pages/admin/HomeLayoutBuilder';
 import SurveyBuilder from './pages/admin/SurveyBuilder';
 import AuditLogs from './pages/admin/AuditLogs';
+import CommentsModeration from './pages/admin/CommentsModeration';
+import MediaLibrary from './pages/admin/MediaLibrary';
+import SeoConsole from './pages/admin/SeoConsole';
 import ContentQueue from './pages/editor/ContentQueue';
 import MyPosts from './pages/journalist/MyPosts';
 import PostEditor from './pages/journalist/PostEditor';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
+import Breadcrumbs from './components/layout/Breadcrumbs';
 import NewsManagement from './pages/admin/NewsManagement';
 import NewsEditor from './pages/admin/NewsEditor';
 import BreakingNewsDashboard from './pages/admin/BreakingNewsDashboard';
@@ -38,6 +42,7 @@ const ProtectedLayout = ({ children, allowedRoles }) => {
       <Sidebar />
       <Header />
       <main className="main-content">
+        <Breadcrumbs />
         {children}
       </main>
     </div>
@@ -137,6 +142,12 @@ function App() {
             </ProtectedLayout>
           } />
 
+          <Route path="/admin/seo" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
+              <SeoConsole />
+            </ProtectedLayout>
+          } />
+
 
           <Route path="/admin/news/:id/edit" element={
             <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
@@ -159,6 +170,18 @@ function App() {
           <Route path="/admin/audit-logs" element={
             <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
               <AuditLogs />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/comments" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
+              <CommentsModeration />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/media" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
+              <MediaLibrary />
             </ProtectedLayout>
           } />
           {/* Chief Editor routes */}

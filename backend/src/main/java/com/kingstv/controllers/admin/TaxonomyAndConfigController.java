@@ -41,6 +41,7 @@ public class TaxonomyAndConfigController {
         cat.setSlug((String) req.get("slug"));
         cat.setDisplayOrder(req.containsKey("displayOrder") ? (Integer) req.get("displayOrder") : 0);
         cat.setIcon((String) req.get("icon"));
+        if (req.containsKey("color")) cat.setColor((String) req.get("color"));
         cat.setIsNav(req.containsKey("isNav") ? (Boolean) req.get("isNav") : true);
         cat.setIsActive(req.containsKey("isActive") ? (Boolean) req.get("isActive") : true);
         return ResponseEntity.status(HttpStatus.CREATED).body(categoryRepository.save(cat));
@@ -55,6 +56,7 @@ public class TaxonomyAndConfigController {
             if (req.containsKey("slug")) cat.setSlug((String) req.get("slug"));
             if (req.containsKey("displayOrder")) cat.setDisplayOrder((Integer) req.get("displayOrder"));
             if (req.containsKey("icon")) cat.setIcon((String) req.get("icon"));
+            if (req.containsKey("color")) cat.setColor((String) req.get("color"));
             if (req.containsKey("isNav")) cat.setIsNav((Boolean) req.get("isNav"));
             if (req.containsKey("isActive")) cat.setIsActive((Boolean) req.get("isActive"));
             return ResponseEntity.ok((Object) categoryRepository.save(cat));
@@ -67,6 +69,40 @@ public class TaxonomyAndConfigController {
         if (!categoryRepository.existsById(id)) return ResponseEntity.notFound().build();
         categoryRepository.deleteById(id);
         return ResponseEntity.ok(Map.of("message", "Category deleted"));
+    }
+
+    // --- Taxonomy: Subcategories ---
+    @GetMapping("/taxonomy/subcategories")
+    @RequiresPermission(Permission.TAXONOMY_MANAGE)
+    public ResponseEntity<?> listSubCategories() { return ResponseEntity.ok(subCategoryRepository.findAll()); }
+
+    @PostMapping("/taxonomy/subcategories")
+    @RequiresPermission(Permission.TAXONOMY_MANAGE)
+    public ResponseEntity<?> createSubCategory(@RequestBody SubCategory subcat) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(subCategoryRepository.save(subcat));
+    }
+
+    @PutMapping("/taxonomy/subcategories/{id}")
+    @RequiresPermission(Permission.TAXONOMY_MANAGE)
+    public ResponseEntity<?> updateSubCategory(@PathVariable Long id, @RequestBody Map<String, Object> req) {
+        return subCategoryRepository.findById(id).map(sub -> {
+            if (req.containsKey("name")) sub.setName((String) req.get("name"));
+            if (req.containsKey("nameTa")) sub.setNameTa((String) req.get("nameTa"));
+            if (req.containsKey("slug")) sub.setSlug((String) req.get("slug"));
+            if (req.containsKey("displayOrder")) sub.setDisplayOrder((Integer) req.get("displayOrder"));
+            if (req.containsKey("categoryId")) sub.setCategoryId(Long.valueOf(req.get("categoryId").toString()));
+            if (req.containsKey("parentId")) sub.setParentId(req.get("parentId") != null ? Long.valueOf(req.get("parentId").toString()) : null);
+            if (req.containsKey("status")) sub.setStatus((String) req.get("status"));
+            return ResponseEntity.ok((Object) subCategoryRepository.save(sub));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/taxonomy/subcategories/{id}")
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN})
+    public ResponseEntity<?> deleteSubCategory(@PathVariable Long id) {
+        if (!subCategoryRepository.existsById(id)) return ResponseEntity.notFound().build();
+        subCategoryRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("message", "SubCategory deleted"));
     }
 
     // --- Taxonomy: Districts ---

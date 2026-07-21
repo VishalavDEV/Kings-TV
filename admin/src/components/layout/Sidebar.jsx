@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useI18n } from '../../context/I18nContext';
+import api from '../../api';
 import { 
   LayoutDashboard, 
   Users, 
@@ -16,13 +18,98 @@ import {
   Key,
   Activity,
   Calendar,
-  DollarSign
+  DollarSign,
+  ChevronDown,
+  Globe,
+  Shield,
+  Newspaper,
+  Megaphone,
+  User,
+  MessageSquare,
+  Image as ImageIcon,
+  Search
 } from 'lucide-react';
-import { useI18n } from '../../context/I18nContext';
+
+/**
+ * Collapsible sidebar section wrapper.
+ * Sections remember their open/closed state in localStorage.
+ */
+const SidebarSection = ({ id, title, icon: Icon, children, defaultOpen = true, badge }) => {
+  const storageKey = `sidebar_section_${id}`;
+  const [isOpen, setIsOpen] = useState(() => {
+    const stored = localStorage.getItem(storageKey);
+    return stored !== null ? stored === 'true' : defaultOpen;
+  });
+
+  const toggle = () => {
+    const next = !isOpen;
+    setIsOpen(next);
+    localStorage.setItem(storageKey, String(next));
+  };
+
+  return (
+    <div className={`sidebar-section ${isOpen ? 'sidebar-section--open' : ''}`}>
+      <button className="sidebar-section-header" onClick={toggle} type="button">
+        <div className="sidebar-section-header-left">
+          {Icon && <Icon size={14} className="sidebar-section-icon" />}
+          <span className="sidebar-section-title">{title}</span>
+        </div>
+        <div className="sidebar-section-header-right">
+          {badge > 0 && <span className="sidebar-badge">{badge > 99 ? '99+' : badge}</span>}
+          <ChevronDown size={14} className={`sidebar-chevron ${isOpen ? 'sidebar-chevron--open' : ''}`} />
+        </div>
+      </button>
+      <div className={`sidebar-section-body ${isOpen ? 'sidebar-section-body--open' : ''}`}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+/** 
+ * Single nav item with optional badge count.
+ */
+const SidebarNavLink = ({ to, icon: Icon, label, badge }) => (
+  <NavLink to={to} className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+    <Icon size={18} />
+    <span className="nav-link-label">{label}</span>
+    {badge > 0 && <span className="sidebar-badge sidebar-badge--inline">{badge > 99 ? '99+' : badge}</span>}
+  </NavLink>
+);
 
 const Sidebar = () => {
   const { user, hasAnyRole } = useAuth();
   const { t } = useI18n();
+  const [counts, setCounts] = useState({});
+
+  // Fetch sidebar badge counts every 60 seconds
+  const fetchCounts = useCallback(async () => {
+    try {
+      const res = await api.get('/admin/sidebar/counts');
+      setCounts(res.data || {});
+    } catch {
+      // Silently fail — badges just won't show numbers
+    }
+  }, []);
+
+  useEffect(() => {
+    if (hasAnyRole(['SUPER_ADMIN', 'CHIEF_EDITOR', 'SUB_EDITOR'])) {
+      fetchCounts();
+      const interval = setInterval(fetchCounts, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [fetchCounts, hasAnyRole]);
+
+  const isAdmin = hasAnyRole(['SUPER_ADMIN']);
+  const isEditor = hasAnyRole(['SUPER_ADMIN', 'CHIEF_EDITOR']);
+  const isJournalist = hasAnyRole(['MOBILE_JOURNALIST', 'INSTITUTION_LOGIN']);
+
+  const getNewsSiteUrl = () => {
+    const host = window.location.hostname;
+    return (host === 'localhost' || host === '127.0.0.1')
+      ? 'http://localhost:5173'
+      : 'https://king-tv.test-technoprint.online/kingstv/';
+  };
 
   return (
     <aside className="sidebar">
@@ -31,133 +118,96 @@ const Sidebar = () => {
       </div>
       
       <nav className="sidebar-nav">
-        <div className="nav-section-title">{t('main')}</div>
-        <NavLink to="/dashboard" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-          <LayoutDashboard size={18} />
-          {t('dashboard')}
-        </NavLink>
+        {/* ═══ MAIN ═══ */}
+        <SidebarSection id="main" title={t('main')} icon={LayoutDashboard} defaultOpen={true}>
+          <SidebarNavLink to="/dashboard" icon={LayoutDashboard} label={t('dashboard')} />
+          {isEditor && (
+            <SidebarNavLink to="/admin/analytics" icon={PieChart} label={t('analytics')} />
+          )}
+        </SidebarSection>
+
+        {/* ═══ NEWSROOM (Content Creation & Management) ═══ */}
+        {isEditor && (
+          <SidebarSection 
+            id="newsroom" 
+            title={t('newsroom')} 
+            icon={Newspaper} 
+            defaultOpen={true}
+            badge={(counts.pendingArticles || 0) + (counts.pendingUgc || 0)}
+          >
+            <SidebarNavLink to="/admin/editorial-calendar" icon={Calendar} label={t('editorialCalendar')} />
+            <SidebarNavLink to="/admin/news" icon={FileText} label={t('newsManagement')} />
+            <SidebarNavLink to="/admin/news/create" icon={Edit3} label={t('createArticle')} />
+            <SidebarNavLink to="/admin/media" icon={ImageIcon} label={t('mediaLibrary') || 'Media Library'} />
+            <SidebarNavLink to="/admin/ugc-queue" icon={Users} label={t('ugcQueue')} badge={counts.pendingUgc} />
+            <SidebarNavLink to="/admin/breaking" icon={AlertTriangle} label={t('breakingNews')} badge={counts.activeBreaking} />
+          </SidebarSection>
+        )}
+
+        {/* ═══ CONTENT (Review Pipeline) ═══ */}
+        {isEditor && (
+          <SidebarSection 
+            id="content" 
+            title={t('content')} 
+            icon={FileText} 
+            defaultOpen={true}
+            badge={counts.pendingArticles}
+          >
+            <SidebarNavLink to="/admin/content" icon={FileText} label={t('contentQueue')} badge={counts.pendingArticles} />
+            <SidebarNavLink to="/admin/comments" icon={MessageSquare} label={t('comments') || 'Comments'} />
+          </SidebarSection>
+        )}
+
+        {/* ═══ WORKSPACE (Journalist / Institution) ═══ */}
+        {isJournalist && (
+          <SidebarSection id="workspace" title={t('workspace')} icon={Edit3} defaultOpen={true}>
+            <SidebarNavLink to="/journalist/posts" icon={Edit3} label={t('myPosts')} />
+          </SidebarSection>
+        )}
+
+        {/* ═══ ENGAGEMENT & LAYOUT ═══ */}
+        {isEditor && (
+          <SidebarSection id="engagement" title={t('engagement')} icon={Megaphone} defaultOpen={false}>
+            <SidebarNavLink to="/admin/push" icon={BellRing} label={t('push')} />
+            <SidebarNavLink to="/admin/layout" icon={Layout} label={t('layout')} />
+          </SidebarSection>
+        )}
+
+        {/* ═══ MONETIZATION ═══ */}
+        {isAdmin && (
+          <SidebarSection id="monetization" title={t('monetization')} icon={DollarSign} defaultOpen={false}>
+            <SidebarNavLink to="/admin/ads" icon={DollarSign} label={t('adManagement')} />
+          </SidebarSection>
+        )}
+
+        {/* ═══ ADMINISTRATION ═══ */}
+        {isAdmin && (
+          <SidebarSection 
+            id="administration" 
+            title={t('administration')} 
+            icon={Shield} 
+            defaultOpen={false}
+            badge={counts.pendingProfanity}
+          >
+            <SidebarNavLink to="/admin/users" icon={Users} label={t('userAccounts')} />
+            <SidebarNavLink to="/admin/roles" icon={Key} label={t('rolesPermissions')} />
+            <SidebarNavLink to="/admin/taxonomy" icon={Tags} label={t('taxonomy')} />
+            <SidebarNavLink to="/admin/seo" icon={Search} label={t('seoConsole') || 'SEO & Sitemap'} />
+            <SidebarNavLink to="/admin/surveys" icon={HelpCircle} label={t('surveys')} />
+            <SidebarNavLink to="/admin/settings" icon={Settings} label={t('settings')} />
+            <SidebarNavLink to="/admin/profanity" icon={AlertTriangle} label={t('profanity')} badge={counts.pendingProfanity} />
+            <SidebarNavLink to="/admin/audit-logs" icon={Activity} label={t('audit')} />
+          </SidebarSection>
+        )}
+
+        {/* ═══ PERSONAL ═══ */}
+        <div className="sidebar-divider" />
+        <SidebarNavLink to="/profile" icon={User} label={t('myProfile')} />
         
-        {hasAnyRole(['SUPER_ADMIN', 'CHIEF_EDITOR']) && (
-          <>
-            <div className="nav-section-title">📰 NEWSROOM</div>
-            <NavLink to="/admin/editorial-calendar" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <Calendar size={18} />
-              Editorial Calendar
-            </NavLink>
-            <NavLink to="/admin/news" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <FileText size={18} />
-              News Management
-            </NavLink>
-            <NavLink to="/admin/news/create" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <Edit3 size={18} />
-              Create Article
-            </NavLink>
-            <NavLink to="/admin/ugc-queue" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <Users size={18} />
-              UGC Queue
-            </NavLink>
-            <NavLink to="/admin/breaking" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <AlertTriangle size={18} />
-              Breaking News
-            </NavLink>
-
-            <div className="nav-section-title">📊 ANALYTICS</div>
-            <NavLink to="/admin/analytics" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <PieChart size={18} />
-              {t('analytics')}
-            </NavLink>
-
-            <div className="nav-section-title">🏗️ CONTENT</div>
-            <NavLink to="/admin/content" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <FileText size={18} />
-              {t('contentQueue')}
-            </NavLink>
-          </>
-        )}
-
-        {hasAnyRole(['MOBILE_JOURNALIST', 'INSTITUTION_LOGIN']) && (
-          <>
-            <div className="nav-section-title">{t('workspace')}</div>
-            <NavLink to="/journalist/posts" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <Edit3 size={18} />
-              {t('myPosts')}
-            </NavLink>
-          </>
-        )}
-
-        {hasAnyRole(['SUPER_ADMIN', 'CHIEF_EDITOR']) && (
-          <>
-            <div className="nav-section-title">{t('engagementLayout')}</div>
-            <NavLink to="/admin/push" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <BellRing size={18} />
-              {t('push')}
-            </NavLink>
-            <NavLink to="/admin/layout" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <Layout size={18} />
-              {t('layout')}
-            </NavLink>
-          </>
-        )}
-
-        {hasAnyRole(['SUPER_ADMIN']) && (
-          <>
-            <div className="nav-section-title">💰 MONETIZATION</div>
-            <NavLink to="/admin/ads" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <DollarSign size={18} />
-              Ad Management
-            </NavLink>
-
-            <div className="nav-section-title">⚙️ SYSTEM</div>
-            <NavLink to="/admin/users" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <Users size={18} />
-              {t('userAccounts')}
-            </NavLink>
-            <NavLink to="/admin/roles" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <Key size={18} />
-              {t('rolesPermissions')}
-            </NavLink>
-            <NavLink to="/admin/taxonomy" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <Tags size={18} />
-              {t('taxonomy')}
-            </NavLink>
-            <NavLink to="/admin/surveys" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <HelpCircle size={18} />
-              {t('surveys')}
-            </NavLink>
-            <NavLink to="/admin/settings" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <Settings size={18} />
-              {t('settings')}
-            </NavLink>
-            <NavLink to="/admin/profanity" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <AlertTriangle size={18} />
-              {t('profanity')}
-            </NavLink>
-            <NavLink to="/admin/audit-logs" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <Activity size={18} />
-              {t('audit')}
-            </NavLink>
-          </>
-        )}
-        
-        <NavLink to="/profile" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-          <Users size={18} />
-          {t('myProfile')}
-        </NavLink>
-        
-        {(() => {
-          const getNewsSiteUrl = () => {
-            const host = window.location.hostname;
-            return (host === 'localhost' || host === '127.0.0.1')
-              ? 'http://localhost:5173'
-              : 'https://king-tv.test-technoprint.online/kingstv/';
-          };
-          return (
-            <a href={getNewsSiteUrl()} target="_blank" rel="noopener noreferrer" className="nav-link" style={{ color: 'var(--primary)' }}>
-              <i className="fas fa-globe" style={{ fontSize: '18px', width: '18px', display: 'inline-flex', justifyContent: 'center' }}></i>
-              <span style={{ marginLeft: '6px' }}>View News Site</span>
-            </a>
-          );
-        })()}
+        <a href={getNewsSiteUrl()} target="_blank" rel="noopener noreferrer" className="nav-link nav-link--external">
+          <Globe size={18} />
+          <span className="nav-link-label">{t('viewNewsSite')}</span>
+        </a>
       </nav>
     </aside>
   );

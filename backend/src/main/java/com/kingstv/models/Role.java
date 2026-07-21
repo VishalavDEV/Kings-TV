@@ -40,6 +40,8 @@ public class Role {
     // Role name constants
     public static final String SUPER_ADMIN = "SUPER_ADMIN";
     public static final String CHIEF_EDITOR = "CHIEF_EDITOR";
+    public static final String SECTION_EDITOR = "SECTION_EDITOR";
+    public static final String SUB_EDITOR = "SUB_EDITOR";
     public static final String DISTRICT_ADMIN = "DISTRICT_ADMIN";
     public static final String MOBILE_JOURNALIST = "MOBILE_JOURNALIST";
     public static final String INSTITUTION_LOGIN = "INSTITUTION_LOGIN";

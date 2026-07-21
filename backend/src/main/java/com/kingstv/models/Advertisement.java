@@ -11,118 +11,76 @@ public class Advertisement {
     private Long id;
 
     @Column(nullable = false)
-    private String title;
-
-    @Column(name = "image_url", nullable = false)
-    private String imageUrl;
-
-    @Column(name = "link_url")
-    private String linkUrl;
+    private String placementId;
 
     @Column(nullable = false)
-    private String status = "active"; // active, inactive, deleted
+    private String title;
 
-    @Column(name = "start_date")
+    private String imageUrl;
+    
+    @Column(columnDefinition = "TEXT")
+    private String customHtml;
+
+    private String targetUrl;
+
     private LocalDateTime startDate;
-
-    @Column(name = "end_date")
     private LocalDateTime endDate;
 
-    @Column(name = "created_by")
-    private Long createdBy;
+    private String targetDistrict;
+    private String targetDevice; // "desktop", "mobile", "all"
 
-    @Column(name = "updated_by")
-    private Long updatedBy;
+    private boolean active = true;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private int impressionsCount = 0;
+    private int clicksCount = 0;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    @Column(name = "placement")
-    private String placement = "sidebar"; // sidebar, header, mid-article
-
-    @Column(name = "impression_count")
-    private Integer impressionCount = 0;
-
-    @Column(name = "click_count")
-    private Integer clickCount = 0;
-
-    @Column(name = "target_device")
-    private String targetDevice = "all"; // all, mobile, desktop
-
-    @Column(name = "target_geo")
-    private String targetGeo = "all"; // all, or district name
-
-    @Column(name = "remaining_budget")
-    private Double remainingBudget = 100.0;
-
-    @Column(name = "cost_per_click")
-    private Double costPerClick = 0.10;
-
-    @Column(name = "cost_per_impression")
-    private Double costPerImpression = 0.005;
+    private String linkUrl;
+    private String status;
+    private String placement;
+    private String targetGeo;
+    private double remainingBudget;
+    private double costPerClick;
+    private double costPerImpression;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-
+    public String getPlacementId() { return placementId; }
+    public void setPlacementId(String placementId) { this.placementId = placementId; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
-
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public String getCustomHtml() { return customHtml; }
+    public void setCustomHtml(String customHtml) { this.customHtml = customHtml; }
+    public String getTargetUrl() { return targetUrl; }
+    public void setTargetUrl(String targetUrl) { this.targetUrl = targetUrl; }
+    public LocalDateTime getStartDate() { return startDate; }
+    public void setStartDate(LocalDateTime startDate) { this.startDate = startDate; }
+    public LocalDateTime getEndDate() { return endDate; }
+    public void setEndDate(LocalDateTime endDate) { this.endDate = endDate; }
+    public String getTargetDistrict() { return targetDistrict; }
+    public void setTargetDistrict(String targetDistrict) { this.targetDistrict = targetDistrict; }
+    public String getTargetDevice() { return targetDevice; }
+    public void setTargetDevice(String targetDevice) { this.targetDevice = targetDevice; }
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
+    public int getImpressionsCount() { return impressionsCount; }
+    public void setImpressionsCount(int impressionsCount) { this.impressionsCount = impressionsCount; }
+    public int getClicksCount() { return clicksCount; }
+    public void setClicksCount(int clicksCount) { this.clicksCount = clicksCount; }
 
     public String getLinkUrl() { return linkUrl; }
     public void setLinkUrl(String linkUrl) { this.linkUrl = linkUrl; }
-
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-
-    public LocalDateTime getStartDate() { return startDate; }
-    public void setStartDate(LocalDateTime startDate) { this.startDate = startDate; }
-
-    public LocalDateTime getEndDate() { return endDate; }
-    public void setEndDate(LocalDateTime endDate) { this.endDate = endDate; }
-
-    public Long getCreatedBy() { return createdBy; }
-    public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }
-
-    public Long getUpdatedBy() { return updatedBy; }
-    public void setUpdatedBy(Long updatedBy) { this.updatedBy = updatedBy; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-
     public String getPlacement() { return placement; }
     public void setPlacement(String placement) { this.placement = placement; }
-
-    public Integer getImpressionCount() { return impressionCount; }
-    public void setImpressionCount(Integer impressionCount) { this.impressionCount = impressionCount; }
-
-    public Integer getClickCount() { return clickCount; }
-    public void setClickCount(Integer clickCount) { this.clickCount = clickCount; }
-
-    public String getTargetDevice() { return targetDevice; }
-    public void setTargetDevice(String targetDevice) { this.targetDevice = targetDevice; }
-
     public String getTargetGeo() { return targetGeo; }
     public void setTargetGeo(String targetGeo) { this.targetGeo = targetGeo; }
-
-    public Double getRemainingBudget() { return remainingBudget; }
-    public void setRemainingBudget(Double remainingBudget) { this.remainingBudget = remainingBudget; }
-
-    public Double getCostPerClick() { return costPerClick; }
-    public void setCostPerClick(Double costPerClick) { this.costPerClick = costPerClick; }
-
-    public Double getCostPerImpression() { return costPerImpression; }
-    public void setCostPerImpression(Double costPerImpression) { this.costPerImpression = costPerImpression; }
+    public double getRemainingBudget() { return remainingBudget; }
+    public void setRemainingBudget(double remainingBudget) { this.remainingBudget = remainingBudget; }
+    public double getCostPerClick() { return costPerClick; }
+    public void setCostPerClick(double costPerClick) { this.costPerClick = costPerClick; }
+    public double getCostPerImpression() { return costPerImpression; }
+    public void setCostPerImpression(double costPerImpression) { this.costPerImpression = costPerImpression; }
 }

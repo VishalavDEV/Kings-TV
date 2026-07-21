@@ -37,6 +37,9 @@ public class Comment {
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "status")
+    private String status = "pending";
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Long getArticleId() { return articleId; }
@@ -49,4 +52,6 @@ public class Comment {
     public void setCommentText(String commentText) { this.commentText = commentText; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }

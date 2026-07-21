@@ -23,7 +23,7 @@ const AdManagement = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingAd, setEditingAd] = useState(null);
-  const [form, setForm] = useState({ name: "", position: "LEADERBOARD_TOP", type: "IMAGE", imageUrl: "", adCode: "", targetUrl: "", startDate: "", endDate: "", device: "ALL", isActive: true });
+  const [form, setForm] = useState({ name: "", position: "LEADERBOARD_TOP", type: "IMAGE", imageUrl: "", adCode: "", targetUrl: "", startDate: "", endDate: "", targetDevice: "all", targetGeo: "all", isActive: true });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
   const [filterPosition, setFilterPosition] = useState("ALL");
@@ -31,7 +31,7 @@ const AdManagement = () => {
   const showMsg = (text, isError = false) => { setMsg({ text, isError }); setTimeout(() => setMsg(null), 4000); };
 
   useEffect(() => {
-    api.get("/advertisements?page=0&size=50")
+    api.get("/advertisements/getAll?page=0&size=50")
       .then(r => setAds(Array.isArray(r.data) ? r.data : (r.data?.content || [])))
       .catch(() => setAds([]))
       .finally(() => setLoading(false));
@@ -39,23 +39,38 @@ const AdManagement = () => {
 
   const openEdit = (ad) => {
     setEditingAd(ad);
-    setForm({ name: ad.name || "", position: ad.position || "LEADERBOARD_TOP", type: ad.type || "IMAGE", imageUrl: ad.imageUrl || "", adCode: ad.adCode || ad.scriptCode || "", targetUrl: ad.targetUrl || ad.linkUrl || "", startDate: ad.startDate ? ad.startDate.slice(0,10) : "", endDate: ad.endDate ? ad.endDate.slice(0,10) : "", device: ad.device || "ALL", isActive: ad.isActive !== false });
+    setForm({ name: ad.title || ad.name || "", position: ad.placement || ad.position || "LEADERBOARD_TOP", type: ad.type || "IMAGE", imageUrl: ad.imageUrl || "", adCode: ad.adCode || ad.scriptCode || "", targetUrl: ad.targetUrl || ad.linkUrl || "", startDate: ad.startDate ? ad.startDate.slice(0,10) : "", endDate: ad.endDate ? ad.endDate.slice(0,10) : "", targetDevice: ad.targetDevice || ad.device || "all", targetGeo: ad.targetGeo || "all", isActive: ad.status === "active" || ad.isActive !== false });
     setShowForm(true);
   };
 
-  const resetForm = () => { setForm({ name: "", position: "LEADERBOARD_TOP", type: "IMAGE", imageUrl: "", adCode: "", targetUrl: "", startDate: "", endDate: "", device: "ALL", isActive: true }); setEditingAd(null); };
+  const resetForm = () => { setForm({ name: "", position: "LEADERBOARD_TOP", type: "IMAGE", imageUrl: "", adCode: "", targetUrl: "", startDate: "", endDate: "", targetDevice: "all", targetGeo: "all", isActive: true }); setEditingAd(null); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.position) { showMsg("Ad name and position are required.", true); return; }
     setSaving(true);
     try {
+      const payload = {
+        id: editingAd ? editingAd.id : undefined,
+        title: form.name,
+        placement: form.position,
+        type: form.type,
+        imageUrl: form.imageUrl,
+        linkUrl: form.targetUrl,
+        adCode: form.adCode,
+        startDate: form.startDate,
+        endDate: form.endDate,
+        targetDevice: form.targetDevice,
+        targetGeo: form.targetGeo,
+        status: form.isActive ? "active" : "inactive"
+      };
+      
       if (editingAd) {
-        const res = await api.put(`/advertisements/${editingAd.id}`, form);
+        const res = await api.put(`/advertisements/saveUpdate`, payload);
         setAds(prev => prev.map(a => a.id === editingAd.id ? res.data : a));
         showMsg("Ad updated successfully!");
       } else {
-        const res = await api.post("/advertisements", form);
+        const res = await api.post("/advertisements/saveUpdate", payload);
         setAds(prev => [...prev, res.data]);
         showMsg("Ad created successfully!");
       }
@@ -66,9 +81,10 @@ const AdManagement = () => {
 
   const toggleActive = async (ad) => {
     try {
-      await api.put(`/advertisements/${ad.id}`, { ...ad, isActive: !ad.isActive });
-      setAds(prev => prev.map(a => a.id === ad.id ? { ...a, isActive: !a.isActive } : a));
-      showMsg(`Ad ${!ad.isActive ? "activated" : "deactivated"}.`);
+      const newStatus = (ad.status === "active" || ad.isActive !== false) ? "inactive" : "active";
+      await api.patch(`/advertisements/changeStatus`, { id: ad.id, status: newStatus });
+      setAds(prev => prev.map(a => a.id === ad.id ? { ...a, status: newStatus, isActive: newStatus === "active" } : a));
+      showMsg(`Ad ${newStatus === "active" ? "activated" : "deactivated"}.`);
     } catch { showMsg("Failed to toggle.", true); }
   };
 
@@ -79,9 +95,9 @@ const AdManagement = () => {
   };
 
   const filteredAds = filterPosition === "ALL" ? ads : ads.filter(a => a.position === filterPosition);
-  const activeCount = ads.filter(a => a.isActive !== false).length;
+  const activeCount = ads.filter(a => a.status === "active" || a.isActive !== false).length;
   const positionStats = {};
-  AD_POSITIONS.forEach(p => { positionStats[p.value] = ads.filter(a => a.position === p.value && a.isActive !== false).length; });
+  AD_POSITIONS.forEach(p => { positionStats[p.value] = ads.filter(a => (a.placement === p.value || a.position === p.value) && (a.status === "active" || a.isActive !== false)).length; });
 
   return (
     <div className="animate-fade-in">
@@ -157,10 +173,10 @@ const AdManagement = () => {
                 </select>
               </div>
               <div><label style={labelStyle}>Device Target</label>
-                <select style={inputStyle} value={form.device} onChange={e => setForm(f => ({ ...f, device: e.target.value }))}>
-                  <option value="ALL">All Devices</option>
-                  <option value="DESKTOP">Desktop Only</option>
-                  <option value="MOBILE">Mobile Only</option>
+                <select style={inputStyle} value={form.targetDevice} onChange={e => setForm(f => ({ ...f, targetDevice: e.target.value }))}>
+                  <option value="all">All Devices</option>
+                  <option value="desktop">Desktop Only</option>
+                  <option value="mobile">Mobile Only</option>
                 </select>
               </div>
               <div><label style={labelStyle}>Status</label>
@@ -176,6 +192,10 @@ const AdManagement = () => {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
               <div><label style={labelStyle}>Start Date</label><input type="date" style={inputStyle} value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} /></div>
               <div><label style={labelStyle}>End Date</label><input type="date" style={inputStyle} value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} /></div>
+            </div>
+            <div>
+              <label style={labelStyle}>Geo-Targeting (District/Category Name)</label>
+              <input style={inputStyle} value={form.targetGeo} onChange={e => setForm(f => ({ ...f, targetGeo: e.target.value }))} placeholder="e.g. 'all' or 'chennai'" />
             </div>
             <div style={{ display: "flex", gap: "1rem" }}>
               <button type="submit" disabled={saving} className="btn btn-primary">{saving ? "Saving..." : editingAd ? "Update Ad" : "Create Ad"}</button>
@@ -199,12 +219,13 @@ const AdManagement = () => {
             <div key={ad.id} className="glass-panel" style={{ padding: "1rem 1.25rem", borderRadius: "10px", display: "flex", alignItems: "center", gap: "1rem",
               borderLeft: `4px solid ${AD_TYPE_COLORS[ad.position] || "var(--primary)"}`, opacity: ad.isActive === false ? 0.6 : 1 }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, marginBottom: "0.2rem" }}>{ad.name}</div>
+                <div style={{ fontWeight: 700, marginBottom: "0.2rem" }}>{ad.title || ad.name}</div>
                 <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-                  <span style={{ color: AD_TYPE_COLORS[ad.position] || "var(--primary)", fontWeight: 600 }}>{AD_POSITIONS.find(p => p.value === ad.position)?.label || ad.position}</span>
-                  {ad.device && ad.device !== "ALL" && <span>?? {ad.device}</span>}
+                  <span style={{ color: AD_TYPE_COLORS[ad.placement || ad.position] || "var(--primary)", fontWeight: 600 }}>{AD_POSITIONS.find(p => p.value === (ad.placement || ad.position))?.label || (ad.placement || ad.position)}</span>
+                  {(ad.targetDevice || ad.device) && (ad.targetDevice || ad.device).toLowerCase() !== "all" && <span style={{ textTransform: 'capitalize' }}>📱 {(ad.targetDevice || ad.device)}</span>}
+                  {ad.targetGeo && ad.targetGeo.toLowerCase() !== "all" && <span style={{ textTransform: 'capitalize' }}>📍 {ad.targetGeo}</span>}
                   {ad.endDate && <span>Expires: {ad.endDate.slice(0,10)}</span>}
-                  {(ad.impressions || 0) > 0 && <span>??? {ad.impressions.toLocaleString()} impressions</span>}
+                  {(ad.impressionCount || ad.impressions || 0) > 0 && <span>👁️ {(ad.impressionCount || ad.impressions).toLocaleString()} impressions</span>}
                 </div>
               </div>
               <div style={{ display: "flex", gap: "0.5rem" }}>

@@ -251,13 +251,30 @@ public class ArticleController {
         return createArticle(entity, request);
     }
 
+    @Autowired
+    private com.kingstv.services.ContentEditService contentEditService;
+
     @PutMapping("/saveUpdate")
-    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN})
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN, Role.SECTION_EDITOR, Role.SUB_EDITOR, Role.MOBILE_JOURNALIST, Role.INSTITUTION_LOGIN})
     @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
     public ResponseEntity<?> update(@RequestBody Article entity, HttpServletRequest request) {
         if (entity.getId() == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Id is required for update"));
         }
+        
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        boolean isLimitedEditor = auth != null && auth.getAuthorities().stream().anyMatch(a -> 
+            a.getAuthority().equals("ROLE_MOBILE_JOURNALIST") || a.getAuthority().equals("ROLE_INSTITUTION_LOGIN"));
+            
+        if (isLimitedEditor) {
+            try {
+                Long userId = auth.getDetails() instanceof Long ? (Long) auth.getDetails() : 0L;
+                contentEditService.attemptEdit("ARTICLE", entity.getId(), userId);
+            } catch (com.kingstv.services.ContentEditService.MaxEditsExceededException ex) {
+                return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of("message", ex.getMessage()));
+            }
+        }
+        
         Optional<Article> artOpt = articleRepository.findById(entity.getId());
         if (artOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Article not found"));
@@ -296,7 +313,7 @@ public class ArticleController {
     }
 
     @PatchMapping("/changeStatus")
-    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN})
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN, Role.SECTION_EDITOR, Role.SUB_EDITOR})
     @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
     public ResponseEntity<?> changeStatus(@RequestBody Map<String, Object> request) {
         if (!request.containsKey("id") || !request.containsKey("status")) {
@@ -304,6 +321,18 @@ public class ArticleController {
         }
         Long id = Long.valueOf(request.get("id").toString());
         String status = request.get("status").toString();
+
+        // RBAC State Machine Validation
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        boolean isSubEditor = auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_SUB_EDITOR"));
+        boolean isSectionEditor = auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_SECTION_EDITOR"));
+        
+        if (isSubEditor && "published".equalsIgnoreCase(status)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Sub Editors cannot publish directly."));
+        }
+        if (isSectionEditor && "published".equalsIgnoreCase(status)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Section Editors cannot publish directly."));
+        }
         
         Optional<Article> opt = articleRepository.findById(id);
         if (opt.isEmpty()) {
