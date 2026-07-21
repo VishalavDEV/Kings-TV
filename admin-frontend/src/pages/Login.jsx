@@ -118,24 +118,50 @@ export default function Login() {
           </form>
 
           {/* Quick Fill Credentials Bar */}
-          <div className="pt-4 border-t border-gray-100 text-center">
-            <p className="text-xs text-gray-400 mb-2 font-medium flex items-center justify-center gap-1">
-              <Key size={13} className="text-[#B3732A]" /> Demo Credentials (Click to fill):
+          <div className="pt-4 border-t border-gray-100">
+            <p className="text-xs text-gray-400 mb-3 font-semibold flex items-center justify-center gap-1">
+              <Key size={13} className="text-[#B3732A]" /> Click to autofill Role Credentials:
             </p>
-            <div className="flex justify-center gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => handleQuickFill('admin@king24x7.com', 'admin123')}
-                className="px-3 py-1 bg-amber-50 text-[#B3732A] border border-amber-200/60 rounded-lg text-xs font-semibold hover:bg-amber-100 transition-colors"
+                className="p-2 bg-amber-50 hover:bg-amber-100/70 border border-amber-200/50 rounded-xl transition-all text-[11px] text-[#B3732A] font-semibold text-center cursor-pointer"
               >
+                <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Super Admin</div>
                 admin@king24x7.com
               </button>
               <button
                 type="button"
-                onClick={() => handleQuickFill('admin@kingstv.com', 'admin123')}
-                className="px-3 py-1 bg-amber-50 text-[#B3732A] border border-amber-200/60 rounded-lg text-xs font-semibold hover:bg-amber-100 transition-colors"
+                onClick={() => handleQuickFill('editor@king24x7.com', 'editor123')}
+                className="p-2 bg-amber-50 hover:bg-amber-100/70 border border-amber-200/50 rounded-xl transition-all text-[11px] text-[#B3732A] font-semibold text-center cursor-pointer"
               >
-                admin@kingstv.com
+                <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Chief Editor</div>
+                editor@king24x7.com
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickFill('district@king24x7.com', 'district123')}
+                className="p-2 bg-amber-50 hover:bg-amber-100/70 border border-amber-200/50 rounded-xl transition-all text-[11px] text-[#B3732A] font-semibold text-center cursor-pointer"
+              >
+                <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">District Admin</div>
+                district@king24x7.com
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickFill('reporter@king24x7.com', 'reporter123')}
+                className="p-2 bg-amber-50 hover:bg-amber-100/70 border border-amber-200/50 rounded-xl transition-all text-[11px] text-[#B3732A] font-semibold text-center cursor-pointer"
+              >
+                <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Mobile Journalist</div>
+                reporter@king24x7.com
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickFill('vendor@king24x7.com', 'vendor123')}
+                className="col-span-2 p-2 bg-amber-50 hover:bg-amber-100/70 border border-amber-200/50 rounded-xl transition-all text-[11px] text-[#B3732A] font-semibold text-center cursor-pointer"
+              >
+                <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Institution Login</div>
+                vendor@king24x7.com
               </button>
             </div>
           </div>
