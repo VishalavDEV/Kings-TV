@@ -138,11 +138,11 @@ const Sidebar = () => {
             <SidebarNavLink to="/admin/editorial-calendar" icon={Calendar} label={t('editorialCalendar')} />
             <SidebarNavLink to="/admin/news" icon={FileText} label={t('newsManagement')} />
             <SidebarNavLink to="/admin/news/create" icon={Edit3} label={t('createArticle')} />
-            <SidebarNavLink to="/admin/media" icon={ImageIcon} label={t('mediaLibrary') || 'Media Library'} />
+            <SidebarNavLink to="/admin/media" icon={ImageIcon} label={t('mediaLibrary')} />
             <SidebarNavLink to="/admin/ugc-queue" icon={Users} label={t('ugcQueue')} badge={counts.pendingUgc} />
             <SidebarNavLink to="/admin/breaking" icon={AlertTriangle} label={t('breakingNews')} badge={counts.activeBreaking} />
-            <SidebarNavLink to="/admin/rss" icon={Globe} label="RSS Importer" />
-            <SidebarNavLink to="/admin/kyc" icon={Shield} label={t('kycVerification') || 'KYC Verification'} />
+            <SidebarNavLink to="/admin/rss" icon={Globe} label={t('rssImporter')} />
+            <SidebarNavLink to="/admin/kyc" icon={Shield} label={t('kycVerification')} />
           </SidebarSection>
         )}
 
@@ -156,7 +156,7 @@ const Sidebar = () => {
             badge={counts.pendingArticles}
           >
             <SidebarNavLink to="/admin/content" icon={FileText} label={t('contentQueue')} badge={counts.pendingArticles} />
-            <SidebarNavLink to="/admin/comments" icon={MessageSquare} label={t('comments') || 'Comments'} />
+            <SidebarNavLink to="/admin/comments" icon={MessageSquare} label={t('comments')} />
           </SidebarSection>
         )}
 
@@ -179,7 +179,7 @@ const Sidebar = () => {
         {isAdmin && (
           <SidebarSection id="monetization" title={t('monetization')} icon={DollarSign} defaultOpen={false}>
             <SidebarNavLink to="/admin/ads" icon={DollarSign} label={t('adManagement')} />
-            <SidebarNavLink to="/admin/rewards" icon={Activity} label="Reward System" />
+            <SidebarNavLink to="/admin/rewards" icon={Activity} label={t('rewardsSystem')} />
           </SidebarSection>
         )}
 
@@ -194,10 +194,10 @@ const Sidebar = () => {
           >
             <SidebarNavLink to="/admin/users" icon={Users} label={t('userAccounts')} />
             <SidebarNavLink to="/admin/roles" icon={Key} label={t('rolesPermissions')} />
-            <SidebarNavLink to="/admin/subscribers" icon={Users} label="Subscribers" />
+            <SidebarNavLink to="/admin/subscribers" icon={Users} label={t('subscribers')} />
             <SidebarNavLink to="/admin/taxonomy" icon={Tags} label={t('taxonomy')} />
-            <SidebarNavLink to="/admin/notifications" icon={BellRing} label="Notifications" />
-            <SidebarNavLink to="/admin/seo" icon={Search} label={t('seoConsole') || 'SEO & Sitemap'} />
+            <SidebarNavLink to="/admin/notifications" icon={BellRing} label={t('notifications')} />
+            <SidebarNavLink to="/admin/seo" icon={Search} label={t('seoConsole')} />
             <SidebarNavLink to="/admin/surveys" icon={HelpCircle} label={t('surveys')} />
             <SidebarNavLink to="/admin/settings" icon={Settings} label={t('settings')} />
             <SidebarNavLink to="/admin/profanity" icon={AlertTriangle} label={t('profanity')} badge={counts.pendingProfanity} />

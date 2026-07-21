@@ -46,6 +46,11 @@ html[lang="ta"] {
   --font-title: 'Noto Sans Tamil', 'Outfit', sans-serif;
 }
 
+html[lang="en"] {
+  --font-sans: 'Inter', 'Noto Sans Tamil', system-ui, -apple-system, sans-serif;
+  --font-title: 'Outfit', 'Noto Sans Tamil', sans-serif;
+}
+
 [data-theme="light"] {
   --bg-primary: #FAF9F6;
   --bg-secondary: #FFFFFF;
@@ -77,7 +82,7 @@ html[lang="ta"] {
   -webkit-tap-highlight-color: transparent;
 }
 
-body {
+body, input, select, textarea, button {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-sans);

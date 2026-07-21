@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useI18n } from "../context/I18nContext";
 import { NavLink } from "react-router-dom";
 import api from "../api";
 import { Users, FileText, Activity, TrendingUp, BarChart2, Plus, Radio, Clock, Eye, AlertCircle, Send, Inbox, ShieldAlert } from "lucide-react";
@@ -23,6 +24,7 @@ const StatCard = ({ label, value, icon: Icon, color, subLabel, subColor }) => (
 );
 
 const QuickPublishWidget = ({ onPublished }) => {
+  const { t } = useI18n();
   const [form, setForm] = useState({ titleTa: "", titleEn: "", categoryId: "", isBreaking: false });
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -35,7 +37,7 @@ const QuickPublishWidget = ({ onPublished }) => {
   const handlePublish = async (e) => {
     e.preventDefault();
     if (!form.titleTa || !form.categoryId) {
-      setMsg({ text: "Title and Category required.", err: true });
+      setMsg({ text: t("titleCategoryRequired") || "Title and Category required.", err: true });
       setTimeout(() => setMsg(null), 3000);
       return;
     }
@@ -46,12 +48,12 @@ const QuickPublishWidget = ({ onPublished }) => {
         const expiresAt = new Date(Date.now() + 6 * 3600000).toISOString();
         await api.post("/breaking-news", { titleTa: form.titleTa, titleEn: form.titleEn, isActive: true, expiresAt, priority: "HIGH" });
       }
-      setMsg({ text: "Article published live!", err: false });
+      setMsg({ text: t("articlePublishedLive") || "Article published live!", err: false });
       setForm({ titleTa: "", titleEn: "", categoryId: "", isBreaking: false });
       if (onPublished) onPublished();
       setTimeout(() => setMsg(null), 3000);
     } catch (err) {
-      setMsg({ text: "Publish failed.", err: true });
+      setMsg({ text: t("publishFailed") || "Publish failed.", err: true });
       setTimeout(() => setMsg(null), 3000);
     }
     setLoading(false);
@@ -61,22 +63,22 @@ const QuickPublishWidget = ({ onPublished }) => {
 
   return (
     <div className="glass-panel" style={{ padding: "1.25rem", borderRadius: "12px", border: "2px solid var(--primary)" }}>
-      <h3 style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--primary)" }}><Send size={16} /> Quick Publish</h3>
+      <h3 style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--primary)" }}><Send size={16} /> {t("quickPublish")}</h3>
       <form onSubmit={handlePublish} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-        <input style={inputStyle} placeholder="Tamil Headline *" value={form.titleTa} onChange={e => setForm(f => ({ ...f, titleTa: e.target.value }))} />
-        <input style={inputStyle} placeholder="English Headline (optional)" value={form.titleEn} onChange={e => setForm(f => ({ ...f, titleEn: e.target.value }))} />
+        <input style={inputStyle} placeholder={t("tamilHeadline")} value={form.titleTa} onChange={e => setForm(f => ({ ...f, titleTa: e.target.value }))} />
+        <input style={inputStyle} placeholder={t("englishHeadline")} value={form.titleEn} onChange={e => setForm(f => ({ ...f, titleEn: e.target.value }))} />
         <div style={{ display: "flex", gap: "0.75rem" }}>
           <select style={{ ...inputStyle, flex: 1 }} value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))}>
-            <option value="">— Select Category —</option>
+            <option value="">— {t("selectCategory")} —</option>
             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.8rem", cursor: "pointer", color: form.isBreaking ? "#EF4444" : "var(--text-secondary)", fontWeight: form.isBreaking ? 700 : 400 }}>
             <input type="checkbox" checked={form.isBreaking} onChange={e => setForm(f => ({ ...f, isBreaking: e.target.checked }))} style={{ accentColor: "#EF4444" }} />
-            Breaking
+            {t("breaking")}
           </label>
         </div>
         <button type="submit" disabled={loading} className="btn btn-primary" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.5rem", padding: "0.6rem", background: form.isBreaking ? "#EF4444" : "var(--primary)", border: "none" }}>
-          {loading ? "Publishing..." : <><Plus size={16} /> Publish Now</>}
+          {loading ? t("publishing") : <><Plus size={16} /> {t("publishNow")}</>}
         </button>
         {msg && <div style={{ fontSize: "0.75rem", color: msg.err ? "#EF4444" : "#10B981", textAlign: "center", fontWeight: 600 }}>{msg.text}</div>}
       </form>
@@ -86,6 +88,7 @@ const QuickPublishWidget = ({ onPublished }) => {
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [kpis, setKpis] = useState(null);
   const [newsPerf, setNewsPerf] = useState(null);
   const [categoryData, setCategoryData] = useState([]);
@@ -126,34 +129,34 @@ const Dashboard = () => {
     <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <div>
-          <h1 style={{ marginBottom: "0.25rem" }}>Newsroom Command Center</h1>
-          <p className="text-secondary">Welcome back, <strong>{user?.email?.split("@")[0]}</strong> · <span style={{ color: "var(--primary)", fontWeight: 'bold' }}>{user?.role?.replace(/_/g, " ")}</span></p>
+          <h1 style={{ marginBottom: "0.25rem" }}>{t("newsroomCommandCenter")}</h1>
+          <p className="text-secondary">{t("welcome")}, <strong>{user?.email?.split("@")[0]}</strong> · <span style={{ color: "var(--primary)", fontWeight: 'bold' }}>{user?.role?.replace(/_/g, " ")}</span></p>
         </div>
         <div style={{ display: "flex", gap: "0.75rem" }}>
-          <NavLink to="/admin/news/create" className="btn btn-primary" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Plus size={16} /> Write Article</NavLink>
+          <NavLink to="/admin/news/create" className="btn btn-primary" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Plus size={16} /> {t("writeArticle")}</NavLink>
         </div>
       </div>
 
       {loading ? (
         <div className="glass-panel" style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
           <Activity size={32} style={{ margin: "0 auto 1rem", display: "block", opacity: 0.4 }} className="animate-pulse" />
-          Loading dashboard data…
+          {t("loadingDashboard")}
         </div>
       ) : (
         <>
           {/* KPI Stat Cards Grid */}
           <div className="stats-grid">
-            <StatCard label="Total Views" value={newsPerf?.totalViews?.toLocaleString() || "0"} icon={Eye} color="#3B82F6" subLabel="Total video & article views" />
-            <StatCard label="Published News" value={newsPerf?.publishedCount?.toLocaleString() || "0"} icon={FileText} color="var(--primary)" subLabel="Articles live on portal" />
-            <StatCard label="Pending Review" value={counts.pendingArticles || "0"} icon={Inbox} color="#F59E0B" subLabel="Submitted for approval" />
-            <StatCard label="Active Authors" value={kpis?.activeUsers || "0"} icon={Users} color="#10B981" subLabel="Content creators online" />
+            <StatCard label={t("totalViews")} value={newsPerf?.totalViews?.toLocaleString() || "0"} icon={Eye} color="#3B82F6" subLabel={t("totalViewsDesc")} />
+            <StatCard label={t("publishedNews")} value={newsPerf?.publishedCount?.toLocaleString() || "0"} icon={FileText} color="var(--primary)" subLabel={t("articlesLive")} />
+            <StatCard label={t("pendingReview")} value={counts.pendingArticles || "0"} icon={Inbox} color="#F59E0B" subLabel={t("pendingReviewDesc")} />
+            <StatCard label={t("activeAuthors")} value={kpis?.activeUsers || "0"} icon={Users} color="#10B981" subLabel={t("creatorsOnline")} />
           </div>
 
           {/* Charts & Graphs Row */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "1.5rem" }}>
             {/* Category Performance Chart */}
             <div className="glass-panel" style={{ padding: "1.5rem", borderRadius: "12px", minHeight: "350px" }}>
-              <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.5rem" }}><TrendingUp size={18} color="var(--primary)" /> Category Traffic Distribution</h3>
+              <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.5rem" }}><TrendingUp size={18} color="var(--primary)" /> {t("categoryTraffic")}</h3>
               <div style={{ width: "100%", height: "260px" }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={topCategoryData}>
@@ -175,7 +178,7 @@ const Dashboard = () => {
 
             {/* Articles Count per Category Chart */}
             <div className="glass-panel" style={{ padding: "1.5rem", borderRadius: "12px", minHeight: "350px" }}>
-              <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.5rem" }}><BarChart2 size={18} color="#3B82F6" /> Articles by Category</h3>
+              <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.5rem" }}><BarChart2 size={18} color="#3B82F6" /> {t("articlesByCategory")}</h3>
               <div style={{ width: "100%", height: "260px" }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={topCategoryData}>
@@ -194,14 +197,14 @@ const Dashboard = () => {
             {/* Status Board */}
             <div className="glass-panel" style={{ padding: "1.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-                <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Activity size={18} color="var(--primary)" /> Editorial Status Board</h3>
-                <NavLink to="/admin/editorial-calendar" style={{ fontSize: "0.8rem", color: "var(--primary)", textDecoration: "none" }}>View Calendar →</NavLink>
+                <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Activity size={18} color="var(--primary)" /> {t("editorialStatusBoard") || "Editorial Status Board"}</h3>
+                <NavLink to="/admin/editorial-calendar" style={{ fontSize: "0.8rem", color: "var(--primary)", textDecoration: "none" }}>{t("viewCalendar")} →</NavLink>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
                 {[
-                  { label: "Pending Reviews", value: counts.pendingArticles || 0, color: "#F59E0B", desc: "Awaiting approval" },
-                  { label: "UGC Submissions", value: counts.pendingUgc || 0, color: "#8B5CF6", desc: "Citizen reports queue" },
-                  { label: "Active Breaking", value: counts.activeBreaking || 0, color: "#EF4444", desc: "Currently live tickers" }
+                  { label: t("pendingReviews"), value: counts.pendingArticles || 0, color: "#F59E0B", desc: t("awaitingApproval") },
+                  { label: t("ugcSubmissions"), value: counts.pendingUgc || 0, color: "#8B5CF6", desc: t("citizenQueue") },
+                  { label: t("breakingNews"), value: counts.activeBreaking || 0, color: "#EF4444", desc: t("activeBreakingDesc") }
                 ].map(s => (
                   <div key={s.label} style={{ padding: "1rem", borderRadius: "10px", background: `${s.color}11`, border: `1px solid ${s.color}33`, textAlign: "center" }}>
                     <div style={{ fontSize: "2rem", fontWeight: 800, color: s.color, marginBottom: "0.25rem" }}>{s.value}</div>
@@ -211,7 +214,7 @@ const Dashboard = () => {
                 ))}
               </div>
               
-              <h4 style={{ marginTop: "2rem", marginBottom: "1rem", color: "var(--text-secondary)" }}>🔥 Top Performing Articles</h4>
+              <h4 style={{ marginTop: "2rem", marginBottom: "1rem", color: "var(--text-secondary)" }}>🔥 {t("topPerforming")}</h4>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 {(newsPerf?.topArticles?.slice(0, 4) || []).map((art, i) => (
                   <div key={art.id} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "var(--bg-secondary)", borderRadius: "8px", border: "1px solid var(--border-color)" }}>
@@ -230,15 +233,15 @@ const Dashboard = () => {
               <QuickPublishWidget onPublished={fetchAll} />
 
               <div className="glass-panel" style={{ padding: "1.25rem" }}>
-                <h3 style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}><TrendingUp size={16} /> Platform Alerts</h3>
+                <h3 style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}><TrendingUp size={16} /> {t("platformAlerts")}</h3>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                   {counts.pendingProfanity > 0 ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '0.75rem', borderRadius: '8px', color: '#EF4444', fontSize: '0.8rem' }}>
                       <ShieldAlert size={16} />
-                      <span>{counts.pendingProfanity} violations need moderate review</span>
+                      <span>{counts.pendingProfanity} {t("violationsReview")}</span>
                     </div>
                   ) : (
-                    <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center' }}>No current platform violations.</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center' }}>{t("noViolations")}</div>
                   )}
                 </div>
               </div>
@@ -248,11 +251,11 @@ const Dashboard = () => {
           {/* Activity Logs */}
           <div className="glass-panel" style={{ padding: "1.5rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-              <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Clock size={18} /> Recent Newsroom Activity</h3>
-              <NavLink to="/admin/audit-logs" style={{ fontSize: "0.8rem", color: "var(--primary)", textDecoration: "none" }}>View All Logs →</NavLink>
+              <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Clock size={18} /> {t("recentActivityBoard")}</h3>
+              <NavLink to="/admin/audit-logs" style={{ fontSize: "0.8rem", color: "var(--primary)", textDecoration: "none" }}>{t("viewAllLogs")} →</NavLink>
             </div>
             {recentLogs.length === 0 ? (
-              <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", textAlign: "center", padding: "1rem" }}>No recent activity.</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", textAlign: "center", padding: "1rem" }}>{t("noActivity") || "No recent activity."}</p>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                 {recentLogs.map((log, i) => (

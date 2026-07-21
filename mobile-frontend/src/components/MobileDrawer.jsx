@@ -46,35 +46,35 @@ const MobileDrawer = ({ isOpen, onClose }) => {
 
           {hasAnyRole(['SUPER_ADMIN', 'CHIEF_EDITOR']) && (
             <>
-              <div className="nav-section-title">📰 NEWSROOM</div>
+              <div className="nav-section-title">📰 {t('newsroom')}</div>
               <NavLink to="/admin/editorial-calendar" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <Calendar size={18} />
-                Editorial Calendar
+                {t('editorialCalendar')}
               </NavLink>
               <NavLink to="/admin/news" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <FileText size={18} />
-                News Management
+                {t('newsManagement')}
               </NavLink>
               <NavLink to="/admin/news/create" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <Edit3 size={18} />
-                Create Article
+                {t('createArticle')}
               </NavLink>
               <NavLink to="/admin/ugc-queue" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <Users size={18} />
-                UGC Queue
+                {t('ugcQueue')}
               </NavLink>
               <NavLink to="/admin/breaking" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <AlertTriangle size={18} />
-                Breaking News
+                {t('breakingNews')}
               </NavLink>
 
-              <div className="nav-section-title">📊 ANALYTICS</div>
+              <div className="nav-section-title">📊 {t('analytics')}</div>
               <NavLink to="/admin/analytics" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <PieChart size={18} />
                 {t('analytics')}
               </NavLink>
 
-              <div className="nav-section-title">🏗️ CONTENT</div>
+              <div className="nav-section-title">🏗️ {t('content')}</div>
               <NavLink to="/admin/content" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <FileText size={18} />
                 {t('contentQueue')}
@@ -108,13 +108,13 @@ const MobileDrawer = ({ isOpen, onClose }) => {
 
           {hasAnyRole(['SUPER_ADMIN']) && (
             <>
-              <div className="nav-section-title">💰 MONETIZATION</div>
+              <div className="nav-section-title">💰 {t('monetization')}</div>
               <NavLink to="/admin/ads" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <DollarSign size={18} />
-                Ad Management
+                {t('adManagement')}
               </NavLink>
 
-              <div className="nav-section-title">⚙️ SYSTEM</div>
+              <div className="nav-section-title">⚙️ {t('administration')}</div>
               <NavLink to="/admin/users" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 <Users size={18} />
                 {t('userAccounts')}
@@ -148,7 +148,7 @@ const MobileDrawer = ({ isOpen, onClose }) => {
 
           <a href={getNewsSiteUrl()} target="_blank" rel="noopener noreferrer" className="nav-link" style={{ color: 'var(--primary)' }}>
             <Globe size={18} />
-            <span>View News Site</span>
+            <span>{t('viewNewsSite')}</span>
           </a>
         </nav>
       </aside>

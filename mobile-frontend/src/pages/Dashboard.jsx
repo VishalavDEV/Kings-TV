@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useI18n } from "../context/I18nContext";
 import { NavLink } from "react-router-dom";
 import api from '../services/api';
 import { Users, FileText, Activity, TrendingUp, BarChart2, Plus, Radio, Clock, Eye, AlertCircle, Send } from "lucide-react";
@@ -36,6 +37,7 @@ const StatCard = ({ label, value, icon: Icon, color, subLabel, subColor, sparkli
 );
 
 const QuickPublishWidget = ({ onPublished }) => {
+  const { t } = useI18n();
   const [form, setForm] = useState({ titleTa: "", titleEn: "", categoryId: "", isBreaking: false });
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -48,7 +50,7 @@ const QuickPublishWidget = ({ onPublished }) => {
   const handlePublish = async (e) => {
     e.preventDefault();
     if (!form.titleTa || !form.categoryId) {
-      setMsg({ text: "Title and Category required.", err: true });
+      setMsg({ text: t("titleCategoryRequired") || "Title and Category required.", err: true });
       setTimeout(() => setMsg(null), 3000);
       return;
     }
@@ -59,12 +61,12 @@ const QuickPublishWidget = ({ onPublished }) => {
         const expiresAt = new Date(Date.now() + 6 * 3600000).toISOString();
         await api.post("/breaking-news", { titleTa: form.titleTa, titleEn: form.titleEn, isActive: true, expiresAt, priority: "HIGH" });
       }
-      setMsg({ text: "Article published live!", err: false });
+      setMsg({ text: t("articlePublishedLive") || "Article published live!", err: false });
       setForm({ titleTa: "", titleEn: "", categoryId: "", isBreaking: false });
       if (onPublished) onPublished();
       setTimeout(() => setMsg(null), 3000);
     } catch (err) {
-      setMsg({ text: "Publish failed.", err: true });
+      setMsg({ text: t("publishFailed") || "Publish failed.", err: true });
       setTimeout(() => setMsg(null), 3000);
     }
     setLoading(false);
@@ -74,22 +76,22 @@ const QuickPublishWidget = ({ onPublished }) => {
 
   return (
     <div className="glass-panel" style={{ padding: "1.25rem", borderRadius: "12px", border: "2px solid var(--primary)" }}>
-      <h3 style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--primary)" }}><Send size={16} /> Quick Publish</h3>
+      <h3 style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--primary)" }}><Send size={16} /> {t("quickPublish")}</h3>
       <form onSubmit={handlePublish} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-        <input style={inputStyle} placeholder="Tamil Headline *" value={form.titleTa} onChange={e => setForm(f => ({ ...f, titleTa: e.target.value }))} />
-        <input style={inputStyle} placeholder="English Headline (optional)" value={form.titleEn} onChange={e => setForm(f => ({ ...f, titleEn: e.target.value }))} />
+        <input style={inputStyle} placeholder={t("tamilHeadline")} value={form.titleTa} onChange={e => setForm(f => ({ ...f, titleTa: e.target.value }))} />
+        <input style={inputStyle} placeholder={t("englishHeadline")} value={form.titleEn} onChange={e => setForm(f => ({ ...f, titleEn: e.target.value }))} />
         <div style={{ display: "flex", gap: "0.75rem" }}>
           <select style={{ ...inputStyle, flex: 1 }} value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))}>
-            <option value=""> Select Category </option>
+            <option value="">— {t("selectCategory")} —</option>
             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.8rem", cursor: "pointer", color: form.isBreaking ? "#EF4444" : "var(--text-secondary)", fontWeight: form.isBreaking ? 700 : 400 }}>
             <input type="checkbox" checked={form.isBreaking} onChange={e => setForm(f => ({ ...f, isBreaking: e.target.checked }))} style={{ accentColor: "#EF4444" }} />
-            Set as Breaking
+            {t("breaking")}
           </label>
         </div>
         <button type="submit" disabled={loading} className="btn btn-primary" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.5rem", padding: "0.6rem", background: form.isBreaking ? "#EF4444" : "var(--primary)", border: "none" }}>
-          {loading ? "Publishing..." : <><Plus size={16} /> Publish Now</>}
+          {loading ? t("publishing") : <><Plus size={16} /> {t("publishNow")}</>}
         </button>
         {msg && <div style={{ fontSize: "0.75rem", color: msg.err ? "#EF4444" : "#10B981", textAlign: "center", fontWeight: 600 }}>{msg.text}</div>}
       </form>
@@ -99,6 +101,7 @@ const QuickPublishWidget = ({ onPublished }) => {
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [kpis, setKpis] = useState(null);
   const [newsPerf, setNewsPerf] = useState(null);
   const [recentLogs, setRecentLogs] = useState([]);
@@ -127,40 +130,40 @@ const Dashboard = () => {
   return (    <div className="animate-fade-in">
       <div className="dashboard-header-bar">
         <div>
-          <h1 style={{ marginBottom: "0.25rem" }}>Newsroom Command Center</h1>
-          <p className="text-secondary">Welcome back, <strong>{user?.email?.split("@")[0]}</strong> · <span style={{ color: "var(--primary)" }}>{user?.role?.replace(/_/g, " ")}</span></p>
+          <h1 style={{ marginBottom: "0.25rem" }}>{t("newsroomCommandCenter")}</h1>
+          <p className="text-secondary">{t("welcome")}, <strong>{user?.email?.split("@")[0]}</strong> · <span style={{ color: "var(--primary)" }}>{user?.role?.replace(/_/g, " ")}</span></p>
         </div>
         <div style={{ display: "flex", gap: "0.75rem" }}>
-          <NavLink to="/admin/news/create" className="btn btn-primary" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Plus size={16} /> Full Editor</NavLink>
+          <NavLink to="/admin/news/create" className="btn btn-primary" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Plus size={16} /> {t("fullEditor")}</NavLink>
         </div>
       </div>
 
       {loading ? (
         <div className="glass-panel" style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
           <Activity size={32} style={{ margin: "0 auto 1rem", display: "block", opacity: 0.4 }} />
-          Loading dashboard data…
+          {t("loadingDashboard")}
         </div>
       ) : (
         <>
           <div className="stats-grid" style={{ marginBottom: "2rem" }}>
-            <StatCard label="Total Views (7 Days)" value={newsPerf?.totalViews?.toLocaleString() || "42,850"} icon={Eye} color="#3B82F6" subLabel="Up 12% from last week" subColor="var(--success)" sparklineData={viewsSparkline} />
-            <StatCard label="Published Articles" value={newsPerf?.publishedCount?.toLocaleString() || "142"} icon={FileText} color="var(--primary)" subLabel="11 published today" subColor="var(--success)" sparklineData={articlesSparkline} />
-            <StatCard label="Active Reporters" value={kpis?.activeUsers || "24"} icon={Users} color="#10B981" subLabel="4 online right now" subColor="var(--success)" />
-            <StatCard label="Pending UGC" value="12" icon={AlertCircle} color="#F59E0B" subLabel="Awaiting editor review" subColor="#F59E0B" />
+            <StatCard label={t("totalViews")} value={newsPerf?.totalViews?.toLocaleString() || "42,850"} icon={Eye} color="#3B82F6" subLabel={t("totalViewsDesc")} subColor="var(--success)" sparklineData={viewsSparkline} />
+            <StatCard label={t("publishedNews")} value={newsPerf?.publishedCount?.toLocaleString() || "142"} icon={FileText} color="var(--primary)" subLabel={t("articlesLive")} subColor="var(--success)" sparklineData={articlesSparkline} />
+            <StatCard label={t("activeAuthors")} value={kpis?.activeUsers || "24"} icon={Users} color="#10B981" subLabel={t("creatorsOnline")} subColor="var(--success)" />
+            <StatCard label={t("pendingReview")} value="12" icon={AlertCircle} color="#F59E0B" subLabel={t("pendingReviewDesc")} subColor="#F59E0B" />
           </div>
 
           <div className="dashboard-main-grid">
             {/* Status Board */}
             <div className="glass-panel" style={{ padding: "1.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-                <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Activity size={18} color="var(--primary)" /> Editorial Status Board</h3>
-                <NavLink to="/admin/editorial-calendar" style={{ fontSize: "0.8rem", color: "var(--primary)", textDecoration: "none" }}>View Calendar ?</NavLink>
+                <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Activity size={18} color="var(--primary)" /> {t("editorialStatusBoard") || "Editorial Status Board"}</h3>
+                <NavLink to="/admin/editorial-calendar" style={{ fontSize: "0.8rem", color: "var(--primary)", textDecoration: "none" }}>{t("viewCalendar")} →</NavLink>
               </div>
               <div className="dashboard-status-grid">
                 {[
-                  { label: "In Draft", value: 45, color: "#8B5CF6", desc: "Being written by reporters" },
-                  { label: "In Review", value: 18, color: "#F59E0B", desc: "Awaiting editor approval" },
-                  { label: "Scheduled", value: 7, color: "#3B82F6", desc: "Queued for publication" }
+                  { label: t("pendingReviews"), value: 45, color: "#8B5CF6", desc: t("awaitingApproval") },
+                  { label: t("ugcSubmissions"), value: 18, color: "#F59E0B", desc: t("citizenQueue") },
+                  { label: t("breakingNews"), value: 7, color: "#3B82F6", desc: t("activeBreakingDesc") }
                 ].map(s => (
                   <div key={s.label} style={{ padding: "1rem", borderRadius: "10px", background: `${s.color}11`, border: `1px solid ${s.color}33`, textAlign: "center" }}>
                     <div style={{ fontSize: "2rem", fontWeight: 800, color: s.color, marginBottom: "0.25rem" }}>{s.value}</div>
@@ -170,7 +173,7 @@ const Dashboard = () => {
                 ))}
               </div>
               
-              <h4 style={{ marginTop: "2rem", marginBottom: "1rem", color: "var(--text-secondary)" }}>🔥 Top Trending Articles</h4>
+              <h4 style={{ marginTop: "2rem", marginBottom: "1rem", color: "var(--text-secondary)" }}>🔥 {t("topPerforming")}</h4>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 {(newsPerf?.topArticles?.slice(0,4) || []).map((art, i) => (
                   <div key={art.id} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem", background: "var(--bg-secondary)", borderRadius: "8px", border: "1px solid var(--border-color)" }}>
@@ -189,7 +192,7 @@ const Dashboard = () => {
               <QuickPublishWidget onPublished={fetchAll} />
 
               <div className="glass-panel" style={{ padding: "1.25rem" }}>
-                <h3 style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}><TrendingUp size={16} /> Trending Tags</h3>
+                <h3 style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}><TrendingUp size={16} /> {t("trendingTags") || "Trending Tags"}</h3>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                   {["#TNBudget", "#Election2026", "#Cricket", "#ChennaiRain", "#StockMarket"].map((tag, i) => (
                     <span key={tag} style={{ padding: "0.3rem 0.6rem", background: i < 2 ? "var(--primary-glow)" : "var(--bg-secondary)", color: i < 2 ? "var(--primary)" : "var(--text-secondary)", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600, border: `1px solid ${i < 2 ? "var(--primary)" : "var(--border-color)"}` }}>
@@ -204,11 +207,11 @@ const Dashboard = () => {
           {/* Activity Logs */}
           <div className="glass-panel" style={{ padding: "1.5rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-              <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Clock size={18} /> Recent Newsroom Activity</h3>
-              <NavLink to="/admin/audit-logs" style={{ fontSize: "0.8rem", color: "var(--primary)", textDecoration: "none" }}>View All Logs →</NavLink>
+              <h3 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Clock size={18} /> {t("recentActivityBoard")}</h3>
+              <NavLink to="/admin/audit-logs" style={{ fontSize: "0.8rem", color: "var(--primary)", textDecoration: "none" }}>{t("viewAllLogs")} →</NavLink>
             </div>
             {recentLogs.length === 0 ? (
-              <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", textAlign: "center", padding: "1rem" }}>No recent activity.</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", textAlign: "center", padding: "1rem" }}>{t("noActivity") || "No recent activity."}</p>
             ) : (
               <div className="dashboard-logs-grid">
                 {recentLogs.map((log, i) => (

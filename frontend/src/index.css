@@ -71,15 +71,23 @@
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-body {
+body, input, select, textarea, button {
   font-family: 'Noto Sans Tamil', 'Segoe UI', sans-serif;
 }
 
-html[lang="en"] body {
+html[lang="en"] body,
+html[lang="en"] input,
+html[lang="en"] select,
+html[lang="en"] textarea,
+html[lang="en"] button {
   font-family: 'Outfit', 'Segoe UI', sans-serif;
 }
 
-html[lang="ta"] body {
+html[lang="ta"] body,
+html[lang="ta"] input,
+html[lang="ta"] select,
+html[lang="ta"] textarea,
+html[lang="ta"] button {
   font-family: 'Noto Sans Tamil', 'Mukta Malar', 'Segoe UI', sans-serif;
 }
 
