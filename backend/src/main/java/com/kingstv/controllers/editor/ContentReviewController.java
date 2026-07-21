@@ -113,6 +113,21 @@ public class ContentReviewController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * Approve deletion request of an article
+     */
+    @PutMapping("/articles/{id}/approve-delete")
+    @RequiresPermission(Permission.ARTICLE_REVIEW)
+    @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
+    public ResponseEntity<?> approveDeleteArticle(@PathVariable Long id) {
+        return articleRepository.findById(id).map(article -> {
+            article.setStatus("unpublished");
+            articleRepository.save(article);
+            logAudit("APPROVE_DELETE", "Article", id, "Approved deletion request — article unpublished");
+            return ResponseEntity.ok(Map.of("message", "Article soft-deleted (unpublished) successfully"));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     // --- UGC Review Queue (#29) ---
 
     @GetMapping("/ugc")

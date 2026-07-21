@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../utils/axios';
 import {
   LayoutDashboard,
   PenSquare,
@@ -30,6 +31,10 @@ import {
   ChevronDown,
   User,
   Menu,
+  MapPin,
+  Building2,
+  Newspaper,
+  FolderOpen,
 } from 'lucide-react';
 
 const PUBLIC_SITE_URL = import.meta.env.VITE_PUBLIC_SITE_URL || 'https://kings-tv.vercel.app';
@@ -37,7 +42,9 @@ const PUBLIC_SITE_URL = import.meta.env.VITE_PUBLIC_SITE_URL || 'https://kings-t
 const NAV_ITEMS = [
   { key: 'admin_panel',      label: 'Dashboard',         icon: LayoutDashboard, path: '/' },
   { key: 'add_post',         label: 'Add Post',           icon: PenSquare,       path: '/add-post' },
+  { key: 'my_content',       label: 'My Content',         icon: FileText,        path: '/posts' },
   { key: 'manage_all_posts', label: 'All Posts',          icon: FileText,        path: '/posts' },
+  { key: 'content_review',   label: 'Content Review',     icon: ShieldCheck,     path: '/posts' },
   { key: 'navigation',       label: 'Navigation',         icon: Navigation,      path: '/navigation' },
   { key: 'pages',            label: 'Pages',              icon: BookOpen,        path: '/pages' },
   { key: 'rss_feeds',        label: 'RSS Feeds',          icon: Rss,             path: '/rss-feeds' },
@@ -48,15 +55,26 @@ const NAV_ITEMS = [
   { key: 'comments',         label: 'Comments',           icon: MessageSquare,   path: '/comments' },
   { key: 'contact_messages', label: 'Contact',            icon: Mail,            path: '/contact' },
   { key: 'newsletter',       label: 'Newsletter',         icon: Send,            path: '/newsletter' },
-  { key: 'reward_system',    label: 'Rewards',            icon: Gift,            path: '/rewards' },
+  { key: 'reward_system',    label: 'Rewards',            icon: Gift,            path: '/rewards',
+    children: [
+      { label: 'Reward System', path: '/rewards' },
+      { label: 'Earnings',      path: '/earnings' },
+      { label: 'Payouts',       path: '/payouts' },
+      { label: 'Pageviews',     path: '/pageviews' },
+    ]
+  },
   { key: 'ad_spaces',        label: 'Ad Spaces',          icon: MonitorPlay,     path: '/ads' },
   { key: 'users',            label: 'Users',              icon: Users,           path: '/users/administrators',
     children: [
+      { label: 'Add User',         path: '/users/add' },
       { label: 'Administrators',   path: '/users/administrators' },
-      { label: 'Registered Users', path: '/users' },
+      { label: 'Users',            path: '/users' },
     ]
   },
   { key: 'roles_permissions',label: 'Roles & Permissions',icon: ShieldCheck,    path: '/roles-permissions' },
+  { key: 'districts',        label: 'Districts',          icon: MapPin,          path: '/districts' },
+  { key: 'institution_news', label: 'Institution News',   icon: Building2,       path: '/institution-news' },
+  { key: 'media_library',    label: 'Media Library',      icon: FolderOpen,      path: '/media-library' },
   { key: 'seo_tools',        label: 'SEO Tools',          icon: Search,          path: '/seo' },
   { key: 'social_login',     label: 'Social Login',       icon: Share2,          path: '/social-login' },
   { key: 'languages',        label: 'Languages',          icon: Globe,           path: '/languages' },
@@ -142,9 +160,28 @@ function NavItem({ item, collapsed }) {
 export default function AdminLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [brandingLogo, setBrandingLogo] = useState('');
+  const [siteTitle, setSiteTitle] = useState('Kings TV');
+  const [visitSiteUrl, setVisitSiteUrl] = useState(import.meta.env.VITE_PUBLIC_SITE_URL || 'https://kings-tv.vercel.app/');
   const { user, permissions, logout, hasPermission } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    // Fetch visual settings logo and site title for white-label branding
+    api.get('/api/admin/settings/visual')
+      .then(res => {
+        if (res.data?.logo_url) setBrandingLogo(res.data.logo_url);
+      })
+      .catch(() => {});
+
+    api.get('/api/admin/settings/general')
+      .then(res => {
+        if (res.data?.general?.site_title) setSiteTitle(res.data.general.site_title);
+        if (res.data?.general?.visit_site_url) setVisitSiteUrl(res.data.general.visit_site_url);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -171,12 +208,16 @@ export default function AdminLayout() {
         }`}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10 shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-[#B3732A] flex items-center justify-center font-bold text-sm shrink-0 shadow-lg">
-            K
-          </div>
+        <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10 shrink-0 overflow-hidden">
+          {brandingLogo ? (
+            <img src={brandingLogo} alt="Logo" className="w-8 h-8 object-contain rounded-lg shrink-0" />
+          ) : (
+            <div className="w-8 h-8 rounded-lg bg-[#B3732A] flex items-center justify-center font-bold text-sm shrink-0 shadow-lg">
+              {siteTitle.charAt(0).toUpperCase()}
+            </div>
+          )}
           {!sidebarCollapsed && (
-            <span className="text-sm font-semibold whitespace-nowrap truncate">Kings TV Admin</span>
+            <span className="text-sm font-semibold whitespace-nowrap truncate">{siteTitle} Panel</span>
           )}
         </div>
 
@@ -212,7 +253,7 @@ export default function AdminLayout() {
 
           <div className="flex items-center gap-2">
             <a
-              href={PUBLIC_SITE_URL}
+              href={visitSiteUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
@@ -265,8 +306,18 @@ export default function AdminLayout() {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6 flex flex-col justify-between">
           <Outlet />
+
+          {/* Admin Footer */}
+          <footer className="mt-8 pt-4 border-t border-gray-200 text-xs text-gray-400 flex flex-col sm:flex-row items-center justify-between gap-2 shrink-0 select-none">
+            <div>
+              &copy; {new Date().getFullYear()} <strong className="text-gray-600">{siteTitle}</strong>. All rights reserved.
+            </div>
+            <div className="font-mono bg-gray-200/60 text-gray-600 px-2 py-0.5 rounded text-[10px] font-semibold">
+              Version 1.0
+            </div>
+          </footer>
         </main>
       </div>
     </div>

@@ -47,6 +47,7 @@ public class SecurityConfig {
                     "/api/auth/**",
                     "/api/admin/auth/login",
                     "/api/admin/auth/refresh",
+                    "/cron/**", "/sitemap.xml",
                     "/uploads/**",
                     "/api/v1/health", 
                     "/api/v1/breaking-news", "/api/v1/breaking-news/**",

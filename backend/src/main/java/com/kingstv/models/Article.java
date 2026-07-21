@@ -179,6 +179,16 @@ public class Article {
     @Column(name = "visibility_radius_km")
     private Double visibilityRadiusKm;
 
+    // --- Source & Institution ---
+    @Column(name = "source", length = 50)
+    private String source = "cms"; // cms | institution | reader | mobile_journalist
+
+    @Column(name = "institution_id")
+    private Long institutionId;
+
+    @Column(name = "institution_name")
+    private String institutionName;
+
     @Column(name = "telegram_sent")
     private Boolean telegramSent = false;
 
@@ -441,4 +451,11 @@ public class Article {
 
     public Integer getBreakingOrder() { return breakingOrder; }
     public void setBreakingOrder(Integer breakingOrder) { this.breakingOrder = breakingOrder; }
+
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
+    public Long getInstitutionId() { return institutionId; }
+    public void setInstitutionId(Long institutionId) { this.institutionId = institutionId; }
+    public String getInstitutionName() { return institutionName; }
+    public void setInstitutionName(String institutionName) { this.institutionName = institutionName; }
 }

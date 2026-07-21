@@ -1,316 +1,297 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Upload, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import axiosInstance from '../../utils/axios';
+import { Plus, Edit, Trash2, Key, Shield, CheckCircle, XCircle, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import api from '../../utils/axios';
+import DataTable from '../../components/DataTable';
+import { useToast } from '../../context/ToastContext';
 
-const ROLES = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
+const DEFAULT_ROLES = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
 
 export default function Administrators() {
   const [users, setUsers] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(0);
-  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const { showSuccess, showError } = useToast();
+  const navigate = useNavigate();
+
+  // Edit Modal State
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [editUser, setEditUser] = useState(null);
-  const [form, setForm] = useState({ fullName: '', email: '', password: '', role: 'CHIEF_EDITOR' });
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [deleteId, setDeleteId] = useState(null);
-  const [availableRoles, setAvailableRoles] = useState([]);
+  const [editForm, setEditForm] = useState({ fullName: '', role: '', isActive: true, profileImage: '' });
 
-  const PAGE_SIZE = 10;
+  // Reset Password Modal State
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [resetUserId, setResetUserId] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
 
-  const fetchUsers = async () => {
+  const loadData = () => {
     setLoading(true);
-    try {
-      const res = await axiosInstance.get('/api/v1/admin/users', {
-        params: { page, size: PAGE_SIZE, search: search || undefined }
-      });
-      // Filter to admin roles only
-      const adminUsers = (res.data.users || []).filter(u => ROLES.includes(u.role));
-      setUsers(adminUsers);
-      setTotal(res.data.totalElements || adminUsers.length);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+    api.get('/api/admin/users/administrators')
+      .then(res => setUsers(Array.isArray(res.data) ? res.data : []))
+      .catch(() => showError('Failed to load administrators'))
+      .finally(() => setLoading(false));
   };
 
-  const fetchRoles = async () => {
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleDelete = async (item) => {
     try {
-      const res = await axiosInstance.get('/api/v1/admin/roles');
-      setAvailableRoles(res.data.roles || []);
+      await api.delete(`/api/admin/users/${item.id}`);
+      showSuccess('Administrator deleted');
+      setUsers(prev => prev.filter(u => u.id !== item.id));
     } catch {
-      // fallback to static list
+      showError('Failed to delete administrator');
     }
   };
 
-  useEffect(() => { fetchUsers(); }, [page, search]);
-  useEffect(() => { fetchRoles(); }, []);
-
-  const openAdd = () => {
-    setEditUser(null);
-    setForm({ fullName: '', email: '', password: '', role: 'CHIEF_EDITOR' });
-    setError('');
-    setShowModal(true);
+  const handleBulkDelete = async (ids) => {
+    try {
+      await Promise.all(ids.map(id => api.delete(`/api/admin/users/${id}`)));
+      showSuccess(`Deleted ${ids.length} administrators`);
+      setUsers(prev => prev.filter(u => !ids.includes(u.id)));
+    } catch {
+      showError('Failed to delete selected administrators');
+    }
   };
 
   const openEdit = (user) => {
     setEditUser(user);
-    setForm({ fullName: user.fullName, email: user.email, password: '', role: user.role });
-    setError('');
-    setShowModal(true);
+    setEditForm({
+      fullName: user.fullName || '',
+      role: user.role || 'CHIEF_EDITOR',
+      isActive: user.isActive !== false,
+      profileImage: user.profileImage || ''
+    });
+    setEditModalOpen(true);
   };
 
-  const handleSave = async () => {
-    if (!form.fullName || !form.email || (!editUser && !form.password)) {
-      setError('Name, email, and password are required');
-      return;
-    }
-    setSaving(true);
-    setError('');
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+    if (!editUser) return;
     try {
-      if (editUser) {
-        const body = { fullName: form.fullName, role: form.role };
-        if (form.password) body.password = form.password;
-        await axiosInstance.put(`/api/v1/admin/users/${editUser.id}`, body);
-      } else {
-        await axiosInstance.post('/api/v1/admin/users', form);
-      }
-      setShowModal(false);
-      fetchUsers();
-    } catch (e) {
-      setError(e.response?.data?.message || 'Failed to save user');
-    } finally {
-      setSaving(false);
+      await api.put(`/api/admin/users/${editUser.id}`, editForm);
+      showSuccess('Administrator updated');
+      setEditModalOpen(false);
+      loadData();
+    } catch {
+      showError('Failed to update administrator');
     }
   };
 
-  const handleDelete = async (id) => {
+  const openReset = (user) => {
+    setResetUserId(user.id);
+    setNewPassword('');
+    setResetModalOpen(true);
+  };
+
+  const handleSaveReset = async (e) => {
+    e.preventDefault();
+    if (!resetUserId || !newPassword) return;
     try {
-      await axiosInstance.delete(`/api/v1/admin/users/${id}`);
-      setDeleteId(null);
-      fetchUsers();
-    } catch (e) {
-      alert(e.response?.data?.message || 'Delete failed');
+      await api.put(`/api/admin/users/administrators/${resetUserId}/reset-password`, { newPassword });
+      showSuccess('Password reset successfully');
+      setResetModalOpen(false);
+    } catch {
+      showError('Failed to reset password');
     }
   };
 
-  const roleColor = (role) => {
-    const map = {
-      SUPER_ADMIN: 'bg-purple-100 text-purple-700',
-      CHIEF_EDITOR: 'bg-blue-100 text-blue-700',
-      DISTRICT_ADMIN: 'bg-green-100 text-green-700',
-      MOBILE_JOURNALIST: 'bg-orange-100 text-orange-700',
-      INSTITUTION_LOGIN: 'bg-teal-100 text-teal-700',
-    };
-    return map[role] || 'bg-gray-100 text-gray-600';
-  };
+  const columns = [
+    { key: 'id', label: 'Id', className: 'w-16' },
+    {
+      key: 'fullName',
+      label: 'Admin User',
+      sortable: true,
+      render: (val, row) => (
+        <div className="flex items-center gap-3">
+          {row.profileImage ? (
+            <img src={row.profileImage} alt="" className="w-8 h-8 rounded-full object-cover" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-amber-100 text-[#B3732A] flex items-center justify-center font-bold text-xs">
+              {(val || 'A').charAt(0)}
+            </div>
+          )}
+          <div>
+            <div className="font-semibold text-gray-800 text-xs">{val || 'Admin'}</div>
+            <div className="text-[11px] text-gray-400">{row.email}</div>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'role',
+      label: 'Role',
+      sortable: true,
+      render: (val) => (
+        <span className="px-2.5 py-1 bg-amber-50 text-[#B3732A] border border-amber-200/60 rounded-lg text-xs font-semibold uppercase">
+          {(val || 'ADMIN').replace(/_/g, ' ')}
+        </span>
+      )
+    },
+    {
+      key: 'isActive',
+      label: 'Status',
+      sortable: true,
+      render: (val) => (
+        <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded ${val !== false ? 'text-emerald-700 bg-emerald-50' : 'text-red-700 bg-red-50'}`}>
+          {val !== false ? 'Active' : 'Inactive'}
+        </span>
+      )
+    }
+  ];
+
+  const customRowActions = [
+    { label: 'Reset Password', onClick: openReset, className: 'text-amber-600 font-semibold' }
+  ];
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-gray-800">Administrators</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Manage admin users and their roles</p>
+          <h2 className="text-xl font-bold text-gray-800">Administrators</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Manage system admin accounts, roles, and password resets</p>
         </div>
+
         <button
-          onClick={openAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-[#B3732A] hover:bg-[#9c6323] text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+          onClick={() => navigate('/users/add')}
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#B3732A] text-white rounded-xl text-xs font-semibold hover:bg-[#9c6323] transition-colors w-fit"
         >
-          <Plus size={16} />
-          Add User
+          <Plus size={16} /> Add Administrator
         </button>
       </div>
 
-      {/* Search */}
-      <div className="relative w-full max-w-sm">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          type="text"
-          value={search}
-          onChange={e => { setSearch(e.target.value); setPage(0); }}
-          placeholder="Search by name or email..."
-          className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#B3732A]/20 focus:border-[#B3732A]"
-        />
-      </div>
+      <DataTable
+        columns={columns}
+        data={users}
+        loading={loading}
+        onEdit={openEdit}
+        onDelete={handleDelete}
+        onBulkDelete={handleBulkDelete}
+        customRowActions={customRowActions}
+        searchableKeys={['fullName', 'email', 'role']}
+      />
 
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">User</th>
-                <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Email</th>
-                <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Role</th>
-                <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Joined</th>
-                <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Last Login</th>
-                <th className="text-right px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {loading ? (
-                <tr><td colSpan={6} className="text-center py-12 text-gray-400 text-sm">Loading...</td></tr>
-              ) : users.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-12 text-gray-400 text-sm">No administrators found</td></tr>
-              ) : users.map(user => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#B3732A]/10 flex items-center justify-center text-[#B3732A] font-semibold text-sm shrink-0">
-                        {user.fullName?.charAt(0) || '?'}
-                      </div>
-                      <span className="font-medium text-gray-800">{user.fullName}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-4 text-gray-600">{user.email}</td>
-                  <td className="px-5 py-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${roleColor(user.role)}`}>
-                      {user.role?.replace(/_/g, ' ')}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 text-gray-500 text-xs">
-                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'}
-                  </td>
-                  <td className="px-5 py-4 text-gray-500 text-xs">
-                    {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => openEdit(user)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                        title="Edit"
-                      >
-                        <Edit size={15} />
-                      </button>
-                      <button
-                        onClick={() => setDeleteId(user.id)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        {total > PAGE_SIZE && (
-          <div className="flex items-center justify-between px-5 py-3.5 border-t border-gray-100">
-            <span className="text-xs text-gray-500">{total} total administrators</span>
-            <div className="flex gap-2">
-              <button
-                disabled={page === 0}
-                onClick={() => setPage(p => p - 1)}
-                className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
-              ><ChevronLeft size={14} /></button>
-              <button
-                disabled={(page + 1) * PAGE_SIZE >= total}
-                onClick={() => setPage(p => p + 1)}
-                className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
-              ><ChevronRight size={14} /></button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Add/Edit Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h3 className="text-base font-bold text-gray-800">{editUser ? 'Edit Administrator' : 'Add Administrator'}</h3>
-              <button onClick={() => setShowModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+      {/* Edit Administrator Modal */}
+      {editModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 animate-fade-in">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="font-bold text-gray-800 text-base">Edit Administrator</h3>
+              <button onClick={() => setEditModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                 <X size={18} />
               </button>
             </div>
-            <div className="p-6 space-y-4">
-              {error && (
-                <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm border border-red-100">{error}</div>
-              )}
+
+            <form onSubmit={handleSaveEdit} className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name *</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Full Name</label>
                 <input
                   type="text"
-                  value={form.fullName}
-                  onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#B3732A]/20 focus:border-[#B3732A]"
-                  placeholder="Full Name"
+                  required
+                  value={editForm.fullName}
+                  onChange={(e) => setEditForm(f => ({ ...f, fullName: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded-xl text-sm"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email *</label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                  disabled={!!editUser}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#B3732A]/20 focus:border-[#B3732A] disabled:bg-gray-50 disabled:text-gray-500"
-                  placeholder="email@example.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Password {editUser ? '(leave blank to keep current)' : '*'}
-                </label>
-                <input
-                  type="password"
-                  value={form.password}
-                  onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#B3732A]/20 focus:border-[#B3732A]"
-                  placeholder={editUser ? '••••••••' : 'Min 8 characters'}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Role *</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Assigned Role</label>
                 <select
-                  value={form.role}
-                  onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#B3732A]/20 focus:border-[#B3732A] bg-white"
+                  value={editForm.role}
+                  onChange={(e) => setEditForm(f => ({ ...f, role: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded-xl text-sm"
                 >
-                  {ROLES.map(r => (
+                  {DEFAULT_ROLES.map(r => (
                     <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>
                   ))}
                 </select>
               </div>
-            </div>
-            <div className="flex gap-3 px-6 pb-6">
-              <button
-                onClick={() => setShowModal(false)}
-                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex-1 px-4 py-2.5 bg-[#B3732A] hover:bg-[#9c6323] text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-              >
-                {saving ? 'Saving...' : editUser ? 'Save Changes' : 'Add User'}
-              </button>
-            </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Profile Image URL</label>
+                <input
+                  type="text"
+                  value={editForm.profileImage}
+                  onChange={(e) => setEditForm(f => ({ ...f, profileImage: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded-xl text-sm"
+                />
+              </div>
+
+              <div className="p-3 bg-gray-50 rounded-xl flex items-center justify-between">
+                <span className="text-xs font-semibold text-gray-800">Account Active Status</span>
+                <button
+                  type="button"
+                  onClick={() => setEditForm(f => ({ ...f, isActive: !f.isActive }))}
+                  className={`w-10 h-5 rounded-full relative transition-colors ${editForm.isActive ? 'bg-[#B3732A]' : 'bg-gray-300'}`}
+                >
+                  <div className={`absolute w-3.5 h-3.5 bg-white rounded-full top-[3px] transition-all shadow-sm ${editForm.isActive ? 'left-[21px]' : 'left-[3px]'}`} />
+                </button>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setEditModalOpen(false)}
+                  className="px-4 py-2 border rounded-xl text-xs font-medium text-gray-600 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-[#B3732A] text-white rounded-xl text-xs font-semibold hover:bg-[#9c6323]"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
-      {/* Delete Confirm */}
-      {deleteId && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <h3 className="text-base font-bold text-gray-800 mb-2">Delete Administrator?</h3>
-            <p className="text-sm text-gray-500 mb-6">This action cannot be undone.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteId(null)} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
-              <button onClick={() => handleDelete(deleteId)} className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors">Delete</button>
+      {/* Reset Password Modal */}
+      {resetModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4 animate-fade-in">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Key size={18} className="text-[#B3732A]" />
+                <h3 className="font-bold text-gray-800 text-base">Reset Password</h3>
+              </div>
+              <button onClick={() => setResetModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={18} />
+              </button>
             </div>
+
+            <form onSubmit={handleSaveReset} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">New Password *</label>
+                <input
+                  type="password"
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new strong password"
+                  className="w-full px-3 py-2 border rounded-xl text-sm"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setResetModalOpen(false)}
+                  className="px-4 py-2 border rounded-xl text-xs font-medium text-gray-600 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-[#B3732A] text-white rounded-xl text-xs font-semibold hover:bg-[#9c6323]"
+                >
+                  Reset Password
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -30,6 +30,12 @@ public class NavigationMenu {
     @Column(name = "location")
     private String location = "MAIN_MENU"; // TOP_MENU, MAIN_MENU, FOOTER
 
+    @Column(name = "dynamic_type", length = 50)
+    private String dynamicType; // DISTRICTS | CONSTITUENCIES | null (static)
+
+    @Column(name = "dynamic_district_id")
+    private Long dynamicDistrictId; // For CONSTITUENCIES type, scope to specific district
+
     // Transient compatibility fields for the new Frontend API
     @Transient
     private String label;
@@ -101,4 +107,11 @@ public class NavigationMenu {
         this.menuOrder = menuOrder;
         this.displayOrder = menuOrder;
     }
+
+    public String getDynamicType() { return dynamicType; }
+    public void setDynamicType(String dynamicType) { this.dynamicType = dynamicType; }
+
+    public Long getDynamicDistrictId() { return dynamicDistrictId; }
+    public void setDynamicDistrictId(Long dynamicDistrictId) { this.dynamicDistrictId = dynamicDistrictId; }
 }
+

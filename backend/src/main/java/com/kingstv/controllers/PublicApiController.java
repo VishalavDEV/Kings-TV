@@ -110,12 +110,27 @@ public class PublicApiController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // --- 3. POST /api/public/articles/{slug}/view ---
-    @PostMapping("/articles/{slug}/view")
-    public ResponseEntity<?> recordArticleView(@PathVariable String slug, HttpServletRequest request) {
-        Optional<Article> articleOpt = articleRepository.findBySlug(slug);
-        if (articleOpt.isEmpty() && slug.matches("^\\d+$")) {
-            articleOpt = articleRepository.findById(Long.parseLong(slug));
+    // --- 3. POST /api/public/track-view & POST /api/public/articles/{slug}/view ---
+    @PostMapping({"/track-view", "/articles/{slug}/view"})
+    public ResponseEntity<?> recordArticleView(
+            @PathVariable(required = false) String slug,
+            @RequestBody(required = false) Map<String, Object> body,
+            HttpServletRequest request) {
+
+        String targetSlug = slug;
+        if ((targetSlug == null || targetSlug.isBlank()) && body != null) {
+            if (body.get("slug") != null) targetSlug = body.get("slug").toString();
+            else if (body.get("postId") != null) targetSlug = body.get("postId").toString();
+            else if (body.get("articleId") != null) targetSlug = body.get("articleId").toString();
+        }
+
+        if (targetSlug == null || targetSlug.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "slug or postId required"));
+        }
+
+        Optional<Article> articleOpt = articleRepository.findBySlug(targetSlug);
+        if (articleOpt.isEmpty() && targetSlug.matches("^\\d+$")) {
+            articleOpt = articleRepository.findById(Long.parseLong(targetSlug));
         }
 
         if (articleOpt.isEmpty()) {
@@ -322,8 +337,8 @@ public class PublicApiController {
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Comment submitted", "comment", saved));
     }
 
-    // --- 16. POST /api/public/contact-messages ---
-    @PostMapping("/contact-messages")
+    // --- 16. POST /api/public/contact & POST /api/public/contact-messages ---
+    @PostMapping({"/contact", "/contact-messages"})
     public ResponseEntity<?> createContactMessage(@RequestBody ContactRequest contactRequest) {
         if (contactRequest.getName() == null || contactRequest.getEmail() == null || contactRequest.getMessage() == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "name, email, and message are required"));

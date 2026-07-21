@@ -37,10 +37,18 @@ export function AuthProvider({ children }) {
     setPermissions(userData.permissions || []);
   };
 
-  const logout = () => {
-    localStorage.removeItem('admin_jwt_token');
-    setUser(null);
-    setPermissions([]);
+  const logout = async () => {
+    try {
+      const refreshToken = localStorage.getItem('admin_refresh_token');
+      await axiosInstance.post('/api/admin/auth/logout', { refreshToken });
+    } catch {
+      // ignore
+    } finally {
+      localStorage.removeItem('admin_jwt_token');
+      localStorage.removeItem('admin_refresh_token');
+      setUser(null);
+      setPermissions([]);
+    }
   };
 
   const hasPermission = (moduleKey) => {

@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * Delete of MJ/Institution posts restricted to Super Admin only (#21).
  */
 @RestController
-@RequestMapping("/api/v1/admin/users")
+@RequestMapping({"/api/admin/users", "/api/v1/admin/users"})
 public class AdminUserController {
 
     @Autowired private UserRepository userRepository;
@@ -34,6 +34,56 @@ public class AdminUserController {
     @Autowired private UserCategoryRepository userCategoryRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private AuditLogRepository auditLogRepository;
+
+    /**
+     * List administrators
+     */
+    @GetMapping("/administrators")
+    public ResponseEntity<?> listAdministrators() {
+        List<String> adminRoles = List.of("SUPER_ADMIN", "CHIEF_EDITOR", "DISTRICT_ADMIN", "MOBILE_JOURNALIST", "INSTITUTION_LOGIN");
+        List<User> list = userRepository.findAll().stream()
+                .filter(u -> u.getRole() != null && adminRoles.contains(u.getRole().toUpperCase()))
+                .sorted(Comparator.comparing(User::getId).reversed())
+                .collect(Collectors.toList());
+        List<Map<String, Object>> res = list.stream().map(this::toUserResponse).collect(Collectors.toList());
+        return ResponseEntity.ok(res);
+    }
+
+    /**
+     * List front-end public registered users
+     */
+    @GetMapping("/public-users")
+    public ResponseEntity<?> listPublicUsers() {
+        List<String> adminRoles = List.of("SUPER_ADMIN", "CHIEF_EDITOR", "DISTRICT_ADMIN", "MOBILE_JOURNALIST", "INSTITUTION_LOGIN");
+        List<User> list = userRepository.findAll().stream()
+                .filter(u -> u.getRole() == null || !adminRoles.contains(u.getRole().toUpperCase()))
+                .sorted(Comparator.comparing(User::getId).reversed())
+                .collect(Collectors.toList());
+        List<Map<String, Object>> res = list.stream().map(this::toUserResponse).collect(Collectors.toList());
+        return ResponseEntity.ok(res);
+    }
+
+    @DeleteMapping("/public-users/{id}")
+    public ResponseEntity<?> deletePublicUser(@PathVariable Long id) {
+        if (!userRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        userRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("message", "Public user deleted successfully"));
+    }
+
+    @PutMapping("/administrators/{id}/reset-password")
+    public ResponseEntity<?> resetPassword(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        String newPassword = body.get("password");
+        if (newPassword == null || newPassword.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "password is required"));
+        }
+        return userRepository.findById(id).map(user -> {
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+            return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
+        }).orElse(ResponseEntity.notFound().build());
+    }
 
     /**
      * List all users with optional filters
@@ -112,13 +162,24 @@ public class AdminUserController {
                     .body(Map.of("message", "Email is already registered"));
         }
 
-        // Check caller's permissions: Chief Editor can only create DA and MJ
+        // Check caller's permissions hierarchy:
         String callerRole = getCallerRole();
+        Long callerId = getCallerId();
+        User caller = callerId != null ? userRepository.findById(callerId).orElse(null) : null;
+
         if (Role.CHIEF_EDITOR.equals(callerRole)) {
             if (!Role.DISTRICT_ADMIN.equals(role) && !Role.MOBILE_JOURNALIST.equals(role)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("message", "Chief Editor can only create District Admin and Mobile Journalist accounts"));
             }
+        } else if (Role.DISTRICT_ADMIN.equals(callerRole)) {
+            if (!Role.MOBILE_JOURNALIST.equals(role)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "District Admin can only create Mobile Journalist accounts for their district"));
+            }
+        } else if (!Role.SUPER_ADMIN.equals(callerRole)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Your role is not authorized to create admin accounts"));
         }
 
         User user = new User();
@@ -136,6 +197,17 @@ public class AdminUserController {
             user.setWebsiteUrl((String) request.get("websiteUrl"));
         if (request.containsKey("location"))
             user.setLocation((String) request.get("location"));
+        if (request.containsKey("gpScope"))
+            user.setGpScope((String) request.get("gpScope"));
+        if (request.containsKey("institutionName"))
+            user.setInstitutionName((String) request.get("institutionName"));
+
+        // If District Admin is creating a Mobile Journalist, auto-assign DA's districtId
+        if (Role.DISTRICT_ADMIN.equals(callerRole) && caller != null && caller.getDistrictId() != null) {
+            user.setDistrictId(caller.getDistrictId());
+        } else if (request.containsKey("districtId") && request.get("districtId") != null) {
+            user.setDistrictId(((Number) request.get("districtId")).longValue());
+        }
 
         User saved = userRepository.save(user);
 
@@ -157,13 +229,27 @@ public class AdminUserController {
         }
 
         User user = userOpt.get();
+        String callerRole = getCallerRole();
 
         if (request.containsKey("fullName")) user.setFullName((String) request.get("fullName"));
-        if (request.containsKey("role")) user.setRole(((String) request.get("role")).toUpperCase());
+        if (request.containsKey("role")) {
+            String newRole = ((String) request.get("role")).toUpperCase();
+            if (!Role.SUPER_ADMIN.equals(callerRole) && (Role.SUPER_ADMIN.equals(newRole) || Role.CHIEF_EDITOR.equals(newRole))) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Only Super Admin can assign Super Admin or Chief Editor roles"));
+            }
+            user.setRole(newRole);
+        }
         if (request.containsKey("isActive")) user.setIsActive((Boolean) request.get("isActive"));
         if (request.containsKey("phoneNumber")) user.setPhoneNumber((String) request.get("phoneNumber"));
         if (request.containsKey("websiteUrl")) user.setWebsiteUrl((String) request.get("websiteUrl"));
         if (request.containsKey("location")) user.setLocation((String) request.get("location"));
+        if (request.containsKey("districtId")) {
+            user.setDistrictId(request.get("districtId") != null ? ((Number) request.get("districtId")).longValue() : null);
+        }
+        if (request.containsKey("gpScope")) user.setGpScope((String) request.get("gpScope"));
+        if (request.containsKey("institutionName")) user.setInstitutionName((String) request.get("institutionName"));
+
         if (request.containsKey("password")) {
             user.setPassword(passwordEncoder.encode((String) request.get("password")));
         }
@@ -296,6 +382,9 @@ public class AdminUserController {
         map.put("phoneNumber", user.getPhoneNumber());
         map.put("websiteUrl", user.getWebsiteUrl());
         map.put("location", user.getLocation());
+        map.put("districtId", user.getDistrictId());
+        map.put("gpScope", user.getGpScope());
+        map.put("institutionName", user.getInstitutionName());
         return map;
     }
 

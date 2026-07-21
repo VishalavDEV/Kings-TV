@@ -13,7 +13,11 @@ import com.kingstv.models.Company;
 import com.kingstv.repository.ObituaryFrameTemplateRepository;
 import com.kingstv.models.ObituaryFrameTemplate;
 
+import com.kingstv.models.Permission;
+import com.kingstv.models.Role;
 import com.kingstv.models.User;
+import com.kingstv.repository.PermissionRepository;
+import com.kingstv.repository.RoleRepository;
 import com.kingstv.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -22,7 +26,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @SpringBootApplication
 @EnableCaching
@@ -56,6 +61,12 @@ public class BackendJavaApplication implements CommandLineRunner {
     @Autowired
     private CompanyRepository companyRepository;
 
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private PermissionRepository permissionRepository;
+
     public static void main(String[] args) {
         System.setOut(new com.kingstv.services.MaskingPrintStream(System.out, System.out));
         System.setErr(new com.kingstv.services.MaskingPrintStream(System.err, System.err));
@@ -64,12 +75,10 @@ public class BackendJavaApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        updatePasswordIfPresent("admin@king24x7.com", "admin123");
-        updatePasswordIfPresent("vendor@king24x7.com", "vendor123");
-        updatePasswordIfPresent("editor@king24x7.com", "editor123");
-        updatePasswordIfPresent("reporter@king24x7.com", "reporter123");
-        updatePasswordIfPresent("user@king24x7.com", "user123");
+        ensureAdminUser("admin@king24x7.com", "admin123");
+        ensureAdminUser("admin@kingstv.com", "admin123");
 
+        seedRolesAndPermissions();
         seedCategories();
         seedFrameTemplates();
         seedObituaryFrameTemplates();
@@ -122,14 +131,22 @@ public class BackendJavaApplication implements CommandLineRunner {
         wishFrameTemplateRepository.save(t);
     }
 
-    private void updatePasswordIfPresent(String email, String rawPassword) {
+    private void ensureAdminUser(String email, String rawPassword) {
         Optional<User> userOpt = userRepository.findByEmail(email);
+        User user;
         if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            user.setPassword(passwordEncoder.encode(rawPassword));
-            userRepository.save(user);
-            System.out.println("Updated password for " + email);
+            user = userOpt.get();
+        } else {
+            user = new User();
+            user.setEmail(email);
+            user.setFullName("Super Administrator");
+            user.setCreatedAt(java.time.LocalDateTime.now());
         }
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        user.setRole("SUPER_ADMIN");
+        user.setIsActive(true);
+        userRepository.save(user);
+        System.out.println("Admin credentials ensured for " + email + " with password: " + rawPassword);
     }
 
 
@@ -251,6 +268,207 @@ public class BackendJavaApplication implements CommandLineRunner {
         s.setName(name);
         s.setSlug(slug);
         classifiedSubcategoryRepository.save(s);
+    }
+
+    /**
+     * Seeds the 6-tier role hierarchy and all permissions.
+     * Idempotent — skips permissions/roles that already exist.
+     */
+    private void seedRolesAndPermissions() {
+        // ── 1. Seed all permissions ──────────────────────────────────────
+        String[][] allPermissions = {
+            // {name, description, module}
+            // User Management
+            {"user:create",          "Create user accounts",             "User Management"},
+            {"user:read",            "View user accounts",              "User Management"},
+            {"user:update",          "Edit user accounts",              "User Management"},
+            {"user:delete",          "Delete user accounts",            "User Management"},
+            {"user:suspend",         "Suspend user accounts",           "User Management"},
+            // Content
+            {"article:create",       "Create articles/posts",           "Content"},
+            {"article:read",         "View articles/posts",             "Content"},
+            {"article:update",       "Edit articles/posts",             "Content"},
+            {"article:delete",       "Delete articles/posts",           "Content"},
+            {"article:publish",      "Publish articles/posts",          "Content"},
+            {"article:review",       "Review submitted articles",       "Content"},
+            {"article:unpublish",    "Unpublish articles (soft-delete)","Content"},
+            // Moderation
+            {"content:review",       "Review content queue",            "Moderation"},
+            {"ugc:review",           "Review user-generated content",   "Moderation"},
+            {"profanity:manage",     "Manage profanity filter",         "Moderation"},
+            {"profanity:view_reports","View profanity reports",         "Moderation"},
+            // Layout
+            {"home_layout:manage",      "Manage home page layout",     "Layout"},
+            {"home_layout:delegated",   "Delegated layout access",     "Layout"},
+            {"mobile_app_layout:manage","Manage mobile app layout",    "Layout"},
+            // Notifications
+            {"push_notification:send",  "Send push notifications",     "Notifications"},
+            // Polls & Surveys
+            {"survey:manage",        "Manage polls and surveys",        "Polls"},
+            // Analytics
+            {"analytics:view",       "View full analytics",             "Analytics"},
+            {"analytics:district_only","View district-scoped analytics","Analytics"},
+            // System
+            {"config:read",          "Read system configuration",       "System"},
+            {"config:write",         "Write system configuration",      "System"},
+            {"audit:view",           "View audit logs",                 "System"},
+            {"seo_config:manage",    "Manage SEO configuration",        "System"},
+            {"sitemap:manage",       "Manage sitemap",                  "System"},
+            {"taxonomy:manage",      "Manage taxonomy/tags",            "System"},
+            {"font:manage",          "Manage font configuration",       "System"},
+            {"webstore:manage",      "Manage webstore",                 "System"},
+            // Journalist management
+            {"journalist:create",    "Create journalist accounts",      "Journalist"},
+            {"journalist:update",    "Update journalist accounts",      "Journalist"},
+            {"journalist:suspend",   "Suspend journalist accounts",     "Journalist"},
+            // AI
+            {"ai_rewriter:use",      "Use AI content rewriter",         "AI Tools"},
+            // Module-key permissions (sidebar visibility)
+            {"admin_panel",          "Access admin dashboard",          "Modules"},
+            {"add_post",             "Access add post page",            "Modules"},
+            {"manage_all_posts",     "Access all posts management",     "Modules"},
+            {"navigation",           "Access navigation management",    "Modules"},
+            {"pages",                "Access pages management",         "Modules"},
+            {"rss_feeds",            "Access RSS feeds management",     "Modules"},
+            {"categories",           "Access categories management",    "Modules"},
+            {"widgets",              "Access widgets management",       "Modules"},
+            {"polls",                "Access polls management",         "Modules"},
+            {"gallery",              "Access gallery management",       "Modules"},
+            {"comments",             "Access comments management",      "Modules"},
+            {"contact_messages",     "Access contact messages",         "Modules"},
+            {"newsletter",           "Access newsletter management",    "Modules"},
+            {"reward_system",        "Access reward system",            "Modules"},
+            {"ad_spaces",            "Access ad spaces management",     "Modules"},
+            {"users",                "Access user management",          "Modules"},
+            {"roles_permissions",    "Access roles & permissions",      "Modules"},
+            {"seo_tools",            "Access SEO tools",                "Modules"},
+            {"social_login",         "Access social login config",      "Modules"},
+            {"languages",            "Access language management",      "Modules"},
+            {"settings",             "Access system settings",          "Modules"},
+            {"content_review",       "Access content review queue",     "Modules"},
+            {"my_content",           "Access own content management",   "Modules"},
+        };
+
+        Map<String, Permission> permMap = new HashMap<>();
+        for (String[] p : allPermissions) {
+            Permission perm = permissionRepository.findByName(p[0]).orElse(null);
+            if (perm == null) {
+                perm = new Permission(p[0], p[1], p[2]);
+                perm = permissionRepository.save(perm);
+            }
+            permMap.put(p[0], perm);
+        }
+        System.out.println("Permissions seeded: " + permMap.size() + " total");
+
+        // ── 2. Seed roles with default permission sets ───────────────────
+        // Helper: resolve permission names to Permission entities
+        java.util.function.Function<String[], Set<Permission>> resolve = names -> {
+            Set<Permission> set = new HashSet<>();
+            for (String n : names) {
+                Permission pm = permMap.get(n);
+                if (pm != null) set.add(pm);
+            }
+            return set;
+        };
+
+        // ── SUPER_ADMIN: all permissions ──
+        seedRole(Role.SUPER_ADMIN, "Full system access",
+            resolve.apply(permMap.keySet().toArray(new String[0])));
+
+        // ── CHIEF_EDITOR ──
+        seedRole(Role.CHIEF_EDITOR, "Full content management, user management for DA/MJ, content review, push notifications, polls, full analytics",
+            resolve.apply(new String[]{
+                // Content
+                "article:create", "article:read", "article:update", "article:delete",
+                "article:publish", "article:review", "article:unpublish",
+                // User management (DA + MJ only, enforced in controller)
+                "user:create", "user:read", "user:update", "user:suspend",
+                // Moderation
+                "content:review", "ugc:review", "profanity:manage", "profanity:view_reports",
+                // Layout
+                "home_layout:manage", "home_layout:delegated", "mobile_app_layout:manage",
+                // Notifications
+                "push_notification:send",
+                // Polls
+                "survey:manage",
+                // Analytics (full)
+                "analytics:view",
+                // Taxonomy
+                "taxonomy:manage",
+                // AI
+                "ai_rewriter:use",
+                // Journalist management
+                "journalist:create", "journalist:update", "journalist:suspend",
+                // Config (read only)
+                "config:read", "audit:view",
+                // Module keys
+                "admin_panel", "add_post", "manage_all_posts", "navigation", "pages",
+                "rss_feeds", "categories", "widgets", "polls", "gallery", "comments",
+                "contact_messages", "newsletter", "reward_system", "ad_spaces",
+                "users", "content_review", "my_content", "languages"
+            }));
+
+        // ── DISTRICT_ADMIN ──
+        seedRole(Role.DISTRICT_ADMIN, "District-scoped content and journalist management",
+            resolve.apply(new String[]{
+                // Content (district-scoped, enforced in controller)
+                "article:create", "article:read", "article:update", "article:unpublish",
+                "article:review",
+                // Journalist management (own district only)
+                "journalist:create", "journalist:update", "journalist:suspend",
+                "user:create", "user:read", "user:update", "user:suspend",
+                // Moderation (district-scoped)
+                "content:review", "ugc:review",
+                // Analytics (district only)
+                "analytics:district_only",
+                // AI
+                "ai_rewriter:use",
+                // Module keys
+                "admin_panel", "add_post", "manage_all_posts",
+                "content_review", "my_content", "users", "comments", "gallery"
+            }));
+
+        // ── MOBILE_JOURNALIST ──
+        seedRole(Role.MOBILE_JOURNALIST, "Can create/submit news posts only",
+            resolve.apply(new String[]{
+                "article:create", "article:read", "article:update",
+                "ai_rewriter:use",
+                // Module keys
+                "admin_panel", "add_post", "my_content"
+            }));
+
+        // ── INSTITUTION_LOGIN ──
+        seedRole(Role.INSTITUTION_LOGIN, "Institutional news posting account",
+            resolve.apply(new String[]{
+                "article:create", "article:read", "article:update",
+                "ai_rewriter:use",
+                // Module keys
+                "admin_panel", "add_post", "my_content"
+            }));
+
+        // ── READER ──
+        seedRole(Role.READER, "Public front-end user, no admin access",
+            new HashSet<>());
+
+        System.out.println("Roles and permissions seeded successfully.");
+    }
+
+    private void seedRole(String name, String description, Set<Permission> permissions) {
+        Role role = roleRepository.findByName(name).orElse(null);
+        if (role == null) {
+            role = new Role(name, description);
+            role.setPermissions(permissions);
+            roleRepository.save(role);
+            System.out.println("  Created role: " + name + " with " + permissions.size() + " permissions");
+        } else {
+            // Update permissions if role already exists but permissions changed
+            if (role.getPermissions().size() != permissions.size()) {
+                role.setPermissions(permissions);
+                role.setDescription(description);
+                roleRepository.save(role);
+                System.out.println("  Updated role: " + name + " to " + permissions.size() + " permissions");
+            }
+        }
     }
 }
 

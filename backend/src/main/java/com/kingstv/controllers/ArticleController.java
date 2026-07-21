@@ -85,12 +85,11 @@ public class ArticleController {
 
     @GetMapping("/public/institution-news")
     public List<Article> getInstitutionNews() {
-        List<User> institutions = userRepository.findByRole("INSTITUTION_LOGIN");
-        List<String> names = institutions.stream().map(User::getFullName).toList();
-        if (names.isEmpty()) {
-            return articleRepository.findTop50ByStatusOrderByPublishedAtDesc("published").stream().limit(6).toList();
-        }
-        return articleRepository.findByAuthorNameInAndStatusOrderByPublishedAtDesc(names, "published");
+        return articleRepository.findBySourceAndStatus(
+            "institution",
+            "published",
+            org.springframework.data.domain.PageRequest.of(0, 10, org.springframework.data.domain.Sort.by("publishedAt").descending())
+        ).getContent();
     }
 
     @GetMapping("/{idOrSlug}")

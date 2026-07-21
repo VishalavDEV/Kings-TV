@@ -54,16 +54,17 @@ const CrowdReportForm = () => {
     setSubmitting(true);
     setSubmitSuccess(false);
 
-    fetchApi('/report-news/saveUpdate', {
+    fetch('http://localhost:8080/api/public/submissions', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        reporterName,
-        reporterContact,
+        submitterName: reporterName,
+        submitterEmail: reporterContact,
         title: reportTitle,
-        details: reportDetails,
+        content: reportDetails,
         imageUrl: reportImageUrl || null,
         videoUrl: reportVideoUrl || null,
-        status: 'pending'
+        source: 'reader'
       })
     })
     .then(() => {
