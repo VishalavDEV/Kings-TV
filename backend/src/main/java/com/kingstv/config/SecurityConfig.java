@@ -45,6 +45,8 @@ public class SecurityConfig {
                     "/",
                     "/api/v1/auth/**", 
                     "/api/auth/**",
+                    "/api/admin/auth/login",
+                    "/api/admin/auth/refresh",
                     "/uploads/**",
                     "/api/v1/health", 
                     "/api/v1/breaking-news", "/api/v1/breaking-news/**",
@@ -88,6 +90,7 @@ public class SecurityConfig {
                     "/"
                 ).permitAll()
                 // Admin portal endpoints require authentication
+                .requestMatchers("/api/admin/**").authenticated()
                 .requestMatchers("/api/v1/admin/**").authenticated()
                 .anyRequest().authenticated()
             )

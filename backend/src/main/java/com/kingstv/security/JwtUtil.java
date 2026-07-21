@@ -33,7 +33,7 @@ public class JwtUtil {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
         claims.put("userId", userId);
-        return createToken(claims, username);
+        return createToken(claims, username, 1000L * 60 * 60 * 10); // 10h for public users
     }
 
     /**
@@ -44,17 +44,33 @@ public class JwtUtil {
         claims.put("role", role);
         claims.put("userId", userId);
         claims.put("permissions", permissions);
-        return createToken(claims, username);
+        return createToken(claims, username, 1000L * 60 * 60 * 10);
     }
 
-    private String createToken(Map<String, Object> claims, String subject) {
+    /**
+     * Admin-specific token with 24h expiry and module-key permissions.
+     */
+    public String generateAdminToken(String username, String role, Long userId, List<String> moduleKeys) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role);
+        claims.put("userId", userId);
+        claims.put("permissions", moduleKeys);
+        claims.put("isAdmin", true);
+        return createToken(claims, username, 1000L * 60 * 60 * 24); // 24h for admin
+    }
+
+    private String createToken(Map<String, Object> claims, String subject, long expiryMs) {
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
+                .setExpiration(new Date(System.currentTimeMillis() + expiryMs))
                 .signWith(key)
                 .compact();
+    }
+
+    private String createToken(Map<String, Object> claims, String subject) {
+        return createToken(claims, subject, 1000L * 60 * 60 * 10);
     }
 
     public Boolean validateToken(String token, String username) {

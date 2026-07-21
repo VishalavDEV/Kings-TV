@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../utils/axios';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -10,6 +11,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,16 +19,17 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await axiosInstance.post('/auth/login', { email, password });
-      const token = res.data.token || res.data.jwt;
+      const res = await axiosInstance.post('/api/admin/auth/login', { email, password });
+      const { token, user } = res.data;
       if (token) {
-        localStorage.setItem('admin_jwt_token', token);
+        login(user, token);
         navigate('/');
       } else {
         setError('Invalid response from server');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Check your credentials.');
+      const msg = err.response?.data?.message;
+      setError(msg || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -37,7 +40,7 @@ export default function Login() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <div className="w-16 h-16 rounded-2xl bg-[#B3732A] flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#B3732A]/30">
             <span className="text-2xl font-bold text-white">K</span>
           </div>
           <h1 className="text-2xl font-bold text-white">Kings TV Admin</h1>
@@ -45,11 +48,12 @@ export default function Login() {
         </div>
 
         {/* Login Card */}
-        <div className="card p-8">
+        <div className="bg-white rounded-2xl shadow-2xl p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm border border-red-100">
-                {error}
+              <div className="flex items-start gap-3 bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm border border-red-100">
+                <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                <span>{error}</span>
               </div>
             )}
 
@@ -57,10 +61,11 @@ export default function Login() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
               <input
                 type="email"
+                id="login-email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="input-field"
-                placeholder="admin@king24x7.com"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B3732A]/20 focus:border-[#B3732A] transition-all"
+                placeholder="admin@kingstv.com"
                 required
               />
             </div>
@@ -70,9 +75,10 @@ export default function Login() {
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  id="login-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input-field pr-10"
+                  className="w-full px-4 py-2.5 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B3732A]/20 focus:border-[#B3732A] transition-all"
                   placeholder="Enter your password"
                   required
                 />
@@ -88,8 +94,9 @@ export default function Login() {
 
             <button
               type="submit"
+              id="login-submit"
               disabled={loading}
-              className="btn-primary w-full flex items-center justify-center gap-2 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 py-3 bg-[#B3732A] hover:bg-[#9c6323] text-white rounded-lg font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

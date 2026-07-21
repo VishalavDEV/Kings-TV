@@ -1,12 +1,12 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080/api/v1';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
 
 const axiosInstance = axios.create({
   baseURL: API_BASE,
 });
 
-// Add a request interceptor to attach the JWT token
+// Attach JWT to every request
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('admin_jwt_token');
@@ -18,12 +18,11 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Add a response interceptor to handle 401 Unauthorized
+// Auto-redirect on 401
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Clear token and redirect to login if unauthorized
       localStorage.removeItem('admin_jwt_token');
       window.location.href = '/login';
     }

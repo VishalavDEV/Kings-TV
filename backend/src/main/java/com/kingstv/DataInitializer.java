@@ -161,6 +161,12 @@ public class DataInitializer {
 
         seedAdvertisements();
 
+        // Seed the 21 admin portal module-key permissions
+        seedModulePermissions();
+
+        // Seed default SUPER_ADMIN user if none exists
+        seedDefaultAdminUser();
+
         if (categoryRepository.count() > 0) {
             System.out.println("Database already has data. Skipping database seeding to preserve dynamic data.");
             return;
@@ -863,4 +869,101 @@ public class DataInitializer {
         menu.setIsActive(true);
         return navigationMenuRepository.save(menu);
     }
+
+    /**
+     * Seeds the 21 admin portal module-key permissions into the permissions table.
+     * These are the sidebar section keys used by the RBAC system.
+     * Safe to run on every startup — skips any that already exist.
+     */
+    private void seedModulePermissions() {
+        String[][] modulePerms = {
+            {"admin_panel",        "Access to admin dashboard",              "admin"},
+            {"add_post",           "Can create new posts/articles",          "content"},
+            {"manage_all_posts",   "Can view/edit/delete all posts",         "content"},
+            {"navigation",         "Can manage navigation menus",            "site"},
+            {"pages",              "Can manage static pages",                "site"},
+            {"rss_feeds",          "Can manage RSS feed settings",           "site"},
+            {"categories",         "Can manage categories and tags",         "content"},
+            {"widgets",            "Can manage sidebar/footer widgets",      "site"},
+            {"polls",              "Can manage polls and surveys",           "engagement"},
+            {"gallery",            "Can manage photo/video gallery",         "media"},
+            {"comments",           "Can moderate comments",                  "engagement"},
+            {"contact_messages",   "Can view contact form submissions",      "communication"},
+            {"newsletter",         "Can manage newsletter subscribers",      "communication"},
+            {"reward_system",      "Can manage reward points system",        "engagement"},
+            {"ad_spaces",          "Can manage advertisement slots",         "monetization"},
+            {"users",              "Can manage admin and public users",      "administration"},
+            {"roles_permissions",  "Can manage roles and permissions",       "administration"},
+            {"seo_tools",          "Can manage SEO settings and meta tags",  "seo"},
+            {"social_login",       "Can manage social login providers",      "settings"},
+            {"languages",          "Can manage site languages",              "settings"},
+            {"settings",           "Can access system settings",             "settings"},
+        };
+
+        for (String[] perm : modulePerms) {
+            try {
+                if (permissionRepository.findByName(perm[0]).isEmpty()) {
+                    permissionRepository.save(new Permission(perm[0], perm[1], perm[2]));
+                    System.out.println("Seeded module permission: " + perm[0]);
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to seed permission " + perm[0] + ": " + e.getMessage());
+            }
+        }
+
+        // Assign all module permissions to SUPER_ADMIN role
+        try {
+            Role superAdmin = roleRepository.findByName("SUPER_ADMIN").orElseGet(() -> {
+                Role r = new Role("SUPER_ADMIN", "Full system access");
+                return roleRepository.save(r);
+            });
+
+            java.util.Set<Permission> allModulePerms = new java.util.HashSet<>();
+            for (String[] perm : modulePerms) {
+                permissionRepository.findByName(perm[0]).ifPresent(allModulePerms::add);
+            }
+            // Merge with existing permissions
+            allModulePerms.addAll(superAdmin.getPermissions());
+            superAdmin.setPermissions(allModulePerms);
+            roleRepository.save(superAdmin);
+            System.out.println("SUPER_ADMIN role updated with all module permissions.");
+        } catch (Exception e) {
+            System.err.println("Failed to update SUPER_ADMIN role: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Seeds a default SUPER_ADMIN user if no admin users exist.
+     * Credentials: admin@kingstv.com / Admin@123
+     * Change the password immediately after first login!
+     */
+    private void seedDefaultAdminUser() {
+        try {
+            boolean hasAdmin = userRepository.findAll().stream()
+                .anyMatch(u -> "SUPER_ADMIN".equals(u.getRole()));
+
+            if (!hasAdmin) {
+                User admin = new User();
+                admin.setFullName("Super Admin");
+                admin.setUsername("super_admin");
+                admin.setEmail("admin@kingstv.com");
+                String encodedPw = passwordEncoder.encode("Admin@123");
+                admin.setPassword(encodedPw);
+                admin.setPasswordHash(encodedPw);
+                admin.setRole("SUPER_ADMIN");
+                admin.setProvider("LOCAL");
+                admin.setIsVerified(true);
+                admin.setIsActive(true);
+                userRepository.save(admin);
+                System.out.println("=================================================");
+                System.out.println("Default admin user created: admin@kingstv.com");
+                System.out.println("Default password: Admin@123");
+                System.out.println("PLEASE CHANGE THIS PASSWORD AFTER FIRST LOGIN!");
+                System.out.println("=================================================");
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to seed default admin user: " + e.getMessage());
+        }
+    }
 }
+
