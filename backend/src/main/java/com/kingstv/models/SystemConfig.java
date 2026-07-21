@@ -72,6 +72,8 @@ public class SystemConfig {
     public static final String TELEGRAM_BOT_TOKEN = "telegram.bot_token";
     public static final String TELEGRAM_CHAT_ID = "telegram.chat_id";
     public static final String TELEGRAM_ENABLED = "telegram.enabled";
+    public static final String GA4_PROPERTY_ID = "ga4.property_id";
+    public static final String GA4_SERVICE_ACCOUNT = "ga4.service_account";
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

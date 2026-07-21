@@ -79,4 +79,26 @@ public class VideoTranscoderService {
             return null;
         }
     }
+
+    public double getVideoDuration(File file) {
+        String[] cmd = {
+            "ffprobe",
+            "-v", "error",
+            "-show_entries", "format=duration",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            file.getAbsolutePath()
+        };
+        try {
+            ProcessBuilder pb = new ProcessBuilder(cmd);
+            Process process = pb.start();
+            java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()));
+            String line = reader.readLine();
+            if (line != null && !line.trim().isEmpty()) {
+                return Double.parseDouble(line.trim());
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Failed to get video duration via ffprobe: " + e.getMessage());
+        }
+        return -1.0;
+    }
 }

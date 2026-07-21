@@ -117,7 +117,16 @@ export const fetchApi = async (endpoint, options = {}) => {
     });
 
     if (!response.ok) {
-      throw new Error(`API error: ${response.statusText}`);
+      let errMsg = `API error: ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        if (errorData && errorData.error) {
+          errMsg = errorData.error;
+        } else if (errorData && errorData.message) {
+          errMsg = errorData.message;
+        }
+      } catch (e) {}
+      throw new Error(errMsg);
     }
 
     const data = await response.json();

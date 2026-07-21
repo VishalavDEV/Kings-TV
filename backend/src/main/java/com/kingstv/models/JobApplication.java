@@ -48,6 +48,15 @@ public class JobApplication {
     @Column(columnDefinition = "TEXT")
     private String summary;
 
+    @Column(name = "applicant_email")
+    private String applicantEmail;
+
+    @Column(name = "resume_file")
+    private String resumeFile;
+
+    @Column(name = "cover_note", columnDefinition = "TEXT")
+    private String coverNote;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -86,4 +95,11 @@ public class JobApplication {
 
     public String getSummary() { return summary; }
     public void setSummary(String summary) { this.summary = summary; }
+
+    public String getApplicantEmail() { return applicantEmail; }
+    public void setApplicantEmail(String applicantEmail) { this.applicantEmail = applicantEmail; }
+    public String getResumeFile() { return resumeFile; }
+    public void setResumeFile(String resumeFile) { this.resumeFile = resumeFile; }
+    public String getCoverNote() { return coverNote; }
+    public void setCoverNote(String coverNote) { this.coverNote = coverNote; }
 }

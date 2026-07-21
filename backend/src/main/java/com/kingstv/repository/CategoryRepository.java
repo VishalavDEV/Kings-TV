@@ -16,4 +16,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long>, JpaSp
     boolean existsByNameAndLanguageAndIdNot(String name, String language, Long id);
     boolean existsBySlug(String slug);
     boolean existsBySlugAndIdNot(String slug, Long id);
+    boolean existsBySlugAndLanguage(String slug, String language);
+    boolean existsBySlugAndLanguageAndIdNot(String slug, String language, Long id);
 }

@@ -3,6 +3,85 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { fetchApi } from '../../utils/api';
 import './AddPost.css';
 
+const HtmlToolbar = ({ targetField, setFormData }) => {
+  const insertTag = (openTag, closeTag = '') => {
+    const el = document.getElementById(targetField);
+    if (!el) return;
+    
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const text = el.value;
+    const selected = text.substring(start, end);
+    const replacement = openTag + selected + closeTag;
+    
+    const newValue = text.substring(0, start) + replacement + text.substring(end);
+    
+    setFormData(prev => ({
+      ...prev,
+      [targetField]: newValue
+    }));
+    
+    setTimeout(() => {
+      el.focus();
+      el.setSelectionRange(start + openTag.length, start + openTag.length + selected.length);
+    }, 0);
+  };
+
+  return (
+    <div className="html-editor-toolbar">
+      <button type="button" title="Bold" onClick={() => insertTag('<strong>', '</strong>')}>
+        <i className="fa-solid fa-bold"></i>
+      </button>
+      <button type="button" title="Italic" onClick={() => insertTag('<em>', '</em>')}>
+        <i className="fa-solid fa-italic"></i>
+      </button>
+      <button type="button" title="Underline" onClick={() => insertTag('<u>', '</u>')}>
+        <i className="fa-solid fa-underline"></i>
+      </button>
+      <button type="button" title="Strikethrough" onClick={() => insertTag('<s>', '</s>')}>
+        <i className="fa-solid fa-strikethrough"></i>
+      </button>
+      <span className="toolbar-separator">|</span>
+      <button type="button" title="Align Left" onClick={() => insertTag('<div style="text-align: left">', '</div>')}>
+        <i className="fa-solid fa-align-left"></i>
+      </button>
+      <button type="button" title="Align Center" onClick={() => insertTag('<div style="text-align: center">', '</div>')}>
+        <i className="fa-solid fa-align-center"></i>
+      </button>
+      <button type="button" title="Align Right" onClick={() => insertTag('<div style="text-align: right">', '</div>')}>
+        <i className="fa-solid fa-align-right"></i>
+      </button>
+      <span className="toolbar-separator">|</span>
+      <button type="button" title="Bullet List" onClick={() => insertTag('<ul>\n  <li>', '</li>\n</ul>')}>
+        <i className="fa-solid fa-list-ul"></i>
+      </button>
+      <button type="button" title="Numbered List" onClick={() => insertTag('<ol>\n  <li>', '</li>\n</ol>')}>
+        <i className="fa-solid fa-list-ol"></i>
+      </button>
+      <button type="button" title="Table" onClick={() => insertTag('<table border="1">\n  <tr>\n    <th>Header 1</th>\n    <th>Header 2</th>\n  </tr>\n  <tr>\n    <td>Cell 1</td>\n    <td>Cell 2</td>\n  </tr>\n</table>')}>
+        <i className="fa-solid fa-table"></i>
+      </button>
+      <span className="toolbar-separator">|</span>
+      <button type="button" title="Heading 2" onClick={() => insertTag('<h2>', '</h2>')}>H2</button>
+      <button type="button" title="Heading 3" onClick={() => insertTag('<h3>', '</h3>')}>H3</button>
+      <button type="button" title="Heading 4" onClick={() => insertTag('<h4>', '</h4>')}>H4</button>
+      <span className="toolbar-separator">|</span>
+      <button type="button" title="Insert Link" onClick={() => {
+        const url = prompt('Enter URL:');
+        if (url) insertTag(`<a href="${url}" target="_blank">`, '</a>');
+      }}>
+        <i className="fa-solid fa-link"></i>
+      </button>
+      <button type="button" title="Insert Image" onClick={() => {
+        const url = prompt('Enter Image URL:');
+        if (url) insertTag(`<img src="${url}" alt="image" style="max-width:100%;" />`);
+      }}>
+        <i className="fa-solid fa-image"></i>
+      </button>
+    </div>
+  );
+};
+
 const EditPost = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -36,6 +115,8 @@ const EditPost = () => {
     showOnlyRegistered: false,
     optionalUrl: '',
     content: '',
+    imageUrl: '',
+    featuredImageUrl: '',
     language: 'ta',
     categoryId: '',
     subcategoryId: '',
@@ -91,6 +172,7 @@ const EditPost = () => {
         let displayFormat = 'article';
         if (formatType === 'gallery') displayFormat = 'gallery';
         else if (formatType === 'sorted_list') displayFormat = 'list';
+        else if (formatType === 'page') displayFormat = 'page';
         else if (formatType === 'video') displayFormat = 'video';
         else if (formatType === 'audio') displayFormat = 'audio';
         else if (formatType === 'trivia_quiz') displayFormat = 'trivia';
@@ -114,6 +196,8 @@ const EditPost = () => {
           showOnlyRegistered: articleData.showOnlyRegistered || false,
           optionalUrl: articleData.optionalUrl || '',
           content: articleData.content || articleData.contentTa || articleData.contentEn || '',
+          imageUrl: articleData.imageUrl || articleData.featuredImageUrl || '',
+          featuredImageUrl: articleData.featuredImageUrl || articleData.imageUrl || '',
           language: articleData.language || 'ta',
           categoryId: articleData.categoryId || '',
           subcategoryId: articleData.subcategoryId || '',
@@ -220,17 +304,70 @@ const EditPost = () => {
     setIsSubmitting(true);
 
     try {
-      const status = saveAsDraft 
-        ? 'DRAFT' 
-        : (formData.isScheduled && formData.scheduledAt ? 'SCHEDULED' : 'PUBLISHED');
-
+      if (!formData.title || !formData.title.trim()) {
+        setErrorMsg('Post Title is required.');
+        setIsSubmitting(false);
+        return;
+      }
+      if (!formData.categoryId) {
+        setErrorMsg('Category is required.');
+        setIsSubmitting(false);
+        return;
+      }
+      
       let postType = 'ARTICLE';
       if (selectedFormat === 'gallery') postType = 'GALLERY';
       else if (selectedFormat === 'list') postType = 'SORTED_LIST';
+      else if (selectedFormat === 'page') postType = 'PAGE';
       else if (selectedFormat === 'video') postType = 'VIDEO';
       else if (selectedFormat === 'audio') postType = 'AUDIO';
       else if (selectedFormat === 'trivia') postType = 'TRIVIA_QUIZ';
       else if (selectedFormat === 'personality') postType = 'PERSONALITY_QUIZ';
+
+      if (['article', 'gallery', 'list', 'page'].includes(selectedFormat)) {
+        if (!formData.imageUrl && !formData.featuredImageUrl) {
+          setErrorMsg(`Main post image or featured image URL is required for ${selectedFormat} format.`);
+          setIsSubmitting(false);
+          return;
+        }
+      } else if (selectedFormat === 'video') {
+        if (!videoData.videoUrl && !videoData.videoEmbedCode) {
+          setErrorMsg('A video file/URL or video embed code is required for video format.');
+          setIsSubmitting(false);
+          return;
+        }
+      } else if (selectedFormat === 'audio') {
+        const hasTrack = audioTracks.some(track => track.fileUrl && track.fileUrl.trim());
+        if (!hasTrack) {
+          setErrorMsg('At least one audio track URL is required for audio format.');
+          setIsSubmitting(false);
+          return;
+        }
+      } else if (['trivia', 'personality'].includes(selectedFormat)) {
+        if (!quizQuestions || quizQuestions.length < 1) {
+          setErrorMsg('At least one question block is required for quiz format.');
+          setIsSubmitting(false);
+          return;
+        }
+        for (let i = 0; i < quizQuestions.length; i++) {
+          const q = quizQuestions[i];
+          if (!q.answers || q.answers.length < 2) {
+            setErrorMsg(`Question #${i + 1} requires at least 2 choice options.`);
+            setIsSubmitting(false);
+            return;
+          }
+          const hasEmptyAnswer = q.answers.some(ans => !ans.text || !ans.text.trim());
+          if (hasEmptyAnswer) {
+            setErrorMsg(`Please fill in all choices for Question #${i + 1}.`);
+            setIsSubmitting(false);
+            return;
+          }
+        }
+      }
+
+      const status = saveAsDraft 
+        ? 'DRAFT' 
+        : (formData.isScheduled && formData.scheduledAt ? 'SCHEDULED' : 'PUBLISHED');
 
       const payload = {
         ...formData,
@@ -330,11 +467,65 @@ const EditPost = () => {
               />
             </div>
 
+            {/* Image Section (upload + alternative URL) */}
+            {['article', 'gallery', 'list', 'page'].includes(selectedFormat) && (
+              <div className="form-group">
+                <label>Main Post Image *</label>
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <input
+                    type="text"
+                    name="imageUrl"
+                    value={formData.imageUrl || ''}
+                    onChange={handleInputChange}
+                    placeholder="Paste image URL alternative..."
+                    style={{ flexGrow: 1 }}
+                  />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        const file = e.target.files[0];
+                        const fData = new FormData();
+                        fData.append('file', file);
+                        try {
+                          const token = localStorage.getItem('accessToken');
+                          const response = await fetch('/api/v1/articles/upload', {
+                            method: 'POST',
+                            headers: {
+                              ...(token ? { Authorization: `Bearer ${token}` } : {})
+                            },
+                            body: fData
+                          });
+                          const data = await response.json();
+                          if (data && data.url) {
+                            setFormData(prev => ({
+                              ...prev,
+                              imageUrl: data.url,
+                              featuredImageUrl: data.url
+                            }));
+                          }
+                        } catch (err) {
+                          console.error('Upload failed:', err);
+                        }
+                      }
+                    }}
+                  />
+                </div>
+                {formData.imageUrl && (
+                  <div style={{ marginTop: '0.25rem' }}>
+                    <img src={formData.imageUrl} alt="preview" style={{ maxWidth: '150px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* --- CUSTOM FORMS BY TYPE --- */}
             
-            {selectedFormat === 'article' && (
+            {(selectedFormat === 'article' || selectedFormat === 'page') && (
               <div className="form-group">
                 <label htmlFor="content">Content *</label>
+                <HtmlToolbar targetField="content" setFormData={setFormData} />
                 <textarea
                   id="content"
                   name="content"

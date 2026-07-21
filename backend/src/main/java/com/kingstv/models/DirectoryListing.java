@@ -84,6 +84,26 @@ public class DirectoryListing {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    private String name;
+
+    @Column(name = "category_id")
+    private Long categoryId;
+
+    private String subcategory;
+    private String address;
+
+    @Column(name = "hours_json", columnDefinition = "TEXT")
+    private String hoursJson;
+
+    @Column(name = "is_verified")
+    private Boolean isVerified = false;
+
+    @Column(name = "owner_id")
+    private Long ownerId;
+
+    @Column(unique = true)
+    private String slug;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getBusinessName() { return businessName; }
@@ -145,4 +165,28 @@ public class DirectoryListing {
     public void setApprovedAt(LocalDateTime approvedAt) { this.approvedAt = approvedAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getName() { return name != null ? name : businessName; }
+    public void setName(String name) { this.name = name; if (this.businessName == null) this.businessName = name; }
+    public Long getCategoryId() { return categoryId; }
+    public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
+    public String getSubcategory() { return subcategory; }
+    public void setSubcategory(String subcategory) { this.subcategory = subcategory; }
+    public String getAddress() { return address != null ? address : (addressStreet != null ? addressStreet + ", " + addressLocality : null); }
+    public void setAddress(String address) { this.address = address; }
+    public String getHoursJson() { return hoursJson; }
+    public void setHoursJson(String hoursJson) { this.hoursJson = hoursJson; }
+    public Boolean getIsVerified() { return isVerified; }
+    public void setIsVerified(Boolean isVerified) { this.isVerified = isVerified; }
+    public Long getOwnerId() { return ownerId; }
+    public void setOwnerId(Long ownerId) { this.ownerId = ownerId; }
+    public String getSlug() { return slug; }
+    public void setSlug(String slug) { this.slug = slug; }
+
+    public String getPhone() { return phoneNumber; }
+    public void setPhone(String phone) { this.phoneNumber = phone; }
+    public String getLogo() { return logoUrl; }
+    public void setLogo(String logo) { this.logoUrl = logo; }
+    public String getCoverImage() { return coverUrl; }
+    public void setCoverImage(String coverImage) { this.coverUrl = coverImage; }
 }

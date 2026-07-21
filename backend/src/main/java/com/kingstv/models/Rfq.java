@@ -10,8 +10,20 @@ public class Rfq {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "buyer_id", nullable = false)
+    @Column(name = "buyer_id")
     private Long buyerId;
+
+    @Column(name = "buyer_name")
+    private String buyerName;
+
+    @Column(name = "buyer_contact")
+    private String buyerContact;
+
+    @Column(name = "budget_min")
+    private Double budgetMin;
+
+    @Column(name = "budget_max")
+    private Double budgetMax;
 
     @Column(nullable = false)
     private String title;
@@ -36,7 +48,7 @@ public class Rfq {
     @Column(name = "attachment_url")
     private String attachmentUrl;
 
-    @Column(nullable = false)
+    @Column(name = "deadline")
     private LocalDateTime deadline;
 
     @Column(nullable = false)
@@ -94,4 +106,16 @@ public class Rfq {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getBuyerName() { return buyerName; }
+    public void setBuyerName(String buyerName) { this.buyerName = buyerName; }
+    public String getBuyerContact() { return buyerContact; }
+    public void setBuyerContact(String buyerContact) { this.buyerContact = buyerContact; }
+    public Double getBudgetMin() { return budgetMin; }
+    public void setBudgetMin(Double budgetMin) { this.budgetMin = budgetMin; }
+    public Double getBudgetMax() { return budgetMax; }
+    public void setBudgetMax(Double budgetMax) { this.budgetMax = budgetMax; }
+
+    public String getProductOrService() { return title; }
+    public void setProductOrService(String productOrService) { this.title = productOrService; }
 }

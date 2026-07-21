@@ -16,13 +16,14 @@ import Category from './pages/Category';
 import AdvancedSearch from './pages/AdvancedSearch';
 import Videos from './pages/Videos';
 import LiveTv from './pages/LiveTv';
-import Obituaries from './pages/Obituaries';
-import Wishes from './pages/Wishes';
+import Obituaries from './pages/PublicObituaries';
+import Wishes from './pages/PublicWishes';
 import Jobs from './pages/Jobs';
 import Classifieds from './pages/Classifieds';
 import BusinessStudies from './pages/BusinessStudies';
 import Advertise from './pages/Advertise';
 import NotFound from './pages/NotFound';
+import CustomPageView from './pages/CustomPageView';
 import BizDirectoryMain from './pages/BizDirectoryMain';
 import NfcCardDashboard from './pages/NfcCardDashboard';
 import DealsListing from './pages/DealsListing';
@@ -33,7 +34,6 @@ import { fetchApi } from './utils/api';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCategories from './pages/admin/AdminCategories';
-import AdminSubcategories from './pages/admin/AdminSubcategories';
 import AddPost from './pages/admin/AddPost';
 import PostsList from './pages/admin/PostsList';
 import EditPost from './pages/admin/EditPost';
@@ -49,6 +49,25 @@ import AdminNewsletter from './pages/admin/AdminNewsletter';
 import AdminRoles from './pages/admin/AdminRoles';
 import AdminBulkPostUpload from './pages/admin/AdminBulkPostUpload';
 import AdminRssFeeds from './pages/admin/AdminRssFeeds';
+import AdminAnalytics from './pages/admin/AdminAnalytics';
+import AdminLiveStream from './pages/admin/AdminLiveStream';
+import AdminPushNotifications from './pages/admin/AdminPushNotifications';
+import AdminSettings from './pages/admin/AdminSettings';
+import AdminProfanity from './pages/admin/AdminProfanity';
+import AdminClassifieds from './pages/admin/AdminClassifieds';
+import PublicDirectory from './pages/PublicDirectory';
+import PublicDirectoryDetail from './pages/PublicDirectoryDetail';
+import AdminBusinessDirectory from './pages/admin/AdminBusinessDirectory';
+import PublicJobs from './pages/PublicJobs';
+import PublicJobDetail from './pages/PublicJobDetail';
+import AdminJobs from './pages/admin/AdminJobs';
+import PublicDeals from './pages/PublicDeals';
+import AdminDeals from './pages/admin/AdminDeals';
+import PublicNfcCard from './pages/PublicNfcCard';
+import AdminNfc from './pages/admin/AdminNfc';
+import PublicRfq from './pages/PublicRfq';
+import AdminRfq from './pages/admin/AdminRfq';
+import AdminObituariesWishes from './pages/admin/AdminObituariesWishes';
 
 function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
@@ -92,7 +111,8 @@ function AppContent() {
   const isAdminRoute = [
     '/dashboard', '/categories', '/posts', '/pages', '/navigation',
     '/themes', '/widgets', '/polls', '/gallery', '/comments',
-    '/contact-messages', '/newsletter', '/roles', '/rss-feeds'
+    '/contact-messages', '/newsletter', '/roles', '/rss-feeds', '/analytics',
+    '/push-notifications', '/livestream-settings', '/settings', '/profanity-filter', '/classifieds-manager', '/admin-directory', '/admin-jobs', '/admin-deals', '/admin-nfc', '/admin-rfq', '/admin-obituaries-wishes'
   ].some(path => location.pathname.startsWith(path)) || location.pathname === '/login';
 
   const wrapAdmin = (component) => (
@@ -115,7 +135,7 @@ function AppContent() {
           {/* Protected Admin Routes in Public Vani Panel Layout */}
           <Route path="/dashboard" element={wrapAdmin(<AdminDashboard />)} />
           <Route path="/categories" element={wrapAdmin(<AdminCategories />)} />
-          <Route path="/categories/subcategories" element={wrapAdmin(<AdminSubcategories />)} />
+          <Route path="/categories/subcategories" element={wrapAdmin(<AdminCategories />)} />
           <Route path="/posts" element={wrapAdmin(<PostsList />)} />
           <Route path="/posts/add" element={wrapAdmin(<AddPost />)} />
           <Route path="/posts/edit/:id" element={wrapAdmin(<EditPost />)} />
@@ -142,28 +162,45 @@ function AppContent() {
           <Route path="/contact-messages" element={wrapAdmin(<AdminContactMessages />)} />
           <Route path="/newsletter" element={wrapAdmin(<AdminNewsletter />)} />
           <Route path="/roles" element={wrapAdmin(<AdminRoles />)} />
+          <Route path="/analytics" element={wrapAdmin(<AdminAnalytics />)} />
+          <Route path="/push-notifications" element={wrapAdmin(<AdminPushNotifications />)} />
+          <Route path="/livestream-settings" element={wrapAdmin(<AdminLiveStream />)} />
+          <Route path="/settings" element={wrapAdmin(<AdminSettings />)} />
+          <Route path="/profanity-filter" element={wrapAdmin(<AdminProfanity />)} />
+          <Route path="/classifieds-manager" element={wrapAdmin(<AdminClassifieds />)} />
+          <Route path="/admin-directory" element={wrapAdmin(<AdminBusinessDirectory />)} />
+          <Route path="/admin-jobs" element={wrapAdmin(<AdminJobs />)} />
+          <Route path="/admin-deals" element={wrapAdmin(<AdminDeals />)} />
+          <Route path="/admin-nfc" element={wrapAdmin(<AdminNfc />)} />
+          <Route path="/admin-rfq" element={wrapAdmin(<AdminRfq />)} />
+          <Route path="/admin-obituaries-wishes" element={wrapAdmin(<AdminObituariesWishes />)} />
 
           <Route path="/index.html" element={<Navigate to="/" replace />} />
           <Route path="/login.html" element={<Navigate to="/login" replace />} />
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/directory" element={<BizDirectoryMain />} />
+          <Route path="/directory" element={<PublicDirectory />} />
+          <Route path="/directory/:slug" element={<PublicDirectoryDetail />} />
           <Route path="/directory.html" element={<Navigate to="/directory" replace />} />
           <Route path="/nfc" element={<NfcCardDashboard />} />
-          <Route path="/deals" element={<DealsListing />} />
+          <Route path="/card/:uid" element={<PublicNfcCard />} />
+          <Route path="/deals" element={<PublicDeals />} />
           <Route path="/directory-dashboard" element={<BizDirectoryDashboard />} />
           <Route path="/my-rfqs" element={<MyRfqs />} />
+          <Route path="/rfq" element={<PublicRfq />} />
           
           {/* Public News Portal Routes */}
           <Route path="/article/:id" element={<ArticleDetail />} />
           <Route path="/article/:id/*" element={<ArticleDetail />} />
           <Route path="/category/:slug" element={<Category />} />
+          <Route path="/p/:slug" element={<CustomPageView />} />
           <Route path="/search" element={<AdvancedSearch />} />
           <Route path="/videos" element={<Videos />} />
           <Route path="/live-tv" element={<LiveTv />} />
           <Route path="/obituaries" element={<Obituaries />} />
           <Route path="/wishes" element={<Wishes />} />
-          <Route path="/jobs" element={<Jobs />} />
+          <Route path="/jobs" element={<PublicJobs />} />
+          <Route path="/jobs/:id" element={<PublicJobDetail />} />
           <Route path="/classifieds" element={<Classifieds />} />
           <Route path="/business-studies" element={<BusinessStudies />} />
           <Route path="/advertise" element={<Advertise />} />

@@ -30,6 +30,9 @@ public class ReportNewsController {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private com.kingstv.services.ProfanityService profanityService;
+
     @GetMapping("/getAll")
     @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN})
     public Page<ReportNews> getAll(
@@ -62,7 +65,16 @@ public class ReportNewsController {
         if (entity.getCreatedAt() == null) {
             entity.setCreatedAt(LocalDateTime.now());
         }
+        
+        java.util.List<String> matched = profanityService.findMatchedTerms(entity.getTitle() + " " + entity.getDetails());
+        if (!matched.isEmpty()) {
+            entity.setStatus("flagged");
+        }
+
         ReportNews saved = reportNewsRepository.save(entity);
+        if (!matched.isEmpty()) {
+            profanityService.logViolation("CROWD_REPORT", saved.getId(), saved.getTitle(), matched, null, saved.getReporterContact());
+        }
         try {
             String emailText = String.format(
                 "A new crowd news report has been submitted.\n\n" +

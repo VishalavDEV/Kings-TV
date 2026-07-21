@@ -2,6 +2,7 @@ package com.kingstv.controllers.admin;
 
 import com.kingstv.models.CustomPage;
 import com.kingstv.repository.CustomPageRepository;
+import com.kingstv.services.HtmlSanitizer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,9 @@ public class AdminPageController {
 
     @Autowired
     private CustomPageRepository pageRepository;
+
+    @Autowired
+    private HtmlSanitizer htmlSanitizer;
 
     @GetMapping
     public ResponseEntity<List<CustomPage>> getAllPages() {
@@ -43,21 +47,48 @@ public class AdminPageController {
             return ResponseEntity.badRequest().body(err);
         }
 
+        String lang = (page.getLanguage() != null && !page.getLanguage().trim().isEmpty()) 
+                ? page.getLanguage().trim() : "ta";
+        page.setLanguage(lang);
+
+        String location = page.getLocation() != null ? page.getLocation().trim() : "NONE";
+        page.setLocation(location);
+
+        if (!"NONE".equalsIgnoreCase(location)) {
+            if (page.getMenuOrder() == null || page.getMenuOrder() < 0) {
+                Map<String, String> err = new HashMap<>();
+                err.put("error", "Menu order position is required and must be 0 or greater when Page is added to a Menu.");
+                return ResponseEntity.badRequest().body(err);
+            }
+        } else {
+            if (page.getMenuOrder() == null) {
+                page.setMenuOrder(0);
+            }
+        }
+
         String slug = page.getSlug();
         if (slug == null || slug.trim().isEmpty()) {
-            slug = page.getTitle().toLowerCase()
-                    .replaceAll("[^a-z0-9\\s-]", "")
-                    .replaceAll("\\s+", "-")
-                    .replaceAll("-+", "-");
+            slug = cleanSlug(page.getTitle());
         } else {
-            slug = slug.trim().toLowerCase();
+            slug = cleanSlug(slug);
         }
         page.setSlug(slug);
 
-        if (pageRepository.existsBySlugIgnoreCase(slug)) {
+        if (pageRepository.existsBySlugIgnoreCaseAndLanguage(slug, lang)) {
             Map<String, String> err = new HashMap<>();
-            err.put("error", "A page with slug '" + slug + "' already exists.");
+            err.put("error", "A page with slug '" + slug + "' already exists for language '" + lang + "'.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
+        }
+
+        if (page.getVisibility() == null || page.getVisibility().trim().isEmpty()) {
+            page.setVisibility("Public");
+        }
+        if (page.getPageType() == null || page.getPageType().trim().isEmpty()) {
+            page.setPageType("custom");
+        }
+
+        if (page.getContent() != null) {
+            page.setContent(htmlSanitizer.sanitize(page.getContent()));
         }
 
         CustomPage saved = pageRepository.save(page);
@@ -75,25 +106,63 @@ public class AdminPageController {
 
         CustomPage existing = existingOpt.get();
 
+        String lang = (updatedPage.getLanguage() != null && !updatedPage.getLanguage().trim().isEmpty())
+                ? updatedPage.getLanguage().trim() : existing.getLanguage();
+
+        String title = updatedPage.getTitle() != null ? updatedPage.getTitle() : existing.getTitle();
+        if (title == null || title.trim().isEmpty()) {
+            Map<String, String> err = new HashMap<>();
+            err.put("error", "Page title is required");
+            return ResponseEntity.badRequest().body(err);
+        }
+
+        String location = updatedPage.getLocation() != null ? updatedPage.getLocation().trim() : existing.getLocation();
+        Integer menuOrder = updatedPage.getMenuOrder() != null ? updatedPage.getMenuOrder() : existing.getMenuOrder();
+
+        if (!"NONE".equalsIgnoreCase(location)) {
+            if (menuOrder == null || menuOrder < 0) {
+                Map<String, String> err = new HashMap<>();
+                err.put("error", "Menu order position is required and must be 0 or greater when Page is added to a Menu.");
+                return ResponseEntity.badRequest().body(err);
+            }
+        }
+
         String slug = updatedPage.getSlug();
         if (slug != null && !slug.trim().isEmpty()) {
-            slug = slug.trim().toLowerCase();
-            if (pageRepository.existsBySlugIgnoreCaseAndIdNot(slug, id)) {
+            slug = cleanSlug(slug);
+            if (pageRepository.existsBySlugIgnoreCaseAndLanguageAndIdNot(slug, lang, id)) {
                 Map<String, String> err = new HashMap<>();
-                err.put("error", "A page with slug '" + slug + "' already exists.");
+                err.put("error", "A page with slug '" + slug + "' already exists for language '" + lang + "'.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
+            }
+            existing.setSlug(slug);
+        } else if (updatedPage.getTitle() != null) {
+            slug = cleanSlug(title);
+            if (pageRepository.existsBySlugIgnoreCaseAndLanguageAndIdNot(slug, lang, id)) {
+                Map<String, String> err = new HashMap<>();
+                err.put("error", "A page with slug '" + slug + "' already exists for language '" + lang + "'.");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
             }
             existing.setSlug(slug);
         }
 
-        if (updatedPage.getTitle() != null) existing.setTitle(updatedPage.getTitle());
+        existing.setTitle(title);
+        existing.setLanguage(lang);
+        existing.setLocation(location);
+        existing.setMenuOrder(menuOrder);
+
         if (updatedPage.getDescription() != null) existing.setDescription(updatedPage.getDescription());
         if (updatedPage.getKeywords() != null) existing.setKeywords(updatedPage.getKeywords());
-        if (updatedPage.getLanguage() != null) existing.setLanguage(updatedPage.getLanguage());
         if (updatedPage.getParentLinkId() != null) existing.setParentLinkId(updatedPage.getParentLinkId());
-        if (updatedPage.getMenuOrder() != null) existing.setMenuOrder(updatedPage.getMenuOrder());
-        if (updatedPage.getLocation() != null) existing.setLocation(updatedPage.getLocation());
-        if (updatedPage.getContent() != null) existing.setContent(updatedPage.getContent());
+        
+        if (updatedPage.getContent() != null) {
+            existing.setContent(htmlSanitizer.sanitize(updatedPage.getContent()));
+        } else if (existing.getContent() != null) {
+            existing.setContent(htmlSanitizer.sanitize(existing.getContent()));
+        }
+        
+        if (updatedPage.getVisibility() != null) existing.setVisibility(updatedPage.getVisibility());
+        if (updatedPage.getPageType() != null) existing.setPageType(updatedPage.getPageType());
 
         CustomPage saved = pageRepository.save(existing);
         return ResponseEntity.ok(saved);
@@ -110,5 +179,15 @@ public class AdminPageController {
         Map<String, String> res = new HashMap<>();
         res.put("message", "Page deleted successfully");
         return ResponseEntity.ok(res);
+    }
+
+    private String cleanSlug(String text) {
+        if (text == null) return "";
+        String cleaned = text.replaceAll("[^a-zA-Z0-9\\u0B80-\\u0BFF\\s\\-]", "");
+        cleaned = cleaned.trim().replaceAll("\\s+", "-").replaceAll("-+", "-").toLowerCase();
+        if (cleaned.isEmpty()) {
+            cleaned = "page-" + System.currentTimeMillis();
+        }
+        return cleaned;
     }
 }

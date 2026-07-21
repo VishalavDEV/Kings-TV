@@ -13,19 +13,19 @@ const PostsList = () => {
   let viewTitle = 'All Articles';
   if (path.includes('/posts/slider')) {
     view = 'slider';
-    viewTitle = 'Slider Carousel Articles';
+    viewTitle = 'Slider Showcase Showcase';
   } else if (path.includes('/posts/featured')) {
     view = 'featured';
-    viewTitle = 'Featured Articles';
+    viewTitle = 'Featured Showcase';
   } else if (path.includes('/posts/breaking')) {
     view = 'breaking';
-    viewTitle = 'Breaking News Articles';
+    viewTitle = 'Breaking News Alerts';
   } else if (path.includes('/posts/recommended')) {
     view = 'recommended';
-    viewTitle = 'Recommended Articles';
+    viewTitle = 'Recommended Showcase';
   } else if (path.includes('/posts/pending')) {
     view = 'pending';
-    viewTitle = 'Pending Review';
+    viewTitle = 'Pending Reviews';
   } else if (path.includes('/posts/scheduled')) {
     view = 'scheduled';
     viewTitle = 'Scheduled Launches';
@@ -39,36 +39,34 @@ const PostsList = () => {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [filteredSubcategories, setFilteredSubcategories] = useState([]);
+  const [authors, setAuthors] = useState([]);
 
   // Pagination & Filtering state
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(15);
 
   const [filterLang, setFilterLang] = useState('');
   const [filterAuthor, setFilterAuthor] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterSubcategory, setFilterSubcategory] = useState('');
+  const [filterType, setFilterType] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Bulk Upload states
-  const [showBulkModal, setShowBulkModal] = useState(false);
-  const [bulkFile, setBulkFile] = useState(null);
-  const [bulkReport, setBulkReport] = useState(null);
-  const [bulkUploading, setBulkUploading] = useState(false);
 
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
   const loadFilterOptions = async () => {
     try {
-      const [cats, subs] = await Promise.all([
+      const [cats, subs, userList] = await Promise.all([
         fetchApi('/admin/categories'),
-        fetchApi('/admin/subcategories')
+        fetchApi('/admin/subcategories'),
+        fetchApi('/admin/users')
       ]);
       if (Array.isArray(cats)) setCategories(cats);
       if (Array.isArray(subs)) setSubcategories(subs);
+      if (Array.isArray(userList)) setAuthors(userList);
     } catch (err) {
       console.error('Failed to load filter definitions:', err);
     }
@@ -83,6 +81,7 @@ const PostsList = () => {
       if (filterAuthor) query += `&user=${encodeURIComponent(filterAuthor)}`;
       if (filterCategory) query += `&category=${filterCategory}`;
       if (filterSubcategory) query += `&subcategory=${filterSubcategory}`;
+      if (filterType) query += `&postType=${filterType}`;
       if (searchTerm) query += `&search=${encodeURIComponent(searchTerm)}`;
 
       const res = await fetchApi(query);
@@ -107,7 +106,7 @@ const PostsList = () => {
 
   useEffect(() => {
     loadArticles(0);
-  }, [view, pageSize, filterLang, filterCategory, filterSubcategory]);
+  }, [view, pageSize, filterLang, filterCategory, filterSubcategory, filterAuthor, filterType]);
 
   useEffect(() => {
     if (filterCategory) {
@@ -140,53 +139,63 @@ const PostsList = () => {
   const handleToggleFeature = async (article, field) => {
     try {
       const updatedValue = !article[field];
-      await fetchApi(`/admin/articles/${article.id}`, {
-        method: 'PUT',
+      const res = await fetchApi(`/admin/articles/${article.id}/toggleFlag`, {
+        method: 'PATCH',
         body: JSON.stringify({
-          [field]: updatedValue
+          flagName: field,
+          value: updatedValue
         })
       });
-      setSuccessMsg(`${field} status updated successfully`);
-      loadArticles(currentPage);
+      if (res && res.error) {
+        setErrorMsg(res.error);
+      } else {
+        setSuccessMsg('Distribution setting updated successfully');
+        loadArticles(currentPage);
+      }
     } catch (err) {
-      setErrorMsg('Failed to toggle highlight status');
+      setErrorMsg('Failed to toggle flag');
     }
   };
 
-  const handleBulkUpload = async (e) => {
-    e.preventDefault();
-    if (!bulkFile) return;
-
-    setBulkUploading(true);
-    setBulkReport(null);
-    setErrorMsg('');
-
+  const handleRemoveFromBreaking = async (article) => {
     try {
-      const formData = new FormData();
-      formData.append('file', bulkFile);
-
-      // fetchApi with multipart/form-data support
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/admin/articles/bulk-upload`, {
-        method: 'POST',
-        headers: {
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: formData
+      const res = await fetchApi(`/admin/articles/${article.id}/toggleFlag`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          flagName: 'isBreaking',
+          value: false
+        })
       });
-
-      const res = await response.json();
-      if (response.ok) {
-        setBulkReport(res);
-        setSuccessMsg('Bulk upload processing complete!');
-        loadArticles(0);
+      if (res && res.error) {
+        setErrorMsg(res.error);
       } else {
-        setErrorMsg(res.error || 'Failed to process bulk upload file');
+        setSuccessMsg('Removed from Breaking News Alerts');
+        // Instantly remove from UI list state
+        setArticles(prev => prev.filter(a => a.id !== article.id));
+        setTotalCount(prev => Math.max(0, prev - 1));
       }
     } catch (err) {
-      setErrorMsg('Network error uploading CSV file');
-    } finally {
-      setBulkUploading(false);
+      setErrorMsg('Failed to remove from breaking list');
+    }
+  };
+
+  const handleBreakingOrderChange = async (article, val) => {
+    try {
+      const parsedVal = val === '' ? null : parseInt(val, 10);
+      const res = await fetchApi(`/admin/articles/${article.id}/toggleFlag`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          flagName: 'breakingOrder',
+          value: parsedVal
+        })
+      });
+      if (!res.error) {
+        setArticles(prev => 
+          prev.map(a => a.id === article.id ? { ...a, breakingOrder: parsedVal } : a)
+        );
+      }
+    } catch (err) {
+      console.error('Failed to update breaking sequence order', err);
     }
   };
 
@@ -200,13 +209,16 @@ const PostsList = () => {
       <div className="posts-header">
         <div>
           <h1>{viewTitle}</h1>
-          <p className="subtitle">Displaying {totalCount} matching articles</p>
+          <p className="subtitle">Displaying Y to Z of {totalCount} matching articles</p>
         </div>
         <div className="action-buttons-group">
-          <button className="btn btn-secondary" onClick={() => setShowBulkModal(true)}>
+          <Link to="/posts/bulk-upload" className="btn btn-secondary">
             <i className="fa-solid fa-file-import"></i> Bulk Upload CSV
-          </button>
-          <Link to="/posts/add" className="btn btn-primary">
+          </Link>
+          <Link 
+            to={view === 'breaking' ? '/posts/add?isBreaking=true' : '/posts/add'} 
+            className="btn btn-primary"
+          >
             <i className="fa-solid fa-plus"></i> Add Post
           </Link>
         </div>
@@ -235,9 +247,10 @@ const PostsList = () => {
         <div className="filter-item">
           <label>Show</label>
           <select value={pageSize} onChange={(e) => setPageSize(parseInt(e.target.value, 10))}>
-            <option value="10">10 entries</option>
+            <option value="15">15 entries</option>
             <option value="25">25 entries</option>
             <option value="50">50 entries</option>
+            <option value="100">100 entries</option>
           </select>
         </div>
 
@@ -247,6 +260,31 @@ const PostsList = () => {
             <option value="">All Languages</option>
             <option value="ta">Tamil (தமிழ்)</option>
             <option value="en">English</option>
+          </select>
+        </div>
+
+        <div className="filter-item">
+          <label>Post Type</label>
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+            <option value="">All Post Types</option>
+            <option value="ARTICLE">Article</option>
+            <option value="GALLERY">Gallery</option>
+            <option value="SORTED_LIST">Sorted List</option>
+            <option value="PAGE">Page</option>
+            <option value="VIDEO">Video</option>
+            <option value="AUDIO">Audio</option>
+            <option value="TRIVIA_QUIZ">Trivia Quiz</option>
+            <option value="PERSONALITY_QUIZ">Personality Quiz</option>
+          </select>
+        </div>
+
+        <div className="filter-item">
+          <label>User</label>
+          <select value={filterAuthor} onChange={(e) => setFilterAuthor(e.target.value)}>
+            <option value="">All Users</option>
+            {authors.map(u => (
+              <option key={u.id} value={u.fullName || u.username}>{u.fullName || u.username}</option>
+            ))}
           </select>
         </div>
 
@@ -267,11 +305,11 @@ const PostsList = () => {
         </div>
 
         <div className="filter-item flex-grow">
-          <label>Search Author / Title</label>
+          <label>Search box</label>
           <div className="search-input-wrapper">
             <input 
               type="text" 
-              placeholder="e.g. politics, Author Name..." 
+              placeholder="e.g. Title keyword..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -301,6 +339,7 @@ const PostsList = () => {
                   <th>Author</th>
                   <th>Views</th>
                   <th>Status</th>
+                  {view === 'breaking' && <th>Breaking Order</th>}
                   {view === 'scheduled' && <th>Days Remaining</th>}
                   <th>Options</th>
                 </tr>
@@ -308,7 +347,7 @@ const PostsList = () => {
               <tbody>
                 {articles.length === 0 ? (
                   <tr>
-                    <td colSpan="10" className="empty-table">No matching posts found.</td>
+                    <td colSpan={view === 'breaking' ? "12" : "11"} className="empty-table">No matching posts found.</td>
                   </tr>
                 ) : (
                   articles.map((art) => (
@@ -332,6 +371,7 @@ const PostsList = () => {
                             {art.isFeatured && <span className="badge badge-featured">Featured</span>}
                             {art.isBreaking && <span className="badge badge-breaking">Breaking</span>}
                             {art.isRecommended && <span className="badge badge-recommended">Recommended</span>}
+                            {art.showOnlyRegistered && <span className="badge badge-registered" style={{background: '#f8fafc', color: '#64748b', border: '1px solid #cbd5e1'}}>Registered Only</span>}
                           </div>
                         </div>
                       </td>
@@ -349,12 +389,24 @@ const PostsList = () => {
                         <span className="cat-chip-badge">{getCategoryName(art.categoryId)}</span>
                       </td>
                       <td><span className="text-slate-600">{art.authorName || 'Desk'}</span></td>
-                      <td><span className="font-medium text-slate-600">{art.views || 0}</span></td>
+                      <td><span className="font-medium text-slate-600">{art.viewsCount || art.views || 0}</span></td>
                       <td>
                         <span className={`status-badge ${art.status ? art.status.toLowerCase() : 'draft'}`}>
                           {art.status || 'DRAFT'}
                         </span>
                       </td>
+                      {view === 'breaking' && (
+                        <td>
+                          <input 
+                            type="number"
+                            value={art.breakingOrder !== null && art.breakingOrder !== undefined ? art.breakingOrder : ''}
+                            onChange={(e) => handleBreakingOrderChange(art, e.target.value)}
+                            className="breaking-order-input"
+                            style={{ width: '60px', padding: '0.2rem 0.4rem', border: '1px solid #e2e8f0', borderRadius: '0.25rem' }}
+                            placeholder="None"
+                          />
+                        </td>
+                      )}
                       {view === 'scheduled' && (
                         <td>
                           <span className="badge badge-scheduled font-semibold">
@@ -373,22 +425,63 @@ const PostsList = () => {
                             <i className="fa-solid fa-pen-to-square"></i> Edit
                           </button>
                           
-                          <div className="toggle-badge-actions">
+                          {art.status === 'PUBLISHED' && (
+                            <a 
+                              href={art.postType === 'PAGE' ? `/p/${art.slug}` : `/news/${art.id}`}
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="action-btn view-btn"
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', borderRadius: '0.25rem', fontSize: '0.75rem', fontWeight: '600', textDecoration: 'none' }}
+                            >
+                              <i className="fa-solid fa-eye"></i> View
+                            </a>
+                          )}
+
+                          <div className="toggle-badge-actions" style={{ display: 'flex', gap: '0.25rem' }}>
                             <button 
                               className={`toggle-action-btn ${art.isFeatured ? 'active' : ''}`}
                               onClick={() => handleToggleFeature(art, 'isFeatured')}
-                              title="Toggle Featured"
+                              title="Toggle Featured Highlight"
+                              style={{ background: art.isFeatured ? '#fef3c7' : '#f1f5f9', color: art.isFeatured ? '#d97706' : '#64748b', border: '1px solid', borderColor: art.isFeatured ? '#fde68a' : '#cbd5e1', borderRadius: '0.25rem', padding: '0.25rem 0.4rem', cursor: 'pointer' }}
                             >
                               <i className="fa-solid fa-star"></i>
                             </button>
                             <button 
+                              className={`toggle-action-btn ${art.isSlider ? 'active' : ''}`}
+                              onClick={() => handleToggleFeature(art, 'isSlider')}
+                              title="Toggle Slider Carousel"
+                              style={{ background: art.isSlider ? '#dbeafe' : '#f1f5f9', color: art.isSlider ? '#2563eb' : '#64748b', border: '1px solid', borderColor: art.isSlider ? '#bfdbfe' : '#cbd5e1', borderRadius: '0.25rem', padding: '0.25rem 0.4rem', cursor: 'pointer' }}
+                            >
+                              <i className="fa-solid fa-images"></i>
+                            </button>
+                            <button 
                               className={`toggle-action-btn ${art.isBreaking ? 'active' : ''}`}
                               onClick={() => handleToggleFeature(art, 'isBreaking')}
-                              title="Toggle Breaking"
+                              title="Toggle Breaking Alert"
+                              style={{ background: art.isBreaking ? '#fee2e2' : '#f1f5f9', color: art.isBreaking ? '#dc2626' : '#64748b', border: '1px solid', borderColor: art.isBreaking ? '#fecaca' : '#cbd5e1', borderRadius: '0.25rem', padding: '0.25rem 0.4rem', cursor: 'pointer' }}
                             >
                               <i className="fa-solid fa-bolt"></i>
                             </button>
+                            <button 
+                              className={`toggle-action-btn ${art.isRecommended ? 'active' : ''}`}
+                              onClick={() => handleToggleFeature(art, 'isRecommended')}
+                              title="Toggle Recommended Display"
+                              style={{ background: art.isRecommended ? '#f0fdf4' : '#f1f5f9', color: art.isRecommended ? '#16a34a' : '#64748b', border: '1px solid', borderColor: art.isRecommended ? '#bbf7d0' : '#cbd5e1', borderRadius: '0.25rem', padding: '0.25rem 0.4rem', cursor: 'pointer' }}
+                            >
+                              <i className="fa-solid fa-thumbs-up"></i>
+                            </button>
                           </div>
+
+                          {view === 'breaking' && (
+                            <button 
+                              className="action-btn remove-breaking-btn" 
+                              onClick={() => handleRemoveFromBreaking(art)}
+                              title="Remove from Breaking Alerts"
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', background: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '0.25rem', fontSize: '0.75rem', fontWeight: '600', cursor: 'pointer' }}
+                            >
+                              <i className="fa-solid fa-ban"></i> Remove
+                            </button>
+                          )}
 
                           <button 
                             className="action-btn delete-btn" 
@@ -405,77 +498,30 @@ const PostsList = () => {
             </table>
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="pagination-bar">
-              <button 
-                disabled={currentPage === 0} 
-                onClick={() => loadArticles(currentPage - 1)}
-                className="pag-btn"
-              >
-                Previous
-              </button>
-              <span className="page-indicator">Page {currentPage + 1} of {totalPages}</span>
-              <button 
-                disabled={currentPage === totalPages - 1} 
-                onClick={() => loadArticles(currentPage + 1)}
-                className="pag-btn"
-              >
-                Next
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Bulk Upload Modal Dialog */}
-      {showBulkModal && (
-        <div className="modal-backdrop">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2>Bulk Upload CSV</h2>
-              <button className="close-modal-btn" onClick={() => { setShowBulkModal(false); setBulkReport(null); setBulkFile(null); }}>&times;</button>
-            </div>
-            
-            <form onSubmit={handleBulkUpload} className="modal-form">
-              <p className="modal-instructions">
-                Upload a CSV file containing columns in order: <code>title</code>, <code>summary</code>, <code>content</code>, and optional <code>language</code>.
-              </p>
-              
-              <div className="form-group">
-                <label htmlFor="csvFile">Choose CSV File</label>
-                <input 
-                  type="file" 
-                  id="csvFile" 
-                  accept=".csv"
-                  onChange={(e) => setBulkFile(e.target.files[0])}
-                  required
-                />
-              </div>
-
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => { setShowBulkModal(false); setBulkReport(null); }}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={bulkUploading || !bulkFile}>
-                  {bulkUploading ? 'Uploading & Processing...' : 'Process Import'}
+          {/* Pagination Footer */}
+          <div className="pagination-wrapper" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', padding: '0.5rem 1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.5rem' }}>
+            <span className="text-sm text-slate-500 font-medium">
+              Showing {articles.length > 0 ? (currentPage * pageSize + 1) : 0} to {currentPage * pageSize + articles.length} of {totalCount} entries
+            </span>
+            {totalPages > 1 && (
+              <div className="pagination-bar" style={{ display: 'flex', gap: '0.25rem' }}>
+                <button 
+                  disabled={currentPage === 0} 
+                  onClick={() => loadArticles(currentPage - 1)}
+                  className="pag-btn"
+                >
+                  Previous
                 </button>
-              </div>
-            </form>
-
-            {bulkReport && (
-              <div className="bulk-report-results">
-                <h3>Processing Report</h3>
-                <div className="report-stats">
-                  <span className="success-text">Success: <strong>{bulkReport.successCount}</strong> rows</span>
-                  <span className="error-text">Failed: <strong>{bulkReport.failureCount}</strong> rows</span>
-                </div>
-                {bulkReport.errors && bulkReport.errors.length > 0 && (
-                  <div className="report-errors-list">
-                    <h4>Error Logs:</h4>
-                    <ul>
-                      {bulkReport.errors.map((err, index) => <li key={index}>{err}</li>)}
-                    </ul>
-                  </div>
-                )}
+                <span className="page-indicator" style={{ display: 'inline-flex', alignItems: 'center', padding: '0 0.75rem', fontSize: '0.85rem', fontWeight: '600', color: '#475569' }}>
+                  {currentPage + 1} / {totalPages}
+                </span>
+                <button 
+                  disabled={currentPage === totalPages - 1} 
+                  onClick={() => loadArticles(currentPage + 1)}
+                  className="pag-btn"
+                >
+                  Next
+                </button>
               </div>
             )}
           </div>

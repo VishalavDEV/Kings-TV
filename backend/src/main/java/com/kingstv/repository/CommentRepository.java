@@ -11,4 +11,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long>, JpaSpec
     List<Comment> findByArticleId(Long articleId);
     List<Comment> findByStatusOrderByCreatedAtDesc(String status);
     List<Comment> findAllByOrderByCreatedAtDesc();
+    List<Comment> findTop5ByStatusOrderByCreatedAtDesc(String status);
+    List<Comment> findTop5ByOrderByCreatedAtDesc();
 }

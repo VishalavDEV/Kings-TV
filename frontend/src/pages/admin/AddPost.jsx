@@ -1,11 +1,91 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchApi } from '../../utils/api';
 import './AddPost.css';
 
+const HtmlToolbar = ({ targetField, setFormData }) => {
+  const insertTag = (openTag, closeTag = '') => {
+    const el = document.getElementById(targetField);
+    if (!el) return;
+    
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const text = el.value;
+    const selected = text.substring(start, end);
+    const replacement = openTag + selected + closeTag;
+    
+    const newValue = text.substring(0, start) + replacement + text.substring(end);
+    
+    setFormData(prev => ({
+      ...prev,
+      [targetField]: newValue
+    }));
+    
+    setTimeout(() => {
+      el.focus();
+      el.setSelectionRange(start + openTag.length, start + openTag.length + selected.length);
+    }, 0);
+  };
+
+  return (
+    <div className="html-editor-toolbar">
+      <button type="button" title="Bold" onClick={() => insertTag('<strong>', '</strong>')}>
+        <i className="fa-solid fa-bold"></i>
+      </button>
+      <button type="button" title="Italic" onClick={() => insertTag('<em>', '</em>')}>
+        <i className="fa-solid fa-italic"></i>
+      </button>
+      <button type="button" title="Underline" onClick={() => insertTag('<u>', '</u>')}>
+        <i className="fa-solid fa-underline"></i>
+      </button>
+      <button type="button" title="Strikethrough" onClick={() => insertTag('<s>', '</s>')}>
+        <i className="fa-solid fa-strikethrough"></i>
+      </button>
+      <span className="toolbar-separator">|</span>
+      <button type="button" title="Align Left" onClick={() => insertTag('<div style="text-align: left">', '</div>')}>
+        <i className="fa-solid fa-align-left"></i>
+      </button>
+      <button type="button" title="Align Center" onClick={() => insertTag('<div style="text-align: center">', '</div>')}>
+        <i className="fa-solid fa-align-center"></i>
+      </button>
+      <button type="button" title="Align Right" onClick={() => insertTag('<div style="text-align: right">', '</div>')}>
+        <i className="fa-solid fa-align-right"></i>
+      </button>
+      <span className="toolbar-separator">|</span>
+      <button type="button" title="Bullet List" onClick={() => insertTag('<ul>\n  <li>', '</li>\n</ul>')}>
+        <i className="fa-solid fa-list-ul"></i>
+      </button>
+      <button type="button" title="Numbered List" onClick={() => insertTag('<ol>\n  <li>', '</li>\n</ol>')}>
+        <i className="fa-solid fa-list-ol"></i>
+      </button>
+      <button type="button" title="Table" onClick={() => insertTag('<table border="1">\n  <tr>\n    <th>Header 1</th>\n    <th>Header 2</th>\n  </tr>\n  <tr>\n    <td>Cell 1</td>\n    <td>Cell 2</td>\n  </tr>\n</table>')}>
+        <i className="fa-solid fa-table"></i>
+      </button>
+      <span className="toolbar-separator">|</span>
+      <button type="button" title="Heading 2" onClick={() => insertTag('<h2>', '</h2>')}>H2</button>
+      <button type="button" title="Heading 3" onClick={() => insertTag('<h3>', '</h3>')}>H3</button>
+      <button type="button" title="Heading 4" onClick={() => insertTag('<h4>', '</h4>')}>H4</button>
+      <span className="toolbar-separator">|</span>
+      <button type="button" title="Insert Link" onClick={() => {
+        const url = prompt('Enter URL:');
+        if (url) insertTag(`<a href="${url}" target="_blank">`, '</a>');
+      }}>
+        <i className="fa-solid fa-link"></i>
+      </button>
+      <button type="button" title="Insert Image" onClick={() => {
+        const url = prompt('Enter Image URL:');
+        if (url) insertTag(`<img src="${url}" alt="image" style="max-width:100%;" />`);
+      }}>
+        <i className="fa-solid fa-image"></i>
+      </button>
+    </div>
+  );
+};
+
 const AddPost = () => {
   const navigate = useNavigate();
-  const [selectedFormat, setSelectedFormat] = useState(null); // 'article', 'gallery', 'list', 'video', 'audio', 'trivia', 'personality'
+  const location = useLocation();
+  const [selectedFormat, setSelectedFormat] = useState(null); 
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [filteredSubcategories, setFilteredSubcategories] = useState([]);
@@ -21,6 +101,7 @@ const AddPost = () => {
     title: '',
     slug: '',
     summary: '',
+    metaTitle: '',
     metaDescription: '',
     metaKeywords: '',
     visibility: true,
@@ -32,6 +113,8 @@ const AddPost = () => {
     showOnlyRegistered: false,
     optionalUrl: '',
     content: '',
+    imageUrl: '',
+    featuredImageUrl: '',
     language: 'ta',
     categoryId: '',
     subcategoryId: '',
@@ -53,6 +136,29 @@ const AddPost = () => {
 
   const [audioTracks, setAudioTracks] = useState([{ title: '', fileUrl: '' }]);
 
+  const [seoSuggest, setSeoSuggest] = useState(null);
+  const [fetchingSeo, setFetchingSeo] = useState(false);
+
+  const getSeoSuggestions = async () => {
+    setFetchingSeo(true);
+    try {
+      const res = await fetchApi('/articles/suggest-seo', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: formData.title,
+          content: formData.content || formData.summary
+        })
+      });
+      if (res && !res.error) {
+        setSeoSuggest(res);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setFetchingSeo(false);
+    }
+  };
+
   // Quiz States
   const [quizResults, setQuizResults] = useState([{ rangeMin: 0, rangeMax: 10, title: '', imageUrl: '', description: '' }]);
   const [quizQuestions, setQuizQuestions] = useState([{
@@ -67,6 +173,7 @@ const AddPost = () => {
     { id: 'article', title: 'Article', desc: 'Standard news story or blog post with rich text and images', icon: 'fa-regular fa-file-lines', active: true },
     { id: 'gallery', title: 'Gallery', desc: 'Collection of images with captions and layouts', icon: 'fa-regular fa-image', active: true },
     { id: 'list', title: 'Sorted List', desc: 'Ranked list posts or itemized checklists', icon: 'fa-solid fa-list-ol', active: true },
+    { id: 'page', title: 'Page', desc: 'Same shape as a static page but filed as a post', icon: 'fa-regular fa-file-code', active: true },
     { id: 'video', title: 'Video', desc: 'Embed media contents or upload video stories', icon: 'fa-regular fa-circle-play', active: true },
     { id: 'audio', title: 'Audio', desc: 'Podcasts or audio playlist narrations', icon: 'fa-solid fa-microphone', active: true },
     { id: 'trivia', title: 'Trivia Quiz', desc: 'Questions with right/wrong answers to challenge readers', icon: 'fa-regular fa-circle-question', active: true },
@@ -113,6 +220,13 @@ const AddPost = () => {
       setFormData(prev => ({ ...prev, subcategoryId: '' }));
     }
   }, [formData.categoryId, subcategories]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('isBreaking') === 'true') {
+      setFormData(prev => ({ ...prev, isBreaking: true }));
+    }
+  }, [location.search]);
 
   const handleTitleChange = (e) => {
     const title = e.target.value;
@@ -166,17 +280,70 @@ const AddPost = () => {
     setIsSubmitting(true);
 
     try {
-      const status = saveAsDraft 
-        ? 'DRAFT' 
-        : (formData.isScheduled && formData.scheduledAt ? 'SCHEDULED' : 'PUBLISHED');
-
+      if (!formData.title || !formData.title.trim()) {
+        setErrorMsg('Post Title is required.');
+        setIsSubmitting(false);
+        return;
+      }
+      if (!formData.categoryId) {
+        setErrorMsg('Category is required.');
+        setIsSubmitting(false);
+        return;
+      }
+      
       let postType = 'ARTICLE';
       if (selectedFormat === 'gallery') postType = 'GALLERY';
       else if (selectedFormat === 'list') postType = 'SORTED_LIST';
+      else if (selectedFormat === 'page') postType = 'PAGE';
       else if (selectedFormat === 'video') postType = 'VIDEO';
       else if (selectedFormat === 'audio') postType = 'AUDIO';
       else if (selectedFormat === 'trivia') postType = 'TRIVIA_QUIZ';
       else if (selectedFormat === 'personality') postType = 'PERSONALITY_QUIZ';
+
+      if (['article', 'gallery', 'list', 'page'].includes(selectedFormat)) {
+        if (!formData.imageUrl && !formData.featuredImageUrl) {
+          setErrorMsg(`Main post image or featured image URL is required for ${selectedFormat} format.`);
+          setIsSubmitting(false);
+          return;
+        }
+      } else if (selectedFormat === 'video') {
+        if (!videoData.videoUrl && !videoData.videoEmbedCode) {
+          setErrorMsg('A video file/URL or video embed code is required for video format.');
+          setIsSubmitting(false);
+          return;
+        }
+      } else if (selectedFormat === 'audio') {
+        const hasTrack = audioTracks.some(track => track.fileUrl && track.fileUrl.trim());
+        if (!hasTrack) {
+          setErrorMsg('At least one audio track URL is required for audio format.');
+          setIsSubmitting(false);
+          return;
+        }
+      } else if (['trivia', 'personality'].includes(selectedFormat)) {
+        if (!quizQuestions || quizQuestions.length < 1) {
+          setErrorMsg('At least one question block is required for quiz format.');
+          setIsSubmitting(false);
+          return;
+        }
+        for (let i = 0; i < quizQuestions.length; i++) {
+          const q = quizQuestions[i];
+          if (!q.answers || q.answers.length < 2) {
+            setErrorMsg(`Question #${i + 1} requires at least 2 choice options.`);
+            setIsSubmitting(false);
+            return;
+          }
+          const hasEmptyAnswer = q.answers.some(ans => !ans.text || !ans.text.trim());
+          if (hasEmptyAnswer) {
+            setErrorMsg(`Please fill in all choices for Question #${i + 1}.`);
+            setIsSubmitting(false);
+            return;
+          }
+        }
+      }
+
+      const status = saveAsDraft 
+        ? 'DRAFT' 
+        : (formData.isScheduled && formData.scheduledAt ? 'SCHEDULED' : 'PUBLISHED');
 
       const payload = {
         ...formData,
@@ -302,12 +469,78 @@ const AddPost = () => {
                   />
                 </div>
 
+                {/* Image Section (upload + alternative URL) */}
+                {['article', 'gallery', 'list', 'page'].includes(selectedFormat) && (
+                  <div className="form-group">
+                    <label>Main Post Image *</label>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <input
+                        type="text"
+                        name="imageUrl"
+                        value={formData.imageUrl || ''}
+                        onChange={handleInputChange}
+                        placeholder="Paste image URL alternative..."
+                        style={{ flexGrow: 1 }}
+                      />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          if (e.target.files && e.target.files.length > 0) {
+                            const file = e.target.files[0];
+                            const fData = new FormData();
+                            fData.append('file', file);
+                            try {
+                              const token = localStorage.getItem('accessToken');
+                              const response = await fetch('/api/v1/articles/upload', {
+                                method: 'POST',
+                                headers: {
+                                  ...(token ? { Authorization: `Bearer ${token}` } : {})
+                                },
+                                body: fData
+                              });
+                              const data = await response.json();
+                              if (data && data.url) {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  imageUrl: data.url,
+                                  featuredImageUrl: data.url,
+                                  imageAltText: data.altText || ''
+                                }));
+                              }
+                            } catch (err) {
+                              console.error('Upload failed:', err);
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                    {formData.imageUrl && (
+                      <div style={{ marginTop: '0.5rem' }}>
+                        <img src={formData.imageUrl} alt="preview" style={{ maxWidth: '150px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+                        <div style={{ marginTop: '0.25rem' }}>
+                          <label style={{ fontSize: '0.75rem', fontWeight: '600' }}>Image Alt Text (Generated)</label>
+                          <input
+                            type="text"
+                            name="imageAltText"
+                            value={formData.imageAltText || ''}
+                            onChange={handleInputChange}
+                            placeholder="e.g. Chennai Rains Floods"
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', width: '100%', marginTop: '0.15rem' }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* --- RENDER CUSTOM FIELDS BY TYPE --- */}
                 
-                {/* 1. ARTICLE FORMAT */}
-                {selectedFormat === 'article' && (
+                {/* 1. ARTICLE / PAGE FORMAT */}
+                {(selectedFormat === 'article' || selectedFormat === 'page') && (
                   <div className="form-group">
                     <label htmlFor="content">Content Details *</label>
+                    <HtmlToolbar targetField="content" setFormData={setFormData} />
                     <textarea
                       id="content"
                       name="content"
@@ -787,6 +1020,18 @@ const AddPost = () => {
                   </div>
                 </div>
 
+                <div className="form-group">
+                  <label htmlFor="metaTitle">Meta SEO Title</label>
+                  <input
+                    type="text"
+                    id="metaTitle"
+                    name="metaTitle"
+                    value={formData.metaTitle}
+                    onChange={handleInputChange}
+                    placeholder="SEO Title..."
+                  />
+                </div>
+
                 <div className="form-row">
                   <div className="form-group half">
                     <label htmlFor="metaDescription">Meta SEO Description</label>
@@ -796,6 +1041,7 @@ const AddPost = () => {
                       name="metaDescription"
                       value={formData.metaDescription}
                       onChange={handleInputChange}
+                      placeholder="SEO description..."
                     />
                   </div>
                   <div className="form-group half">
@@ -806,8 +1052,57 @@ const AddPost = () => {
                       name="metaKeywords"
                       value={formData.metaKeywords}
                       onChange={handleInputChange}
+                      placeholder="SEO keywords..."
                     />
                   </div>
+                </div>
+
+                <div className="seo-suggestions-panel" style={{ background: '#f8fafc', padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '8px', marginTop: '1rem', marginBottom: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: '700', color: '#0f172a' }}>
+                      <i className="fa-solid fa-wand-magic-sparkles text-blue-500"></i> AI/Automated SEO Helper
+                    </h4>
+                    <button type="button" className="btn btn-secondary py-1 text-xs" onClick={getSeoSuggestions} disabled={fetchingSeo}>
+                      {fetchingSeo ? 'Generating...' : 'Generate SEO Suggestions'}
+                    </button>
+                  </div>
+                  {seoSuggest && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <div className="suggestion-item" style={{ fontSize: '0.8rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b', fontWeight: '600', marginBottom: '0.15rem' }}>
+                          <span>Suggested Meta Title:</span>
+                          <button type="button" style={{ background: 'transparent', border: 'none', color: '#2563eb', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '700' }} onClick={() => setFormData(prev => ({ ...prev, metaTitle: seoSuggest.metaTitle }))}>
+                            Use this
+                          </button>
+                        </div>
+                        <div style={{ padding: '0.35rem 0.5rem', background: 'white', border: '1px solid #cbd5e1', borderRadius: '4px' }}>
+                          {seoSuggest.metaTitle}
+                        </div>
+                      </div>
+                      <div className="suggestion-item" style={{ fontSize: '0.8rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b', fontWeight: '600', marginBottom: '0.15rem' }}>
+                          <span>Suggested Description:</span>
+                          <button type="button" style={{ background: 'transparent', border: 'none', color: '#2563eb', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '700' }} onClick={() => setFormData(prev => ({ ...prev, metaDescription: seoSuggest.metaDescription }))}>
+                            Use this
+                          </button>
+                        </div>
+                        <div style={{ padding: '0.35rem 0.5rem', background: 'white', border: '1px solid #cbd5e1', borderRadius: '4px' }}>
+                          {seoSuggest.metaDescription}
+                        </div>
+                      </div>
+                      <div className="suggestion-item" style={{ fontSize: '0.8rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b', fontWeight: '600', marginBottom: '0.15rem' }}>
+                          <span>Suggested Keywords:</span>
+                          <button type="button" style={{ background: 'transparent', border: 'none', color: '#2563eb', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '700' }} onClick={() => setFormData(prev => ({ ...prev, metaKeywords: seoSuggest.metaKeywords }))}>
+                            Use this
+                          </button>
+                        </div>
+                        <div style={{ padding: '0.35rem 0.5rem', background: 'white', border: '1px solid #cbd5e1', borderRadius: '4px' }}>
+                          {seoSuggest.metaKeywords}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group">

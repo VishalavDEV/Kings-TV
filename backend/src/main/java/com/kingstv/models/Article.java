@@ -80,6 +80,9 @@ public class Article {
     @Column(name = "is_breaking")
     private Boolean isBreaking = false;
 
+    @Column(name = "breaking_order")
+    private Integer breakingOrder;
+
     @Column(name = "is_slider")
     private Boolean isSlider = false;
 
@@ -435,4 +438,7 @@ public class Article {
     public void setAuthorProfileImage(String authorProfileImage) { this.authorProfileImage = authorProfileImage; }
     public Boolean getTelegramSent() { return telegramSent != null && telegramSent; }
     public void setTelegramSent(Boolean telegramSent) { this.telegramSent = telegramSent; }
+
+    public Integer getBreakingOrder() { return breakingOrder; }
+    public void setBreakingOrder(Integer breakingOrder) { this.breakingOrder = breakingOrder; }
 }

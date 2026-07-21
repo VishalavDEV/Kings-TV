@@ -19,4 +19,7 @@ public interface SubCategoryRepository extends JpaRepository<SubCategory, Long>,
     boolean existsByNameAndLanguageAndCategoryIdAndSubcategoryIdNot(String name, String language, Long categoryId, Long subcategoryId);
     boolean existsBySlug(String slug);
     boolean existsBySlugAndSubcategoryIdNot(String slug, Long subcategoryId);
+    boolean existsByCategoryId(Long categoryId);
+    boolean existsBySlugAndLanguage(String slug, String language);
+    boolean existsBySlugAndLanguageAndSubcategoryIdNot(String slug, String language, Long subcategoryId);
 }

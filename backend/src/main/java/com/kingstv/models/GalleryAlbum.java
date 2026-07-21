@@ -16,8 +16,16 @@ public class GalleryAlbum {
     @Column(nullable = false)
     private String language = "ta";
 
+    @Column(name = "cover_image_id")
+    private Long coverImageId;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = this.createdAt != null ? this.createdAt : LocalDateTime.now();
+    }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -27,6 +35,9 @@ public class GalleryAlbum {
 
     public String getLanguage() { return language; }
     public void setLanguage(String language) { this.language = language; }
+
+    public Long getCoverImageId() { return coverImageId; }
+    public void setCoverImageId(Long coverImageId) { this.coverImageId = coverImageId; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

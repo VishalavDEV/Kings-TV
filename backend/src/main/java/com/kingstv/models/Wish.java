@@ -21,6 +21,9 @@ public class Wish {
     @Column(name = "recipient_photo")
     private String recipientPhoto;
 
+    @Column(name = "wish_type")
+    private String wishType = "birthday";
+
     @Column(name = "sender_name", nullable = false)
     private String senderName;
 
@@ -184,4 +187,16 @@ public class Wish {
 
     public Boolean getDeleted() { return deleted; }
     public void setDeleted(Boolean deleted) { this.deleted = deleted; }
+
+    public String getWishType() { return wishType; }
+    public void setWishType(String wishType) { this.wishType = wishType; }
+
+    public String getImage() { return recipientPhoto; }
+    public void setImage(String image) { this.recipientPhoto = image; }
+
+    public String getSubmittedByName() { return senderName; }
+    public void setSubmittedByName(String submittedByName) { this.senderName = submittedByName; }
+
+    public String getSubmittedByContact() { return senderProfile; }
+    public void setSubmittedByContact(String submittedByContact) { this.senderProfile = submittedByContact; }
 }

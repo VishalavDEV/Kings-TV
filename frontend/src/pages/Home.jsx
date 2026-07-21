@@ -16,15 +16,14 @@ const Home = () => {
   const [liveVideo, setLiveVideo] = useState(null);
   const [tickerIndex, setTickerIndex] = useState(0);
   const [categoriesMap, setCategoriesMap] = useState({});
+  const [activeStreams, setActiveStreams] = useState([]);
   const [layoutSections, setLayoutSections] = useState([]);
   const [crowdReports, setCrowdReports] = useState([]);
   const [institutionNews, setInstitutionNews] = useState([]);
-  const [commodityPrices, setCommodityPrices] = useState([
-    { nameEn: 'Gold (24K/10g)', nameTa: 'தங்கம் (24K/10g)', price: '₹72,450', change: '+₹150' },
-    { nameEn: 'Silver (1kg)', nameTa: 'வெள்ளி (1kg)', price: '₹91,200', change: '-₹450' },
-    { nameEn: 'Paddy (Quintal)', nameTa: 'நெல் (குவிண்டால்)', price: '₹2,300', change: '+₹75' },
-    { nameEn: 'Cotton (Candy)', nameTa: 'பருத்தி (கேண்டி)', price: '₹57,500', change: '₹0' }
-  ]);
+  const [classifieds, setClassifieds] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const [commodityPrices, setCommodityPrices] = useState([]);
   const initialTickers = [
     lang === 'en' ? "Paddy procurement price increased - farmers express delight!" : "🌾 நெல் கொள்முதல் விலை உயர்வு - விவசாயிகள் மகிழ்ச்சி",
     lang === 'en' ? "Vijay 69th movie announcement sends fans into celebration mode!" : "🎬 விஜய் 69-வது படம் அறிவிப்பு - ரசிகர்கள் கொண்டாட்டம்",
@@ -94,7 +93,7 @@ const Home = () => {
       })
       .catch(err => console.warn("Could not load categories", err));
 
-    const pArticles = fetchApi('/articles')
+    const pArticles = fetchApi(`/articles?language=${lang}`)
       .then(data => {
         const list = Array.isArray(data) ? data : [];
         setArticles(list);
@@ -104,7 +103,7 @@ const Home = () => {
         setArticles([]);
       });
 
-    const pBreakingNews = fetchApi('/breaking-news/getAllWeb?size=10')
+    const pBreakingNews = fetchApi(`/breaking-news/getAllWeb?size=10&language=${lang}`)
       .then(data => {
         const list = data && Array.isArray(data.content) ? data.content : [];
         if (list.length > 0) {
@@ -119,7 +118,7 @@ const Home = () => {
         setTickers(initialTickers);
       });
 
-    const pWebStories = fetchApi('/web-stories/getAllWeb?size=6')
+    const pWebStories = fetchApi(`/web-stories/getAllWeb?size=6&language=${lang}`)
       .then(data => {
         const list = data && Array.isArray(data.content) ? data.content : [];
         if (list.length > 0) {
@@ -142,7 +141,7 @@ const Home = () => {
         setStories(storiesList);
       });
 
-    const pVideos = fetchApi('/videos')
+    const pVideos = fetchApi(`/videos?language=${lang}`)
       .then(data => {
         const list = Array.isArray(data) ? data : [];
         const translated = list.map(vid => {
@@ -186,9 +185,22 @@ const Home = () => {
       })
       .catch(err => console.warn("Could not load live video from API", err));
 
-    const pLayout = fetchApi('/public/layout/web')
+    const pActiveStreams = fetchApi('/public/livestream/active')
       .then(data => {
         if (Array.isArray(data)) {
+          setActiveStreams(data);
+        }
+      })
+      .catch(() => {});
+
+    const pLayout = fetchApi('/public/layout/web')
+      .then(data => {
+        if (data && data.layout) {
+          const parsed = JSON.parse(data.layout);
+          if (Array.isArray(parsed)) {
+            setLayoutSections(parsed);
+          }
+        } else if (Array.isArray(data)) {
           setLayoutSections(data);
         }
       })
@@ -210,7 +222,7 @@ const Home = () => {
       })
       .catch(err => console.warn("Could not load RSS aggregated news", err));
 
-    const pInstitution = fetchApi('/articles/public/institution-news')
+    const pInstitution = fetchApi(`/articles/public/institution-news?language=${lang}`)
       .then(data => {
         if (Array.isArray(data)) {
           setInstitutionNews(data);
@@ -226,9 +238,31 @@ const Home = () => {
       })
       .catch(() => {});
 
+    const pMarketPrices = fetchApi('/market-prices/public')
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const formatted = data.map(item => ({
+            nameEn: item.name,
+            nameTa: item.name,
+            price: item.price,
+            change: '+₹0'
+          }));
+          setCommodityPrices(formatted);
+        }
+      })
+      .catch(err => console.warn("Could not load market prices", err));
+
+    const pClassifieds = fetchApi('/classifieds/latest')
+      .then(data => {
+        if (Array.isArray(data)) {
+          setClassifieds(data);
+        }
+      })
+      .catch(err => console.warn("Could not load classifieds", err));
+
     // Geolocation Personalized Articles
     const selectedDistId = localStorage.getItem('selectedDistrictId');
-    let newsUrl = '/public/news?limit=12';
+    let newsUrl = `/public/articles?limit=12&language=${lang}`;
     if (selectedDistId) {
       newsUrl = `/articles/getAllWeb?districtId=${selectedDistId}&size=12`;
     }
@@ -306,7 +340,8 @@ const Home = () => {
     // Resolve loading after critical calls complete
     Promise.allSettled([
       pCategories, pArticles, pBreakingNews, pWebStories, pVideos, pLiveVideo,
-      pLayout, pTrending, pRss, pInstitution, pCrowd, pPersonalized, pWeather, pCaseStudies
+      pLayout, pTrending, pRss, pInstitution, pCrowd, pPersonalized, pWeather, pCaseStudies,
+      pMarketPrices, pClassifieds
     ]).then((results) => {
       // Check if critical resources failed (e.g., articles could not load)
       const articlesSuccess = results[1].status === 'fulfilled';
@@ -375,14 +410,34 @@ const Home = () => {
     };
   }, []);
 
-  const getSortedSections = (keys) => {
-    if (layoutSections.length === 0) {
-      // Fallback order matching standard design
-      return keys.map((k, idx) => ({ sectionKey: k, isVisible: true, displayOrder: idx }));
+  const getSortedSections = (groupKeys) => {
+    if (layoutSections.length > 0) {
+      const mapped = layoutSections
+        .filter(sec => {
+          const mappedKey = mapLayoutIdToKey(sec.id);
+          return groupKeys.includes(mappedKey) && sec.active;
+        })
+        .map((sec, idx) => ({
+          sectionKey: mapLayoutIdToKey(sec.id),
+          displayOrder: idx
+        }));
+      return mapped;
     }
-    return layoutSections
-      .filter(s => keys.includes(s.sectionKey) && s.isVisible)
-      .sort((a, b) => a.displayOrder - b.displayOrder);
+    return groupKeys.map((k, idx) => ({ sectionKey: k, displayOrder: idx }));
+  };
+
+  const mapLayoutIdToKey = (id) => {
+    switch (id) {
+      case 'Featured': return 'hero';
+      case 'Latest': return 'latest_news';
+      case 'Breaking Ticker': return 'news_ticker';
+      case 'Institution News': return 'institution_news';
+      case 'Nearby/District feed': return 'quick_access';
+      case 'Classifieds row': return 'classifieds';
+      case 'Market Ticker': return 'market_ticker';
+      case 'Live TV embed': return 'live_tv';
+      default: return id;
+    }
   };
 
   const handleSubmitReport = (e) => {
@@ -842,7 +897,16 @@ const Home = () => {
           {lang === 'en' ? 'Live Broadcast' : 'நேரலை ஒளிபரப்பு'}
         </h4>
         <div style={{ width: '100%', height: '180px', background: 'black', borderRadius: '8px', overflow: 'hidden' }}>
-          {liveVideo ? (
+          {activeStreams && activeStreams.length > 0 ? (
+            <video 
+              controls
+              autoPlay
+              muted
+              playsInline
+              src={activeStreams[0].streamUrl}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : liveVideo ? (
             <iframe 
               src={liveVideo.videoUrl} 
               title="Live Stream" 
@@ -1028,6 +1092,123 @@ const Home = () => {
     );
   };
 
+  const renderClassifieds = () => {
+    return (
+      <section className="news-section" style={{ marginTop: '30px', padding: '1.5rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+        <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <i className="fa-solid fa-tags text-amber-500"></i> {lang === 'en' ? 'Latest Classifieds Listings' : 'சமீபத்திய விளம்பரங்கள்'}
+          </h2>
+          <Link to="/classifieds" style={{ fontSize: '0.85rem', color: '#B3732A', fontWeight: '700', textDecoration: 'none' }}>
+            {lang === 'en' ? 'View All' : 'அனைத்தும் காண்க'} <i className="fa-solid fa-arrow-right"></i>
+          </Link>
+        </div>
+        <div style={{ display: 'flex', gap: '1rem', overflowX: 'auto', paddingBottom: '0.5rem', scrollbarWidth: 'none' }}>
+          {classifieds.length === 0 ? (
+            <p style={{ color: '#64748b', fontSize: '0.85rem' }}>
+              {lang === 'en' ? 'No active classifieds listings found.' : 'செயலில் உள்ள விளம்பரங்கள் எதுவும் இல்லை.'}
+            </p>
+          ) : (
+            classifieds.map(ad => (
+              <div key={ad.id} style={{ minWidth: '240px', maxWidth: '240px', background: 'white', border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                <div style={{ height: '140px', background: ad.imageUrl ? `url(${ad.imageUrl}) center/cover` : '#e2e8f0' }}></div>
+                <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', flexGrow: 1 }}>
+                  <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: '#B3732A', fontWeight: '700' }}>{ad.category}</span>
+                  <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: '700', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ad.title}</h4>
+                  <span style={{ fontSize: '0.95rem', fontWeight: '800', color: '#22c55e' }}>₹{ad.price}</span>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b' }}><i className="fa-solid fa-location-dot"></i> {ad.location}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+    );
+  };
+
+  const startVoiceSearch = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice search is not supported in your browser. Please try Chrome.");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = lang === 'en' ? 'en-US' : 'ta-IN';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    setIsListening(true);
+    recognition.start();
+
+    recognition.onresult = (event) => {
+      const speechToText = event.results[0][0].transcript;
+      setSearchQuery(speechToText);
+      handleSearchSubmit(speechToText);
+    };
+
+    recognition.onerror = (event) => {
+      console.error(event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+  };
+
+  const handleSearchSubmit = async (queryStr) => {
+    if (!queryStr.trim()) return;
+    setLoading(true);
+    try {
+      const res = await fetchApi(`/public/articles?search=${encodeURIComponent(queryStr)}&language=${lang}`);
+      if (res && Array.isArray(res.articles)) {
+        setArticles(res.articles);
+      }
+    } catch (e) {
+      console.error("Search failed:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderVoiceSearchBar = () => {
+    return (
+      <div className="container" style={{ margin: '1.5rem auto 0 auto', padding: '0 15px' }}>
+        <div style={{ display: 'flex', gap: '8px', background: 'white', padding: '0.5rem', borderRadius: '12px', border: '1px solid #cbd5e1', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', alignItems: 'center' }}>
+          <i className="fa-solid fa-magnifying-glass text-slate-400" style={{ marginLeft: '0.5rem' }}></i>
+          <input
+            type="text"
+            placeholder={lang === 'en' ? "Search news articles..." : "செய்திகளைத் தேடுங்கள்..."}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit(searchQuery)}
+            style={{ flexGrow: 1, border: 'none', outline: 'none', fontSize: '0.9rem', color: '#1e293b', background: 'transparent' }}
+          />
+          <button
+            type="button"
+            onClick={startVoiceSearch}
+            style={{
+              border: 'none',
+              background: isListening ? '#ef4444' : '#f1f5f9',
+              color: isListening ? 'white' : '#B3732A',
+              padding: '0.5rem 0.85rem',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: '700',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s'
+            }}
+          >
+            <i className={`fa-solid ${isListening ? 'fa-microphone-lines animate-pulse' : 'fa-microphone'}`}></i>
+            <span style={{ fontSize: '0.75rem' }}>{isListening ? 'Listening...' : 'Voice Search'}</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const getRenderedSection = (key) => {
     switch (key) {
       case 'news_ticker': return renderNewsTicker();
@@ -1045,6 +1226,8 @@ const Home = () => {
       case 'business_case': return renderBusinessCase();
       case 'crowd_reporter': return renderCrowdReporterWidget();
       case 'news_digest': return renderNewsDigest();
+      case 'classifieds': return renderClassifieds();
+      case 'market_ticker': return renderCommodityTicker();
       default: return null;
     }
   };
@@ -1102,11 +1285,11 @@ const Home = () => {
 
   return (
     <div style={{ width: '100%' }}>
-      {/* COMMODITY TICKER */}
-      {renderCommodityTicker()}
+      {/* AI Voice Search Bar */}
+      {renderVoiceSearchBar()}
 
       {/* FULL-WIDTH TOP SECTIONS */}
-      {getSortedSections(['news_ticker', 'hero', 'quick_access']).map(sec => (
+      {getSortedSections(['market_ticker', 'news_ticker', 'hero', 'quick_access']).map(sec => (
         <React.Fragment key={sec.sectionKey}>
           {getRenderedSection(sec.sectionKey)}
         </React.Fragment>
@@ -1120,7 +1303,7 @@ const Home = () => {
       {/* MAIN LAYOUT SPLIT */}
       <div className="container main-layout-container">
         <div className="left-content-column">
-          {getSortedSections(['latest_news', 'video_news', 'web_stories', 'crowd_reporter_highlight', 'institution_news']).map(sec => (
+          {getSortedSections(['latest_news', 'video_news', 'web_stories', 'crowd_reporter_highlight', 'institution_news', 'classifieds']).map(sec => (
             <React.Fragment key={sec.sectionKey}>
               {getRenderedSection(sec.sectionKey)}
             </React.Fragment>

@@ -24,6 +24,8 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
 
     boolean existsByTitleIgnoreCaseAndLanguage(String title, String language);
     boolean existsByTitleIgnoreCaseAndLanguageAndIdNot(String title, String language, Long id);
+    boolean existsBySlugIgnoreCaseAndLanguage(String slug, String language);
+    boolean existsBySlugIgnoreCaseAndLanguageAndIdNot(String slug, String language, Long id);
 
     boolean existsByTitleEnIgnoreCaseAndLanguage(String title, String language);
     boolean existsByTitleTaIgnoreCaseAndLanguage(String title, String language);
@@ -45,6 +47,9 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
            "ORDER BY published_at DESC LIMIT :limit", nativeQuery = true)
     List<Article> findNearbyArticles(@Param("userLat") Double userLat, @Param("userLon") Double userLon, @Param("defaultRadius") Double defaultRadius, @Param("limit") int limit);
     List<Article> findTop10ByStatusAndCategoryIdAndIdNotOrderByPublishedAtDesc(String status, Long categoryId, Long id);
+
+    boolean existsByCategoryId(Long categoryId);
+    boolean existsBySubcategoryId(Long subcategoryId);
 
     @org.springframework.data.jpa.repository.Modifying
     @org.springframework.transaction.annotation.Transactional

@@ -1,10 +1,22 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
+import { fetchApi } from '../utils/api';
 
 const Footer = () => {
   const { lang } = useContext(LanguageContext);
   const currentYear = new Date().getFullYear();
+  const [publicPages, setPublicPages] = useState([]);
+
+  useEffect(() => {
+    fetchApi('/public/pages')
+      .then(data => {
+        if (Array.isArray(data)) {
+          setPublicPages(data);
+        }
+      })
+      .catch(err => console.warn("Footer failed to load public custom pages", err));
+  }, []);
 
   return (
     <footer className="site-footer">
@@ -70,6 +82,15 @@ const Footer = () => {
             <Link to="/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', fontSize: '13px' }}>{lang === 'en' ? 'Privacy Policy' : 'தனியுரிமைக் கொள்கை'}</Link>
             <span style={{ opacity: 0.3 }}>|</span>
             <Link to="/terms-of-use" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', fontSize: '13px' }}>{lang === 'en' ? 'Terms & Conditions' : 'விதிமுறைகள்'}</Link>
+            
+            {publicPages.filter(p => p.location === 'FOOTER' && p.language === lang).map((page) => (
+              <React.Fragment key={page.id}>
+                <span style={{ opacity: 0.3 }}>|</span>
+                <Link to={`/p/${page.slug}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', fontSize: '13px' }}>
+                  {page.title}
+                </Link>
+              </React.Fragment>
+            ))}
           </div>
         </div>
       </div>

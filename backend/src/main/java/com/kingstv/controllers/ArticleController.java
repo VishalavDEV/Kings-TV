@@ -25,6 +25,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
@@ -451,11 +454,55 @@ public class ArticleController {
         }
         try {
             String url = storageService.uploadFile(file, "articles");
-            return ResponseEntity.ok(Map.of("url", url));
+            String originalName = file.getOriginalFilename();
+            String altText = generateAltText(originalName);
+            return ResponseEntity.ok(Map.of("url", url, "altText", altText));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Failed to upload file: " + e.getMessage()));
         }
+    }
+
+    private String generateAltText(String filename) {
+        if (filename == null || filename.isEmpty()) return "Uploaded Image";
+        int extIdx = filename.lastIndexOf('.');
+        String base = extIdx > 0 ? filename.substring(0, extIdx) : filename;
+        String cleaned = base.replace('_', ' ').replace('-', ' ');
+        return Arrays.stream(cleaned.split("\\s+"))
+            .filter(w -> !w.isEmpty())
+            .map(w -> Character.toUpperCase(w.charAt(0)) + (w.length() > 1 ? w.substring(1).toLowerCase() : ""))
+            .collect(Collectors.joining(" "));
+    }
+
+    @PostMapping("/suggest-seo")
+    public ResponseEntity<?> suggestSeo(@RequestBody Map<String, String> request) {
+        String title = request.getOrDefault("title", "");
+        String content = request.getOrDefault("content", "");
+        
+        String metaTitle = title.trim() + " | KINGS 24x7 News";
+        
+        String plainContent = content.replaceAll("<[^>]*>", "").trim();
+        String metaDesc = plainContent.length() > 155 ? plainContent.substring(0, 152) + "..." : plainContent;
+        if (metaDesc.isEmpty()) {
+            metaDesc = "Read the latest updates and breaking coverage on KINGS 24x7.";
+        }
+        
+        String cleanText = (title + " " + plainContent).toLowerCase().replaceAll("[^a-zA-Z\\s]", "");
+        Set<String> words = Arrays.stream(cleanText.split("\\s+"))
+            .filter(w -> w.length() > 5)
+            .limit(10)
+            .collect(Collectors.toSet());
+        
+        String keywords = String.join(", ", words);
+        if (keywords.isEmpty()) {
+            keywords = "kings tv, tamil news, breaking news";
+        }
+        
+        return ResponseEntity.ok(Map.of(
+            "metaTitle", metaTitle,
+            "metaDescription", metaDesc,
+            "metaKeywords", keywords
+        ));
     }
 
     @GetMapping("/public/authors/{name}")

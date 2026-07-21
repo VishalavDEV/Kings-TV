@@ -1,0 +1,26 @@
+.public-rfq-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px 3rem 15px;
+}
+
+.rfq-hero-banner {
+  text-align: center;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: white;
+  padding: 4rem 2rem;
+  border-radius: 16px;
+  margin-top: 1.5rem;
+}
+
+.rfq-hero-banner h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.rfq-hero-banner p {
+  color: #94a3b8;
+  max-width: 600px;
+  margin: 0 auto;
+}

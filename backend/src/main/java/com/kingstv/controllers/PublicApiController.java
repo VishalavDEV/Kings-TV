@@ -39,12 +39,16 @@ public class PublicApiController {
     @Autowired private AuthorEarningRepository authorEarningRepository;
     @Autowired private UserRepository userRepository;
     @Autowired private SystemConfigService systemConfigService;
+    @Autowired private PushNotificationRepository pushNotificationRepository;
+    @Autowired private DeviceTokenRepository deviceTokenRepository;
+    @Autowired private LiveChannelRepository liveChannelRepository;
 
     // --- 1. GET /api/public/articles ---
     @GetMapping("/articles")
     public ResponseEntity<?> getArticles(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String language,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit) {
         
@@ -60,19 +64,32 @@ public class PublicApiController {
             }
         }
 
-        Page<Article> articlesPage;
-        if (catId != null) {
-            final Long filterCatId = catId;
-            articlesPage = articleRepository.findAll(
-                (root, query, cb) -> cb.and(
-                    cb.equal(root.get("status"), "published"),
-                    cb.equal(root.get("categoryId"), filterCatId)
-                ),
-                pageable
-            );
-        } else {
-            articlesPage = articleRepository.findByStatus("published", pageable);
-        }
+        final Long filterCatId = catId;
+        final String searchLower = (search != null) ? search.trim().toLowerCase() : null;
+
+        Page<Article> articlesPage = articleRepository.findAll(
+            (root, query, cb) -> {
+                List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
+                predicates.add(cb.equal(root.get("status"), "published"));
+                
+                if (filterCatId != null) {
+                    predicates.add(cb.equal(root.get("categoryId"), filterCatId));
+                }
+                if (language != null && !language.isBlank()) {
+                    predicates.add(cb.equal(cb.lower(root.get("language")), language.toLowerCase()));
+                }
+                if (searchLower != null && !searchLower.isEmpty()) {
+                    predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("titleTa")), "%" + searchLower + "%"),
+                        cb.like(cb.lower(root.get("titleEn")), "%" + searchLower + "%"),
+                        cb.like(cb.lower(root.get("contentTa")), "%" + searchLower + "%"),
+                        cb.like(cb.lower(root.get("contentEn")), "%" + searchLower + "%")
+                    ));
+                }
+                return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+            },
+            pageable
+        );
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("articles", articlesPage.getContent());
@@ -265,19 +282,28 @@ public class PublicApiController {
         }
 
         Poll poll = pollOpt.get();
-        int option = 1;
-        if (body.get("option") != null) {
-            option = Integer.parseInt(body.get("option").toString());
+        Long optionId = null;
+        if (body.get("optionId") != null) {
+            optionId = Long.parseLong(body.get("optionId").toString());
+        } else if (body.get("option") != null) {
+            int index = Integer.parseInt(body.get("option").toString()) - 1;
+            if (index >= 0 && index < poll.getOptions().size()) {
+                optionId = poll.getOptions().get(index).getId();
+            }
         }
 
-        if (option == 1) {
-            poll.setOption1Votes((poll.getOption1Votes() != null ? poll.getOption1Votes() : 0) + 1);
-        } else if (option == 2) {
-            poll.setOption2Votes((poll.getOption2Votes() != null ? poll.getOption2Votes() : 0) + 1);
-        } else if (option == 3) {
-            poll.setOption3Votes((poll.getOption3Votes() != null ? poll.getOption3Votes() : 0) + 1);
+        if (optionId != null) {
+            for (com.kingstv.models.PollOption opt : poll.getOptions()) {
+                if (opt.getId().equals(optionId)) {
+                    opt.setVoteCount((opt.getVoteCount() != null ? opt.getVoteCount() : 0) + 1);
+                    break;
+                }
+            }
+        } else {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid or missing option parameter"));
         }
 
+        poll.setVoteCount((poll.getVoteCount() != null ? poll.getVoteCount() : 0) + 1);
         pollRepository.save(poll);
         return ResponseEntity.ok(poll);
     }
@@ -402,13 +428,43 @@ public class PublicApiController {
     // --- 20. GET /api/public/layout/web ---
     @GetMapping("/layout/web")
     public ResponseEntity<?> getWebLayout() {
-        return ResponseEntity.ok(List.of(
-            Map.of("sectionKey", "news_ticker", "isVisible", true),
-            Map.of("sectionKey", "video_news", "isVisible", true),
-            Map.of("sectionKey", "web_stories", "isVisible", true),
-            Map.of("sectionKey", "live_tv", "isVisible", true),
-            Map.of("sectionKey", "news_digest", "isVisible", true),
-            Map.of("sectionKey", "business_case", "isVisible", true)
-        ));
+        String layoutJson = systemConfigService.getConfigValueOrDefault("general.homepage_layout", "");
+        if (layoutJson != null && !layoutJson.trim().isEmpty()) {
+            return ResponseEntity.ok(Map.of("layout", layoutJson));
+        }
+        return ResponseEntity.ok(Map.of("layout", "[{\"id\":\"Featured\",\"active\":true},{\"id\":\"Latest\",\"active\":true},{\"id\":\"Breaking Ticker\",\"active\":true},{\"id\":\"Institution News\",\"active\":true},{\"id\":\"Nearby/District feed\",\"active\":true},{\"id\":\"Classifieds row\",\"active\":true},{\"id\":\"Market Ticker\",\"active\":true},{\"id\":\"Live TV embed\",\"active\":true}]"));
+    }
+    @PostMapping("/device-tokens")
+    public ResponseEntity<?> registerDeviceToken(@RequestBody Map<String, String> body) {
+        String token = body.get("token");
+        if (token == null || token.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Token is required"));
+        }
+        
+        Optional<DeviceToken> existing = deviceTokenRepository.findByToken(token);
+        DeviceToken deviceToken = existing.orElse(new DeviceToken());
+        deviceToken.setToken(token);
+        
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getDetails() instanceof Long) {
+            deviceToken.setUserId((Long) auth.getDetails());
+        }
+        
+        deviceTokenRepository.save(deviceToken);
+        return ResponseEntity.ok(Map.of("message", "Device token registered successfully"));
+    }
+
+    @GetMapping("/livestream/active")
+    public ResponseEntity<List<LiveChannel>> getActiveStreams() {
+        return ResponseEntity.ok(liveChannelRepository.findByIsActive(true));
+    }
+
+    @PostMapping("/push-notifications/{id}/click")
+    public ResponseEntity<?> recordPushClick(@PathVariable Long id) {
+        return pushNotificationRepository.findById(id).map(record -> {
+            record.setOpenedCount((record.getOpenedCount() != null ? record.getOpenedCount() : 0) + 1);
+            pushNotificationRepository.save(record);
+            return ResponseEntity.ok(Map.of("message", "Click logged successfully"));
+        }).orElse(ResponseEntity.notFound().build());
     }
 }

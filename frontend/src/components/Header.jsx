@@ -110,6 +110,7 @@ const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [navCategories, setNavCategories] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
+  const [publicPages, setPublicPages] = useState([]);
   const [showHeaderSubcatDropdown, setShowHeaderSubcatDropdown] = useState(false);
   const [districtsList, setDistrictsList] = useState([]);
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -350,7 +351,7 @@ const Header = () => {
       });
     }
 
-    return dynamicItems.length > 0 ? dynamicItems : [
+    const baseItems = dynamicItems.length > 0 ? dynamicItems : [
       { path: '/', label: lang === 'en' ? 'Home' : 'முகப்பு', subcategories: [] },
       { path: '/category/politics', label: lang === 'en' ? 'Politics' : 'அரசியல்', subcategories: [{ id: 'fp-1', slug: 'state', name: 'State', nameTa: 'மாநிலம்' }] },
       { path: '/category/business', label: lang === 'en' ? 'Business' : 'வணிகம்', subcategories: [{ id: 'fb-1', slug: 'markets', name: 'Markets', nameTa: 'சந்தை' }] },
@@ -392,6 +393,17 @@ const Header = () => {
       },
       { path: '/web-stories', label: lang === 'en' ? 'Web Stories' : 'வெப் ஸ்டோரிஸ்', subcategories: [] }
     ];
+
+    const pageItems = publicPages
+      .filter(p => p.location === 'MAIN_MENU' && p.language === lang)
+      .map(p => ({
+        id: `cp-${p.id}`,
+        path: `/p/${p.slug}`,
+        label: p.title,
+        subcategories: []
+      }));
+
+    return [...baseItems, ...pageItems];
   };
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -487,6 +499,14 @@ const Header = () => {
         }
       })
       .catch(err => console.warn("Header failed to load public menus", err));
+
+    fetchApi('/public/pages')
+      .then(data => {
+        if (Array.isArray(data)) {
+          setPublicPages(data);
+        }
+      })
+      .catch(err => console.warn("Header failed to load public pages", err));
 
     fetchApi('/videos')
       .then(data => {
@@ -1355,9 +1375,18 @@ const Header = () => {
             >
               <i className="fas fa-bars"></i>
             </button>
-            <div className="logo-district-container" style={{ display: 'flex', gap: '8px' }}>
+            <div className="logo-district-container" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               {renderLogo('small', true)}
               {renderDistrictSelector(true)}
+              
+              {/* Desktop Top Menu Dynamic Custom Pages */}
+              <div className="top-pages-links-header" style={{ display: 'flex', gap: '12px', marginLeft: '16px', alignItems: 'center' }}>
+                {publicPages.filter(p => (p.location === 'TOP_MENU' || p.location === 'HEADER') && p.language === lang).map(p => (
+                  <Link key={p.id} to={`/p/${p.slug}`} style={{ color: 'rgba(255, 255, 255, 0.75)', fontSize: '12px', fontWeight: '600', textDecoration: 'none', transition: 'color 0.2s', whiteSpace: 'nowrap' }} onMouseEnter={(e) => e.target.style.color = '#ffffff'} onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.75)'}>
+                    {p.title}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
@@ -1764,6 +1793,33 @@ const Header = () => {
             </h4>
             {renderNavMenuVertical(() => setDrawerOpen(false))}
           </div>
+
+          {/* Drawer static custom pages list */}
+          {publicPages.filter(p => p.language === lang).length > 0 && (
+            <div style={{ borderBottom: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #cbd5e1', paddingBottom: '15px' }}>
+              <h4 style={{ margin: '0 0 10px 0', fontSize: '11px', color: '#64748B', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                {lang === 'en' ? 'Pages' : 'பக்கங்கள்'}
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {publicPages.filter(p => p.language === lang).map(p => (
+                  <Link
+                    key={p.id}
+                    to={`/p/${p.slug}`}
+                    onClick={() => setDrawerOpen(false)}
+                    style={{
+                      color: theme === 'dark' ? '#cbd5e1' : '#334155',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      textDecoration: 'none',
+                      display: 'block'
+                    }}
+                  >
+                    {p.title}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Utility elements inside sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>

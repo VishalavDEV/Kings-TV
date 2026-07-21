@@ -7,18 +7,24 @@ import java.util.List;
 
 public class SpecificationBuilder {
     public static <T> Specification<T> build(String search, String status, String categoryId, String districtId) {
-        return build(search, status, categoryId, districtId, null);
+        return build(search, status, categoryId, null, districtId, null, null, null, null, null, null, null, null, null);
     }
 
     public static <T> Specification<T> build(String search, String status, String categoryId, String districtId, String authorId) {
-        return build(search, status, categoryId, districtId, authorId, null);
+        return build(search, status, categoryId, null, districtId, authorId, null, null, null, null, null, null, null, null);
     }
 
     public static <T> Specification<T> build(String search, String status, String categoryId, String districtId, String authorId, String tag) {
-        return build(search, status, categoryId, districtId, authorId, tag, null, null, null, null);
+        return build(search, status, categoryId, null, districtId, authorId, tag, null, null, null, null, null, null, null);
     }
 
     public static <T> Specification<T> build(String search, String status, String categoryId, String districtId, String authorId, String tag,
+                                             java.time.LocalDateTime startDate, java.time.LocalDateTime endDate, Integer year, Integer month) {
+        return build(search, status, categoryId, null, districtId, authorId, tag, null, null, null, startDate, endDate, year, month);
+    }
+
+    public static <T> Specification<T> build(String search, String status, String categoryId, String subcategoryId, String districtId, String authorId, String tag,
+                                             String language, String postType, Boolean isBreaking,
                                              java.time.LocalDateTime startDate, java.time.LocalDateTime endDate, Integer year, Integer month) {
         return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -88,6 +94,15 @@ public class SpecificationBuilder {
                 }
             }
 
+            if (subcategoryId != null && !subcategoryId.isEmpty()) {
+                try {
+                    root.get("subcategoryId");
+                    predicates.add(cb.equal(root.get("subcategoryId"), Long.parseLong(subcategoryId)));
+                } catch (IllegalArgumentException e) {
+                    // Entity doesn't have a subcategoryId field, ignore
+                }
+            }
+
             if (districtId != null && !districtId.isEmpty()) {
                 try {
                     root.get("districtId");
@@ -100,13 +115,41 @@ public class SpecificationBuilder {
             if (authorId != null && !authorId.isEmpty()) {
                 try {
                     root.get("authorName");
-                    predicates.add(cb.equal(root.get("authorName"), authorId));
+                    predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("authorName")), "%" + authorId.toLowerCase() + "%"),
+                        cb.equal(root.get("authorId").as(String.class), authorId)
+                    ));
                 } catch (IllegalArgumentException e) {
                     // Entity doesn't have an authorName field, ignore
                 }
             }
 
+            if (language != null && !language.isEmpty()) {
+                try {
+                    root.get("language");
+                    predicates.add(cb.equal(root.get("language"), language));
+                } catch (IllegalArgumentException e) {
+                    // ignore
+                }
+            }
 
+            if (postType != null && !postType.isEmpty()) {
+                try {
+                    root.get("postType");
+                    predicates.add(cb.equal(root.get("postType"), postType.toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    // ignore
+                }
+            }
+
+            if (isBreaking != null) {
+                try {
+                    root.get("isBreaking");
+                    predicates.add(cb.equal(root.get("isBreaking"), isBreaking));
+                } catch (IllegalArgumentException e) {
+                    // ignore
+                }
+            }
 
             if (search != null && !search.isEmpty()) {
                 String searchPattern = "%" + search.toLowerCase() + "%";

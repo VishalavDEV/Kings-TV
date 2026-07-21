@@ -108,6 +108,13 @@
             <version>2.3.0</version>
         </dependency>
 
+        <!-- HTML Sanitizer -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.16.1</version>
+        </dependency>
+
         <!-- Google Authenticator TOTP 2FA -->
         <dependency>
             <groupId>com.warrenstrange</groupId>

@@ -97,7 +97,8 @@ public class AdminSettingsController {
         "general.site_language",
         "general.timezone",
         "general.date_format",
-        "general.time_format"
+        "general.time_format",
+        "general.homepage_layout"
     );
 
     private static final List<String> CONTACT_KEYS = List.of(

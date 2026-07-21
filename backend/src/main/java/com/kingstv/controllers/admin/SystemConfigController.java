@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import com.kingstv.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 
 import java.util.Map;
 
@@ -29,6 +31,9 @@ public class SystemConfigController {
 
     @Autowired
     private DbCleanupService dbCleanupService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @GetMapping
     @RequiresPermission(Permission.CONFIG_READ)
@@ -184,6 +189,26 @@ public class SystemConfigController {
             SystemConfig.TELEGRAM_ENABLED, request.getOrDefault("enabled", "false")
         ), "telegram", userId);
         return ResponseEntity.ok(Map.of("message", "Telegram config updated"));
+    }
+
+    @PutMapping("/ga4")
+    public ResponseEntity<?> updateGa4Config(@RequestBody Map<String, String> request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getDetails() instanceof Long)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Unauthorized access."));
+        }
+        
+        Long userId = (Long) auth.getDetails();
+        com.kingstv.models.User caller = userRepository.findById(userId).orElse(null);
+        if (caller == null || !"SUPER_ADMIN".equalsIgnoreCase(caller.getRole())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Access denied. Only Super Admins can update GA4 credentials."));
+        }
+
+        configService.setMultipleConfigs(Map.of(
+            SystemConfig.GA4_PROPERTY_ID, request.getOrDefault("propertyId", ""),
+            SystemConfig.GA4_SERVICE_ACCOUNT, request.getOrDefault("serviceAccount", "")
+        ), "ga4", userId);
+        return ResponseEntity.ok(Map.of("message", "GA4 configuration updated successfully."));
     }
 
     @PostMapping("/db-cleanup")

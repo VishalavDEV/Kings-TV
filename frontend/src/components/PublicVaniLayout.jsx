@@ -34,6 +34,7 @@ const PublicVaniLayout = ({ children }) => {
 
   const navItems = [
     { label: 'Dashboard', path: '/dashboard', icon: 'fa-solid fa-gauge-high' },
+    { label: 'Analytics Reports', path: '/analytics', icon: 'fa-solid fa-chart-column' },
     { label: 'Add Post', path: '/posts/add', icon: 'fa-solid fa-plus-circle' },
     { label: 'Manage All Posts', path: '/posts', icon: 'fa-solid fa-newspaper' },
     { label: 'Slider Posts', path: '/posts/slider', icon: 'fa-solid fa-images' },
@@ -56,6 +57,17 @@ const PublicVaniLayout = ({ children }) => {
     { label: 'Contact Messages', path: '/contact-messages', icon: 'fa-solid fa-envelope' },
     { label: 'Newsletter', path: '/newsletter', icon: 'fa-solid fa-paper-plane' },
     { label: 'Roles & Permissions', path: '/roles', icon: 'fa-solid fa-user-shield' },
+    { label: 'Push Alerts', path: '/push-notifications', icon: 'fa-solid fa-bell' },
+    { label: 'Live Streams', path: '/livestream-settings', icon: 'fa-solid fa-tower-broadcast' },
+    { label: 'System Settings', path: '/settings', icon: 'fa-solid fa-gears' },
+    { label: 'Profanity Moderation', path: '/profanity-filter', icon: 'fa-solid fa-filter' },
+    { label: 'Classifieds Manager', path: '/classifieds-manager', icon: 'fa-solid fa-tags' },
+    { label: 'Directory Listings', path: '/admin-directory', icon: 'fa-solid fa-store' },
+    { label: 'Jobs Manager', path: '/admin-jobs', icon: 'fa-solid fa-briefcase' },
+    { label: 'Deals & Offers', path: '/admin-deals', icon: 'fa-solid fa-gift' },
+    { label: 'NFC Card Manager', path: '/admin-nfc', icon: 'fa-solid fa-id-card' },
+    { label: 'RFQ Moderation', path: '/admin-rfq', icon: 'fa-solid fa-file-contract' },
+    { label: 'Obits & Wishes', path: '/admin-obituaries-wishes', icon: 'fa-solid fa-ribbon' },
     { label: 'Themes & Skins', path: '/themes', icon: 'fa-solid fa-palette' }
   ];
 

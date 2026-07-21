@@ -53,6 +53,14 @@ public class LoginAttemptService {
         attemptsCache.put(cacheKey, attempts);
     }
 
+    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(LoginAttemptService.class.getName());
+
+    public void loginFailed(String email, String ip) {
+        if (email != null) loginFailed(email);
+        if (ip != null) loginFailed(ip);
+        LOGGER.warning(String.format("[SECURITY ALERT] Failed login attempt from IP: %s for account: %s", ip, email));
+    }
+
     /**
      * Checks if a key (email or IP) is locked out.
      */

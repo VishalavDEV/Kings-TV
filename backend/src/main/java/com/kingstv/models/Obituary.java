@@ -255,4 +255,13 @@ public class Obituary {
 
     public Boolean getIsCelebrity() { return isCelebrity; }
     public void setIsCelebrity(Boolean isCelebrity) { this.isCelebrity = isCelebrity; }
+
+    public String getFamilyMessage() { return biography; }
+    public void setFamilyMessage(String familyMessage) { this.biography = familyMessage; }
+
+    public String getSubmittedByName() { return familyContactName; }
+    public void setSubmittedByName(String submittedByName) { this.familyContactName = submittedByName; }
+
+    public String getSubmittedByContact() { return familyPhone; }
+    public void setSubmittedByContact(String submittedByContact) { this.familyPhone = submittedByContact; }
 }

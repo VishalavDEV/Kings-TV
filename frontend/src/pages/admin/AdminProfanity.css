@@ -1,0 +1,44 @@
+.admin-profanity-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.dictionary-terms-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+}
+
+.dictionary-term-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #e2e8f0;
+  color: #334155;
+  padding: 0.35rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.dictionary-term-pill button {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.dictionary-term-pill button:hover {
+  color: #ef4444;
+}

@@ -2,6 +2,7 @@ package com.kingstv.controllers.admin;
 
 import com.kingstv.models.SubCategory;
 import com.kingstv.repository.SubCategoryRepository;
+import com.kingstv.repository.ArticleRepository;
 import com.kingstv.services.SlugService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,9 @@ public class AdminSubCategoryController {
 
     @Autowired
     private SubCategoryRepository subCategoryRepository;
+
+    @Autowired
+    private ArticleRepository articleRepository;
 
     @Autowired
     private SlugService slugService;
@@ -41,9 +45,9 @@ public class AdminSubCategoryController {
 
     @PostMapping
     public ResponseEntity<?> createSubCategory(@RequestBody SubCategory subCategory) {
-        if (subCategory.getName() == null || subCategory.getName().trim().isEmpty()) {
+        if (subCategory.getName() == null || subCategory.getName().trim().length() < 2 || subCategory.getName().trim().length() > 100) {
             Map<String, String> err = new HashMap<>();
-            err.put("error", "Subcategory name is required");
+            err.put("error", "Subcategory name must be between 2 and 100 characters");
             return ResponseEntity.badRequest().body(err);
         }
 
@@ -72,8 +76,29 @@ public class AdminSubCategoryController {
             return ResponseEntity.badRequest().body(err);
         }
 
+        // Validate hex color if provided
+        if (subCategory.getColor() != null && !subCategory.getColor().trim().isEmpty()) {
+            String hexColor = subCategory.getColor().trim();
+            if (!hexColor.matches("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")) {
+                Map<String, String> err = new HashMap<>();
+                err.put("error", "Color must be a valid hex code (e.g. #3B82F6)");
+                return ResponseEntity.badRequest().body(err);
+            }
+            subCategory.setColor(hexColor);
+        }
+
         // Handle slug
-        slugService.generateAndSetSlug(subCategory);
+        if (subCategory.getSlug() != null && !subCategory.getSlug().trim().isEmpty()) {
+            String slug = subCategory.getSlug().trim();
+            if (subCategoryRepository.existsBySlugAndLanguage(slug, lang)) {
+                Map<String, String> err = new HashMap<>();
+                err.put("error", "Slug '" + slug + "' is already in use for language '" + lang + "'");
+                return ResponseEntity.badRequest().body(err);
+            }
+            subCategory.setSlug(slug);
+        } else {
+            slugService.generateAndSetSlug(subCategory);
+        }
 
         SubCategory saved = subCategoryRepository.save(subCategory);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
@@ -93,8 +118,17 @@ public class AdminSubCategoryController {
         Long parentId = updatedSubCategory.getParentCategoryId() != null ? updatedSubCategory.getParentCategoryId() : existing.getParentCategoryId();
         String lang = updatedSubCategory.getLanguage() != null ? updatedSubCategory.getLanguage() : existing.getLanguage();
 
+        String name = existing.getName();
         if (updatedSubCategory.getName() != null && !updatedSubCategory.getName().trim().isEmpty()) {
-            String name = updatedSubCategory.getName().trim();
+            name = updatedSubCategory.getName().trim();
+            if (name.length() < 2 || name.length() > 100) {
+                Map<String, String> err = new HashMap<>();
+                err.put("error", "Subcategory name must be between 2 and 100 characters");
+                return ResponseEntity.badRequest().body(err);
+            }
+        }
+
+        if (updatedSubCategory.getName() != null && !updatedSubCategory.getName().trim().isEmpty()) {
             if (subCategoryRepository.existsByNameAndLanguageAndCategoryIdAndSubcategoryIdNot(name, lang, parentId, id)) {
                 Map<String, String> err = new HashMap<>();
                 err.put("error", "Subcategory with name '" + name + "' already exists under this parent category");
@@ -106,11 +140,22 @@ public class AdminSubCategoryController {
         existing.setParentCategoryId(parentId);
         existing.setLanguage(lang);
 
+        // Validate hex color if provided
+        if (updatedSubCategory.getColor() != null && !updatedSubCategory.getColor().trim().isEmpty()) {
+            String hexColor = updatedSubCategory.getColor().trim();
+            if (!hexColor.matches("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")) {
+                Map<String, String> err = new HashMap<>();
+                err.put("error", "Color must be a valid hex code (e.g. #3B82F6)");
+                return ResponseEntity.badRequest().body(err);
+            }
+            existing.setColor(hexColor);
+        }
+
         if (updatedSubCategory.getSlug() != null && !updatedSubCategory.getSlug().trim().isEmpty()) {
             String slug = updatedSubCategory.getSlug().trim();
-            if (subCategoryRepository.existsBySlugAndSubcategoryIdNot(slug, id)) {
+            if (subCategoryRepository.existsBySlugAndLanguageAndSubcategoryIdNot(slug, lang, id)) {
                 Map<String, String> err = new HashMap<>();
-                err.put("error", "Slug '" + slug + "' is already in use");
+                err.put("error", "Slug '" + slug + "' is already in use for language '" + lang + "'");
                 return ResponseEntity.badRequest().body(err);
             }
             existing.setSlug(slug);
@@ -118,7 +163,6 @@ public class AdminSubCategoryController {
 
         if (updatedSubCategory.getDescription() != null) existing.setDescription(updatedSubCategory.getDescription());
         if (updatedSubCategory.getKeywords() != null) existing.setKeywords(updatedSubCategory.getKeywords());
-        if (updatedSubCategory.getColor() != null) existing.setColor(updatedSubCategory.getColor());
         if (updatedSubCategory.getMenuOrder() != null) existing.setMenuOrder(updatedSubCategory.getMenuOrder());
         if (updatedSubCategory.getShowOnMenu() != null) existing.setShowOnMenu(updatedSubCategory.getShowOnMenu());
         if (updatedSubCategory.getStatus() != null) existing.setStatus(updatedSubCategory.getStatus());
@@ -133,6 +177,12 @@ public class AdminSubCategoryController {
             Map<String, String> err = new HashMap<>();
             err.put("error", "Subcategory not found");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
+        }
+        // Block deletion if articles/posts are attached
+        if (articleRepository.existsBySubcategoryId(id)) {
+            Map<String, String> err = new HashMap<>();
+            err.put("error", "Cannot delete subcategory because it has articles/posts attached. Please reassign the posts first.");
+            return ResponseEntity.badRequest().body(err);
         }
         subCategoryRepository.deleteById(id);
         Map<String, String> res = new HashMap<>();

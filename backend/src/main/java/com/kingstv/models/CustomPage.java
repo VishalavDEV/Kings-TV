@@ -37,10 +37,24 @@ public class CustomPage {
     @Column(name = "content", columnDefinition = "LONGTEXT")
     private String content;
 
+    @Column(name = "visibility")
+    private String visibility = "Public"; // Public, Draft
+
+    @Column(name = "page_type")
+    private String pageType = "custom";
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
@@ -75,6 +89,15 @@ public class CustomPage {
 
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
+
+    public String getVisibility() { return visibility != null ? visibility : "Public"; }
+    public void setVisibility(String visibility) { this.visibility = visibility; }
+
+    public String getPageType() { return pageType != null ? pageType : "custom"; }
+    public void setPageType(String pageType) { this.pageType = pageType; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }

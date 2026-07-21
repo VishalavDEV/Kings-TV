@@ -10,10 +10,10 @@ public class NfcCard {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "listing_id", nullable = false)
+    @Column(name = "listing_id")
     private Long listingId;
 
-    @Column(name = "short_code", nullable = false, unique = true)
+    @Column(name = "short_code", unique = true)
     private String shortCode;
 
     @Column(name = "link_type", nullable = false)
@@ -36,6 +36,48 @@ public class NfcCard {
 
     @Column(name = "tracking_number")
     private String trackingNumber;
+
+    @Column(name = "card_uid", unique = true)
+    private String cardUid;
+
+    @Column(name = "owner_name")
+    private String ownerName;
+
+    @Column(name = "title")
+    private String title;
+
+    @Column(name = "company")
+    private String company;
+
+    @Column(name = "phone")
+    private String phone;
+
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "website")
+    private String website;
+
+    @Column(name = "social_links", columnDefinition = "TEXT")
+    private String socialLinks;
+
+    @Column(name = "profile_photo")
+    private String profilePhoto;
+
+    @Column(name = "card_template")
+    private String cardTemplate = "classic";
+
+    @Column(name = "vcard_enabled")
+    private Boolean vcardEnabled = true;
+
+    @Column(name = "tap_count")
+    private Integer tapCount = 0;
+
+    @Column(name = "created_by")
+    private Long createdBy;
+
+    @Column(name = "status")
+    private String status = "active";
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -83,4 +125,33 @@ public class NfcCard {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getCardUid() { return cardUid != null ? cardUid : shortCode; }
+    public void setCardUid(String cardUid) { this.cardUid = cardUid; }
+    public String getOwnerName() { return ownerName; }
+    public void setOwnerName(String ownerName) { this.ownerName = ownerName; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getCompany() { return company; }
+    public void setCompany(String company) { this.company = company; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getWebsite() { return website; }
+    public void setWebsite(String website) { this.website = website; }
+    public String getSocialLinks() { return socialLinks; }
+    public void setSocialLinks(String socialLinks) { this.socialLinks = socialLinks; }
+    public String getProfilePhoto() { return profilePhoto; }
+    public void setProfilePhoto(String profilePhoto) { this.profilePhoto = profilePhoto; }
+    public String getCardTemplate() { return cardTemplate; }
+    public void setCardTemplate(String cardTemplate) { this.cardTemplate = cardTemplate; }
+    public Boolean getVcardEnabled() { return vcardEnabled; }
+    public void setVcardEnabled(Boolean vcardEnabled) { this.vcardEnabled = vcardEnabled; }
+    public Integer getTapCount() { return tapCount; }
+    public void setTapCount(Integer tapCount) { this.tapCount = tapCount; }
+    public Long getCreatedBy() { return createdBy; }
+    public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }

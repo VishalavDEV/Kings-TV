@@ -2,59 +2,153 @@ import React, { useState, useEffect } from 'react';
 import { fetchApi } from '../../utils/api';
 import './AdminWidgets.css';
 
+const HtmlToolbar = ({ targetField, setFormData }) => {
+  const insertTag = (openTag, closeTag = '') => {
+    const el = document.getElementById(targetField);
+    if (!el) return;
+    
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const text = el.value;
+    const selected = text.substring(start, end);
+    const replacement = openTag + selected + closeTag;
+    
+    const newValue = text.substring(0, start) + replacement + text.substring(end);
+    
+    setFormData(prev => ({
+      ...prev,
+      [targetField]: newValue
+    }));
+    
+    setTimeout(() => {
+      el.focus();
+      el.setSelectionRange(start + openTag.length, start + openTag.length + selected.length);
+    }, 0);
+  };
+
+  return (
+    <div className="html-editor-toolbar" style={{ display: 'flex', gap: '0.25rem', padding: '0.4rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderBottom: 'none', borderTopLeftRadius: '0.375rem', borderTopRightRadius: '0.375rem' }}>
+      <button type="button" onClick={() => insertTag('<strong>', '</strong>')} title="Bold" style={{ padding: '0.2rem 0.4rem', cursor: 'pointer' }}><i className="fa-solid fa-bold"></i></button>
+      <button type="button" onClick={() => insertTag('<em>', '</em>')} title="Italic" style={{ padding: '0.2rem 0.4rem', cursor: 'pointer' }}><i className="fa-solid fa-italic"></i></button>
+      <button type="button" onClick={() => insertTag('<u>', '</u>')} title="Underline" style={{ padding: '0.2rem 0.4rem', cursor: 'pointer' }}><i className="fa-solid fa-underline"></i></button>
+      <button type="button" onClick={() => insertTag('<s>', '</s>')} title="Strikethrough" style={{ padding: '0.2rem 0.4rem', cursor: 'pointer' }}><i className="fa-solid fa-strikethrough"></i></button>
+      <span style={{ color: '#cbd5e1', padding: '0 0.25rem' }}>|</span>
+      <button type="button" onClick={() => insertTag('<ul>\n  <li>', '</li>\n</ul>')} title="Bullet List" style={{ padding: '0.2rem 0.4rem', cursor: 'pointer' }}><i className="fa-solid fa-list-ul"></i></button>
+      <button type="button" onClick={() => insertTag('<ol>\n  <li>', '</li>\n</ol>')} title="Numbered List" style={{ padding: '0.2rem 0.4rem', cursor: 'pointer' }}><i className="fa-solid fa-list-ol"></i></button>
+      <span style={{ color: '#cbd5e1', padding: '0 0.25rem' }}>|</span>
+      <button type="button" onClick={() => {
+        const url = prompt('Enter link URL:');
+        if (url) insertTag(`<a href="${url}" target="_blank">`, '</a>');
+      }} title="Link" style={{ padding: '0.2rem 0.4rem', cursor: 'pointer' }}><i className="fa-solid fa-link"></i></button>
+    </div>
+  );
+};
+
 const AdminWidgets = () => {
   const [widgets, setWidgets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
+  // Pagination & Filtering state
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(15);
+  const [filterLang, setFilterLang] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Modal Add/Edit states
+  const [showModal, setShowModal] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+
   const [formData, setFormData] = useState({
     title: '',
-    widgetType: 'Recent Posts',
-    placement: 'sidebar',
+    widgetType: 'Default', // Default, Voting Poll, Tags Cloud, Random Posts, Popular Posts, Follow Us
+    placement: 'sidebar',  // sidebar, footer
     menuOrder: 0,
-    // config properties
-    limit: 5,
-    customHtml: ''
+    language: 'ta',
+    visibility: true,
+    content: ''
   });
 
-  const widgetTypes = ['Recent Posts', 'Categories', 'Tags Cloud', 'Custom HTML'];
+  const widgetTypes = ['Default', 'Voting Poll', 'Tags Cloud', 'Random Posts', 'Popular Posts', 'Follow Us'];
 
-  const loadWidgets = async () => {
+  const loadWidgets = async (page = 0) => {
     setLoading(true);
+    setErrorMsg('');
     try {
-      const res = await fetchApi('/admin/widgets');
-      if (Array.isArray(res)) {
-        setWidgets(res);
+      let query = `/admin/widgets?page=${page}&size=${pageSize}`;
+      if (filterLang) query += `&language=${filterLang}`;
+      if (searchTerm) query += `&search=${encodeURIComponent(searchTerm)}`;
+
+      const res = await fetchApi(query);
+      if (res && res.content) {
+        setWidgets(res.content);
+        setTotalCount(res.totalElements);
+        setTotalPages(res.totalPages);
+        setCurrentPage(res.number);
+      } else {
+        setWidgets([]);
       }
     } catch (err) {
-      console.error('Failed to load active widgets:', err);
+      console.error(err);
+      setErrorMsg('Failed to load active widgets list');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadWidgets();
-  }, []);
+    loadWidgets(0);
+  }, [pageSize, filterLang]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    loadWidgets(0);
+  };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
 
-  const resetForm = () => {
+  const openAddModal = () => {
+    setIsEditMode(false);
+    setEditingId(null);
     setFormData({
       title: '',
-      widgetType: 'Recent Posts',
+      widgetType: 'Default',
       placement: 'sidebar',
       menuOrder: 0,
-      limit: 5,
-      customHtml: ''
+      language: 'ta',
+      visibility: true,
+      content: ''
     });
+    setErrorMsg('');
+    setSuccessMsg('');
+    setShowModal(true);
+  };
+
+  const openEditModal = (widget) => {
+    setIsEditMode(true);
+    setEditingId(widget.id);
+    setFormData({
+      title: widget.title || '',
+      widgetType: widget.widgetType || 'Default',
+      placement: widget.placement || 'sidebar',
+      menuOrder: widget.menuOrder || 0,
+      language: widget.language || 'ta',
+      visibility: widget.visibility !== false,
+      content: widget.content || ''
+    });
+    setErrorMsg('');
+    setSuccessMsg('');
+    setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
@@ -68,240 +162,310 @@ const AdminWidgets = () => {
     }
 
     try {
-      const configObj = {};
-      if (formData.widgetType === 'Recent Posts') {
-        configObj.limit = parseInt(formData.limit, 10) || 5;
-      } else if (formData.widgetType === 'Custom HTML') {
-        configObj.html = formData.customHtml;
-      }
-
       const payload = {
         title: formData.title,
         widgetType: formData.widgetType,
         placement: formData.placement,
         menuOrder: parseInt(formData.menuOrder, 10) || 0,
-        config: JSON.stringify(configObj)
+        language: formData.language,
+        visibility: formData.visibility,
+        content: formData.widgetType === 'Default' ? formData.content : null
       };
 
-      const res = await fetchApi('/admin/widgets', {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      });
+      let res;
+      if (isEditMode) {
+        res = await fetchApi(`/admin/widgets/${editingId}`, {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        });
+      } else {
+        res = await fetchApi('/admin/widgets', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+      }
 
       if (res && res.error) {
         setErrorMsg(res.error);
       } else {
-        setSuccessMsg('Widget created successfully!');
-        resetForm();
-        loadWidgets();
+        setSuccessMsg(isEditMode ? 'Widget updated successfully!' : 'Widget created successfully!');
+        setTimeout(() => {
+          setShowModal(false);
+          loadWidgets(currentPage);
+        }, 800);
       }
     } catch (err) {
-      setErrorMsg('Failed to save widget');
+      setErrorMsg('Failed to save widget configuration');
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to remove this widget layout?')) return;
+    if (!window.confirm('Are you sure you want to remove this widget?')) return;
     setErrorMsg('');
     setSuccessMsg('');
     try {
       await fetchApi(`/admin/widgets/${id}`, { method: 'DELETE' });
       setSuccessMsg('Widget removed successfully');
-      loadWidgets();
+      loadWidgets(currentPage);
     } catch (err) {
       setErrorMsg('Failed to delete widget');
     }
   };
 
-  const moveOrder = async (item, index, direction, list) => {
-    const targetIdx = index + direction;
-    if (targetIdx < 0 || targetIdx >= list.length) return;
-
-    const currentItem = list[index];
-    const swapItem = list[targetIdx];
-
-    const tempOrder = currentItem.menuOrder;
-    currentItem.menuOrder = swapItem.menuOrder;
-    swapItem.menuOrder = tempOrder;
-
-    setLoading(true);
-    try {
-      await fetchApi('/admin/widgets/reorder', {
-        method: 'PUT',
-        body: JSON.stringify([
-          { id: currentItem.id, menuOrder: currentItem.menuOrder, placement: currentItem.placement },
-          { id: swapItem.id, menuOrder: swapItem.menuOrder, placement: swapItem.placement }
-        ])
-      });
-      setSuccessMsg('Widget placement order updated');
-      loadWidgets();
-    } catch (err) {
-      setErrorMsg('Failed to update reorder details');
-      setLoading(false);
-    }
-  };
-
-  const getWidgetsByZone = (zone) => {
-    return widgets
-      .filter((w) => w.placement === zone)
-      .sort((a, b) => a.menuOrder - b.menuOrder);
-  };
-
-  const renderZoneList = (zone, zoneTitle) => {
-    const list = getWidgetsByZone(zone);
-    return (
-      <div className="zone-widgets-group">
-        <h3>
-          {zoneTitle} zone ({list.length})
-        </h3>
-        {list.length === 0 ? (
-          <div className="empty-zone-state">Drag or create widgets for this zone area.</div>
-        ) : (
-          <div className="widget-nodes-list">
-            {list.map((w, idx) => {
-              let infoText = '';
-              try {
-                const conf = JSON.parse(w.config);
-                if (w.widgetType === 'Recent Posts') infoText = `Limit: ${conf.limit} posts`;
-                else if (w.widgetType === 'Custom HTML') infoText = `HTML code stub`;
-              } catch (e) {}
-
-              return (
-                <div key={w.id} className="widget-card-node">
-                  <div className="node-details">
-                    <span className="font-semibold text-slate-800">{w.title}</span>
-                    <span className="badge badge-widget-type">{w.widgetType}</span>
-                    {infoText && <span className="text-xs text-gray-500 font-light block">{infoText}</span>}
-                  </div>
-                  <div className="node-actions">
-                    <button type="button" className="mini-action" onClick={() => moveOrder(w, idx, -1, list)} disabled={idx === 0}>
-                      <i className="fa-solid fa-arrow-up"></i>
-                    </button>
-                    <button type="button" className="mini-action" onClick={() => moveOrder(w, idx, 1, list)} disabled={idx === list.length - 1}>
-                      <i className="fa-solid fa-arrow-down"></i>
-                    </button>
-                    <button type="button" className="mini-action danger" onClick={() => handleDelete(w.id)}>
-                      <i className="fa-solid fa-trash"></i>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className="admin-widgets-container">
-      <div className="pages-header">
-        <h1>Sidebar & Footer Widgets</h1>
-        <p className="subtitle">Choose layout components and place them in page sidebar or footer columns</p>
+      <div className="posts-header">
+        <div>
+          <h1>Sidebar & Footer Widgets</h1>
+          <p className="subtitle">Displaying Y to Z of {totalCount} matching widgets</p>
+        </div>
+        <div className="action-buttons-group">
+          <button className="btn btn-primary" onClick={openAddModal}>
+            <i className="fa-solid fa-plus"></i> Add Widget
+          </button>
+        </div>
       </div>
 
       {errorMsg && <div className="alert-banner error">{errorMsg}</div>}
       {successMsg && <div className="alert-banner success">{successMsg}</div>}
 
-      <div className="split-view-layout">
-        {/* Left: Configure widget */}
-        <div className="form-panel">
-          <h2>Create Widget Layout</h2>
-          <form onSubmit={handleSubmit} className="category-form">
-            <div className="form-group">
-              <label htmlFor="widgetType">Widget Component Type</label>
-              <select id="widgetType" name="widgetType" value={formData.widgetType} onChange={handleInputChange}>
-                {widgetTypes.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
+      {/* Filter Row */}
+      <form onSubmit={handleSearchSubmit} className="posts-filter-bar">
+        <div className="filter-item">
+          <label>Show</label>
+          <select value={pageSize} onChange={(e) => setPageSize(parseInt(e.target.value, 10))}>
+            <option value="15">15 entries</option>
+            <option value="25">25 entries</option>
+            <option value="50">50 entries</option>
+            <option value="100">100 entries</option>
+          </select>
+        </div>
 
-            <div className="form-group">
-              <label htmlFor="title">Widget Title *</label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="e.g. Recent Breaking Posts"
-                required
-              />
-            </div>
+        <div className="filter-item">
+          <label>Language</label>
+          <select value={filterLang} onChange={(e) => setFilterLang(e.target.value)}>
+            <option value="">All Languages</option>
+            <option value="ta">Tamil (தமிழ்)</option>
+            <option value="en">English</option>
+          </select>
+        </div>
 
-            <div className="form-row">
-              <div className="form-group half">
-                <label htmlFor="placement">Placement Zone</label>
-                <select id="placement" name="placement" value={formData.placement} onChange={handleInputChange}>
-                  <option value="sidebar">Right Sidebar Zone</option>
-                  <option value="footer">Footer Columns Zone</option>
-                </select>
-              </div>
-              <div className="form-group half">
-                <label htmlFor="menuOrder">Display Order</label>
-                <input
-                  type="number"
-                  id="menuOrder"
-                  name="menuOrder"
-                  value={formData.menuOrder}
-                  onChange={handleInputChange}
-                  min="0"
-                />
-              </div>
-            </div>
-
-            {/* Config specific fields */}
-            {formData.widgetType === 'Recent Posts' && (
-              <div className="form-group">
-                <label htmlFor="limit">Maximum Posts Count</label>
-                <input
-                  type="number"
-                  id="limit"
-                  name="limit"
-                  value={formData.limit}
-                  onChange={handleInputChange}
-                  min="1"
-                  max="20"
-                />
-              </div>
-            )}
-
-            {formData.widgetType === 'Custom HTML' && (
-              <div className="form-group">
-                <label htmlFor="customHtml">Custom HTML / Script Block</label>
-                <textarea
-                  id="customHtml"
-                  name="customHtml"
-                  rows="4"
-                  value={formData.customHtml}
-                  onChange={handleInputChange}
-                  placeholder="<div class='ad-banner'>...</div>"
-                />
-              </div>
-            )}
-
-            <button type="submit" className="btn btn-primary w-full">
-              Add Widget to Layout
+        <div className="filter-item flex-grow">
+          <label>Search Title / Type</label>
+          <div className="search-input-wrapper">
+            <input 
+              type="text" 
+              placeholder="Search active widgets..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <button type="submit" className="search-btn">
+              <i className="fa-solid fa-magnifying-glass"></i> Filter
             </button>
-          </form>
+          </div>
         </div>
+      </form>
 
-        {/* Right: Zones list */}
-        <div className="table-panel flex flex-col gap-6">
-          {loading ? (
-            <div className="loading-state">Loading active widgets...</div>
-          ) : (
-            <div>
-              {renderZoneList('sidebar', 'Right Sidebar')}
-              <div className="my-6 border-b border-gray-100" />
-              {renderZoneList('footer', 'Footer Columns')}
-            </div>
-          )}
+      {/* Widgets Table */}
+      {loading ? (
+        <div className="loading-state">Loading active widgets...</div>
+      ) : (
+        <div className="posts-table-panel">
+          <div className="table-wrapper">
+            <table className="posts-table">
+              <thead>
+                <tr>
+                  <th width="60">ID</th>
+                  <th>Widget Title</th>
+                  <th>Language</th>
+                  <th>Placement</th>
+                  <th>Display Order</th>
+                  <th>Widget Type</th>
+                  <th>Visibility</th>
+                  <th>Date Added</th>
+                  <th>Options</th>
+                </tr>
+              </thead>
+              <tbody>
+                {widgets.length === 0 ? (
+                  <tr>
+                    <td colSpan="9" className="empty-table">No active widgets configured.</td>
+                  </tr>
+                ) : (
+                  widgets.map((w) => (
+                    <tr key={w.id}>
+                      <td>#{w.id}</td>
+                      <td>
+                        <span className="font-semibold block text-slate-800">{w.title}</span>
+                      </td>
+                      <td>
+                        <span className={`lang-badge ${w.language}`}>
+                          {w.language === 'en' ? 'English' : 'Tamil'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="cat-chip-badge" style={{ textTransform: 'capitalize' }}>
+                          {w.placement === 'sidebar' ? 'Right Sidebar' : 'Footer Columns'}
+                        </span>
+                      </td>
+                      <td><span className="font-medium text-slate-600">{w.menuOrder || 0}</span></td>
+                      <td>
+                        <span className="badge badge-widget-type" style={{ padding: '0.2rem 0.5rem', background: '#e2e8f0', color: '#1e293b', borderRadius: '0.25rem', fontSize: '0.75rem', fontWeight: '600' }}>
+                          {w.widgetType}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`status-badge ${w.visibility ? 'published' : 'draft'}`}>
+                          {w.visibility ? 'Show' : 'Hide'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="text-xs text-slate-500">
+                          {w.createdAt ? w.createdAt.substring(0, 10) : 'N/A'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="action-buttons-cell">
+                          <button className="action-btn edit-btn" onClick={() => openEditModal(w)}>
+                            <i className="fa-solid fa-pen-to-square"></i> Edit
+                          </button>
+                          <button className="action-btn delete-btn" onClick={() => handleDelete(w.id)}>
+                            <i className="fa-solid fa-trash"></i> Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Footer */}
+          <div className="pagination-wrapper" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', padding: '0.5rem 1rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.5rem' }}>
+            <span className="text-sm text-slate-500 font-medium">
+              Showing {widgets.length > 0 ? (currentPage * pageSize + 1) : 0} to {currentPage * pageSize + widgets.length} of {totalCount} entries
+            </span>
+            {totalPages > 1 && (
+              <div className="pagination-bar" style={{ display: 'flex', gap: '0.25rem' }}>
+                <button 
+                  disabled={currentPage === 0} 
+                  onClick={() => loadWidgets(currentPage - 1)}
+                  className="pag-btn"
+                >
+                  Previous
+                </button>
+                <span className="page-indicator" style={{ display: 'inline-flex', alignItems: 'center', padding: '0 0.75rem', fontSize: '0.85rem', fontWeight: '600', color: '#475569' }}>
+                  {currentPage + 1} / {totalPages}
+                </span>
+                <button 
+                  disabled={currentPage === totalPages - 1} 
+                  onClick={() => loadWidgets(currentPage + 1)}
+                  className="pag-btn"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Overlay Modal form */}
+      {showModal && (
+        <div className="modal-backdrop">
+          <div className="modal-content" style={{ maxWidth: '650px' }}>
+            <div className="modal-header">
+              <h2>{isEditMode ? `Edit Widget #${editingId}` : 'Add New Widget'}</h2>
+              <button className="close-modal-btn" onClick={() => setShowModal(false)}>&times;</button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="modal-form">
+              <div className="form-group">
+                <label>Widget Title *</label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  placeholder="e.g. Recent Breaking Posts"
+                  required
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group half">
+                  <label>Widget Type *</label>
+                  <select name="widgetType" value={formData.widgetType} onChange={handleInputChange}>
+                    {widgetTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div className="form-group half">
+                  <label>Placement Zone *</label>
+                  <select name="placement" value={formData.placement} onChange={handleInputChange}>
+                    <option value="sidebar">Right Sidebar Zone</option>
+                    <option value="footer">Footer Columns Zone</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group half">
+                  <label>Language *</label>
+                  <select name="language" value={formData.language} onChange={handleInputChange}>
+                    <option value="ta">Tamil (தமிழ்)</option>
+                    <option value="en">English</option>
+                  </select>
+                </div>
+                <div className="form-group half">
+                  <label>Display Order</label>
+                  <input
+                    type="number"
+                    name="menuOrder"
+                    value={formData.menuOrder}
+                    onChange={handleInputChange}
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="flex items-center gap-2 cursor-pointer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0' }}>
+                  <input
+                    type="checkbox"
+                    name="visibility"
+                    checked={formData.visibility}
+                    onChange={handleInputChange}
+                  />
+                  <strong>Visible (Show on Site)</strong>
+                </label>
+              </div>
+
+              {formData.widgetType === 'Default' && (
+                <div className="form-group">
+                  <label>Custom HTML / Sanitized Content</label>
+                  <HtmlToolbar targetField="content" setFormData={setFormData} />
+                  <textarea
+                    id="content"
+                    name="content"
+                    rows="6"
+                    value={formData.content}
+                    onChange={handleInputChange}
+                    placeholder="<div class='custom-widget-content'>...</div>"
+                  />
+                </div>
+              )}
+
+              <div className="modal-actions" style={{ marginTop: '1.5rem' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary">
+                  {isEditMode ? 'Save Changes' : 'Create Widget'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

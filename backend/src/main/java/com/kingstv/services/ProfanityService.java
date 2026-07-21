@@ -1,82 +1,23 @@
 package com.kingstv.services;
 
-import com.kingstv.models.ProfanityViolation;
 import com.kingstv.models.ProfanityWord;
-import com.kingstv.repository.ProfanityViolationRepository;
+import com.kingstv.models.ProfanityViolation;
 import com.kingstv.repository.ProfanityWordRepository;
+import com.kingstv.repository.ProfanityViolationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
-/**
- * Profanity scanning service. Called automatically before any content publish.
- * Blocks publishing on match, creates a violation report, and flags for dashboard alert.
- */
 @Service
 public class ProfanityService {
 
     @Autowired
-    private ProfanityWordRepository profanityWordRepository;
+    private ProfanityWordRepository wordRepo;
 
     @Autowired
-    private ProfanityViolationRepository profanityViolationRepository;
+    private ProfanityViolationRepository violationRepo;
 
-    /**
-     * Scans content for profanity matches.
-     * @return list of matched terms, empty if clean
-     */
-    public List<String> scanContent(String content) {
-        if (content == null || content.isEmpty()) {
-            return List.of();
-        }
-
-        List<ProfanityWord> dictionary = profanityWordRepository.findAll();
-        String lowerContent = content.toLowerCase();
-
-        return dictionary.stream()
-                .filter(word -> lowerContent.contains(word.getTerm().toLowerCase()))
-                .map(ProfanityWord::getTerm)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Scans all text fields of a content piece and blocks if violations found.
-     * @return ProfanityCheckResult with status and matched terms
-     */
-    public ProfanityCheckResult checkContent(String contentType, Long contentId, String contentTitle,
-                                              Long authorId, String authorEmail, String... textFields) {
-        List<String> allMatches = new ArrayList<>();
-
-        for (String text : textFields) {
-            allMatches.addAll(scanContent(text));
-        }
-
-        allMatches = allMatches.stream().distinct().collect(Collectors.toList());
-
-        if (!allMatches.isEmpty()) {
-            // Create violation report
-            ProfanityViolation violation = new ProfanityViolation();
-            violation.setContentType(contentType);
-            violation.setContentId(contentId);
-            violation.setContentTitle(contentTitle);
-            violation.setMatchedTerms(String.join(", ", allMatches));
-            violation.setAuthorId(authorId);
-            violation.setAuthorEmail(authorEmail);
-            violation.setStatus("PENDING");
-            profanityViolationRepository.save(violation);
-
-            return new ProfanityCheckResult(false, allMatches);
-        }
-
-        return new ProfanityCheckResult(true, List.of());
-    }
-
-    /**
-     * Result of a profanity check.
-     */
     public static class ProfanityCheckResult {
         private final boolean clean;
         private final List<String> matchedTerms;
@@ -88,5 +29,51 @@ public class ProfanityService {
 
         public boolean isClean() { return clean; }
         public List<String> getMatchedTerms() { return matchedTerms; }
+    }
+
+    public List<String> findMatchedTerms(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        List<ProfanityWord> terms = wordRepo.findAll();
+        List<String> matched = new ArrayList<>();
+        String lowerText = text.toLowerCase();
+        
+        for (ProfanityWord word : terms) {
+            String term = word.getTerm().toLowerCase();
+            if (lowerText.contains(term)) {
+                matched.add(word.getTerm());
+            }
+        }
+        return matched;
+    }
+
+    public ProfanityCheckResult checkContent(String type, Long contentId, String title, Long authorId, String authorEmail, String titleTa, String titleEn, String contentTa, String contentEn) {
+        StringBuilder sb = new StringBuilder();
+        if (title != null) sb.append(title).append(" ");
+        if (titleTa != null) sb.append(titleTa).append(" ");
+        if (titleEn != null) sb.append(titleEn).append(" ");
+        if (contentTa != null) sb.append(contentTa).append(" ");
+        if (contentEn != null) sb.append(contentEn).append(" ");
+        
+        List<String> matched = findMatchedTerms(sb.toString());
+        if (!matched.isEmpty()) {
+            logViolation(type, contentId, title != null ? title : (titleTa != null ? titleTa : "Untitled"), matched, authorId, authorEmail);
+            return new ProfanityCheckResult(false, matched);
+        }
+        return new ProfanityCheckResult(true, new ArrayList<>());
+    }
+
+    public void logViolation(String contentType, Long contentId, String title, List<String> matched, Long authorId, String authorEmail) {
+        ProfanityViolation violation = new ProfanityViolation();
+        violation.setContentType(contentType);
+        violation.setContentId(contentId);
+        violation.setContentTitle(title);
+        violation.setMatchedTerms(String.join(", ", matched));
+        violation.setAuthorId(authorId);
+        violation.setAuthorEmail(authorEmail);
+        violation.setStatus("PENDING");
+        violationRepo.save(violation);
     }
 }

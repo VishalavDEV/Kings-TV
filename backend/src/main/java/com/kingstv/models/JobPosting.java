@@ -95,6 +95,18 @@ public class JobPosting {
 
     private Boolean deleted = false;
 
+    @Column(name = "apply_method")
+    private String applyMethod = "in-app";
+
+    @Column(name = "apply_target")
+    private String applyTarget;
+
+    @Column(name = "posted_by")
+    private Long postedBy;
+
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
+
     // Compatibility fields to store old strings from DataInitializer
     @Column(name = "company_name")
     private String companyName;
@@ -238,4 +250,16 @@ public class JobPosting {
     public void setCategory(String category) {
         this.categoryName = category;
     }
+
+    public String getApplyMethod() { return applyMethod; }
+    public void setApplyMethod(String applyMethod) { this.applyMethod = applyMethod; }
+    public String getApplyTarget() { return applyTarget; }
+    public void setApplyTarget(String applyTarget) { this.applyTarget = applyTarget; }
+    public Long getPostedBy() { return postedBy; }
+    public void setPostedBy(Long postedBy) { this.postedBy = postedBy; }
+    public LocalDateTime getExpiresAt() { return expiresAt; }
+    public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
+
+    public String getJobType() { return employmentType; }
+    public void setJobType(String jobType) { this.employmentType = jobType; }
 }

@@ -7,6 +7,8 @@ import com.kingstv.repository.RefreshTokenRepository;
 import com.kingstv.repository.RoleRepository;
 import com.kingstv.repository.UserRepository;
 import com.kingstv.security.JwtUtil;
+import com.kingstv.services.LoginAttemptService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,11 +34,20 @@ public class AdminAuthController {
         "SUPER_ADMIN", "CHIEF_EDITOR", "DISTRICT_ADMIN", "MOBILE_JOURNALIST", "INSTITUTION_LOGIN"
     );
 
+    @Autowired private LoginAttemptService loginAttemptService;
     @Autowired private UserRepository userRepository;
     @Autowired private RoleRepository roleRepository;
     @Autowired private RefreshTokenRepository refreshTokenRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private JwtUtil jwtUtil;
+
+    private String getClientIp(HttpServletRequest request) {
+        String xf = request.getHeader("X-Forwarded-For");
+        if (xf != null && !xf.isEmpty()) {
+            return xf.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
 
     /**
      * POST /api/admin/auth/login
@@ -44,7 +55,7 @@ public class AdminAuthController {
      * returns a 24h JWT + refresh token with module-key permissions embedded.
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> login(@RequestBody Map<String, String> body, HttpServletRequest request) {
         String rawEmail = body.get("email");
         String password = body.get("password");
 
@@ -53,6 +64,12 @@ public class AdminAuthController {
         }
 
         String email = rawEmail.trim().toLowerCase().replace("×", "x");
+        String ip = getClientIp(request);
+
+        if (loginAttemptService.isBlocked(email) || loginAttemptService.isBlocked(ip)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of("message", "Too many failed login attempts. Please try again after 15 minutes."));
+        }
 
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
@@ -68,6 +85,7 @@ public class AdminAuthController {
         }
 
         if (userOpt.isEmpty()) {
+            loginAttemptService.loginFailed(email, ip);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Invalid email or password"));
         }
@@ -76,19 +94,25 @@ public class AdminAuthController {
 
         // Block non-admin roles from logging in here
         if (!ADMIN_ROLES.contains(user.getRole())) {
+            loginAttemptService.loginFailed(email, ip);
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "Access denied. This portal is for administrators only."));
         }
 
         if (!user.getIsActive()) {
+            loginAttemptService.loginFailed(email, ip);
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "Your account has been suspended. Contact the system administrator."));
         }
 
         if (!passwordMatches(password, user)) {
+            loginAttemptService.loginFailed(email, ip);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Invalid email or password"));
         }
+
+        loginAttemptService.loginSucceeded(email);
+        loginAttemptService.loginSucceeded(ip);
 
         // Get module-key permissions for this user's role
         List<String> moduleKeys = getModulePermissions(user.getRole());

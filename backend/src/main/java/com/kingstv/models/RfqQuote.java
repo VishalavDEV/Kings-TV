@@ -19,7 +19,7 @@ public class RfqQuote {
     @Column(name = "quoted_price", nullable = false)
     private Double quotedPrice;
 
-    @Column(name = "timeline_days", nullable = false)
+    @Column(name = "timeline_days")
     private Integer timelineDays;
 
     @Column(columnDefinition = "TEXT")
@@ -71,4 +71,10 @@ public class RfqQuote {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public Long getBusinessId() { return sellerBusinessId; }
+    public void setBusinessId(Long businessId) { this.sellerBusinessId = businessId; }
+
+    public String getMessage() { return notes; }
+    public void setMessage(String message) { this.notes = message; }
 }

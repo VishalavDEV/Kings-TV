@@ -13,4 +13,7 @@ public interface CustomPageRepository extends JpaRepository<CustomPage, Long> {
     boolean existsBySlugIgnoreCase(String slug);
     boolean existsBySlugIgnoreCaseAndIdNot(String slug, Long id);
     List<CustomPage> findByLanguageOrderByMenuOrderAsc(String language);
+    boolean existsBySlugIgnoreCaseAndLanguage(String slug, String language);
+    boolean existsBySlugIgnoreCaseAndLanguageAndIdNot(String slug, String language, Long id);
+    List<CustomPage> findByVisibility(String visibility);
 }

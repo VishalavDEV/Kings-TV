@@ -1,6 +1,7 @@
 package com.kingstv.controllers;
 
 import com.kingstv.models.Poll;
+import com.kingstv.models.PollOption;
 import com.kingstv.repository.PollRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -8,130 +9,207 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import com.kingstv.repository.SpecificationBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.persistence.criteria.Predicate;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1/polls")
+@RequestMapping({"/api/admin/polls", "/api/v1/admin/polls", "/api/v1/polls"})
 public class PollController {
 
     @Autowired
     private PollRepository pollRepository;
 
-    @GetMapping("/getAll")
-    public Page<Poll> getAll(
+    @GetMapping
+    public ResponseEntity<?> getAll(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String language,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
-        
-        Sort sort = Sort.by(direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
-        Specification<Poll> spec = SpecificationBuilder.build(search, status, null, null);
-        return pollRepository.findAll(spec, pageable);
+            @RequestParam(defaultValue = "15") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+
+        Specification<Poll> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (status != null && !status.trim().isEmpty()) {
+                predicates.add(cb.equal(root.get("status"), status.trim()));
+            } else {
+                predicates.add(cb.notEqual(root.get("status"), "deleted"));
+            }
+
+            if (language != null && !language.trim().isEmpty()) {
+                predicates.add(cb.equal(root.get("language"), language.trim()));
+            }
+
+            if (search != null && !search.trim().isEmpty()) {
+                String s = "%" + search.trim().toLowerCase() + "%";
+                predicates.add(cb.like(cb.lower(root.get("question")), s));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<Poll> result = pollRepository.findAll(spec, pageable);
+        return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/getAllWeb")
-    public Page<Poll> getAllWeb(
-            @RequestParam(required = false) String search,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
-        
-        return getAll(search, "active", page, size, sortBy, direction);
-    }
+    @PostMapping
+    public ResponseEntity<?> create(@RequestBody Poll poll) {
+        if (poll.getQuestion() == null || poll.getQuestion().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Poll question is required"));
+        }
+        if (poll.getOptions() == null || poll.getOptions().size() < 2) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Minimum 2 poll options are required"));
+        }
 
-    @PostMapping("/saveUpdate")
-    public ResponseEntity<?> save(@RequestBody Poll entity) {
-        if (entity.getQuestion() == null || entity.getQuestionTa() == null || entity.getOption1() == null || entity.getOption2() == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Question, Question (Tamil), Option 1, and Option 2 are required"));
+        // Validate options and set their orders
+        int orderIndex = 1;
+        for (PollOption opt : poll.getOptions()) {
+            if (opt.getOptionText() == null || opt.getOptionText().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "All options must have non-empty text"));
+            }
+            opt.setOptionOrder(orderIndex++);
+            opt.setVoteCount(0);
         }
-        if (entity.getCreatedAt() == null) {
-            entity.setCreatedAt(LocalDateTime.now());
-        }
-        entity.setUpdatedAt(LocalDateTime.now());
-        Poll saved = pollRepository.save(entity);
+
+        poll.setVoteCount(0);
+        poll.setCreatedAt(LocalDateTime.now());
+        poll.setUpdatedAt(LocalDateTime.now());
+        Poll saved = pollRepository.save(poll);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    @PutMapping("/saveUpdate")
-    public ResponseEntity<?> update(@RequestBody Poll entity) {
-        if (entity.getId() == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Id is required for update"));
-        }
-        Optional<Poll> opt = pollRepository.findById(entity.getId());
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(
+            @PathVariable Long id,
+            @RequestBody Poll poll,
+            @RequestParam(defaultValue = "false") boolean confirmOptionDelete
+    ) {
+        Optional<Poll> opt = pollRepository.findById(id);
         if (opt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Poll not found"));
         }
+
         Poll existing = opt.get();
-        existing.setQuestion(entity.getQuestion());
-        existing.setQuestionTa(entity.getQuestionTa());
-        existing.setOption1(entity.getOption1());
-        existing.setOption1Ta(entity.getOption1Ta());
-        existing.setOption1Votes(entity.getOption1Votes());
-        existing.setOption2(entity.getOption2());
-        existing.setOption2Ta(entity.getOption2Ta());
-        existing.setOption2Votes(entity.getOption2Votes());
-        existing.setOption3(entity.getOption3());
-        existing.setOption3Ta(entity.getOption3Ta());
-        existing.setOption3Votes(entity.getOption3Votes());
-        existing.setStatus(entity.getStatus());
-        existing.setExpiresAt(entity.getExpiresAt());
+
+        // 1. Check if any option is deleted that has active votes
+        for (PollOption existingOpt : existing.getOptions()) {
+            boolean stillExists = poll.getOptions().stream()
+                    .anyMatch(o -> o.getId() != null && o.getId().equals(existingOpt.getId()));
+            if (!stillExists && existingOpt.getVoteCount() > 0 && !confirmOptionDelete) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "CONFIRM_DELETE");
+                errorResponse.put("message", "Option '" + existingOpt.getOptionText() + "' has " + existingOpt.getVoteCount() + " votes. Deleting it will affect results integrity. Do you want to proceed?");
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+            }
+        }
+
+        // 2. Perform updates
+        existing.setQuestion(poll.getQuestion());
+        existing.setLanguage(poll.getLanguage());
+        existing.setPermission(poll.getPermission());
+        existing.setStatus(poll.getStatus());
+
+        // Update option text or insert new ones
+        List<PollOption> newOptionsList = new ArrayList<>();
+        int orderIndex = 1;
+        int totalVotesAccum = 0;
+
+        for (PollOption optionPayload : poll.getOptions()) {
+            if (optionPayload.getOptionText() == null || optionPayload.getOptionText().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "All options must have non-empty text"));
+            }
+            
+            PollOption targetOption;
+            if (optionPayload.getId() != null) {
+                // Find existing option
+                Optional<PollOption> match = existing.getOptions().stream()
+                        .filter(o -> o.getId().equals(optionPayload.getId()))
+                        .findFirst();
+                if (match.isPresent()) {
+                    targetOption = match.get();
+                    targetOption.setOptionText(optionPayload.getOptionText());
+                } else {
+                    targetOption = new PollOption();
+                    targetOption.setOptionText(optionPayload.getOptionText());
+                    targetOption.setVoteCount(0);
+                }
+            } else {
+                targetOption = new PollOption();
+                targetOption.setOptionText(optionPayload.getOptionText());
+                targetOption.setVoteCount(0);
+            }
+            
+            targetOption.setOptionOrder(orderIndex++);
+            totalVotesAccum += targetOption.getVoteCount();
+            newOptionsList.add(targetOption);
+        }
+
+        existing.getOptions().clear();
+        existing.getOptions().addAll(newOptionsList);
+        existing.setVoteCount(totalVotesAccum);
         existing.setUpdatedAt(LocalDateTime.now());
-        
+
         Poll saved = pollRepository.save(existing);
         return ResponseEntity.ok(saved);
     }
 
     @PostMapping("/{id}/vote")
-    public ResponseEntity<?> vote(@PathVariable Long id, @RequestParam int optionNum) {
+    public ResponseEntity<?> vote(
+            @PathVariable Long id,
+            @RequestParam Long optionId
+    ) {
+        Optional<Poll> opt = pollRepository.findById(id);
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Poll not found"));
+        }
+
+        Poll poll = opt.get();
+        if (!"active".equalsIgnoreCase(poll.getStatus())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Poll is closed or inactive"));
+        }
+
+        Optional<PollOption> optionOpt = poll.getOptions().stream()
+                .filter(o -> o.getId().equals(optionId))
+                .findFirst();
+
+        if (optionOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid option chosen"));
+        }
+
+        PollOption option = optionOpt.get();
+        option.setVoteCount((option.getVoteCount() != null ? option.getVoteCount() : 0) + 1);
+        poll.setVoteCount((poll.getVoteCount() != null ? poll.getVoteCount() : 0) + 1);
+        poll.setUpdatedAt(LocalDateTime.now());
+
+        pollRepository.save(poll);
+        return ResponseEntity.ok(poll);
+    }
+
+    @GetMapping("/{id}/results")
+    public ResponseEntity<?> getResults(@PathVariable Long id) {
         Optional<Poll> opt = pollRepository.findById(id);
         if (opt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Poll not found"));
         }
         Poll poll = opt.get();
-        if ("closed".equals(poll.getStatus()) || (poll.getExpiresAt() != null && poll.getExpiresAt().isBefore(LocalDateTime.now()))) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Poll is closed"));
-        }
-        if (optionNum == 1) {
-            poll.setOption1Votes(poll.getOption1Votes() + 1);
-        } else if (optionNum == 2) {
-            poll.setOption2Votes(poll.getOption2Votes() + 1);
-        } else if (optionNum == 3) {
-            poll.setOption3Votes(poll.getOption3Votes() + 1);
-        } else {
-            return ResponseEntity.badRequest().body(Map.of("message", "Invalid option number"));
-        }
-        poll.setUpdatedAt(LocalDateTime.now());
-        Poll saved = pollRepository.save(poll);
-        return ResponseEntity.ok(saved);
-    }
-
-    @PatchMapping("/changeStatus")
-    public ResponseEntity<?> changeStatus(@RequestBody Map<String, Object> request) {
-        if (!request.containsKey("id") || !request.containsKey("status")) {
-            return ResponseEntity.badRequest().body(Map.of("message", "id and status are required"));
-        }
-        Long id = Long.valueOf(request.get("id").toString());
-        String status = request.get("status").toString();
         
-        Optional<Poll> opt = pollRepository.findById(id);
-        if (opt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Poll not found"));
-        }
-        Poll existing = opt.get();
-        existing.setStatus(status);
-        existing.setUpdatedAt(LocalDateTime.now());
-        pollRepository.save(existing);
-        return ResponseEntity.ok(Map.of("message", "Status updated successfully", "id", id, "status", status));
+        Map<String, Object> results = new HashMap<>();
+        results.put("id", poll.getId());
+        results.put("question", poll.getQuestion());
+        results.put("totalVotes", poll.getVoteCount());
+        results.put("options", poll.getOptions());
+        return ResponseEntity.ok(results);
     }
 
     @DeleteMapping("/{id}")

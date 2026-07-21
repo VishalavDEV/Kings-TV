@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import com.kingstv.repository.UserRepository;
 import java.time.LocalDate;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -41,6 +42,9 @@ public class StorageServiceImpl implements StorageService {
 
     @Autowired
     private ImageCompressorService imageCompressorService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Value("${aws.s3.enabled:false}")
     private boolean s3Enabled;
@@ -141,6 +145,39 @@ public class StorageServiceImpl implements StorageService {
             throw new IllegalArgumentException("Cannot upload empty file.");
         }
 
+        String originalName = file.getOriginalFilename();
+        if (originalName == null || !originalName.contains(".")) {
+            throw new IllegalArgumentException("File name is invalid or has no extension.");
+        }
+
+        String extension = originalName.substring(originalName.lastIndexOf(".")).toLowerCase();
+
+        boolean isImage = extension.equals(".jpg") || extension.equals(".jpeg") || extension.equals(".png") || extension.equals(".gif") || extension.equals(".svg") || extension.equals(".webp");
+        boolean isDoc = extension.equals(".pdf") || extension.equals(".docx") || extension.equals(".zip");
+        boolean isMedia = extension.equals(".mp3") || extension.equals(".mp4") || extension.equals(".wav") || extension.equals(".m4a");
+
+        if (!isImage && !isDoc && !isMedia) {
+            throw new IllegalArgumentException("Unsupported file type: " + extension);
+        }
+
+        long maxLimit = isImage ? 5 * 1024 * 1024 : (isDoc ? 25 * 1024 * 1024 : 100 * 1024 * 1024);
+        if (file.getSize() > maxLimit) {
+            throw new IllegalArgumentException("File size exceeds limit of " + (maxLimit / (1024 * 1024)) + "MB.");
+        }
+
+        try {
+            byte[] fileBytes = file.getBytes();
+            if (isImage || isDoc) {
+                byte[] header = new byte[Math.min(fileBytes.length, 30)];
+                System.arraycopy(fileBytes, 0, header, 0, header.length);
+                if (!isValidMagicBytes(header, extension)) {
+                    throw new IllegalArgumentException("File content signature mismatch. The file structure is not valid for type " + extension);
+                }
+            }
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Error reading file stream bytes for safety check.");
+        }
+
         LocalDate now = LocalDate.now();
         String year = String.valueOf(now.getYear());
         String month = String.format("%02d", now.getMonthValue());
@@ -160,20 +197,6 @@ public class StorageServiceImpl implements StorageService {
             }
         }
 
-        String originalName = file.getOriginalFilename();
-        String extension = "";
-        if (originalName != null && originalName.contains(".")) {
-            extension = originalName.substring(originalName.lastIndexOf("."));
-        } else {
-            // Determine extension from content-type if missing
-            if (contentType != null) {
-                if (contentType.equals("image/png")) extension = ".png";
-                else if (contentType.equals("image/jpeg")) extension = ".jpg";
-                else if (contentType.equals("image/webp")) extension = ".webp";
-                else if (contentType.equals("video/mp4")) extension = ".mp4";
-            }
-        }
-
         // Video HLS Transcoding Pipeline
         if (contentType != null && contentType.startsWith("video/")) {
             String uuid = UUID.randomUUID().toString();
@@ -184,6 +207,31 @@ public class StorageServiceImpl implements StorageService {
                 Path tempFilePath = tempDir.resolve(uuid + extension);
                 File tempFile = tempFilePath.toFile();
                 Files.copy(file.getInputStream(), tempFilePath, StandardCopyOption.REPLACE_EXISTING);
+
+                // Verify duration cap limit on video files
+                double duration = transcoderService.getVideoDuration(tempFile);
+                if (duration > 0) {
+                    org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+                    if (auth != null && auth.getDetails() instanceof Long) {
+                        Long currentUserId = (Long) auth.getDetails();
+                        com.kingstv.models.User uInfo = userRepository.findById(currentUserId).orElse(null);
+                        if (uInfo != null) {
+                            String role = uInfo.getRole();
+                            double limit = 300.0; // standard 5 min cap
+                            if ("MOBILE_JOURNALIST".equalsIgnoreCase(role)) {
+                                limit = 600.0; // 10 min cap
+                            } else if ("INSTITUTION_LOGIN".equalsIgnoreCase(role)) {
+                                limit = 900.0; // 15 min cap
+                            } else if ("SUPER_ADMIN".equalsIgnoreCase(role) || "CHIEF_EDITOR".equalsIgnoreCase(role)) {
+                                limit = 3600.0; // 1 hour cap
+                            }
+                            if (duration > limit) {
+                                Files.deleteIfExists(tempFilePath);
+                                throw new IllegalArgumentException("Video length " + Math.round(duration) + "s exceeds your role's duration cap (" + Math.round(limit) + "s).");
+                            }
+                        }
+                    }
+                }
 
                 // Attempt transcode
                 File transcodedDir = transcoderService.transcodeToHls(tempFile, uuid);
@@ -320,5 +368,42 @@ public class StorageServiceImpl implements StorageService {
                 }
             }
         }
+    }
+
+    private boolean isValidMagicBytes(byte[] header, String extension) {
+        if (header == null || header.length < 4) return false;
+        
+        String ext = extension.toLowerCase();
+        
+        if (ext.equals(".jpg") || ext.equals(".jpeg")) {
+            return (header[0] & 0xFF) == 0xFF && (header[1] & 0xFF) == 0xD8 && (header[2] & 0xFF) == 0xFF;
+        }
+        
+        if (ext.equals(".png")) {
+            return (header[0] & 0xFF) == 0x89 && (header[1] & 0xFF) == 0x50 && (header[2] & 0xFF) == 0x4E && (header[3] & 0xFF) == 0x47;
+        }
+        
+        if (ext.equals(".gif")) {
+            return (header[0] & 0xFF) == 0x47 && (header[1] & 0xFF) == 0x49 && (header[2] & 0xFF) == 0x46 && (header[3] & 0xFF) == 0x38;
+        }
+        
+        if (ext.equals(".webp")) {
+            return (header[0] & 0xFF) == 0x52 && (header[1] & 0xFF) == 0x49 && (header[2] & 0xFF) == 0x46 && (header[3] & 0xFF) == 0x46;
+        }
+        
+        if (ext.equals(".svg")) {
+            String content = new String(header).toLowerCase();
+            return content.contains("<svg") || content.contains("<?xml") || content.contains("<!doctype svg");
+        }
+        
+        if (ext.equals(".pdf")) {
+            return (header[0] & 0xFF) == 0x25 && (header[1] & 0xFF) == 0x50 && (header[2] & 0xFF) == 0x44 && (header[3] & 0xFF) == 0x46;
+        }
+        
+        if (ext.equals(".zip") || ext.equals(".docx")) {
+            return (header[0] & 0xFF) == 0x50 && (header[1] & 0xFF) == 0x4B && (header[2] & 0xFF) == 0x03 && (header[3] & 0xFF) == 0x04;
+        }
+        
+        return false;
     }
 }

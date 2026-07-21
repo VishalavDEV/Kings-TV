@@ -10,7 +10,7 @@ public class Deal {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "listing_id", nullable = false)
+    @Column(name = "listing_id")
     private Long listingId;
 
     @Column(nullable = false)
@@ -63,6 +63,9 @@ public class Deal {
 
     @Column(nullable = false)
     private String status = "pending"; // pending, approved, rejected, expired
+
+    @Column(name = "created_by")
+    private Long createdBy;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -137,4 +140,16 @@ public class Deal {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public Long getCreatedBy() { return createdBy; }
+    public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }
+
+    public Long getBusinessId() { return listingId; }
+    public void setBusinessId(Long businessId) { this.listingId = businessId; }
+
+    public String getImage() { return bannerUrl; }
+    public void setImage(String image) { this.bannerUrl = image; }
+
+    public String getTermsConditions() { return terms; }
+    public void setTermsConditions(String termsConditions) { this.terms = termsConditions; }
 }
