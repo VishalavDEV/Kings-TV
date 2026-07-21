@@ -297,27 +297,7 @@ const Videos = () => {
         {/* Video Catalog Grid Section */}
         <div className="video-catalog-section">
           <div className="section-header">
-            <h2>{lang === 'en' ? 'Browse Video Categories' : 'வகைகளின்படி வீடியோக்கள்'}</h2>
-            
-            {/* Category tabs */}
-            <div className="catalog-tabs">
-              {['all', 'politics', 'business', 'sports', 'cinema', 'tech', 'regional', 'international'].map(tab => (
-                <button
-                  key={tab}
-                  className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
-                  onClick={() => setActiveTab(tab)}
-                >
-                  {tab === 'all' && (lang === 'en' ? 'All Videos' : 'அனைத்தும்')}
-                  {tab === 'politics' && (lang === 'en' ? 'Politics' : 'அரசியல்')}
-                  {tab === 'business' && (lang === 'en' ? 'Business' : 'வணிகம்')}
-                  {tab === 'sports' && (lang === 'en' ? 'Sports' : 'விளையாட்டு')}
-                  {tab === 'cinema' && (lang === 'en' ? 'Cinema' : 'திரைப்படம்')}
-                  {tab === 'tech' && (lang === 'en' ? 'Technology' : 'தொழில்நுட்பம்')}
-                  {tab === 'regional' && (lang === 'en' ? 'Regional' : 'மாநிலம்')}
-                  {tab === 'international' && (lang === 'en' ? 'International' : 'சர்வதேசம்')}
-                </button>
-              ))}
-            </div>
+            <h2>{lang === 'en' ? 'Browse Videos' : 'வீடியோக்களை உலாவுக'}</h2>
           </div>
 
           {/* Videos Grid */}

@@ -539,45 +539,7 @@ const Category = () => {
             {lang === 'en' ? currentCat.titleEn : currentCat.titleTa}
           </h1>
 
-          {/* Subcategory scroller tabs */}
-          <div className="subcategory-tabs" style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '12px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            {subcategories.map((sub, idx) => {
-              const isActive = selectedSubcat === sub;
-              return (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedSubcat(sub)}
-                  style={{
-                    padding: '8px 20px',
-                    borderRadius: '30px',
-                    border: '1px solid',
-                    borderColor: isActive ? 'var(--category-color, var(--primary))' : 'var(--border-color)',
-                    background: isActive ? 'var(--category-color, var(--primary))' : 'transparent',
-                    color: isActive ? 'white' : 'var(--text-muted)',
-                    fontWeight: isActive ? 700 : 600,
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.borderColor = 'var(--category-color, var(--primary))';
-                      e.currentTarget.style.color = 'var(--category-color, var(--primary))';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.borderColor = 'var(--border-color)';
-                      e.currentTarget.style.color = 'var(--text-muted)';
-                    }
-                  }}
-                >
-                  {sub}
-                </button>
-              );
-            })}
-          </div>
+          {/* Subcategory tabs removed */}
         </div>
       </div>
 
