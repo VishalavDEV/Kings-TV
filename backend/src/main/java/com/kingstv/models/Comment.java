@@ -34,6 +34,12 @@ public class Comment {
     @Size(max = 1000, message = "Comment cannot exceed 1000 characters")
     private String commentText;
 
+    @Column(nullable = false)
+    private String status = "pending"; // pending, approved, rejected
+
+    @Transient
+    private String articleTitle;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -47,6 +53,10 @@ public class Comment {
     public void setCommentorEmail(String commentorEmail) { this.commentorEmail = commentorEmail; }
     public String getCommentText() { return commentText; }
     public void setCommentText(String commentText) { this.commentText = commentText; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public String getArticleTitle() { return articleTitle; }
+    public void setArticleTitle(String articleTitle) { this.articleTitle = articleTitle; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

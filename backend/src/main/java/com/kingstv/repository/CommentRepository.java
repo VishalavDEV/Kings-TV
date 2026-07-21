@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long>, JpaSpecificationExecutor<Comment> {
     List<Comment> findByArticleId(Long articleId);
+    List<Comment> findByStatusOrderByCreatedAtDesc(String status);
+    List<Comment> findAllByOrderByCreatedAtDesc();
 }

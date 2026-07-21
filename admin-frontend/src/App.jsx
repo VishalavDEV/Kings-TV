@@ -9,6 +9,11 @@ import PublicUsers from './pages/users/PublicUsers';
 import RolesPermissions from './pages/roles/RolesPermissions';
 import EditRole from './pages/roles/EditRole';
 
+// Comments, Contact, Newsletter
+import Comments from './pages/Comments';
+import ContactMessages from './pages/ContactMessages';
+import Newsletter from './pages/Newsletter';
+
 // Settings
 import Preferences from './pages/settings/Preferences';
 import VisualSettings from './pages/settings/VisualSettings';
@@ -73,6 +78,11 @@ function AppRoutes() {
         <Route path="rss-feeds" element={<RssFeeds />} />
         <Route path="rss-feeds/add" element={<AddRssFeed />} />
         <Route path="rss-feeds/:id/edit" element={<AddRssFeed />} />
+
+        {/* Comments, Contact, Newsletter */}
+        <Route path="comments" element={<Comments />} />
+        <Route path="contact" element={<ContactMessages />} />
+        <Route path="newsletter" element={<Newsletter />} />
 
         {/* System */}
         <Route path="storage" element={<Storage />} />
