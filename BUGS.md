@@ -1,10 +1,19 @@
-# King 24x7 — Systematic Bug Tracking Log (BUGS.md)
+# King 24x7 — Full Systematic Bug & Fix Report (BUGS.md)
 
-This document contains a comprehensive audit and resolution log for all identified bugs across Encoding, UI, Functionality, and Redirects, complete with root causes, fixes, and verification evidence.
+This consolidated document provides the complete, phase-by-phase bug sweep report, covering root causes, technical fixes, and empirical verification evidence across all 5 audit phases (Phase 0 to Phase 4).
 
 ---
 
-## Phase 0 — Unicode & Character Encoding Bug ("?" / Garbled Characters)
+## 📌 Executive Summary of Results
+- **Phase 0 (Encoding & Tamil Unicode)**: **Fixed** (Added JDBC `useUnicode=true&characterEncoding=UTF-8`, forced UTF-8 response encoding in `SecurityConfig`, code-point safe string truncations in `SeoController`, added `Noto Sans Tamil` CSS fallbacks).
+- **Phase 1 (UI & Responsive Audit)**: **Fixed** (Resolved rigid layout wrapping in `NewsEditor.jsx`, updated fallback API URLs, removed static dev breakpoints).
+- **Phase 2 (Functionality & Core Features)**: **Fixed** (Verified `StorageServiceImpl` dual-tier fallback to local disk, verified notification preferences, enabled `ArticlePriorityService` cron scoring).
+- **Phase 3 (Redirects & SPA Navigation)**: **Fixed** (Corrected Admin login bouncing bug, updated `Login.jsx` to resolve `${window.location.origin}/admin/layout` dynamically, added `.htaccess` Apache rewrite rules for `/admin/` and `/`).
+- **Phase 4 (Full Codebase Error & Build Analysis)**: **Fixed** (Backend compiles with `BUILD SUCCESS`, zero missing symbol errors, clean production bundle generation).
+
+---
+
+## Phase 0 — Unicode & Character Encoding ("?" / Garbled Characters)
 
 ### BUG-001: JDBC Connection String Missing UTF-8 & Unicode Parameters
 - **BUG**: Tamil text parameters sent through Spring Data JPA / JDBC to TiDB are converted to `?` (question mark) characters or garbled bytes.
@@ -40,7 +49,7 @@ This document contains a comprehensive audit and resolution log for all identifi
 
 ---
 
-## Phase 1 — Systematic UI Audit
+## Phase 1 — Systematic UI & Spacing Audit
 
 ### BUG-005: Layout Controls Misalignment in News Editor
 - **BUG**: News creation/editor form layout controls wrapping incorrectly on smaller screen sizes.
@@ -49,6 +58,22 @@ This document contains a comprehensive audit and resolution log for all identifi
 - **FIX**: Added flexible wrap containers and responsive input sizing.
 - **STATUS**: Fixed
 - **VERIFIED**: Inspected layout at 375px, 768px, and 1280px breakpoints.
+
+### BUG-010: Hardcoded Localhost Admin Redirect in Frontend Login
+- **BUG**: Logging in as Admin/Editor from the Frontend Portal attempted to redirect the user to `http://localhost:3000/admin/layout`, which failed in production environments.
+- **WHERE FOUND**: Frontend Login Page (`frontend/src/pages/Login.jsx`).
+- **ROOT CAUSE**: Static string assignment `window.location.href = 'http://localhost:3000/admin/layout'`.
+- **FIX**: Replaced static localhost string with dynamic origin resolution: `${window.location.origin}/admin/layout`.
+- **STATUS**: Fixed
+- **VERIFIED**: Admin/Staff logins from frontend portal resolve to `{origin}/admin/layout` cleanly on live domains.
+
+### BUG-011: Outdated Localhost Fallback API Endpoints
+- **BUG**: API utilities fell back to `http://localhost:8080` or `http://localhost:5000` when build-time environment variables were unpopulated, resulting in silent API failures on production.
+- **WHERE FOUND**: Frontend Utilities (`frontend/src/utils/api.js`, `authService.js`, `userService.js`).
+- **ROOT CAUSE**: Legacy local development default constants.
+- **FIX**: Updated fallback constants to production Render endpoint `https://kings-tv.onrender.com/api/v1`.
+- **STATUS**: Fixed
+- **VERIFIED**: Inspected build output; API calls target `https://kings-tv.onrender.com` when environment variable fallback triggers.
 
 ---
 
@@ -96,8 +121,8 @@ This document contains a comprehensive audit and resolution log for all identifi
 - **ROOT CAUSE**: Missing import statements for `RssFeedConfigRepository` and `existsByCanonicalUrl` query method.
 - **FIX**: Added imports, added `existsByCanonicalUrl` to `ArticleRepository`, and implemented `getLatestItems()` in `RssAggregatorService`.
 - **STATUS**: Fixed
-- **VERIFIED**: Clean Java compilation and package build output.
+- **VERIFIED**: Clean Java compilation (`mvn test-compile` -> BUILD SUCCESS) and production package build output.
 
 ---
 
-**Summary**: All identified bugs across Phase 0 to Phase 4 have been reproduced, fixed at the root layer, and verified with empirical evidence.
+**Final Conclusion**: All 5 phases of the bug sweep have been systematically executed, resolved at the root layer, verified with empirical evidence, deployed live to Hostinger (`king-tv` subdomain), and pushed to GitHub (`test-1` branch).
