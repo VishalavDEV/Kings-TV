@@ -2,6 +2,8 @@ package com.kingstv.controllers;
 
 import com.kingstv.models.Advertisement;
 import com.kingstv.repository.AdvertisementRepository;
+import com.kingstv.security.RequiresPermission;
+import com.kingstv.models.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +26,7 @@ public class AdvertisementController {
     private AdvertisementRepository advertisementRepository;
 
     @GetMapping("/getAll")
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR})
     public Page<Advertisement> getAll(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
@@ -50,6 +53,7 @@ public class AdvertisementController {
     }
 
     @PostMapping("/saveUpdate")
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR})
     public ResponseEntity<?> save(@RequestBody Advertisement entity) {
         if (entity.getTitle() == null || entity.getImageUrl() == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Title and Image URL are required"));
@@ -63,6 +67,7 @@ public class AdvertisementController {
     }
 
     @PutMapping("/saveUpdate")
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR})
     public ResponseEntity<?> update(@RequestBody Advertisement entity) {
         if (entity.getId() == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Id is required for update"));
@@ -154,6 +159,7 @@ public class AdvertisementController {
     }
 
     @PatchMapping("/changeStatus")
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR})
     public ResponseEntity<?> changeStatus(@RequestBody Map<String, Object> request) {
         if (!request.containsKey("id") || !request.containsKey("status")) {
             return ResponseEntity.badRequest().body(Map.of("message", "id and status are required"));
@@ -173,6 +179,7 @@ public class AdvertisementController {
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR})
     public ResponseEntity<?> delete(@PathVariable Long id) {
         Optional<Advertisement> opt = advertisementRepository.findById(id);
         if (opt.isEmpty()) {

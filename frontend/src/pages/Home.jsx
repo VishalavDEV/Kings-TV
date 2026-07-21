@@ -4,10 +4,13 @@ import { LanguageContext } from '../context/LanguageContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { fetchApi, getImageUrl } from '../utils/api';
 import AdWidget from '../components/AdWidget';
+import SkeletonLoader from '../components/SkeletonLoader';
 
 const Home = () => {
   const { lang, t } = useContext(LanguageContext);
   const { widgetWidth, slideSpeed, sections } = useContext(ThemeContext);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [articles, setArticles] = useState([]);
   const [videos, setVideos] = useState([]);
   const [liveVideo, setLiveVideo] = useState(null);
@@ -74,8 +77,8 @@ const Home = () => {
 
 
   useEffect(() => {
-    // 1. Fetch Categories
-    fetchApi('/categories')
+    // Primary fetches wrapped in promises for loading state coordination
+    const pCategories = fetchApi('/categories')
       .then(data => {
         if (Array.isArray(data)) {
           const map = {};
@@ -91,8 +94,7 @@ const Home = () => {
       })
       .catch(err => console.warn("Could not load categories", err));
 
-    // 2. Fetch Articles
-    fetchApi('/articles')
+    const pArticles = fetchApi('/articles')
       .then(data => {
         const list = Array.isArray(data) ? data : [];
         setArticles(list);
@@ -102,8 +104,7 @@ const Home = () => {
         setArticles([]);
       });
 
-    // 3. Fetch Breaking News
-    fetchApi('/breaking-news/getAllWeb?size=10')
+    const pBreakingNews = fetchApi('/breaking-news/getAllWeb?size=10')
       .then(data => {
         const list = data && Array.isArray(data.content) ? data.content : [];
         if (list.length > 0) {
@@ -118,8 +119,7 @@ const Home = () => {
         setTickers(initialTickers);
       });
 
-    // 4. Fetch Web Stories
-    fetchApi('/web-stories/getAllWeb?size=6')
+    const pWebStories = fetchApi('/web-stories/getAllWeb?size=6')
       .then(data => {
         const list = data && Array.isArray(data.content) ? data.content : [];
         if (list.length > 0) {
@@ -142,8 +142,7 @@ const Home = () => {
         setStories(storiesList);
       });
 
-    // 5. Fetch Videos
-    fetchApi('/videos')
+    const pVideos = fetchApi('/videos')
       .then(data => {
         const list = Array.isArray(data) ? data : [];
         const translated = list.map(vid => {
@@ -173,8 +172,7 @@ const Home = () => {
         setVideos([]);
       });
 
-    // 6. Fetch Live Video
-    fetchApi('/videos/live')
+    const pLiveVideo = fetchApi('/videos/live')
       .then(data => {
         if (data && data.youtubeUrl) {
           let titleVal = data.title;
@@ -188,9 +186,90 @@ const Home = () => {
       })
       .catch(err => console.warn("Could not load live video from API", err));
 
+    const pLayout = fetchApi('/public/layout/web')
+      .then(data => {
+        if (Array.isArray(data)) {
+          setLayoutSections(data);
+        }
+      })
+      .catch(() => {});
+
+    const pTrending = fetchApi('/articles/public/trending')
+      .then(data => {
+        if (Array.isArray(data)) {
+          setTrendingNews(data);
+        }
+      })
+      .catch(() => {});
+
+    const pRss = fetchApi('/rss-aggregator/latest?page=0&size=5')
+      .then(data => {
+        if (data && Array.isArray(data.content)) {
+          setAggregatedNews(data.content);
+        }
+      })
+      .catch(err => console.warn("Could not load RSS aggregated news", err));
+
+    const pInstitution = fetchApi('/articles/public/institution-news')
+      .then(data => {
+        if (Array.isArray(data)) {
+          setInstitutionNews(data);
+        }
+      })
+      .catch(() => {});
+
+    const pCrowd = fetchApi('/report-news/getAllWeb?size=4')
+      .then(res => {
+        if (res && Array.isArray(res.content)) {
+          setCrowdReports(res.content);
+        }
+      })
+      .catch(() => {});
+
+    // Geolocation Personalized Articles
+    const selectedDistId = localStorage.getItem('selectedDistrictId');
+    let newsUrl = '/public/news?limit=12';
+    if (selectedDistId) {
+      newsUrl = `/articles/getAllWeb?districtId=${selectedDistId}&size=12`;
+    }
+
+    const pPersonalized = new Promise((resolve) => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            fetchApi(`${newsUrl}&lat=${latitude}&lon=${longitude}`)
+              .then(data => {
+                const list = data && Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
+                if (list.length > 0) setArticles(list);
+                resolve();
+              })
+              .catch(() => { resolve(); });
+          },
+          () => {
+            fetchApi(newsUrl)
+              .then(data => {
+                const list = data && Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
+                if (list.length > 0) setArticles(list);
+                resolve();
+              })
+              .catch(() => { resolve(); });
+          }
+        );
+      } else {
+        fetchApi(newsUrl)
+          .then(data => {
+            const list = data && Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
+            if (list.length > 0) setArticles(list);
+            resolve();
+          })
+          .catch(() => { resolve(); });
+      }
+    });
+
     // 7. Fetch Weather Forecast from backend for Chennai
     const baseApi = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api/v1';
-    fetch(`${baseApi}/weather?city=Chennai`)
+    const pWeather = fetch(`${baseApi}/weather?city=Chennai`)
       .then(res => res.json())
       .then(data => {
         if (data && data.temp) {
@@ -216,8 +295,7 @@ const Home = () => {
       })
       .catch(err => console.warn("Weather fetch failed, using default info", err));
 
-    // 8. Fetch Business Case Studies (PDFs)
-    fetchApi('/pdfs')
+    const pCaseStudies = fetchApi('/pdfs')
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
           setCaseStudies(data);
@@ -225,86 +303,18 @@ const Home = () => {
       })
       .catch(err => console.warn("Could not load PDFs", err));
 
-    // 9. Fetch Layout Sections
-    fetchApi('/public/layout/web')
-      .then(data => {
-        if (Array.isArray(data)) {
-          setLayoutSections(data);
-        }
-      })
-      .catch(() => {});
-
-    // 10. Fetch Real Trending News
-    fetchApi('/articles/public/trending')
-      .then(data => {
-        if (Array.isArray(data)) {
-          setTrendingNews(data);
-        }
-      })
-      .catch(() => {});
-
-    // Fetch RSS Aggregated News
-    fetchApi('/rss-aggregator/latest?page=0&size=5')
-      .then(data => {
-        if (data && Array.isArray(data.content)) {
-          setAggregatedNews(data.content);
-        }
-      })
-      .catch(err => console.warn("Could not load RSS aggregated news", err));
-
-    // 11. Fetch Institution News
-    fetchApi('/articles/public/institution-news')
-      .then(data => {
-        if (Array.isArray(data)) {
-          setInstitutionNews(data);
-        }
-      })
-      .catch(() => {});
-
-    // 12. Fetch Approved Crowd Reports
-    fetchApi('/report-news/getAllWeb?size=4')
-      .then(res => {
-        if (res && Array.isArray(res.content)) {
-          setCrowdReports(res.content);
-        }
-      })
-      .catch(() => {});
-
-    // 13. Geolocation Personalized Articles
-    const selectedDistId = localStorage.getItem('selectedDistrictId');
-    let newsUrl = '/public/news?limit=12';
-    if (selectedDistId) {
-      newsUrl = `/articles/getAllWeb?districtId=${selectedDistId}&size=12`;
-    }
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const { latitude, longitude } = pos.coords;
-          fetchApi(`${newsUrl}&lat=${latitude}&lon=${longitude}`)
-            .then(data => {
-              const list = data && Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
-              if (list.length > 0) setArticles(list);
-            })
-            .catch(() => {});
-        },
-        () => {
-          fetchApi(newsUrl)
-            .then(data => {
-              const list = data && Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
-              if (list.length > 0) setArticles(list);
-            })
-            .catch(() => {});
-        }
-      );
-    } else {
-      fetchApi(newsUrl)
-        .then(data => {
-          const list = data && Array.isArray(data.content) ? data.content : (Array.isArray(data) ? data : []);
-          if (list.length > 0) setArticles(list);
-        })
-        .catch(() => {});
-    }
+    // Resolve loading after critical calls complete
+    Promise.allSettled([
+      pCategories, pArticles, pBreakingNews, pWebStories, pVideos, pLiveVideo,
+      pLayout, pTrending, pRss, pInstitution, pCrowd, pPersonalized, pWeather, pCaseStudies
+    ]).then((results) => {
+      // Check if critical resources failed (e.g., articles could not load)
+      const articlesSuccess = results[1].status === 'fulfilled';
+      if (!articlesSuccess) {
+        setError(lang === 'en' ? 'Fatal: Failed to connect to the backend service.' : 'சேவை இணைப்பு தோல்வியடைந்தது.');
+      }
+      setLoading(false);
+    });
   }, [lang]);
 
   useEffect(() => {
@@ -1038,6 +1048,57 @@ const Home = () => {
       default: return null;
     }
   };
+
+  if (error) {
+    return (
+      <div className="container" style={{ padding: '40px 15px', textAlign: 'center' }}>
+        <div style={{ padding: '30px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px', color: 'var(--text-dark)' }}>
+          <h2 style={{ color: '#EF4444', marginBottom: '10px' }}>{lang === 'en' ? 'Connection Error' : 'இணைப்பு பிழை'}</h2>
+          <p>{error}</p>
+          <button onClick={() => window.location.reload()} style={{ marginTop: '15px', padding: '8px 16px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+            {lang === 'en' ? 'Retry' : 'மீண்டும் முயல்க'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="container" style={{ padding: '20px 15px' }}>
+        {/* Ticker Skeleton */}
+        <div className="skeleton-item" style={{ height: '40px', width: '100%', borderRadius: '6px', marginBottom: '20px' }}></div>
+        
+        {/* Hero Section Skeleton */}
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '30px' }} className="hero-skeleton-grid">
+          <div className="skeleton-item" style={{ height: '350px', borderRadius: '12px' }}></div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div className="skeleton-item" style={{ height: '105px', borderRadius: '8px' }}></div>
+            <div className="skeleton-item" style={{ height: '105px', borderRadius: '8px' }}></div>
+            <div className="skeleton-item" style={{ height: '105px', borderRadius: '8px' }}></div>
+          </div>
+        </div>
+
+        {/* Main Split Skeletons */}
+        <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr', gap: '30px' }} className="main-skeleton-grid">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            <div>
+              <div className="skeleton-item" style={{ height: '24px', width: '200px', borderRadius: '4px', marginBottom: '15px' }}></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }} className="skeleton-cards-grid">
+                <SkeletonLoader type="card" count={4} />
+              </div>
+            </div>
+          </div>
+          <div>
+            <div className="skeleton-item" style={{ height: '24px', width: '150px', borderRadius: '4px', marginBottom: '15px' }}></div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <SkeletonLoader type="list" count={4} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ width: '100%' }}>

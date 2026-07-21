@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
 import { fetchApi } from '../utils/api';
 import AdWidget from '../components/AdWidget';
+import SkeletonLoader from '../components/SkeletonLoader';
 
 const ArticleDetail = () => {
   const { id } = useParams();
@@ -721,7 +722,21 @@ const ArticleDetail = () => {
   };
 
   if (!article) {
-    return <div style={{ padding: '60px', textAlign: 'center' }}>{lang === 'en' ? 'Loading article details...' : 'கட்டுரை ஏற்றப்படுகிறது...'}</div>;
+    return (
+      <div className="container" style={{ marginTop: '30px', marginBottom: '40px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr', gap: '30px' }} className="detail-skeleton-grid">
+          <div>
+            <SkeletonLoader type="detail" />
+          </div>
+          <div>
+            <div className="skeleton-item" style={{ height: '24px', width: '150px', borderRadius: '4px', marginBottom: '15px' }}></div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <SkeletonLoader type="list" count={3} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

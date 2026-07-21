@@ -3,6 +3,8 @@ package com.kingstv.controllers;
 import com.kingstv.models.AggregatedNews;
 import com.kingstv.repository.AggregatedNewsRepository;
 import com.kingstv.services.RssAggregatorService;
+import com.kingstv.security.RequiresPermission;
+import com.kingstv.models.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +32,7 @@ public class RssAggregatorController {
     }
 
     @PostMapping("/fetch")
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR})
     public ResponseEntity<?> forceFetch() {
         try {
             rssAggregatorService.fetchAggregatedFeeds();

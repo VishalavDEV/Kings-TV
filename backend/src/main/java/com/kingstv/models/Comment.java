@@ -1,6 +1,10 @@
 package com.kingstv.models;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 @Entity
@@ -12,15 +16,22 @@ public class Comment {
     private Long id;
 
     @Column(name = "article_id", nullable = false)
+    @NotNull(message = "Article ID is required")
     private Long articleId;
 
     @Column(name = "commentor_name", nullable = false)
+    @NotBlank(message = "Name is required")
+    @Size(max = 100, message = "Name cannot exceed 100 characters")
     private String commentorName;
 
     @Column(name = "commentor_email")
+    @Email(message = "Invalid email format")
+    @Size(max = 100, message = "Email cannot exceed 100 characters")
     private String commentorEmail;
 
     @Column(name = "comment_text", nullable = false, columnDefinition = "TEXT")
+    @NotBlank(message = "Comment text is required")
+    @Size(max = 1000, message = "Comment cannot exceed 1000 characters")
     private String commentText;
 
     @Column(name = "created_at")

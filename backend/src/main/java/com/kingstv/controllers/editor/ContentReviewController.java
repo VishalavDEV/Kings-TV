@@ -65,6 +65,9 @@ public class ContentReviewController {
     @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
     public ResponseEntity<?> approveArticle(@PathVariable Long id) {
         return articleRepository.findById(id).map(article -> {
+            if (!"submitted".equals(article.getStatus())) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Only articles in 'submitted' state can be approved"));
+            }
             // Run profanity check before publishing if auto-flagging is enabled in config
             String autoFlagEnabledStr = systemConfigService.getConfigValueOrDefault("profanity.auto_flagging", "true");
             boolean autoFlagEnabled = Boolean.parseBoolean(autoFlagEnabledStr);
@@ -100,6 +103,9 @@ public class ContentReviewController {
     @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
     public ResponseEntity<?> rejectArticle(@PathVariable Long id, @RequestBody Map<String, String> request) {
         return articleRepository.findById(id).map(article -> {
+            if (!"submitted".equals(article.getStatus())) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Only articles in 'submitted' state can be rejected"));
+            }
             article.setStatus("rejected");
             articleRepository.save(article);
             logAudit("REJECT", "Article", id, "Rejected: " + request.getOrDefault("reason", "No reason provided"));
