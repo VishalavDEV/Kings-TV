@@ -103,7 +103,8 @@ const CategorySubcategorySelect = ({
             {loadingCats ? 'Loading categories...' : '— Select Category —'}
           </option>
           {categories.map((c) => {
-            const cleanLabel = (c.icon && !c.icon.startsWith('fa') && !c.icon.includes('fa-'))
+            const isIconString = typeof c?.icon === 'string';
+            const cleanLabel = (isIconString && !c.icon.startsWith('fa') && !c.icon.includes('fa-'))
               ? `${c.icon} ${c.nameTa ? `${c.nameTa} / ${c.name}` : c.name}`
               : (c.nameTa ? `${c.nameTa} / ${c.name}` : c.name);
             return (

@@ -35,6 +35,43 @@ import RewardSystem from './pages/admin/RewardSystem';
 import SubscribersManagement from './pages/admin/SubscribersManagement';
 import NotificationPreferences from './pages/admin/NotificationPreferences';
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("Uncaught error caught by ErrorBoundary:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', color: '#fff', padding: '2rem' }}>
+          <div style={{ maxWidth: '500px', width: '100%', background: '#1e293b', border: '1px solid #334155', padding: '2rem', borderRadius: '12px', textAlign: 'center' }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: '#f43f5e' }}>⚠️ Page Render Error</h2>
+            <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+              {this.state.error?.message || 'An unexpected rendering error occurred.'}
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{ background: '#3b82f6', color: '#fff', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}
+            >
+              🔄 Refresh Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const ProtectedLayout = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
 
@@ -43,14 +80,16 @@ const ProtectedLayout = ({ children, allowedRoles }) => {
   if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/admin/dashboard" replace />;
 
   return (
-    <div className="app-container">
-      <Sidebar />
-      <Header />
-      <main className="main-content">
-        <Breadcrumbs />
-        {children}
-      </main>
-    </div>
+    <ErrorBoundary>
+      <div className="app-container">
+        <Sidebar />
+        <Header />
+        <main className="main-content">
+          <Breadcrumbs />
+          {children}
+        </main>
+      </div>
+    </ErrorBoundary>
   );
 };
 
