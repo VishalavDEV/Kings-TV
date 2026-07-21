@@ -45,14 +45,19 @@ public class AdminAuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
-        String email = body.get("email");
+        String rawEmail = body.get("email");
         String password = body.get("password");
 
-        if (email == null || password == null) {
+        if (rawEmail == null || password == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Email and password are required"));
         }
 
-        Optional<User> userOpt = userRepository.findByEmail(email.toLowerCase());
+        String email = rawEmail.trim().toLowerCase().replace("×", "x");
+
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty() && "admin@king24x7.com".equals(email)) {
+            userOpt = userRepository.findByEmail("admin@kingstv.com");
+        }
         if (userOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Invalid email or password"));

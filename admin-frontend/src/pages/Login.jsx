@@ -18,8 +18,10 @@ export default function Login() {
     setError('');
     setLoading(true);
 
+    const cleanEmail = email.trim().toLowerCase().replace(/×/g, 'x');
+
     try {
-      const res = await axiosInstance.post('/api/admin/auth/login', { email, password });
+      const res = await axiosInstance.post('/api/admin/auth/login', { email: cleanEmail, password });
       const { token, user } = res.data;
       if (token) {
         login(user, token);
