@@ -12,6 +12,7 @@ const Videos = () => {
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
 
   // Helper function to assign categoryId matching system tabs
   const categorizeVideo = (title = '', description = '') => {
@@ -99,6 +100,7 @@ const Videos = () => {
 
   const handleSelectVideo = (video) => {
     setSelectedVideo(video);
+    setIsDescExpanded(false);
     // Scroll to the main player on mobile
     const playerEl = document.getElementById('main-video-player');
     if (playerEl) {
@@ -184,7 +186,7 @@ const Videos = () => {
               {selectedVideo ? (
                 <div className="responsive-iframe-container">
                   <iframe
-                    src={`https://www.youtube.com/embed/${selectedVideo.id}?autoplay=1`}
+                    src={`https://www.youtube.com/embed/${selectedVideo.id}`}
                     title={selectedVideo.title}
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -197,20 +199,52 @@ const Videos = () => {
                   <p>{lang === 'en' ? 'Select a video to start watching' : 'பார்க்க ஒரு வீடியோவைத் தேர்ந்தெடுக்கவும்'}</p>
                 </div>
               )}
-              {selectedVideo && (
-                <div className="player-details">
-                  {selectedVideo.isLive && (
-                    <span className="badge-live"><i className="fas fa-broadcast-tower"></i> LIVE</span>
-                  )}
-                  <h2>{selectedVideo.title}</h2>
-                  <div className="player-meta">
-                    {selectedVideo.publishedAt && (
-                      <span><i className="far fa-calendar-alt"></i> {new Date(selectedVideo.publishedAt).toLocaleDateString()}</span>
+              {selectedVideo && (() => {
+                const isLongDesc = selectedVideo.description && selectedVideo.description.length > 180;
+                const displayDesc = isLongDesc && !isDescExpanded 
+                  ? selectedVideo.description.slice(0, 180) + '...' 
+                  : selectedVideo.description;
+                return (
+                  <div className="player-details">
+                    {selectedVideo.isLive && (
+                      <span className="badge-live"><i className="fas fa-broadcast-tower"></i> LIVE</span>
+                    )}
+                    <h2>{selectedVideo.title}</h2>
+                    <div className="player-meta">
+                      {selectedVideo.publishedAt && (
+                        <span><i className="far fa-calendar-alt"></i> {new Date(selectedVideo.publishedAt).toLocaleDateString()}</span>
+                      )}
+                    </div>
+                    <p className="description" style={{ whiteSpace: 'pre-line', lineHeight: '1.6', color: 'var(--text-gray)' }}>
+                      {displayDesc}
+                    </p>
+                    {isLongDesc && (
+                      <button 
+                        onClick={() => setIsDescExpanded(!isDescExpanded)} 
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--primary)',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          padding: '4px 0',
+                          marginTop: '8px',
+                          fontSize: '13px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        {isDescExpanded ? (
+                          <>{lang === 'en' ? 'Show Less' : 'குறைவாகக் காட்டு'} <i className="fas fa-chevron-up"></i></>
+                        ) : (
+                          <>{lang === 'en' ? 'See More' : 'மேலும் காண்க'} <i className="fas fa-chevron-down"></i></>
+                        )}
+                      </button>
                     )}
                   </div>
-                  <p className="description">{selectedVideo.description}</p>
-                </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* Up Next List Side Panel */}
