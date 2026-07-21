@@ -734,6 +734,61 @@ public class DataInitializer {
         districtRepository.save(dist);
     }
 
+    private void seedDefaultAdminUser() {
+        try {
+            // ── Ensure the legacy admin@king24x7.com account is always accessible ──
+            // Resets role to SUPER_ADMIN and password to "admin123" on every startup
+            // so the original admin can always log in with familiar credentials.
+            userRepository.findByEmail("admin@king24x7.com").ifPresent(legacy -> {
+                try {
+                    String encoded = passwordEncoder.encode("admin123");
+                    legacy.setRole("SUPER_ADMIN");
+                    legacy.setPassword(encoded);
+                    legacy.setPasswordHash(encoded);
+                    if (legacy.getUsername() == null || legacy.getUsername().isBlank()) {
+                        legacy.setUsername("admin_king24x7");
+                    }
+                    if (legacy.getFullName() == null || legacy.getFullName().isBlank()) {
+                        legacy.setFullName("Super Admin");
+                    }
+                    if (legacy.getProvider() == null || legacy.getProvider().isBlank()) {
+                        legacy.setProvider("LOCAL");
+                    }
+                    legacy.setIsActive(true);
+                    userRepository.save(legacy);
+                    System.out.println("Admin credentials ensured for admin@king24x7.com → password: admin123");
+                } catch (Exception ex) {
+                    System.err.println("Could not reset admin@king24x7.com: " + ex.getMessage());
+                }
+            });
+
+            boolean hasAdmin = userRepository.findAll().stream()
+                .anyMatch(u -> "SUPER_ADMIN".equals(u.getRole()));
+
+            if (!hasAdmin) {
+                User admin = new User();
+                admin.setFullName("Super Admin");
+                admin.setUsername("super_admin");
+                admin.setEmail("admin@kingstv.com");
+                String encodedPw = passwordEncoder.encode("admin123");
+                admin.setPassword(encodedPw);
+                admin.setPasswordHash(encodedPw);
+                admin.setRole("SUPER_ADMIN");
+                admin.setProvider("LOCAL");
+                admin.setIsVerified(true);
+                admin.setIsActive(true);
+                userRepository.save(admin);
+                System.out.println("=================================================");
+                System.out.println("Default admin user created: admin@kingstv.com");
+                System.out.println("Default password: admin123");
+                System.out.println("PLEASE CHANGE THIS PASSWORD AFTER FIRST LOGIN!");
+                System.out.println("=================================================");
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to seed default admin user: " + e.getMessage());
+        }
+    }
+
     private void seedArticle(Long catId, Long distId, String titleTa, String titleEn, String contentTa, String contentEn, String shortDescTa, String shortDescEn, String imageUrl, int views, String slug) {
         Article art = new Article();
         art.setCategoryId(catId);
@@ -932,38 +987,5 @@ public class DataInitializer {
         }
     }
 
-    /**
-     * Seeds a default SUPER_ADMIN user if no admin users exist.
-     * Credentials: admin@kingstv.com / Admin@123
-     * Change the password immediately after first login!
-     */
-    private void seedDefaultAdminUser() {
-        try {
-            boolean hasAdmin = userRepository.findAll().stream()
-                .anyMatch(u -> "SUPER_ADMIN".equals(u.getRole()));
-
-            if (!hasAdmin) {
-                User admin = new User();
-                admin.setFullName("Super Admin");
-                admin.setUsername("super_admin");
-                admin.setEmail("admin@kingstv.com");
-                String encodedPw = passwordEncoder.encode("Admin@123");
-                admin.setPassword(encodedPw);
-                admin.setPasswordHash(encodedPw);
-                admin.setRole("SUPER_ADMIN");
-                admin.setProvider("LOCAL");
-                admin.setIsVerified(true);
-                admin.setIsActive(true);
-                userRepository.save(admin);
-                System.out.println("=================================================");
-                System.out.println("Default admin user created: admin@kingstv.com");
-                System.out.println("Default password: Admin@123");
-                System.out.println("PLEASE CHANGE THIS PASSWORD AFTER FIRST LOGIN!");
-                System.out.println("=================================================");
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to seed default admin user: " + e.getMessage());
-        }
-    }
 }
 

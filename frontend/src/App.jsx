@@ -54,12 +54,24 @@ function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
   const location = useLocation();
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [maintTitle, setMaintTitle] = useState('');
+  const [maintMsg, setMaintMsg] = useState('');
 
   useEffect(() => {
-    fetchApi('/public/maintenance-status')
+    fetchApi('/public/settings')
       .then(res => {
-        if (res && res.maintenance) {
-          setMaintenanceMode(true);
+        if (res) {
+          if (res.maintenanceMode) {
+            setMaintenanceMode(true);
+            setMaintTitle(res.maintenanceTitle || '');
+            setMaintMsg(res.maintenanceMessage || '');
+          }
+          if (res.siteColor) {
+            document.documentElement.style.setProperty('--primary', res.siteColor);
+          }
+          if (res.siteName) {
+            document.title = res.siteName + (res.siteTagline ? ` - ${res.siteTagline}` : '');
+          }
         }
       })
       .catch(() => {});
@@ -76,7 +88,7 @@ function AppContent() {
   }, [location]);
 
   if (maintenanceMode && location.pathname !== '/login') {
-    return <Maintenance />;
+    return <Maintenance title={maintTitle} message={maintMsg} />;
   }
 
   return (

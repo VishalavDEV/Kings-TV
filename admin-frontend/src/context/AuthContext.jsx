@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
       return;
     }
     try {
-      const res = await axiosInstance.get('/admin/auth/me');
+      const res = await axiosInstance.get('/api/admin/auth/me');
       setUser(res.data);
       setPermissions(res.data.permissions || []);
     } catch {

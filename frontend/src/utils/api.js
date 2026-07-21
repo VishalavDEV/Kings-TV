@@ -1,5 +1,6 @@
-const SERVER_BASE = import.meta.env.VITE_SERVER_BASE || `http://${window.location.hostname}:8080`;
-const API_BASE = import.meta.env.VITE_API_BASE || `${SERVER_BASE}/api/v1`;
+const PUBLIC_BASE = import.meta.env.NEXT_PUBLIC_API_URL || import.meta.env.VITE_SERVER_BASE || `http://${window.location.hostname}:8080`;
+const SERVER_BASE = PUBLIC_BASE.endsWith('/api') ? PUBLIC_BASE.slice(0, -4) : (PUBLIC_BASE.endsWith('/api/v1') ? PUBLIC_BASE.slice(0, -7) : PUBLIC_BASE);
+const API_BASE = `${SERVER_BASE}/api/v1`;
 
 export const getImageUrl = (path) => {
   if (!path) return '';
@@ -101,7 +102,16 @@ export const fetchApi = async (endpoint, options = {}) => {
   };
 
   try {
-    const response = await fetch(`${API_BASE}${endpoint}`, {
+    let requestUrl;
+    if (endpoint.startsWith('/public/')) {
+      requestUrl = `${SERVER_BASE}/api${endpoint}`;
+    } else if (endpoint.startsWith('/api/')) {
+      requestUrl = `${SERVER_BASE}${endpoint}`;
+    } else {
+      requestUrl = `${API_BASE}${endpoint}`;
+    }
+
+    const response = await fetch(requestUrl, {
       ...options,
       headers
     });

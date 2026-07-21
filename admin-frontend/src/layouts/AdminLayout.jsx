@@ -40,7 +40,7 @@ const NAV_ITEMS = [
   { key: 'manage_all_posts', label: 'All Posts',          icon: FileText,        path: '/posts' },
   { key: 'navigation',       label: 'Navigation',         icon: Navigation,      path: '/navigation' },
   { key: 'pages',            label: 'Pages',              icon: BookOpen,        path: '/pages' },
-  { key: 'rss_feeds',        label: 'RSS Feeds',          icon: Rss,             path: '/rss' },
+  { key: 'rss_feeds',        label: 'RSS Feeds',          icon: Rss,             path: '/rss-feeds' },
   { key: 'categories',       label: 'Categories',         icon: Tag,             path: '/categories' },
   { key: 'widgets',          label: 'Widgets',            icon: LayoutGrid,      path: '/widgets' },
   { key: 'polls',            label: 'Polls',              icon: BarChart2,       path: '/polls' },
@@ -52,7 +52,7 @@ const NAV_ITEMS = [
   { key: 'ad_spaces',        label: 'Ad Spaces',          icon: MonitorPlay,     path: '/ads' },
   { key: 'users',            label: 'Users',              icon: Users,           path: '/users/administrators',
     children: [
-      { label: 'Administrators', path: '/users/administrators' },
+      { label: 'Administrators',   path: '/users/administrators' },
       { label: 'Registered Users', path: '/users' },
     ]
   },
@@ -60,8 +60,18 @@ const NAV_ITEMS = [
   { key: 'seo_tools',        label: 'SEO Tools',          icon: Search,          path: '/seo' },
   { key: 'social_login',     label: 'Social Login',       icon: Share2,          path: '/social-login' },
   { key: 'languages',        label: 'Languages',          icon: Globe,           path: '/languages' },
-  { key: 'settings',         label: 'Settings',           icon: Settings,        path: '/settings' },
+  { key: 'settings',         label: 'Settings',           icon: Settings,        path: '/settings/general',
+    children: [
+      { label: 'Preferences',       path: '/preferences' },
+      { label: 'Visual Settings',   path: '/settings/visual' },
+      { label: 'General Settings',  path: '/settings/general' },
+      { label: 'Storage',           path: '/storage' },
+      { label: 'Cache System',      path: '/cache-system' },
+      { label: 'Backup',            path: '/backup' },
+    ]
+  },
 ];
+
 
 function NavItem({ item, collapsed }) {
   const [open, setOpen] = useState(false);

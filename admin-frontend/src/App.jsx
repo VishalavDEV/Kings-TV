@@ -9,6 +9,20 @@ import PublicUsers from './pages/users/PublicUsers';
 import RolesPermissions from './pages/roles/RolesPermissions';
 import EditRole from './pages/roles/EditRole';
 
+// Settings
+import Preferences from './pages/settings/Preferences';
+import VisualSettings from './pages/settings/VisualSettings';
+import GeneralSettings from './pages/settings/GeneralSettings';
+
+// RSS
+import RssFeeds from './pages/rss/RssFeeds';
+import AddRssFeed from './pages/rss/AddRssFeed';
+
+// System
+import Storage from './pages/system/Storage';
+import CacheSystem from './pages/system/CacheSystem';
+import Backup from './pages/system/Backup';
+
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
 
@@ -40,11 +54,32 @@ function AppRoutes() {
         }
       >
         <Route index element={<Dashboard />} />
+
+        {/* Users */}
         <Route path="users/administrators" element={<Administrators />} />
         <Route path="users" element={<PublicUsers />} />
+
+        {/* Roles */}
         <Route path="roles-permissions" element={<RolesPermissions />} />
         <Route path="roles-permissions/:id/edit" element={<EditRole />} />
-        {/* Placeholder routes for future pages */}
+
+        {/* Settings */}
+        <Route path="preferences" element={<Preferences />} />
+        <Route path="settings/visual" element={<VisualSettings />} />
+        <Route path="settings/general" element={<GeneralSettings />} />
+        <Route path="settings" element={<Navigate to="settings/general" replace />} />
+
+        {/* RSS Feeds */}
+        <Route path="rss-feeds" element={<RssFeeds />} />
+        <Route path="rss-feeds/add" element={<AddRssFeed />} />
+        <Route path="rss-feeds/:id/edit" element={<AddRssFeed />} />
+
+        {/* System */}
+        <Route path="storage" element={<Storage />} />
+        <Route path="cache-system" element={<CacheSystem />} />
+        <Route path="backup" element={<Backup />} />
+
+        {/* Catch-all for pages not yet built */}
         <Route path="*" element={<ComingSoon />} />
       </Route>
     </Routes>

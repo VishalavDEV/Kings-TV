@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { LanguageContext } from '../context/LanguageContext';
 
-const Maintenance = () => {
+const Maintenance = ({ title, message }) => {
   const { lang } = useContext(LanguageContext);
 
   return (
@@ -56,13 +56,13 @@ const Maintenance = () => {
         </div>
 
         <h1 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '16px', letterSpacing: '0.5px' }}>
-          {lang === 'en' ? 'System Under Maintenance' : 'கணினி பராமரிப்பில் உள்ளது'}
+          {title || (lang === 'en' ? 'System Under Maintenance' : 'கணினி பராமரிப்பில் உள்ளது')}
         </h1>
 
         <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '15px', lineHeight: 1.6, margin: '0 0 30px 0' }}>
-          {lang === 'en' 
+          {message || (lang === 'en' 
             ? "We are currently performing scheduled maintenance to improve our platform services. We apologize for the inconvenience and will be back online shortly."
-            : "எங்கள் செய்தி தள சேவைகளை மேம்படுத்த தற்போது திட்டமிடப்பட்ட பராமரிப்புப் பணிகள் நடைபெற்று வருகின்றன. விரைவில் நாங்கள் நேரலைக்குத் திரும்புவோம்."}
+            : "எங்கள் செய்தி தள சேவைகளை மேம்படுத்த தற்போது திட்டமிடப்பட்ட பராமரிப்புப் பணிகள் நடைபெற்று வருகின்றன. விரைவில் நாங்கள் நேரலைக்குத் திரும்புவோம்.")}
         </p>
 
         <div style={{
