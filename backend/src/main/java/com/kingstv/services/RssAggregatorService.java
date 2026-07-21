@@ -1,7 +1,9 @@
 package com.kingstv.services;
 
 import com.kingstv.models.AggregatedNews;
+import com.kingstv.models.RssFeedConfig;
 import com.kingstv.repository.AggregatedNewsRepository;
+import com.kingstv.repository.RssFeedConfigRepository;
 import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.SyndFeedInput;
@@ -128,5 +130,9 @@ public class RssAggregatorService {
             }
         }
         LOGGER.info("RSS news aggregation completed. Total new items ingested: " + totalIngested);
+    }
+
+    public List<AggregatedNews> getLatestItems() {
+        return aggregatedNewsRepository.findAll();
     }
 }
