@@ -62,6 +62,17 @@ function AppContent() {
         }
       })
       .catch(() => {});
+
+    fetchApi('/public/config/ui')
+      .then(res => {
+        if (res) {
+          const root = document.documentElement;
+          if (res['font.primary']) root.style.setProperty('--font-primary', res['font.primary']);
+          if (res['font.secondary']) root.style.setProperty('--font-secondary', res['font.secondary']);
+          if (res['font.tertiary']) root.style.setProperty('--font-tertiary', res['font.tertiary']);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {

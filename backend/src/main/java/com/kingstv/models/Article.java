@@ -100,6 +100,18 @@ public class Article {
     @Column(name = "reading_time")
     private Integer readingTime = 1;
 
+    @Column(name = "priority_score")
+    private Double priorityScore = 0.0;
+
+    @Column(name = "show_right_column")
+    private Boolean showRightColumn = true;
+
+    @Column(name = "is_plugged_in")
+    private Boolean isPluggedIn = false;
+
+    @Column(name = "featured_category")
+    private String featuredCategory;
+
     @Transient
     private String authorProfileImage;
 
@@ -206,4 +218,16 @@ public class Article {
 
     public Boolean getTelegramSent() { return telegramSent != null && telegramSent; }
     public void setTelegramSent(Boolean telegramSent) { this.telegramSent = telegramSent; }
+
+    public Double getPriorityScore() { return priorityScore; }
+    public void setPriorityScore(Double priorityScore) { this.priorityScore = priorityScore; }
+
+    public Boolean getShowRightColumn() { return showRightColumn != null ? showRightColumn : true; }
+    public void setShowRightColumn(Boolean showRightColumn) { this.showRightColumn = showRightColumn; }
+
+    public Boolean getIsPluggedIn() { return isPluggedIn != null ? isPluggedIn : false; }
+    public void setIsPluggedIn(Boolean isPluggedIn) { this.isPluggedIn = isPluggedIn; }
+
+    public String getFeaturedCategory() { return featuredCategory; }
+    public void setFeaturedCategory(String featuredCategory) { this.featuredCategory = featuredCategory; }
 }

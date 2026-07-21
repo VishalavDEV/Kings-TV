@@ -24,7 +24,10 @@ const SystemSettings = () => {
     youtubeApiKey: '',
     youtubeChannelId: '',
     renderApiKey: '',
-    vercelApiKey: ''
+    vercelApiKey: '',
+    primaryFont: 'Inter',
+    secondaryFont: 'Merriweather',
+    tertiaryFont: 'Poppins'
   });
   const [loading, setLoading] = useState(true);
   const [savingGroup, setSavingGroup] = useState('');
@@ -57,6 +60,9 @@ const SystemSettings = () => {
             if (item.configKey === 'youtube.channel_id') mapped.youtubeChannelId = item.configValue || '';
             if (item.configKey === 'hosting.render_api_key') mapped.renderApiKey = item.configValue || '';
             if (item.configKey === 'hosting.vercel_api_key') mapped.vercelApiKey = item.configValue || '';
+            if (item.configKey === 'font.primary') mapped.primaryFont = item.configValue || 'Inter';
+            if (item.configKey === 'font.secondary') mapped.secondaryFont = item.configValue || 'Merriweather';
+            if (item.configKey === 'font.tertiary') mapped.tertiaryFont = item.configValue || 'Poppins';
           });
           setConfig(prev => ({ ...prev, ...mapped }));
         }
@@ -116,6 +122,12 @@ const SystemSettings = () => {
           renderApiKey: config.renderApiKey, 
           vercelApiKey: config.vercelApiKey 
         });
+      } else if (group === 'typography') {
+        await api.put('/admin/config/typography', { 
+          primaryFont: config.primaryFont, 
+          secondaryFont: config.secondaryFont,
+          tertiaryFont: config.tertiaryFont
+        });
       }
       alert(`${group.toUpperCase()} settings saved successfully.`);
     } catch (error) {
@@ -158,6 +170,11 @@ const SystemSettings = () => {
         api.put('/admin/config/hosting', { 
           renderApiKey: config.renderApiKey, 
           vercelApiKey: config.vercelApiKey 
+        }),
+        api.put('/admin/config/typography', { 
+          primaryFont: config.primaryFont, 
+          secondaryFont: config.secondaryFont,
+          tertiaryFont: config.tertiaryFont
         })
       ]);
       alert('All settings saved successfully.');
@@ -472,6 +489,45 @@ const SystemSettings = () => {
           </div>
           <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('hosting')} disabled={savingGroup !== ''}>
             {savingGroup === 'hosting' ? 'Saving Hosting...' : 'Save Hosting Settings'}
+          </button>
+        </div>
+
+        {/* Typography / Font Settings */}
+        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '300px' }}>
+          <div>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', fontSize: '16px', fontWeight: 700 }}>
+              <span style={{ fontSize: '20px' }}>Aa</span> Typography & Font Config
+            </h3>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" style={{ fontWeight: 600, fontSize: '13px' }}>Primary Font (Headings)</label>
+              <input 
+                type="text" name="primaryFont" className="form-control" 
+                value={config.primaryFont} onChange={handleChange} 
+                placeholder="e.g. Inter, Roboto"
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" style={{ fontWeight: 600, fontSize: '13px' }}>Secondary Font (Body Text)</label>
+              <input 
+                type="text" name="secondaryFont" className="form-control" 
+                value={config.secondaryFont} onChange={handleChange} 
+                placeholder="e.g. Merriweather"
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" style={{ fontWeight: 600, fontSize: '13px' }}>Tertiary Font (Accents)</label>
+              <input 
+                type="text" name="tertiaryFont" className="form-control" 
+                value={config.tertiaryFont} onChange={handleChange} 
+                placeholder="e.g. Poppins"
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
+              />
+            </div>
+          </div>
+          <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('typography')} disabled={savingGroup !== ''}>
+            {savingGroup === 'typography' ? 'Saving Fonts...' : 'Save Typography Settings'}
           </button>
         </div>
 

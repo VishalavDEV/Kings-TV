@@ -167,6 +167,31 @@ public class SystemConfigController {
         return ResponseEntity.ok(Map.of("message", "PWA config updated"));
     }
 
+    // --- Typography Config ---
+    @PutMapping("/typography")
+    public ResponseEntity<?> updateTypographyConfig(@RequestBody Map<String, String> request) {
+        Long userId = getCallerId();
+        configService.setMultipleConfigs(Map.of(
+            SystemConfig.FONT_PRIMARY, request.getOrDefault("primaryFont", "Inter"),
+            SystemConfig.FONT_SECONDARY, request.getOrDefault("secondaryFont", "Merriweather"),
+            SystemConfig.FONT_TERTIARY, request.getOrDefault("tertiaryFont", "Poppins")
+        ), "typography", userId);
+        return ResponseEntity.ok(Map.of("message", "Typography config updated"));
+    }
+
+    // --- Notification Preferences ---
+    @PutMapping("/notifications")
+    public ResponseEntity<?> updateNotificationPreferences(@RequestBody Map<String, String> request) {
+        Long userId = getCallerId();
+        configService.setMultipleConfigs(Map.of(
+            SystemConfig.NOTIFY_EMAIL_BREAKING, request.getOrDefault("emailBreaking", "false"),
+            SystemConfig.NOTIFY_EMAIL_DAILY, request.getOrDefault("emailDaily", "false"),
+            SystemConfig.NOTIFY_SMS_BREAKING, request.getOrDefault("smsBreaking", "false"),
+            SystemConfig.NOTIFY_SMS_OTP, request.getOrDefault("smsOtp", "true")
+        ), "notifications", userId);
+        return ResponseEntity.ok(Map.of("message", "Notification preferences updated"));
+    }
+
     // --- AI/LLM Config (#46) ---
     @PutMapping("/ai-llm")
     public ResponseEntity<?> updateAiLlmConfig(@RequestBody Map<String, String> request) {
