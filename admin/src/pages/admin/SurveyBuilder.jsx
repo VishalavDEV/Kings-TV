@@ -1,8 +1,10 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import { Plus, Edit2, Trash2, HelpCircle, X, PlusCircle, MinusCircle } from 'lucide-react';
 
 const SurveyBuilder = () => {
+  const { t } = useI18n();
   const [surveys, setSurveys] = useState([]);
   const [loading, setLoading] = useState(true);
 

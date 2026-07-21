@@ -1,7 +1,9 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const RssManager = () => {
+  const { t } = useI18n();
   const [configs, setConfigs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -96,7 +98,7 @@ const RssManager = () => {
               <input type="text" name="name" value={formData.name} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Feed URL</label>
+              <label className="block text-sm font-medium text-gray-700">{t('feedUrl')}</label>
               <input type="url" name="feedUrl" value={formData.feedUrl} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
             </div>
             <div>

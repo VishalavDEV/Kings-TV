@@ -1,8 +1,10 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import { ShieldAlert, Plus, Trash2 } from 'lucide-react';
 
 const ProfanityFilter = () => {
+  const { t } = useI18n();
   const [words, setWords] = useState([]);
   const [newWord, setNewWord] = useState('');
   const [loading, setLoading] = useState(true);

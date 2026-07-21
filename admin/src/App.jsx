@@ -25,6 +25,15 @@ import BreakingNewsDashboard from './pages/admin/BreakingNewsDashboard';
 import UgcQueue from './pages/admin/UgcQueue';
 import EditorialCalendar from './pages/admin/EditorialCalendar';
 import AdManagement from './pages/admin/AdManagement';
+import CommentsModeration from './pages/admin/CommentsModeration';
+import MediaLibrary from './pages/admin/MediaLibrary';
+import RssManager from './pages/admin/RssManager';
+import KycManagement from './pages/admin/KycManagement';
+import RewardSystem from './pages/admin/RewardSystem';
+import SubscribersManagement from './pages/admin/SubscribersManagement';
+import NotificationPreferences from './pages/admin/NotificationPreferences';
+import SeoConsole from './pages/admin/SeoConsole';
+
 
 const ProtectedLayout = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
@@ -174,11 +183,61 @@ function App() {
             </ProtectedLayout>
           } />
 
+
+          <Route path="/admin/comments" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
+              <CommentsModeration />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/media" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
+              <MediaLibrary />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/rss" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
+              <RssManager />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/kyc" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
+              <KycManagement />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/rewards" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
+              <RewardSystem />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/subscribers" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
+              <SubscribersManagement />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/notifications" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
+              <NotificationPreferences />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/seo" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
+              <SeoConsole />
+            </ProtectedLayout>
+          } />
+
           <Route path="/admin/audit-logs" element={
             <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
               <AuditLogs />
             </ProtectedLayout>
           } />
+
           {/* Chief Editor routes */}
           <Route path="/admin/content" element={
             <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>

@@ -1,8 +1,10 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from 'react';
 import { Search, Globe, RefreshCw, Save, Activity } from 'lucide-react';
 import api from '../../api';
 
 const SeoConsole = () => {
+  const { t } = useI18n();
   const [seoTemplates, setSeoTemplates] = useState([]);
   const [sitemapConfig, setSitemapConfig] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -141,7 +143,7 @@ const SeoConsole = () => {
                           onClick={() => saveSeoTemplate(template)}
                           disabled={saving}
                         >
-                          <Save size={14} /> {saving ? 'Saving...' : 'Save Template'}
+                          <Save size={14} /> {saving ? t('saving') : t('saveTemplate')}
                         </button>
                       </div>
                     </div>

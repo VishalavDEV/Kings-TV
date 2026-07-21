@@ -1,9 +1,11 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import { Shield, Plus, Edit2, Check, X, ShieldAlert, Key } from 'lucide-react';
 
 const RoleManagement = () => {
+  const { t } = useI18n();
   const { user: currentUser } = useAuth();
   const [roles, setRoles] = useState([]);
   const [permissions, setPermissions] = useState({});

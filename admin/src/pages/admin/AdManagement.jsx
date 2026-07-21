@@ -1,3 +1,4 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from "react";
 import api from "../../api";
 import { DollarSign, Plus, Eye, EyeOff, Trash2, Edit2, BarChart2 } from "lucide-react";
@@ -19,6 +20,7 @@ const inputStyle = { width: "100%", padding: "0.75rem 1rem", borderRadius: "8px"
 const labelStyle = { fontSize: "0.8rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.4rem", display: "block" };
 
 const AdManagement = () => {
+  const { t } = useI18n();
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -47,7 +49,7 @@ const AdManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.position) { showMsg("Ad name and position are required.", true); return; }
+    if (!form.name || !form.position) { showMsg(t("adNameRequired"), true); return; }
     setSaving(true);
     try {
       const payload = {
@@ -165,7 +167,7 @@ const AdManagement = () => {
               </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
-              <div><label style={labelStyle}>Ad Type</label>
+              <div><label style={labelStyle}>{t('adType')}</label>
                 <select style={inputStyle} value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
                   <option value="IMAGE">??? Image Ad</option>
                   <option value="HTML_CODE">?? HTML/JS Code</option>
@@ -174,9 +176,9 @@ const AdManagement = () => {
               </div>
               <div><label style={labelStyle}>Device Target</label>
                 <select style={inputStyle} value={form.targetDevice} onChange={e => setForm(f => ({ ...f, targetDevice: e.target.value }))}>
-                  <option value="all">All Devices</option>
-                  <option value="desktop">Desktop Only</option>
-                  <option value="mobile">Mobile Only</option>
+                  <option value="all">{t('deviceAll')}</option>
+                  <option value="desktop">{t('deviceDesktop')}</option>
+                  <option value="mobile">{t('deviceMobile')}</option>
                 </select>
               </div>
               <div><label style={labelStyle}>Status</label>
@@ -186,19 +188,19 @@ const AdManagement = () => {
                 </select>
               </div>
             </div>
-            {form.type === "IMAGE" && <div><label style={labelStyle}>Image URL</label><input style={inputStyle} value={form.imageUrl} onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))} placeholder="https://cdn.king24x7.com/ads/banner.jpg" /></div>}
+            {form.type === "IMAGE" && <div><label style={labelStyle}>{t('imageUrl')}</label><input style={inputStyle} value={form.imageUrl} onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))} placeholder="https://cdn.king24x7.com/ads/banner.jpg" /></div>}
             {form.type === "HTML_CODE" && <div><label style={labelStyle}>Ad HTML/JS Code</label><textarea value={form.adCode} onChange={e => setForm(f => ({ ...f, adCode: e.target.value }))} style={{ ...inputStyle, minHeight: "120px", resize: "vertical", fontFamily: "monospace" }} placeholder="<script>..." /></div>}
             <div><label style={labelStyle}>Click Target URL</label><input style={inputStyle} value={form.targetUrl} onChange={e => setForm(f => ({ ...f, targetUrl: e.target.value }))} placeholder="https://advertiser-website.com" /></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-              <div><label style={labelStyle}>Start Date</label><input type="date" style={inputStyle} value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} /></div>
-              <div><label style={labelStyle}>End Date</label><input type="date" style={inputStyle} value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} /></div>
+              <div><label style={labelStyle}>{t('startDate')}</label><input type="date" style={inputStyle} value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} /></div>
+              <div><label style={labelStyle}>{t('endDate')}</label><input type="date" style={inputStyle} value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} /></div>
             </div>
             <div>
               <label style={labelStyle}>Geo-Targeting (District/Category Name)</label>
               <input style={inputStyle} value={form.targetGeo} onChange={e => setForm(f => ({ ...f, targetGeo: e.target.value }))} placeholder="e.g. 'all' or 'chennai'" />
             </div>
             <div style={{ display: "flex", gap: "1rem" }}>
-              <button type="submit" disabled={saving} className="btn btn-primary">{saving ? "Saving..." : editingAd ? "Update Ad" : "Create Ad"}</button>
+              <button type="submit" disabled={saving} className="btn btn-primary">{saving ? t("saving") : editingAd ? t("updateAd") : t("createAd")}</button>
               <button type="button" onClick={() => { setShowForm(false); resetForm(); }} className="btn btn-secondary">Cancel</button>
             </div>
           </form>
@@ -207,11 +209,11 @@ const AdManagement = () => {
 
       {/* Ad List */}
       {loading ? (
-        <div className="glass-panel" style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>Loading ads...</div>
+        <div className="glass-panel" style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>{t('loadingAds')}</div>
       ) : filteredAds.length === 0 ? (
         <div className="glass-panel" style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)", borderRadius: "12px" }}>
           <DollarSign size={40} style={{ opacity: 0.3, display: "block", margin: "0 auto 1rem" }} />
-          No ads found. Create your first ad above!
+          {t('noAdsFound')}
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>

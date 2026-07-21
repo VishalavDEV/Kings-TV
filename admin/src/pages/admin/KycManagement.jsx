@@ -1,8 +1,10 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from "react";
 import api from "../../api";
 import { Check, X, FileText, Store, Shield, AlertCircle, RefreshCw } from "lucide-react";
 
 const KycManagement = () => {
+  const { t } = useI18n();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

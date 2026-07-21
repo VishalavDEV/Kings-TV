@@ -193,28 +193,28 @@ const Header = () => {
 
             {notificationsOpen && (
               <div className="glass-panel" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', width: '280px', padding: '1rem', zIndex: 1000, display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.85rem' }}>
-                <h4 style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', margin: 0, color: 'var(--text-primary)' }}>System Alerts</h4>
+                <h4 style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', margin: 0, color: 'var(--text-primary)' }}>{t('systemAlerts') || 'System Alerts'}</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '250px', overflowY: 'auto' }}>
                   {counts.pendingArticles > 0 && (
                     <Link to="/admin/content" onClick={() => setNotificationsOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', textDecoration: 'none', padding: '0.25rem 0' }}>
                       <Inbox size={14} color="var(--primary)" />
-                      <span>{counts.pendingArticles} Submitted news articles</span>
+                      <span>{counts.pendingArticles} {t('submittedNewsArticles') || 'Submitted news articles'}</span>
                     </Link>
                   )}
                   {counts.pendingUgc > 0 && (
                     <Link to="/admin/ugc-queue" onClick={() => setNotificationsOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', textDecoration: 'none', padding: '0.25rem 0' }}>
                       <Users size={14} color="#10B981" />
-                      <span>{counts.pendingUgc} UGC posts pending review</span>
+                      <span>{counts.pendingUgc} {t('ugcPendingReview') || 'UGC posts pending review'}</span>
                     </Link>
                   )}
                   {counts.pendingProfanity > 0 && (
                     <Link to="/admin/profanity" onClick={() => setNotificationsOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', textDecoration: 'none', padding: '0.25rem 0' }}>
                       <AlertCircle size={14} color="#EF4444" />
-                      <span>{counts.pendingProfanity} Profanity alerts flagged</span>
+                      <span>{counts.pendingProfanity} {t('profanityAlertsFlagged') || 'Profanity alerts flagged'}</span>
                     </Link>
                   )}
                   {totalNotifications === 0 && (
-                    <div style={{ padding: '0.5rem 0', color: 'var(--text-muted)', textAlign: 'center' }}>No new system notifications.</div>
+                    <div style={{ padding: '0.5rem 0', color: 'var(--text-muted)', textAlign: 'center' }}>{t('noNewNotifications') || 'No new system notifications.'}</div>
                   )}
                 </div>
               </div>
@@ -240,16 +240,16 @@ const Header = () => {
                   <div style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 'bold', marginTop: '2px' }}>{user?.role?.replace('_', ' ')}</div>
                 </div>
                 <Link to="/profile" onClick={() => setProfileOpen(false)} className="nav-link" style={{ fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}>
-                  <User size={14} /> My Profile
+                  <User size={14} /> {t('myProfile') || 'My Profile'}
                 </Link>
                 {hasAnyRole(['SUPER_ADMIN']) && (
                   <Link to="/admin/settings" onClick={() => setProfileOpen(false)} className="nav-link" style={{ fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}>
-                    <Settings size={14} /> System Settings
+                    <Settings size={14} /> {t('settings') || 'System Settings'}
                   </Link>
                 )}
                 <div className="sidebar-divider" style={{ margin: '0.25rem 0' }} />
                 <button onClick={() => { setProfileOpen(false); logout(); }} className="nav-link" style={{ width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}>
-                  <LogOut size={14} /> Log Out
+                  <LogOut size={14} /> {t('logout') || 'Log Out'}
                 </button>
               </div>
             )}
@@ -268,7 +268,7 @@ const Header = () => {
                 type="text" 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search articles, categories, settings..." 
+                placeholder={t('searchPlaceholder')} 
                 style={{ width: '100%', border: 'none', background: 'none', outline: 'none', color: 'var(--text-primary)', fontSize: '0.95rem' }}
               />
               <button 

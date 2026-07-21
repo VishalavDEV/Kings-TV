@@ -1,8 +1,10 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, CheckCircle, XCircle, AlertOctagon, RefreshCw, Trash2, Edit2 } from 'lucide-react';
 import api from '../../api';
 
 const CommentsModeration = () => {
+  const { t } = useI18n();
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('pending');
@@ -29,17 +31,17 @@ const CommentsModeration = () => {
       await api.put(`/comments/${id}`, { ...currentComment, status: newStatus });
       setComments(comments.map(c => c.id === id ? { ...c, status: newStatus } : c));
     } catch (err) {
-      alert("Failed to update status");
+      alert(t("failedUpdateStatus"));
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to permanently delete this comment?")) {
+    if (window.confirm(t("confirmDeleteComment"))) {
       try {
         await api.delete(`/comments/${id}`);
         setComments(comments.filter(c => c.id !== id));
       } catch (err) {
-        alert("Failed to delete comment");
+        alert(t("failedDeleteComment"));
       }
     }
   };
@@ -50,8 +52,8 @@ const CommentsModeration = () => {
     <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
-          <h1><MessageSquare size={24} style={{ display: 'inline', marginRight: '10px' }} /> Comments Moderation</h1>
-          <p className="text-secondary">Review and moderate user comments before they appear on articles.</p>
+          <h1><MessageSquare size={24} style={{ display: 'inline', marginRight: '10px' }} /> {t('commentsModeration')}</h1>
+          <p className="text-secondary">{t('commentsModerationDesc')}</p>
         </div>
         <button className="btn btn-secondary" onClick={fetchComments}>
           <RefreshCw size={16} /> Refresh
@@ -65,29 +67,29 @@ const CommentsModeration = () => {
             onClick={() => setActiveTab('pending')}
             style={{ flex: 1, padding: '1rem', border: 'none', background: activeTab === 'pending' ? 'var(--bg-card)' : 'transparent', color: activeTab === 'pending' ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: activeTab === 'pending' ? 600 : 400, borderBottom: activeTab === 'pending' ? '2px solid var(--primary)' : 'none' }}
           >
-            Pending ({comments.filter(c => (c.status || 'pending') === 'pending').length})
+            {t('pending')} ({comments.filter(c => (c.status || 'pending') === 'pending').length})
           </button>
           <button 
             className={`btn-tab ${activeTab === 'approved' ? 'active' : ''}`}
             onClick={() => setActiveTab('approved')}
             style={{ flex: 1, padding: '1rem', border: 'none', background: activeTab === 'approved' ? 'var(--bg-card)' : 'transparent', color: activeTab === 'approved' ? 'var(--success)' : 'var(--text-secondary)', fontWeight: activeTab === 'approved' ? 600 : 400, borderBottom: activeTab === 'approved' ? '2px solid var(--success)' : 'none' }}
           >
-            Approved ({comments.filter(c => c.status === 'approved').length})
+            {t('approved')} ({comments.filter(c => c.status === 'approved').length})
           </button>
           <button 
             className={`btn-tab ${activeTab === 'spam' ? 'active' : ''}`}
             onClick={() => setActiveTab('spam')}
             style={{ flex: 1, padding: '1rem', border: 'none', background: activeTab === 'spam' ? 'var(--bg-card)' : 'transparent', color: activeTab === 'spam' ? 'var(--danger)' : 'var(--text-secondary)', fontWeight: activeTab === 'spam' ? 600 : 400, borderBottom: activeTab === 'spam' ? '2px solid var(--danger)' : 'none' }}
           >
-            Spam ({comments.filter(c => c.status === 'spam').length})
+            {t('spam')} ({comments.filter(c => c.status === 'spam').length})
           </button>
         </div>
 
         <div style={{ padding: '1.5rem' }}>
           {loading ? (
-            <div>Loading comments...</div>
+            <div>{t('loadingComments')}</div>
           ) : filteredComments.length === 0 ? (
-            <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 0' }}>No {activeTab} comments found.</div>
+            <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 0' }}>{t('noRecords')}</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {filteredComments.map(c => (
@@ -97,7 +99,7 @@ const CommentsModeration = () => {
                       <strong style={{ color: 'var(--text-primary)' }}>{c.commentorName}</strong>
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginLeft: '0.5rem' }}>({c.commentorEmail})</span>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                        Article ID: {c.articleId} • {new Date(c.createdAt).toLocaleString()}
+                        {t('articleId')}: {c.articleId} • {new Date(c.createdAt).toLocaleString()}
                       </div>
                     </div>
                     

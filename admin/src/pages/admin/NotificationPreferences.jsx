@@ -1,7 +1,9 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
 
 const NotificationPreferences = () => {
+  const { t } = useI18n();
   const [prefs, setPrefs] = useState({
     email_breaking_news: false,
     email_daily_digest: false,

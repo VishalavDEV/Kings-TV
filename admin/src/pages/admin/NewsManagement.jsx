@@ -1,3 +1,4 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useEffect, useState, useCallback } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import api from '../../api';
@@ -26,6 +27,7 @@ const STATUS_BADGE = {
 };
 
 const NewsManagement = () => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [articles, setArticles] = useState([]);
   const [totalPages, setTotalPages] = useState(0);

@@ -1,3 +1,4 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api';
@@ -9,6 +10,7 @@ const slugify = (text) =>
   (text || '').toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim();
 
 const NewsEditor = () => {
+  const { t } = useI18n();
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = !!id;
@@ -1361,7 +1363,7 @@ const NewsEditor = () => {
           <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderRadius: '12px' }}>
             <button onClick={() => save()} disabled={saving}
               className="btn btn-primary" style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-              <Save size={15} /> {saving ? 'Saving...' : 'Save Changes'}
+              <Save size={15} /> {saving ? t('saving') : t('saveChanges')}
             </button>
             <button onClick={() => navigate('/admin/news')}
               className="btn btn-secondary" style={{ width: '100%' }}>Cancel</button>

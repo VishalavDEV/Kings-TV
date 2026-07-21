@@ -1,8 +1,10 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import { CheckCircle, XCircle, Eye, AlertCircle } from 'lucide-react';
 
 const ContentQueue = () => {
+  const { t } = useI18n();
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
 

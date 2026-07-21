@@ -1,8 +1,10 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from 'react';
 import { Activity, Search, AlertCircle, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../../api';
 
 const AuditLogs = () => {
+  const { t } = useI18n();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -98,14 +100,14 @@ const AuditLogs = () => {
       <div className="page-header">
         <div>
           <h1 className="page-title">
-            <Activity className="icon" /> System Audit Logs
+            <Activity className="icon" /> {t('systemAuditLogs')}
           </h1>
-          <p className="page-description">Review all system activities, authorization trails, and administrative events.</p>
+          <p className="page-description">{t('systemAuditLogsDesc')}</p>
         </div>
         <div className="header-actions">
           <button className="btn btn-secondary" onClick={handleRefresh} disabled={loading}>
             <RefreshCw size={16} className={loading ? 'spin' : ''} />
-            Refresh
+            {t('refresh')}
           </button>
         </div>
       </div>
@@ -113,12 +115,12 @@ const AuditLogs = () => {
       <div className="glass-panel" style={{ padding: '1.5rem' }}>
         <div className="filter-bar" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
           <div className="form-group" style={{ flex: '2 1 300px' }}>
-            <label className="form-label">Search Logs</label>
+            <label className="form-label">{t('searchLogs')}</label>
             <div style={{ position: 'relative' }}>
               <input 
                 type="text" 
                 className="form-control" 
-                placeholder="Search actor email, entity, details..." 
+                placeholder={t("searchLogsPlaceholder")} 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{ paddingLeft: '2.5rem' }}
@@ -128,13 +130,13 @@ const AuditLogs = () => {
           </div>
           
           <div className="form-group" style={{ flex: '1 1 150px' }}>
-            <label className="form-label">Filter by Role</label>
+            <label className="form-label">{t('filterByRole')}</label>
             <select 
               className="form-control"
               value={roleFilter}
               onChange={(e) => { setRoleFilter(e.target.value); setPage(0); }}
             >
-              <option value="">All Roles</option>
+              <option value="">{t('allRoles')}</option>
               <option value="SUPER_ADMIN">Super Admin</option>
               <option value="CHIEF_EDITOR">Chief Editor</option>
               <option value="MOBILE_JOURNALIST">Mobile Journalist</option>
@@ -144,13 +146,13 @@ const AuditLogs = () => {
           </div>
           
           <div className="form-group" style={{ flex: '1 1 150px' }}>
-            <label className="form-label">Filter by Action</label>
+            <label className="form-label">{t('filterByAction')}</label>
             <select 
               className="form-control"
               value={actionFilter}
               onChange={(e) => { setActionFilter(e.target.value); setPage(0); }}
             >
-              <option value="">All Actions</option>
+              <option value="">{t('allActions')}</option>
               <option value="CREATE">Create</option>
               <option value="UPDATE">Update</option>
               <option value="DELETE">Delete</option>
@@ -171,7 +173,7 @@ const AuditLogs = () => {
         {loading ? (
           <div className="loading-state" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
             <RefreshCw size={24} className="spin" style={{ marginBottom: '1rem' }} />
-            <div>Loading audit logs...</div>
+            <div>{t('loadingAuditLogs')}</div>
           </div>
         ) : (
           <>
@@ -179,12 +181,12 @@ const AuditLogs = () => {
               <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
-                    <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Timestamp</th>
-                    <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Actor</th>
-                    <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Role</th>
-                    <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Action</th>
-                    <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Entity</th>
-                    <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Details</th>
+                    <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{t('timestamp')}</th>
+                    <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{t('actor')}</th>
+                    <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{t('role')}</th>
+                    <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{t('action')}</th>
+                    <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{t('entity')}</th>
+                    <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{t('details')}</th>
                     <th style={{ padding: '1rem', width: '50px' }}></th>
                   </tr>
                 </thead>
@@ -192,7 +194,7 @@ const AuditLogs = () => {
                   {logs.length === 0 ? (
                     <tr>
                       <td colSpan="7" className="text-center" style={{ padding: '3rem', color: 'var(--text-muted)' }}>
-                        No audit logs found matching your criteria.
+                        {t('noAuditLogsFound')}
                       </td>
                     </tr>
                   ) : (

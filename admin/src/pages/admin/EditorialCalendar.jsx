@@ -1,3 +1,4 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from "react";
 import api from "../../api";
 import { Calendar, Plus, ChevronLeft, ChevronRight, User, Clock, FileText, CheckCircle, Circle } from "lucide-react";
@@ -23,6 +24,7 @@ const inputStyle = {
 const labelStyle = { fontSize: "0.8rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.4rem", display: "block" };
 
 const EditorialCalendar = () => {
+  const { t } = useI18n();
   const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -285,4 +287,5 @@ const AssignmentRow = ({ assignment: a, onStatusChange, onDelete, showDate }) =>
   );
 };
 
-export default EditorialCalendar;
+export default EditorialCalendar;
+

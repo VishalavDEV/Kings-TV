@@ -1,8 +1,10 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import { Plus, Folder, MapPin, Edit2, Trash2, X } from 'lucide-react';
 
 const TaxonomyManager = () => {
+  const { t } = useI18n();
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [locations, setLocations] = useState([]);
@@ -248,7 +250,7 @@ const TaxonomyManager = () => {
                 <input type="text" className="form-control" value={catFormData.nameTa} onChange={e => setCatFormData({...catFormData, nameTa: e.target.value})} required />
               </div>
               <div className="form-group">
-                <label>Slug</label>
+                <label>{t('slug')}</label>
                 <input type="text" className="form-control" value={catFormData.slug} onChange={e => setCatFormData({...catFormData, slug: e.target.value})} required />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -325,7 +327,7 @@ const TaxonomyManager = () => {
                 <input type="text" className="form-control" value={subCatFormData.nameTa} onChange={e => setSubCatFormData({...subCatFormData, nameTa: e.target.value})} required />
               </div>
               <div className="form-group">
-                <label>Slug</label>
+                <label>{t('slug')}</label>
                 <input type="text" className="form-control" value={subCatFormData.slug} onChange={e => setSubCatFormData({...subCatFormData, slug: e.target.value})} required />
               </div>
               <div className="form-group">

@@ -1,8 +1,10 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import { Save, Server, Mail, Smartphone, MapPin, Video, HardDrive, Send, Youtube, Cloud } from 'lucide-react';
 
 const SystemSettings = () => {
+  const { t } = useI18n();
   const [config, setConfig] = useState({
     gpsNewsRadius: 15,
     videoLengthLimit: 55,
@@ -195,7 +197,7 @@ const SystemSettings = () => {
           <p className="text-secondary" style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Manage global parameters, asset CDN distribution, and third-party gateways.</p>
         </div>
         <button className="btn btn-primary" onClick={handleSaveAll} disabled={savingGroup === 'all'}>
-          <Save size={16} /> {savingGroup === 'all' ? 'Saving All...' : 'Save All Settings'}
+          <Save size={16} /> {savingGroup === 'all' ? t('savingAll') : t('saveAllSettings')}
         </button>
       </div>
 
@@ -243,7 +245,7 @@ const SystemSettings = () => {
             </div>
           </div>
           <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('pwa')} disabled={savingGroup !== ''}>
-            {savingGroup === 'pwa' ? 'Saving Branding...' : 'Save Branding Settings'}
+            {savingGroup === 'pwa' ? t('savingBranding') : t('saveBrandingSettings')}
           </button>
         </div>
 
@@ -276,7 +278,7 @@ const SystemSettings = () => {
             </div>
           </div>
           <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('cdn')} disabled={savingGroup !== ''}>
-            {savingGroup === 'cdn' ? 'Saving CDN...' : 'Save CDN Settings'}
+            {savingGroup === 'cdn' ? t('savingCdn') : t('saveCdnSettings')}
           </button>
         </div>
 
@@ -308,7 +310,7 @@ const SystemSettings = () => {
             </div>
           </div>
           <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => { handleSaveGroup('gps'); handleSaveGroup('video'); }} disabled={savingGroup !== ''}>
-            {savingGroup === 'gps' || savingGroup === 'video' ? 'Saving...' : 'Save Variables'}
+            {savingGroup === 'gps' || savingGroup === 'video' ? t('saving') : t('saveVariables')}
           </button>
         </div>
 
@@ -336,7 +338,7 @@ const SystemSettings = () => {
             </div>
           </div>
           <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('smtp')} disabled={savingGroup !== ''}>
-            {savingGroup === 'smtp' ? 'Saving SMTP...' : 'Save SMTP Settings'}
+            {savingGroup === 'smtp' ? t('savingSmtp') : t('saveSmtpSettings')}
           </button>
         </div>
 
@@ -357,7 +359,7 @@ const SystemSettings = () => {
             </div>
           </div>
           <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('sms')} disabled={savingGroup !== ''}>
-            {savingGroup === 'sms' ? 'Saving SMS...' : 'Save SMS Settings'}
+            {savingGroup === 'sms' ? t('savingSms') : t('saveSmsSettings')}
           </button>
         </div>
 
@@ -387,7 +389,7 @@ const SystemSettings = () => {
             </div>
           </div>
           <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('youtube')} disabled={savingGroup !== ''}>
-            {savingGroup === 'youtube' ? 'Saving YouTube...' : 'Save YouTube Settings'}
+            {savingGroup === 'youtube' ? t('savingYoutube') : t('saveYoutubeSettings')}
           </button>
         </div>
 
@@ -428,7 +430,7 @@ const SystemSettings = () => {
             </div>
           </div>
           <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('telegram')} disabled={savingGroup !== ''}>
-            {savingGroup === 'telegram' ? 'Saving Telegram...' : 'Save Telegram Settings'}
+            {savingGroup === 'telegram' ? t('savingTelegram') : t('saveTelegramSettings')}
           </button>
         </div>
 
@@ -458,7 +460,7 @@ const SystemSettings = () => {
             </div>
           </div>
           <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('youtube')} disabled={savingGroup !== ''}>
-            {savingGroup === 'youtube' ? 'Saving YouTube...' : 'Save YouTube Settings'}
+            {savingGroup === 'youtube' ? t('savingYoutube') : t('saveYoutubeSettings')}
           </button>
         </div>
 
@@ -488,7 +490,7 @@ const SystemSettings = () => {
             </div>
           </div>
           <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('hosting')} disabled={savingGroup !== ''}>
-            {savingGroup === 'hosting' ? 'Saving Hosting...' : 'Save Hosting Settings'}
+            {savingGroup === 'hosting' ? t('savingHosting') : t('saveHostingSettings')}
           </button>
         </div>
 
@@ -527,7 +529,7 @@ const SystemSettings = () => {
             </div>
           </div>
           <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('typography')} disabled={savingGroup !== ''}>
-            {savingGroup === 'typography' ? 'Saving Fonts...' : 'Save Typography Settings'}
+            {savingGroup === 'typography' ? t('savingFonts') : t('saveTypographySettings')}
           </button>
         </div>
 

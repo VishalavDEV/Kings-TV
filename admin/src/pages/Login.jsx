@@ -1,9 +1,11 @@
+import { useI18n } from '../context/I18nContext';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogIn } from 'lucide-react';
 
 const Login = () => {
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -22,7 +24,7 @@ const Login = () => {
     if (result.success) {
       navigate('/admin/dashboard');
     } else {
-      setError(result.message || 'Login failed');
+      setError(result.message || t('loginFailed'));
     }
     setIsLoading(false);
   };
@@ -43,7 +45,7 @@ const Login = () => {
             className="logo-dark-only" 
             style={{ maxHeight: '55px', width: 'auto', marginBottom: '0.5rem' }} 
           />
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Admin Portal Login</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{t('adminPortalLogin')}</p>
         </div>
         
         {error && (
@@ -54,7 +56,7 @@ const Login = () => {
         
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Email Address</label>
+            <label className="form-label">{t('emailAddress')}</label>
             <input 
               type="email" 
               className="form-control" 
@@ -66,7 +68,7 @@ const Login = () => {
           </div>
           
           <div className="form-group">
-            <label className="form-label">Password</label>
+            <label className="form-label">{t('password')}</label>
             <input 
               type="password" 
               className="form-control" 
@@ -83,10 +85,10 @@ const Login = () => {
             style={{ width: '100%', marginTop: '1rem' }}
             disabled={isLoading}
           >
-            {isLoading ? 'Authenticating...' : (
+            {isLoading ? t('authenticating') : (
               <>
                 <LogIn size={18} />
-                Sign In
+                {t('signIn')}
               </>
             )}
           </button>

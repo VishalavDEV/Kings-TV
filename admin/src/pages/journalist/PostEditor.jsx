@@ -1,3 +1,4 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../api";
@@ -5,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { Save, AlertCircle, FileImage, Send, MapPin } from "lucide-react";
 
 const PostEditor = () => {
+  const { t } = useI18n();
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -191,4 +193,5 @@ const PostEditor = () => {
     </div>
   );
 };
-export default PostEditor;
+export default PostEditor;
+

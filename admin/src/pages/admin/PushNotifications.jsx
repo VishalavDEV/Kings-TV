@@ -1,8 +1,10 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState } from 'react';
 import api from '../../api';
 import { Send, Bell, Users, Map } from 'lucide-react';
 
 const PushNotifications = () => {
+  const { t } = useI18n();
   const [formData, setFormData] = useState({
     title: '',
     message: '',
@@ -107,7 +109,7 @@ const PushNotifications = () => {
         </div>
 
         <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1.5rem', padding: '1rem' }} disabled={loading}>
-          <Send size={18} /> {loading ? 'Sending...' : 'Broadcast Notification'}
+          <Send size={18} /> {loading ? t('sending') : t('broadcastNotification')}
         </button>
       </form>
     </div>

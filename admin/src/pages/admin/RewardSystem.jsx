@@ -1,7 +1,9 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const RewardSystem = () => {
+  const { t } = useI18n();
   const [config, setConfig] = useState({ costPerView: '0.01' });
   const [ledgers, setLedgers] = useState([]);
   const [loading, setLoading] = useState(true);

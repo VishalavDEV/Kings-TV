@@ -1,9 +1,11 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import { Plus, Edit2, Trash2, Shield, UserX, UserCheck, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const UserManagement = () => {
+  const { t } = useI18n();
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,23 +49,23 @@ const UserManagement = () => {
   };
 
   const toggleStatus = async (id, currentStatus) => {
-    if(window.confirm(`Are you sure you want to ${currentStatus ? 'suspend' : 'activate'} this user?`)) {
+    if(window.confirm(currentStatus ? t("confirmSuspendUser") : t("confirmActivateUser"))) {
       try {
         await api.put(`/admin/users/${id}`, { isActive: !currentStatus });
         fetchUsers();
       } catch (e) {
-        alert("Failed to update status");
+        alert(t("failedUpdateStatus"));
       }
     }
   };
 
   const deleteUser = async (id) => {
-    if(window.confirm("CRITICAL: Delete this user permanently?")) {
+    if(window.confirm(t("confirmDeleteUserCritical"))) {
       try {
         await api.delete(`/admin/users/${id}`);
         fetchUsers();
       } catch (e) {
-        alert("Failed to delete user");
+        alert(t("failedDeleteUser"));
       }
     }
   };
@@ -141,11 +143,11 @@ const UserManagement = () => {
     <div className="animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
-          <h1>User Management</h1>
+          <h1>{t('users')}</h1>
           <p className="text-secondary">Manage staff, journalists, and admin accounts.</p>
         </div>
         <button className="btn btn-primary" onClick={() => setIsAddingUser(true)}>
-          <Plus size={16} /> Add User
+          <Plus size={16} /> {t('addUser')}
         </button>
       </div>
 
@@ -234,7 +236,7 @@ const UserManagement = () => {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="glass-panel" style={{ width: '500px', padding: '2rem', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-              <h3>Edit User</h3>
+              <h3>{t('editUser')}</h3>
               <button className="btn-toggle" onClick={() => setEditingUser(null)}><X size={18} /></button>
             </div>
             
@@ -258,12 +260,12 @@ const UserManagement = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Phone Number</label>
+              <label className="form-label">{t('phoneNum')}</label>
               <input type="text" className="form-control" value={editFormData.phoneNumber} onChange={e => setEditFormData({...editFormData, phoneNumber: e.target.value})} />
             </div>
 
             <div className="form-group">
-              <label className="form-label">Location</label>
+              <label className="form-label">{t('location')}</label>
               <input type="text" className="form-control" value={editFormData.location} onChange={e => setEditFormData({...editFormData, location: e.target.value})} placeholder="e.g. Chennai, TN" />
             </div>
 
@@ -324,12 +326,12 @@ const UserManagement = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Phone Number</label>
-              <input type="text" className="form-control" value={newUser.phoneNumber} onChange={e => setNewUser({...newUser, phoneNumber: e.target.value})} placeholder="e.g. +91 98765 43210" />
+              <label className="form-label">{t('phoneNum')}</label>
+              <input type="text" className="form-control" value={newUser.phoneNumber} onChange={e => setNewUser({...newUser, phoneNumber: e.target.value})} placeholder={t("phoneNum")} />
             </div>
 
             <div className="form-group">
-              <label className="form-label">Location</label>
+              <label className="form-label">{t('location')}</label>
               <input type="text" className="form-control" value={newUser.location} onChange={e => setNewUser({...newUser, location: e.target.value})} placeholder="e.g. Coimbatore, TN" />
             </div>
 

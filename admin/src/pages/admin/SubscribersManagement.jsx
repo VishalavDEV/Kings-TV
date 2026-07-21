@@ -1,9 +1,11 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import { Trash2, UserCheck, UserX } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const SubscribersManagement = () => {
+  const { t } = useI18n();
   const { user: currentUser } = useAuth();
   const [subscribers, setSubscribers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -77,7 +79,7 @@ const SubscribersManagement = () => {
             ) : error ? (
               <tr><td colSpan="6" className="px-6 py-4 text-center text-red-500">{error}</td></tr>
             ) : subscribers.length === 0 ? (
-              <tr><td colSpan="6" className="px-6 py-4 text-center text-gray-500">No subscribers found.</td></tr>
+              <tr><td colSpan="6" className="px-6 py-4 text-center text-gray-500">{t('noRecords')}</td></tr>
             ) : (
               subscribers.map(sub => (
                 <tr key={sub.id}>

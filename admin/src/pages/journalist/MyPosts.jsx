@@ -1,3 +1,4 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from "react";
 import api from "../../api";
 import { useAuth } from "../../context/AuthContext";
@@ -7,6 +8,7 @@ import { PenTool, CheckCircle, FileText, Clock, Trash2, Eye } from "lucide-react
 const STATUS_COLORS = { published: "#10B981", draft: "#8B5CF6", pending: "#F59E0B" };
 
 const MyPosts = () => {
+  const { t } = useI18n();
   const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);

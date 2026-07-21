@@ -50,6 +50,11 @@ html[lang="en"] {
   --font-title: 'Outfit', 'Noto Sans Tamil', sans-serif;
 }
 
+:lang(ta) {
+  font-family: "Noto Sans Tamil", "Mukta Malar", sans-serif;
+}
+
+
 [data-theme="light"] {
   --bg-primary: #FAF9F6;
   --bg-secondary: #FFFFFF;

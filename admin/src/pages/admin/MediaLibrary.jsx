@@ -1,8 +1,10 @@
+import { useI18n } from '../../context/I18nContext';
 import React, { useState, useEffect } from 'react';
 import { Image as ImageIcon, Film, FileText, Download, Copy, Trash2, Search, Filter } from 'lucide-react';
 import api from '../../api';
 
 const MediaLibrary = () => {
+  const { t } = useI18n();
   const [mediaList, setMediaList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState('all');
@@ -25,7 +27,7 @@ const MediaLibrary = () => {
 
   const copyToClipboard = (url) => {
     navigator.clipboard.writeText(url);
-    alert("URL copied to clipboard!");
+    alert(t("copied"));
   };
 
   const getIcon = (type) => {
@@ -44,8 +46,8 @@ const MediaLibrary = () => {
     <div className="animate-fade-in" style={{ maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
-          <h1><ImageIcon size={24} style={{ display: 'inline', marginRight: '10px' }} /> Media Library</h1>
-          <p className="text-secondary">Manage uploaded images, videos, and documents used across articles.</p>
+          <h1><ImageIcon size={24} style={{ display: 'inline', marginRight: '10px' }} /> {t('mediaLibrary')}</h1>
+          <p className="text-secondary">{t('mediaLibraryDesc')}</p>
         </div>
       </div>
 
@@ -55,7 +57,7 @@ const MediaLibrary = () => {
           <input 
             type="text" 
             className="form-control" 
-            placeholder="Search media by filename..." 
+            placeholder={t("searchMediaPlaceholder")} 
             style={{ paddingLeft: '2.5rem' }}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -64,16 +66,16 @@ const MediaLibrary = () => {
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <Filter size={16} color="var(--text-muted)" />
           <select className="form-control" value={filterType} onChange={(e) => setFilterType(e.target.value)} style={{ minWidth: '150px' }}>
-            <option value="all">All Types</option>
-            <option value="image">Images</option>
-            <option value="video">Videos</option>
-            <option value="document">Documents</option>
+            <option value="all">{t('allTypes')}</option>
+            <option value="image">{t('images')}</option>
+            <option value="video">{t('videos')}</option>
+            <option value="document">{t('documents')}</option>
           </select>
         </div>
       </div>
 
       {loading ? (
-        <div>Loading media...</div>
+        <div>{t('loadingMedia')}</div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
           {filtered.map(media => (
@@ -88,12 +90,12 @@ const MediaLibrary = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
                   <span>{media.size}</span>
                   <span style={{ color: media.usage > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
-                    Usage: {media.usage}
+                    {t('usage')}: {media.usage}
                   </span>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button onClick={() => copyToClipboard(media.url)} className="btn btn-secondary" style={{ flex: 1, padding: '0.4rem', fontSize: '0.8rem', display: 'flex', justifyContent: 'center', gap: '0.25rem' }}>
-                    <Copy size={14} /> Copy URL
+                    <Copy size={14} /> {t('copyUrl')}
                   </button>
                   <button className="btn btn-danger" style={{ padding: '0.4rem' }}>
                     <Trash2 size={14} />
