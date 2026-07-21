@@ -17,4 +17,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByRole(String role);
     long countByIsActive(Boolean isActive);
     List<User> findByRoleAndIsActive(String role, Boolean isActive);
+    List<User> findTop5ByOrderByCreatedAtDesc();
 }

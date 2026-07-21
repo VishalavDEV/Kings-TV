@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface NewsletterSubscriberRepository extends JpaRepository<NewsletterSubscriber, Long>, JpaSpecificationExecutor<NewsletterSubscriber> {
     Optional<NewsletterSubscriber> findByEmail(String email);
+    boolean existsByEmail(String email);
 }

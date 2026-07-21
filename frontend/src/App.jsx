@@ -1,54 +1,54 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { fetchApi } from './utils/api';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import Customizer from './components/Customizer';
-import AiAssistant from './components/AiAssistant';
 import SplashScreen from './components/SplashScreen';
-import MobileBottomNav from './components/MobileBottomNav';
-import ScrollToTop from './components/ScrollToTop';
-import { AuthProvider } from './context/AuthContext';
-import DashboardLayout from './components/DashboardLayout';
 import OfflineBanner from './components/OfflineBanner';
-
+import ProtectedRoute from './components/ProtectedRoute';
+import PublicVaniLayout from './components/PublicVaniLayout';
 import Home from './pages/Home';
+import Maintenance from './pages/Maintenance';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
-import Directory from './pages/Directory';
+import ArticleDetail from './pages/ArticleDetail';
+import Category from './pages/Category';
+import AdvancedSearch from './pages/AdvancedSearch';
+import Videos from './pages/Videos';
+import LiveTv from './pages/LiveTv';
+import Obituaries from './pages/Obituaries';
+import Wishes from './pages/Wishes';
+import Jobs from './pages/Jobs';
+import Classifieds from './pages/Classifieds';
+import BusinessStudies from './pages/BusinessStudies';
+import Advertise from './pages/Advertise';
+import NotFound from './pages/NotFound';
 import BizDirectoryMain from './pages/BizDirectoryMain';
 import NfcCardDashboard from './pages/NfcCardDashboard';
 import DealsListing from './pages/DealsListing';
-import RfqMarketplace from './pages/RfqMarketplace';
-import Classifieds from './pages/Classifieds';
-import Wishes from './pages/Wishes';
-import Obituaries from './pages/Obituaries';
-import Jobs from './pages/Jobs';
-import BusinessStudies from './pages/BusinessStudies';
-import ArticleDetail from './pages/ArticleDetail';
-import Category from './pages/Category';
-import TagArchive from './pages/TagArchive';
-import Videos from './pages/Videos';
-import NotFound from './pages/NotFound';
-import Maintenance from './pages/Maintenance';
-import DMCAPolicy from './pages/DMCAPolicy';
-import CrowdReportForm from './pages/CrowdReportForm';
-import AuthorProfile from './pages/AuthorProfile';
-import AdvancedSearch from './pages/AdvancedSearch';
-import ArchiveListing from './pages/ArchiveListing';
-import WebStories from './pages/WebStories';
-import AboutUs from './pages/AboutUs';
-import Careers from './pages/Careers';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsOfUse from './pages/TermsOfUse';
-import ContactUs from './pages/ContactUs';
-import Advertise from './pages/Advertise';
-import LiveTv from './pages/LiveTv';
-import Weather from './pages/Weather';
-import BizDirectoryRegister from './pages/BizDirectoryRegister';
 import BizDirectoryDashboard from './pages/BizDirectoryDashboard';
 import MyRfqs from './pages/MyRfqs';
+import { fetchApi } from './utils/api';
+
+import AdminLogin from './pages/admin/AdminLogin';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminCategories from './pages/admin/AdminCategories';
+import AdminSubcategories from './pages/admin/AdminSubcategories';
+import AddPost from './pages/admin/AddPost';
+import PostsList from './pages/admin/PostsList';
+import EditPost from './pages/admin/EditPost';
+import AdminPages from './pages/admin/AdminPages';
+import AdminNavigation from './pages/admin/AdminNavigation';
+import AdminThemes from './pages/admin/AdminThemes';
+import AdminWidgets from './pages/admin/AdminWidgets';
+import AdminPolls from './pages/admin/AdminPolls';
+import AdminGallery from './pages/admin/AdminGallery';
+import AdminComments from './pages/admin/AdminComments';
+import AdminContactMessages from './pages/admin/AdminContactMessages';
+import AdminNewsletter from './pages/admin/AdminNewsletter';
+import AdminRoles from './pages/admin/AdminRoles';
+import AdminBulkPostUpload from './pages/admin/AdminBulkPostUpload';
+import AdminRssFeeds from './pages/admin/AdminRssFeeds';
 
 function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
@@ -78,12 +78,10 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    if (window.gtag) {
+    if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('config', 'G-XXXXXXX', {
         page_path: location.pathname + location.search
       });
-    } else {
-      console.log(`[GA4 Stub] Page View Tracked: ${location.pathname + location.search}`);
     }
   }, [location]);
 
@@ -91,17 +89,61 @@ function AppContent() {
     return <Maintenance title={maintTitle} message={maintMsg} />;
   }
 
+  const isAdminRoute = [
+    '/dashboard', '/categories', '/posts', '/pages', '/navigation',
+    '/themes', '/widgets', '/polls', '/gallery', '/comments',
+    '/contact-messages', '/newsletter', '/roles', '/rss-feeds'
+  ].some(path => location.pathname.startsWith(path)) || location.pathname === '/login';
+
+  const wrapAdmin = (component) => (
+    <ProtectedRoute>
+      <PublicVaniLayout>{component}</PublicVaniLayout>
+    </ProtectedRoute>
+  );
+
   return (
     <div className="app-container">
       <OfflineBanner />
-      {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
-      <Header />
+      {showSplash && !isAdminRoute && <SplashScreen onComplete={() => setShowSplash(false)} />}
+      {!isAdminRoute && <Header />}
       
-      <main className="main-content">
+      <main className={isAdminRoute ? 'admin-main-content' : 'main-content'}>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/login" element={<AdminLogin />} />
+
+          {/* Protected Admin Routes in Public Vani Panel Layout */}
+          <Route path="/dashboard" element={wrapAdmin(<AdminDashboard />)} />
+          <Route path="/categories" element={wrapAdmin(<AdminCategories />)} />
+          <Route path="/categories/subcategories" element={wrapAdmin(<AdminSubcategories />)} />
+          <Route path="/posts" element={wrapAdmin(<PostsList />)} />
+          <Route path="/posts/add" element={wrapAdmin(<AddPost />)} />
+          <Route path="/posts/edit/:id" element={wrapAdmin(<EditPost />)} />
+          <Route path="/posts/slider" element={wrapAdmin(<PostsList />)} />
+          <Route path="/posts/featured" element={wrapAdmin(<PostsList />)} />
+          <Route path="/posts/breaking" element={wrapAdmin(<PostsList />)} />
+          <Route path="/posts/recommended" element={wrapAdmin(<PostsList />)} />
+          <Route path="/posts/pending" element={wrapAdmin(<PostsList />)} />
+          <Route path="/posts/scheduled" element={wrapAdmin(<PostsList />)} />
+          <Route path="/posts/drafts" element={wrapAdmin(<PostsList />)} />
+          <Route path="/posts/bulk-upload" element={wrapAdmin(<AdminBulkPostUpload />)} />
+          <Route path="/rss-feeds" element={wrapAdmin(<AdminRssFeeds />)} />
+          <Route path="/pages" element={wrapAdmin(<AdminPages />)} />
+          <Route path="/navigation" element={wrapAdmin(<AdminNavigation />)} />
+          <Route path="/themes" element={wrapAdmin(<AdminThemes />)} />
+          <Route path="/widgets" element={wrapAdmin(<AdminWidgets />)} />
+          <Route path="/polls" element={wrapAdmin(<AdminPolls />)} />
+          <Route path="/polls/add" element={wrapAdmin(<AdminPolls />)} />
+          <Route path="/gallery" element={wrapAdmin(<AdminGallery />)} />
+          <Route path="/gallery/add-album" element={wrapAdmin(<AdminGallery />)} />
+          <Route path="/comments" element={wrapAdmin(<AdminComments />)} />
+          <Route path="/comments/pending" element={wrapAdmin(<AdminComments />)} />
+          <Route path="/comments/approved" element={wrapAdmin(<AdminComments />)} />
+          <Route path="/contact-messages" element={wrapAdmin(<AdminContactMessages />)} />
+          <Route path="/newsletter" element={wrapAdmin(<AdminNewsletter />)} />
+          <Route path="/roles" element={wrapAdmin(<AdminRoles />)} />
+
           <Route path="/index.html" element={<Navigate to="/" replace />} />
-          <Route path="/login" element={<Login />} />
           <Route path="/login.html" element={<Navigate to="/login" replace />} />
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
@@ -109,64 +151,29 @@ function AppContent() {
           <Route path="/directory.html" element={<Navigate to="/directory" replace />} />
           <Route path="/nfc" element={<NfcCardDashboard />} />
           <Route path="/deals" element={<DealsListing />} />
-          <Route path="/rfq" element={<RfqMarketplace />} />
-          <Route path="/classifieds" element={<Classifieds />} />
-          <Route path="/classifieds.html" element={<Navigate to="/classifieds" replace />} />
-          <Route path="/wishes" element={<Wishes />} />
-          <Route path="/wishes.html" element={<Navigate to="/wishes" replace />} />
-          <Route path="/obituaries" element={<Obituaries />} />
-          <Route path="/obituaries.html" element={<Navigate to="/obituaries" replace />} />
-          <Route path="/jobs" element={<Jobs />} />
-          <Route path="/jobs.html" element={<Navigate to="/jobs" replace />} />
-          <Route path="/business-studies" element={<BusinessStudies />} />
-          <Route path="/business-studies.html" element={<Navigate to="/business-studies" replace />} />
-          <Route path="/category/:slug" element={<Category />} />
-          <Route path="/category.html" element={<Category />} />
-          <Route path="/videos" element={<Videos />} />
-          <Route path="/web-stories" element={<WebStories />} />
-          <Route path="/article/:id" element={<ArticleDetail />} />
-          <Route path="/article" element={<Navigate to="/" replace />} />
-          <Route path="/news/:id" element={<ArticleDetail />} />
-          <Route path="/tag/:tagName" element={<TagArchive />} />
-          <Route path="/about-us" element={<AboutUs />} />
-          <Route path="/contact" element={<ContactUs />} />
-          <Route path="/advertise" element={<Advertise />} />
-          <Route path="/live-tv" element={<LiveTv />} />
-          <Route path="/weather" element={<Weather />} />
-          <Route path="/careers" element={<Careers />} />
-          <Route path="/directory/register" element={<BizDirectoryRegister />} />
-          <Route path="/directory/dashboard" element={<BizDirectoryDashboard />} />
+          <Route path="/directory-dashboard" element={<BizDirectoryDashboard />} />
           <Route path="/my-rfqs" element={<MyRfqs />} />
-           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms-of-use" element={<TermsOfUse />} />
-          <Route path="/maintenance" element={<Maintenance />} />
-          <Route path="/submit-report" element={<CrowdReportForm />} />
-          <Route path="/author/:authorName" element={<AuthorProfile />} />
+          
+          {/* Public News Portal Routes */}
+          <Route path="/article/:id" element={<ArticleDetail />} />
+          <Route path="/article/:id/*" element={<ArticleDetail />} />
+          <Route path="/category/:slug" element={<Category />} />
           <Route path="/search" element={<AdvancedSearch />} />
-          <Route path="/archive/:year/:month" element={<ArchiveListing />} />
-          <Route path="/archive/:year" element={<ArchiveListing />} />
-          <Route path="/dmca-policy" element={<DMCAPolicy />} />
+          <Route path="/videos" element={<Videos />} />
+          <Route path="/live-tv" element={<LiveTv />} />
+          <Route path="/obituaries" element={<Obituaries />} />
+          <Route path="/wishes" element={<Wishes />} />
+          <Route path="/jobs" element={<Jobs />} />
+          <Route path="/classifieds" element={<Classifieds />} />
+          <Route path="/business-studies" element={<BusinessStudies />} />
+          <Route path="/advertise" element={<Advertise />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-
-      <Footer />
-      <MobileBottomNav />
-      <Customizer />
-      <AiAssistant />
-      <ScrollToTop />
+      
+      {!isAdminRoute && <Footer />}
     </div>
   );
 }
 
-function App() {
-  return (
-    <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
-    </AuthProvider>
-  );
-}
-
-export default App;
+export default AppContent;

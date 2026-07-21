@@ -13,7 +13,7 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret}")
+    @Value("${jwt.secret:super_secret_kings_tv_token_key_1234_long_string_required_for_spring_boot_security}")
     private String jwtSecret;
 
     private Key key;

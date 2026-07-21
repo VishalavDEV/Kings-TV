@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
  * Super Admin Role and Permission Management endpoints.
  */
 @RestController
-@RequestMapping("/api/v1/admin/roles")
+@RequestMapping({"/api/admin/roles", "/api/v1/admin/roles"})
 public class AdminRoleController {
 
     @Autowired

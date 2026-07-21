@@ -492,8 +492,28 @@ public class DataInitializer {
             savedPerms.put(p.getName(), existing.orElseGet(() -> permissionRepository.save(p)));
         }
 
+        String[] moduleNames = {
+            "Admin Panel", "Add Post", "Manage All Posts", "Navigation", "Pages", 
+            "RSS Feeds", "Categories", "Widgets", "Polls", "Gallery", 
+            "Comments", "Contact Messages", "Newsletter", "Reward System", "Ad Spaces", 
+            "Users", "Roles & Permissions", "SEO Tools", "Social Login", "Languages", "Settings"
+        };
+        for (String mod : moduleNames) {
+            Optional<Permission> existing = permissionRepository.findByName(mod);
+            Permission p = existing.orElseGet(() -> permissionRepository.save(new Permission(mod, mod + " module permission access", mod)));
+            savedPerms.put(mod, p);
+        }
+
         // Create Roles
-        Role superAdmin = roleRepository.findByName(Role.SUPER_ADMIN).orElseGet(() -> roleRepository.save(new Role(Role.SUPER_ADMIN, "Super Administrator with full bypass access")));
+        Role superAdmin = roleRepository.findByName(Role.SUPER_ADMIN).orElseGet(() -> roleRepository.save(new Role(Role.SUPER_ADMIN, "Super Administrator with full access")));
+        Role superAdminAlias = roleRepository.findByName("SUPERADMIN").orElseGet(() -> roleRepository.save(new Role("SUPERADMIN", "Super Administrator with full access")));
+        
+        superAdmin.getPermissions().addAll(permissionRepository.findAll());
+        roleRepository.save(superAdmin);
+
+        superAdminAlias.getPermissions().addAll(permissionRepository.findAll());
+        roleRepository.save(superAdminAlias);
+
         Role chiefEditor = roleRepository.findByName(Role.CHIEF_EDITOR).orElseGet(() -> roleRepository.save(new Role(Role.CHIEF_EDITOR, "Chief Editor managing content publish flows")));
         Role districtAdmin = roleRepository.findByName(Role.DISTRICT_ADMIN).orElseGet(() -> roleRepository.save(new Role(Role.DISTRICT_ADMIN, "District Admin managing local journalists")));
         Role mobileJournalist = roleRepository.findByName(Role.MOBILE_JOURNALIST).orElseGet(() -> roleRepository.save(new Role(Role.MOBILE_JOURNALIST, "Field Mobile Journalist submitting posts")));

@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,6 +19,18 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
     org.springframework.data.domain.Page<Article> findByStatus(String status, org.springframework.data.domain.Pageable pageable);
     List<Article> findTop5ByStatusOrderByViewsCountDesc(String status);
     List<Article> findByAuthorNameInAndStatusOrderByPublishedAtDesc(List<String> authorNames, String status);
+
+    long countByStatus(String status);
+
+    boolean existsByTitleIgnoreCaseAndLanguage(String title, String language);
+    boolean existsByTitleIgnoreCaseAndLanguageAndIdNot(String title, String language, Long id);
+
+    boolean existsByTitleEnIgnoreCaseAndLanguage(String title, String language);
+    boolean existsByTitleTaIgnoreCaseAndLanguage(String title, String language);
+    boolean existsByTitleEnIgnoreCaseAndLanguageAndIdNot(String title, String language, Long id);
+    boolean existsByTitleTaIgnoreCaseAndLanguageAndIdNot(String title, String language, Long id);
+
+    List<Article> findByStatusAndScheduledAtBefore(String status, LocalDateTime scheduledAt);
 
     @org.springframework.data.jpa.repository.Modifying
     @org.springframework.transaction.annotation.Transactional

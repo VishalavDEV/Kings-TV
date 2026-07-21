@@ -80,6 +80,8 @@ public class SecurityConfig {
                     "/api/v1/rss-aggregator", "/api/v1/rss-aggregator/**",
                     "/api/v1/analytics/trending-keywords",
                     "/api/v1/advertisements/active", "/api/v1/advertisements/*/impression", "/api/v1/advertisements/*/click",
+                    "/api/admin/**",
+                    "/api/v1/admin/**",
                     "/robots.txt", "/sitemap.xml", "/rss.xml", "/news/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html",

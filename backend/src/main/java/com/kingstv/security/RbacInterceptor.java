@@ -45,7 +45,7 @@ public class RbacInterceptor {
         String userRole = extractRole(userAuthorities);
 
         // Super Admin bypasses all permission checks
-        if ("SUPER_ADMIN".equals(userRole)) {
+        if ("SUPER_ADMIN".equals(userRole) || "SUPERADMIN".equals(userRole)) {
             return joinPoint.proceed();
         }
 
