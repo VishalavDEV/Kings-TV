@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../../api";
 import { DollarSign, Plus, Eye, EyeOff, Trash2, Edit2, BarChart2 } from "lucide-react";
 import ImageUploadPreview from "../../components/common/ImageUploadPreview";
+import DatePickerInput from "../../components/common/DatePickerInput";
 
 const AD_POSITIONS = [
   { value: "LEADERBOARD_TOP", label: "Leaderboard Top (728x90)" },
@@ -199,8 +200,22 @@ const AdManagement = () => {
             {form.type === "HTML_CODE" && <div><label style={labelStyle}>Ad HTML/JS Code</label><textarea value={form.adCode} onChange={e => setForm(f => ({ ...f, adCode: e.target.value }))} style={{ ...inputStyle, minHeight: "120px", resize: "vertical", fontFamily: "monospace" }} placeholder="<script>..." /></div>}
             <div><label style={labelStyle}>Click Target URL</label><input style={inputStyle} value={form.targetUrl} onChange={e => setForm(f => ({ ...f, targetUrl: e.target.value }))} placeholder="https://advertiser-website.com" /></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-              <div><label style={labelStyle}>Start Date</label><input type="date" style={inputStyle} value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} /></div>
-              <div><label style={labelStyle}>End Date</label><input type="date" style={inputStyle} value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} /></div>
+              <div>
+                <DatePickerInput 
+                  label="Start Date" 
+                  value={form.startDate} 
+                  onChange={val => setForm(f => ({ ...f, startDate: val }))} 
+                  placeholder="dd/mm/yyyy" 
+                />
+              </div>
+              <div>
+                <DatePickerInput 
+                  label="End Date" 
+                  value={form.endDate} 
+                  onChange={val => setForm(f => ({ ...f, endDate: val }))} 
+                  placeholder="dd/mm/yyyy" 
+                />
+              </div>
             </div>
             <div>
               <label style={labelStyle}>Geo-Targeting (District/Category Name)</label>

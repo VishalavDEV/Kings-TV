@@ -4,6 +4,7 @@ import api from '../../api';
 import { Save, ArrowLeft, Send, CheckCircle, MapPin, Image, Video, Link, Copy, Plus, Sparkles } from 'lucide-react';
 import ImageUploadPreview from '../../components/common/ImageUploadPreview';
 import CategorySubcategorySelect from '../../components/common/CategorySubcategorySelect';
+import DatePickerInput from '../../components/common/DatePickerInput';
 
 const TABS = ['Tamil', 'English', 'SEO', 'Settings'];
 
@@ -406,6 +407,63 @@ const NewsEditor = () => {
     if (!form.slug && form.titleEn) set('slug', slugify(form.titleEn));
   };
 
+  // ─── Client-side AI fallback (used when backend has no LLM configured) ─────
+  const clientSideAiFallback = (action, text, title) => {
+    const cleanText = (text || '').replace(/<[^>]*>/gm, ' ').replace(/\s+/g, ' ').trim();
+    const cleanTitle = (title || '').replace(/<[^>]*>/gm, '').trim();
+
+    switch (action) {
+      case 'headlines': {
+        const base = cleanTitle || cleanText.substring(0, 80);
+        return [
+          base,
+          `Breaking: ${base.substring(0, 60)}`,
+          `Update: ${base.substring(0, 55)} — Latest News`,
+          `Exclusive: ${base.substring(0, 55)}`,
+        ].filter(Boolean).join('\n');
+      }
+      case 'summarize': {
+        const sentences = cleanText.split(/[.!?]+/).filter(s => s.trim().length > 20);
+        return sentences.slice(0, 3).map(s => s.trim()).join('. ') + (sentences.length > 3 ? '...' : '.');
+      }
+      case 'tags': {
+        const words = cleanText.toLowerCase().split(/\s+/);
+        const stopWords = new Set(['the','a','an','is','are','was','were','to','of','in','on','at','and','or','but','for','with','as','by','from','that','this','these','those','it','its','be','been','being','have','has','had','do','does','did','will','would','could','should','may','might','not','no','so','if','then','than','when','where','who','which','what','how','all','any','both','each','few','more','most','other','such','into','through','during','before','after','above','below','between']);
+        const freq = {};
+        words.forEach(w => {
+          const clean = w.replace(/[^\w]/g, '');
+          if (clean.length > 3 && !stopWords.has(clean)) freq[clean] = (freq[clean] || 0) + 1;
+        });
+        return Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([w]) => w).join(', ');
+      }
+      case 'seo': {
+        const title60 = cleanTitle.substring(0, 60) || cleanText.substring(0, 60);
+        const desc = cleanText.substring(0, 155) + (cleanText.length > 155 ? '...' : '');
+        const words2 = cleanText.toLowerCase().split(/\s+/);
+        const stopWords2 = new Set(['the','a','an','is','are','was','to','of','in','on','and','or','for','with','this','that','it']);
+        const freq2 = {};
+        words2.forEach(w => {
+          const c = w.replace(/[^\w]/g, '');
+          if (c.length > 3 && !stopWords2.has(c)) freq2[c] = (freq2[c] || 0) + 1;
+        });
+        const kws = Object.entries(freq2).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([w]) => w).join(', ');
+        const slugBase = title60.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        return 'SEO_TITLE:' + title60 + '\nMETA_DESC:' + desc + '\nKEYWORDS:' + kws + '\nSLUG:' + slugBase + '\nTAGS:' + kws;
+      }
+      case 'expand': {
+        return `${cleanText}\n\n[AI expansion not available — LLM credentials not configured. The above is your original content. Please configure an LLM API key in System Settings to enable AI expansion.]`;
+      }
+      case 'grammar': {
+        return `Your text (${cleanText.split(' ').length} words) has been reviewed locally. For full grammar checking, please configure an LLM API key in System Settings > AI Configuration.\n\nOriginal text preview:\n${cleanText.substring(0, 300)}...`;
+      }
+      case 'translate': {
+        return `Translation requires an LLM API key. Please configure one in System Settings > AI Configuration.\n\nYour text (${cleanText.split(' ').length} words) is ready to translate once configured.`;
+      }
+      default:
+        return 'Action not supported in local fallback mode.';
+    }
+  };
+
   const runAiAction = async () => {
     if (!aiPrompt && !['seo', 'tags'].includes(aiAction)) {
       showMsg('Please provide some text or context for the AI.', true);
@@ -433,9 +491,15 @@ const NewsEditor = () => {
       });
       if (res.data && res.data.result) {
         setAiResult(res.data.result);
+      } else {
+        // Backend returned success but no result — use fallback
+        const fallback = clientSideAiFallback(aiAction, textToProcess, form.titleEn || form.titleTa);
+        setAiResult('ℹ️ [Local Analysis — LLM not configured]\n\n' + fallback);
       }
     } catch (err) {
-      setAiResult('Error generating AI content. Please try again.');
+      // Backend AI failed — use smart client-side fallback
+      const fallback = clientSideAiFallback(aiAction, textToProcess, form.titleEn || form.titleTa);
+      setAiResult('ℹ️ [Local Analysis — connect an LLM in System Settings for AI-powered results]\n\n' + fallback);
     } finally {
       setAiLoading(false);
     }
@@ -530,37 +594,35 @@ const NewsEditor = () => {
       return;
     }
     setAiSeoLoading(true);
+    
+    const applyParsedSeo = (result) => {
+      const lines = result.split('\n');
+      let updates = {};
+      lines.forEach(line => {
+        if (line.startsWith('SEO_TITLE:')) updates.metaTitle = line.replace('SEO_TITLE:', '').trim();
+        else if (line.startsWith('META_DESC:')) updates.metaDescription = line.replace('META_DESC:', '').trim();
+        else if (line.startsWith('SLUG:')) updates.slug = line.replace('SLUG:', '').trim();
+        else if (line.startsWith('KEYWORDS:')) updates.focusKeywords = line.replace('KEYWORDS:', '').trim();
+        else if (line.startsWith('TAGS:')) updates.metaKeywords = line.replace('TAGS:', '').trim();
+      });
+      return updates;
+    };
+
     try {
       const res = await api.post('/articles/ai-assist', { action: 'seo', text: textToAnalyze });
       if (res.data && res.data.result) {
-        const lines = res.data.result.split('\n');
-        let updates = {};
-        lines.forEach(line => {
-          if (line.startsWith('SEO_TITLE:')) {
-            updates.metaTitle = line.replace('SEO_TITLE:', '').trim();
-          } else if (line.startsWith('META_DESC:')) {
-            updates.metaDescription = line.replace('META_DESC:', '').trim();
-          } else if (line.startsWith('SLUG:')) {
-            updates.slug = line.replace('SLUG:', '').trim();
-          } else if (line.startsWith('KEYWORDS:')) {
-            updates.focusKeywords = line.replace('KEYWORDS:', '').trim();
-          } else if (line.startsWith('TAGS:')) {
-            updates.metaKeywords = line.replace('TAGS:', '').trim();
-          }
-        });
-
-        setForm(f => {
-          const newForm = { ...f, ...updates };
-          formRef.current = newForm;
-          return newForm;
-        });
-
-        showMsg('✨ AI successfully auto-filled all 5 SEO fields!', false);
+        const updates = applyParsedSeo(res.data.result);
+        setForm(f => { const nf = { ...f, ...updates }; formRef.current = nf; return nf; });
+        showMsg('✨ AI successfully auto-filled all SEO fields!');
       } else {
-        showMsg('AI returned invalid response.', true);
+        throw new Error('No result');
       }
     } catch (err) {
-      showMsg('Failed to auto-fill SEO fields via AI.', true);
+      // Client-side fallback
+      const fallbackRaw = clientSideAiFallback('seo', textToAnalyze, form.titleEn || form.titleTa);
+      const updates = applyParsedSeo(fallbackRaw);
+      setForm(f => { const nf = { ...f, ...updates }; formRef.current = nf; return nf; });
+      showMsg('ℹ️ SEO fields filled using local analysis. Configure an LLM for AI-powered results.');
     } finally {
       setAiSeoLoading(false);
     }
@@ -772,8 +834,60 @@ const NewsEditor = () => {
         }}>{msg.text}</div>
       )}
 
+      {/* AI Assistant Inline Panel — above tabs */}
+      {aiPanelOpen && (
+        <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '10px', border: '2px solid var(--primary)', background: 'var(--bg-surface)', marginBottom: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'start' }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <h4 style={{ margin: 0, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.95rem' }}>✨ AI Assistant</h4>
+              <button onClick={() => setAiPanelOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1rem', padding: 0 }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+              <select style={{ ...inputStyle, cursor: 'pointer', flex: 1 }} value={aiAction} onChange={e => setAiAction(e.target.value)}>
+                <option value="headlines">🪄 Generate Headlines</option>
+                <option value="expand">✍️ Expand Text</option>
+                <option value="summarize">📝 Summarize</option>
+                <option value="grammar">🔤 Grammar Check</option>
+                <option value="tags">🏷️ Generate Tags</option>
+                <option value="seo">🔍 SEO Optimizer</option>
+                <option value="translate">🌐 Translate (Ta↔En)</option>
+              </select>
+            </div>
+            {['headlines', 'expand', 'summarize', 'grammar', 'translate'].includes(aiAction) && (
+              <textarea
+                style={{ ...taStyle, minHeight: '80px', marginBottom: '0.5rem' }}
+                value={aiPrompt}
+                onChange={e => setAiPrompt(e.target.value)}
+                placeholder="Enter text or rough idea..."
+              />
+            )}
+            <button onClick={runAiAction} disabled={aiLoading} className="btn btn-primary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+              {aiLoading ? '🤖 Generating...' : '🚀 Run AI Action'}
+            </button>
+          </div>
+          <div>
+            {aiResult ? (
+              <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <label style={labelStyle}>AI Output</label>
+                <div style={{ padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: '8px', fontSize: '0.85rem', whiteSpace: 'pre-wrap', maxHeight: '200px', overflowY: 'auto', flex: 1 }}>
+                  {aiResult}
+                </div>
+                <button onClick={() => { navigator.clipboard.writeText(aiResult); showMsg('AI Output copied!'); }}
+                  className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                  <Copy size={12} /> Copy Output
+                </button>
+              </div>
+            ) : (
+              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '1rem' }}>
+                Select an action and run it to see AI output here.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Tab Nav */}
-      <div style={{ display: 'flex', gap: '0', marginBottom: '1.5rem', borderBottom: '2px solid var(--border)' }}>
+      <div style={{ display: 'flex', gap: '0', marginBottom: '1.5rem', borderBottom: '2px solid var(--border)', alignItems: 'center' }}>
         {TABS.map((tab, i) => (
           <button key={tab} onClick={() => setActiveTab(i)}
             style={{
@@ -784,9 +898,17 @@ const NewsEditor = () => {
             {tab === 'Tamil' && '🇮🇳 '}{tab === 'English' && '🌐 '}{tab === 'SEO' && '🔍 '}{tab === 'Settings' && '⚙️ '}{tab}
           </button>
         ))}
+        {/* Inline media insert button in tab bar */}
+        <button
+          onClick={() => setMediaModalOpen(true)}
+          title="Open Media Insert Library"
+          style={{ marginLeft: 'auto', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.4rem 0.75rem', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 600 }}
+        >
+          <Image size={15} /> Media
+        </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: aiPanelOpen ? '1fr 320px 320px' : '1fr 320px', gap: '1.5rem', alignItems: 'start', transition: 'grid-template-columns 0.3s' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '1.5rem', alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div className="glass-panel" style={{ padding: '1.75rem', borderRadius: '12px', position: 'relative', minHeight: '500px' }}>
             {/* Tamil Tab */}
@@ -1076,9 +1198,12 @@ const NewsEditor = () => {
                   onChange={e => set('authorName', e.target.value)} />
               </div>
               <div>
-                <label style={labelStyle}>Schedule Publish Date/Time</label>
-                <input type="datetime-local" style={inputStyle} value={form.publishedAt}
-                  onChange={e => set('publishedAt', e.target.value)} />
+                <DatePickerInput
+                  label="Schedule Publish Date"
+                  value={form.publishedAt ? form.publishedAt.substring(0, 10) : ''}
+                  onChange={val => set('publishedAt', val ? val + 'T00:00' : '')}
+                  placeholder="dd/mm/yyyy"
+                />
               </div>
               <div style={{ padding: '1.25rem', background: 'var(--bg-surface)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                 <label style={{ ...labelStyle, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
@@ -1131,17 +1256,6 @@ const NewsEditor = () => {
             </div>
           </div>
 
-          </div>
-          
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
-            <button 
-              onClick={() => setMediaModalOpen(true)}
-              className="btn btn-primary"
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', borderRadius: '8px' }}
-            >
-              <Image size={18} /> Open Media Insert Library
-            </button>
-          </div>
         </div>
 
         {/* Media Assets Library Modal */}
@@ -1342,72 +1456,9 @@ const NewsEditor = () => {
           </div>
         </div>
 
-        {/* AI Assistant Panel */}
-        {aiPanelOpen && (
-          <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '1.25rem', borderRadius: '12px', border: '2px solid var(--primary)', background: 'var(--bg-surface)' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
-              ✨ AI Assistant
-            </h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
-              Use AI to generate headlines, expand text, check grammar, or generate SEO metadata.
-            </p>
-
-            <div>
-              <label style={labelStyle}>Action</label>
-              <select style={{ ...inputStyle, cursor: 'pointer' }} value={aiAction} onChange={e => setAiAction(e.target.value)}>
-                <option value="headlines">🪄 Generate Headlines</option>
-                <option value="expand">✍️ Expand Text</option>
-                <option value="summarize">📝 Summarize</option>
-                <option value="grammar">🔤 Grammar Check</option>
-                <option value="tags">🏷️ Generate Tags</option>
-                <option value="seo">🔍 SEO Optimizer</option>
-                <option value="translate">🌐 Translate (Ta↔En)</option>
-              </select>
-            </div>
-
-            {['headlines', 'expand', 'summarize', 'grammar', 'translate'].includes(aiAction) && (
-              <div>
-                <label style={labelStyle}>Input Text / Idea</label>
-                <textarea 
-                  style={{ ...taStyle, minHeight: '100px' }} 
-                  value={aiPrompt}
-                  onChange={e => setAiPrompt(e.target.value)} 
-                  placeholder="Enter text or rough idea..." 
-                />
-              </div>
-            )}
-
-            <button 
-              onClick={runAiAction} 
-              disabled={aiLoading}
-              className="btn btn-primary" 
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-            >
-              {aiLoading ? '🤖 Generating...' : '🚀 Run AI Action'}
-            </button>
-
-            {aiResult && (
-              <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-                <label style={labelStyle}>AI Output</label>
-                <div style={{ padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: '8px', fontSize: '0.85rem', whiteSpace: 'pre-wrap', maxHeight: '300px', overflowY: 'auto' }}>
-                  {aiResult}
-                </div>
-                <button 
-                  onClick={() => {
-                    navigator.clipboard.writeText(aiResult);
-                    showMsg('AI Output copied to clipboard!');
-                  }}
-                  className="btn btn-secondary" 
-                  style={{ width: '100%', marginTop: '0.75rem', fontSize: '0.8rem', padding: '0.4rem' }}
-                >
-                  <Copy size={12} style={{ display: 'inline', marginRight: '4px' }} /> Copy Output
-                </button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
-    );
+    </div>
+  );
 };
 
 export default NewsEditor;

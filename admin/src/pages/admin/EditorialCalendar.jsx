@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api";
-import { Calendar, Plus, ChevronLeft, ChevronRight, User, Clock, FileText, CheckCircle, Circle } from "lucide-react";
+import { Calendar, Plus, ChevronLeft, ChevronRight, User, Clock, FileText, CheckCircle, Trash2 } from "lucide-react";
+import DatePickerInput from "../../components/common/DatePickerInput";
 
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -112,8 +113,8 @@ const EditorialCalendar = () => {
           <div style={{ display: "flex", gap: "0.25rem", background: "var(--bg-secondary)", borderRadius: "8px", padding: "3px" }}>
             {["calendar","list"].map(v => (
               <button key={v} onClick={() => setView(v)} style={{ padding: "0.35rem 0.75rem", borderRadius: "6px", border: "none", cursor: "pointer", fontWeight: 600, fontSize: "0.8rem",
-                background: view === v ? "var(--primary)" : "transparent", color: view === v ? "#fff" : "var(--text-secondary)" }}>
-                {v === "calendar" ? "?? Calendar" : "?? List"}
+                background: view === v ? "var(--primary)" : "transparent", color: view === v ? "#fff" : "var(--text-secondary)", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                {v === "calendar" ? <><Calendar size={13} /> Calendar</> : <><FileText size={13} /> List</>}
               </button>
             ))}
           </div>
@@ -133,8 +134,8 @@ const EditorialCalendar = () => {
         ))}
       </div>
       {overdue > 0 && (
-        <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#EF4444", padding: "0.75rem 1.25rem", borderRadius: "8px", marginBottom: "1.5rem", fontWeight: 600, fontSize: "0.875rem" }}>
-          ?? {overdue} overdue assignment{overdue > 1 ? "s" : ""} — check your list view!
+        <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#EF4444", padding: "0.75rem 1.25rem", borderRadius: "8px", marginBottom: "1.5rem", fontWeight: 600, fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <CheckCircle size={16} /> {overdue} overdue assignment{overdue > 1 ? "s" : ""} — check your list view!
         </div>
       )}
 
@@ -150,7 +151,7 @@ const EditorialCalendar = () => {
       {/* New Assignment Form */}
       {showForm && (
         <div className="glass-panel" style={{ padding: "1.75rem", borderRadius: "14px", border: "2px solid var(--primary)", marginBottom: "1.5rem" }}>
-          <h3 style={{ marginBottom: "1.25rem", color: "var(--primary)" }}>?? Create Story Assignment</h3>
+          <h3 style={{ marginBottom: "1.25rem", color: "var(--primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}><Plus size={18} /> Create Story Assignment</h3>
           <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <div>
               <label style={labelStyle}>Story Title *</label>
@@ -169,8 +170,12 @@ const EditorialCalendar = () => {
                 <input style={inputStyle} value={form.assignedTo} onChange={e => setForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="reporter@king24x7.com" />
               </div>
               <div>
-                <label style={labelStyle}>Deadline *</label>
-                <input type="date" style={inputStyle} value={form.deadline} onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))} />
+                <DatePickerInput
+                  label="Deadline *"
+                  value={form.deadline}
+                  onChange={val => setForm(f => ({ ...f, deadline: val || '' }))}
+                  required
+                />
               </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "1rem" }}>
@@ -280,7 +285,7 @@ const AssignmentRow = ({ assignment: a, onStatusChange, onDelete, showDate }) =>
           background: cfg.bg, color: cfg.color, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>
         {Object.entries(STATUS_CONFIG).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
       </select>
-      <button onClick={() => onDelete(a.id)} style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "6px", padding: "0.3rem 0.5rem", cursor: "pointer", color: "#EF4444" }}>?</button>
+      <button onClick={() => onDelete(a.id)} style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "6px", padding: "0.3rem 0.5rem", cursor: "pointer", color: "#EF4444", display: "flex", alignItems: "center" }}><Trash2 size={14} /></button>
     </div>
   );
 };
