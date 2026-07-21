@@ -131,6 +131,17 @@ public class SystemConfigController {
         return ResponseEntity.ok(Map.of("message", "CDN config updated"));
     }
 
+    // --- Hosting Config ---
+    @PutMapping("/hosting")
+    public ResponseEntity<?> updateHostingConfig(@RequestBody Map<String, String> request) {
+        Long userId = getCallerId();
+        configService.setMultipleConfigs(Map.of(
+            SystemConfig.RENDER_API_KEY, request.getOrDefault("renderApiKey", ""),
+            SystemConfig.VERCEL_API_KEY, request.getOrDefault("vercelApiKey", "")
+        ), "hosting", userId);
+        return ResponseEntity.ok(Map.of("message", "Hosting config updated"));
+    }
+
     // --- Live Stream Config (#14) ---
     @PutMapping("/livestream")
     public ResponseEntity<?> updateLivestreamConfig(@RequestBody Map<String, String> request) {

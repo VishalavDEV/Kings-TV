@@ -306,8 +306,7 @@ const Header = () => {
           nameTa: 'நம்ம ஊர்',
           subcategories: [
             { id: 'reg-deals', slug: 'deals', path: '/deals', name: 'Deals', nameTa: 'சலுகைகள்' },
-            { id: 'reg-rfq', slug: 'rfq', path: '/rfq', name: 'RFQ', nameTa: 'கோரிக்கைகள்' },
-            { id: 'reg-nfc', slug: 'nfc', path: '/nfc', name: 'NFC Card', nameTa: 'என்எஃப்சி கார்டு' }
+            { id: 'reg-rfq', slug: 'rfq', path: '/rfq', name: 'RFQ', nameTa: 'கோரிக்கைகள்' }
           ]
         },
         { id: 'reg-wishes', slug: 'wishes', path: '/wishes', name: 'Wishes', nameTa: 'வாழ்த்து' },
@@ -371,8 +370,7 @@ const Header = () => {
             nameTa: 'நம்ம ஊர்',
             subcategories: [
               { id: 'reg-deals', slug: 'deals', path: '/deals', name: 'Deals', nameTa: 'சலுகைகள்' },
-              { id: 'reg-rfq', slug: 'rfq', path: '/rfq', name: 'RFQ', nameTa: 'கோரிக்கைகள்' },
-              { id: 'reg-nfc', slug: 'nfc', path: '/nfc', name: 'NFC Card', nameTa: 'என்எஃப்சி கார்டு' }
+              { id: 'reg-rfq', slug: 'rfq', path: '/rfq', name: 'RFQ', nameTa: 'கோரிக்கைகள்' }
             ]
           },
           { id: 'reg-wishes', slug: 'wishes', path: '/wishes', name: 'Wishes', nameTa: 'வாழ்த்து' },

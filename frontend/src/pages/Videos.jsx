@@ -1,99 +1,85 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { fetchApi } from '../utils/api';
+import { useLocation } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
+import { resolveHandleToChannelId, fetchChannelVideos } from '../services/youtubeService';
 import './Videos.css';
 
 const Videos = () => {
   const { lang } = useContext(LanguageContext);
+  const location = useLocation();
   const [videos, setVideos] = useState([]);
-  const [liveVideo, setLiveVideo] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Helper function to assign categoryId matching system tabs
+  const categorizeVideo = (title = '', description = '') => {
+    const text = `${title} ${description}`.toLowerCase();
+    if (text.includes('tvk') || text.includes('dmk') || text.includes('admk') || text.includes('bjp') || text.includes('election') || text.includes('politics') || text.includes('அரசியல்') || text.includes('தேர்தல்') || text.includes('அமைச்சர்')) {
+      return 1; // politics
+    }
+    if (text.includes('gold') || text.includes('rate') || text.includes('price') || text.includes('market') || text.includes('budget') || text.includes('business') || text.includes('தங்கம்') || text.includes('விலை') || text.includes('வணிகம்')) {
+      return 2; // business
+    }
+    if (text.includes('ipl') || text.includes('csk') || text.includes('cricket') || text.includes('match') || text.includes('sports') || text.includes('dhoni') || text.includes('விளையாட்டு') || text.includes('கிரிக்கெட்')) {
+      return 3; // sports
+    }
+    if (text.includes('cinema') || text.includes('movie') || text.includes('teaser') || text.includes('trailer') || text.includes('actor') || text.includes('திரைப்படம்') || text.includes('சினிமா')) {
+      return 4; // cinema
+    }
+    if (text.includes('isro') || text.includes('gaganyaan') || text.includes('space') || text.includes('tech') || text.includes('metro') || text.includes('train') || text.includes('தொழில்நுட்பம்')) {
+      return 5; // tech
+    }
+    if (text.includes('tamil nadu') || text.includes('chennai') || text.includes('rain') || text.includes('alert') || text.includes('கனமழை') || text.includes('சென்னை')) {
+      return 6; // regional
+    }
+    if (text.includes('us') || text.includes('china') || text.includes('global') || text.includes('world') || text.includes('international') || text.includes('சர்வதேசம்') || text.includes('உலகம்')) {
+      return 7; // international
+    }
+    // Default to regional
+    return 6; 
+  };
 
   useEffect(() => {
-    // Scroll to top
     window.scrollTo(0, 0);
 
-    // Fetch non-live videos
-    fetchApi('/videos')
-      .then(data => {
-        if (Array.isArray(data)) {
-          const translated = data.map(vid => {
-            const rawTitle = vid.title || '';
-            const rawDesc = vid.description || '';
-            let titleVal = rawTitle;
-            let descVal = rawDesc;
-            
-            if (lang === 'en') {
-              if (rawTitle.includes('Rain Update') || rawTitle.includes('கனமழை')) {
-                titleVal = 'Rain Update in Tamil Nadu | Heavy Rain Alert in Chennai and Districts';
-                descVal = 'Weather department issues heavy rain warning for next 24 hours in Chennai and surrounding districts.';
-              } else if (rawTitle.includes('Gold Rate') || rawTitle.includes('தங்க விலை')) {
-                titleVal = 'Gold Rate Drops Sharply | Today\'s Gold Price details in Chennai';
-                descVal = 'Good news for gold buyers as sovereign rate decreases significantly today.';
-              } else if (rawTitle.includes('Vijay TVK') || rawTitle.includes('விஜய் மாநாடு')) {
-                titleVal = 'Vijay TVK First State Conference | Massive crowd gathers in Vikravandi';
-                descVal = 'Detailed ground report from the historic debut state conference of actor Vijay\'s TVK.';
-              } else if (rawTitle.includes('IPL') || rawTitle.includes('ஐபிஎல்')) {
-                titleVal = 'IPL Final Highlights: Thrilling last over finish';
-                descVal = 'Catch the complete match analysis and exciting moments of the league finale.';
-              } else if (rawTitle.includes('Gaganyaan') || rawTitle.includes('ககன்யான்')) {
-                titleVal = 'ISRO Gaganyaan Test Success | Indian Astronaut Space Mission Updates';
-                descVal = 'India\'s space agency successfully tests the solid booster system for the upcoming human flight.';
-              } else if (rawTitle.includes('Metro') || rawTitle.includes('சென்னை மெட்ரோ')) {
-                titleVal = 'Chennai Metro Phase 2 updates | Driverless train tests began';
-                descVal = 'Trial runs of driverless trainsets started between Poonamallee and Vadapalani elevated line.';
-              }
-            }
-            
-            return {
-              ...vid,
-              title: titleVal,
-              description: descVal
-            };
-          });
-          setVideos(translated);
-        }
-      })
-      .catch(err => console.error("Error loading videos", err));
+    const getVideos = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // 1. Resolve channel handle @king24x7
+        const channelId = await resolveHandleToChannelId('@king24x7');
+        
+        // 2. Fetch latest 20 videos
+        const fetched = await fetchChannelVideos(channelId, 20);
+        
+        // 3. Map categories and translate if needed
+        const categorized = fetched.map(vid => ({
+          ...vid,
+          categoryId: categorizeVideo(vid.title, vid.description)
+        }));
 
-    // Fetch Live TV video
-    fetchApi('/videos/live')
-      .then(data => {
-        if (data && data.youtubeUrl) {
-          let titleVal = data.title;
-          let descVal = data.description;
-          if (lang === 'en') {
-            titleVal = 'KINGS 24x7 Live TV News Stream';
-            descVal = 'Watch continuous Tamil and English live news coverage, debates and special updates.';
-          }
-          const updated = {
-            ...data,
-            title: titleVal,
-            description: descVal
-          };
-          setLiveVideo(updated);
-          setSelectedVideo(updated); // Set Live TV as the initially selected active video
+        setVideos(categorized);
+        
+        const selectId = location.state?.selectVideoId;
+        const found = categorized.find(v => v.id === selectId);
+        if (found) {
+          setSelectedVideo(found);
+        } else if (categorized.length > 0) {
+          setSelectedVideo(categorized[0]); // Auto load newest video in player
         }
-      })
-      .catch(err => console.error("Error loading live video", err));
-  }, [lang]);
-
-  const getYoutubeId = (url) => {
-    if (!url) return '';
-    // Handle embed URLs like https://www.youtube.com/embed/coYw5G37n18
-    if (url.includes('/embed/')) {
-      const parts = url.split('/embed/');
-      if (parts[1]) {
-        // Remove query parameters if any (like ?channel=...)
-        return parts[1].split('?')[0];
+      } catch (err) {
+        console.error("Error loading YouTube videos:", err);
+        setError(err.message || "Failed to fetch videos from YouTube. Please check your API key and connection.");
+      } finally {
+        setLoading(false);
       }
-    }
-    // Handle watch URLs like https://www.youtube.com/watch?v=coYw5G37n18
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : '';
-  };
+    };
+
+    getVideos();
+  }, []);
 
   // Categories mapping matching the Category ID
   const catIdMap = {
@@ -136,90 +122,133 @@ const Videos = () => {
           </p>
         </div>
 
-        {/* Main Section: Video Player & Up Next List */}
-        <div className="main-video-layout" id="main-video-player">
-          {/* Main Video Player Panel */}
-          <div className="video-player-container">
-            {selectedVideo ? (
-              <div className="responsive-iframe-container">
-                <iframe
-                  src={selectedVideo.youtubeUrl.includes('?') ? `${selectedVideo.youtubeUrl}&autoplay=1` : `${selectedVideo.youtubeUrl}?autoplay=1`}
-                  title={selectedVideo.title}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                ></iframe>
-              </div>
-            ) : (
-              <div className="no-video-placeholder">
-                <i className="fas fa-video-slash"></i>
-                <p>{lang === 'en' ? 'Select a video to start watching' : 'பார்க்க ஒரு வீடியோவைத் தேர்ந்தெடுக்கவும்'}</p>
-              </div>
-            )}
-            {selectedVideo && (
-              <div className="player-details">
-                {selectedVideo.isLiveTv === 1 && (
-                  <span className="badge-live"><i className="fas fa-broadcast-tower"></i> LIVE TV</span>
-                )}
-                <h2>{selectedVideo.title}</h2>
-                <div className="player-meta">
-                  <span><i className="far fa-eye"></i> {selectedVideo.viewsCount || '15K'} {lang === 'en' ? 'views' : 'பார்வைகள்'}</span>
-                  {selectedVideo.publishedAt && (
-                    <span><i className="far fa-calendar-alt"></i> {new Date(selectedVideo.publishedAt).toLocaleDateString()}</span>
-                  )}
-                </div>
-                <p className="description">{selectedVideo.description}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Up Next List Side Panel */}
-          <div className="side-playlist-container">
-            <h3>{lang === 'en' ? 'Up Next' : 'அடுத்ததாக'}</h3>
-            <div className="side-playlist">
-              {liveVideo && (
-                <div 
-                  className={`playlist-item ${selectedVideo?.id === liveVideo.id ? 'active' : ''}`}
-                  onClick={() => handleSelectVideo(liveVideo)}
-                >
-                  <div className="item-thumb">
-                    <img 
-                      src={`https://img.youtube.com/vi/${getYoutubeId(liveVideo.youtubeUrl)}/0.jpg`} 
-                      onError={(e) => { e.target.src = liveVideo.thumbnailUrl || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=300'; }}
-                      alt={liveVideo.title} 
-                    />
-                    <span className="duration-tag live">LIVE</span>
-                  </div>
-                  <div className="item-info">
-                    <h4>{liveVideo.title}</h4>
-                    <span className="live-label"><i className="fas fa-circle"></i> Live Now</span>
-                  </div>
-                </div>
-              )}
-
-              {videos.map((vid) => (
-                <div 
-                  key={vid.id}
-                  className={`playlist-item ${selectedVideo?.id === vid.id ? 'active' : ''}`}
-                  onClick={() => handleSelectVideo(vid)}
-                >
-                  <div className="item-thumb">
-                    <img 
-                      src={`https://img.youtube.com/vi/${getYoutubeId(vid.youtubeUrl)}/hqdefault.jpg`} 
-                      onError={(e) => { e.target.src = vid.thumbnailUrl || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=300'; }}
-                      alt={vid.title} 
-                    />
-                    <span className="duration-tag">{vid.duration || '3:15'}</span>
-                  </div>
-                  <div className="item-info">
-                    <h4>{vid.title}</h4>
-                    <span>{vid.viewsCount || '10K'} {lang === 'en' ? 'views' : 'பார்வைகள்'}</span>
-                  </div>
-                </div>
-              ))}
+        {error && (
+          <div className="error-message-banner" style={{
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.2)',
+            color: '#EF4444',
+            padding: '16px',
+            borderRadius: 'var(--radius-lg)',
+            marginBottom: '30px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <i className="fas fa-exclamation-triangle" style={{ fontSize: '20px' }}></i>
+            <div>
+              <h4 style={{ fontWeight: 700, marginBottom: '4px' }}>
+                {lang === 'en' ? 'API Connection Error' : 'API இணைப்புப் பிழை'}
+              </h4>
+              <p style={{ fontSize: '13px' }}>{error}</p>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Main Section: Video Player & Up Next List */}
+        {loading ? (
+          <div className="main-video-layout">
+            {/* Left Player skeleton */}
+            <div className="video-player-container">
+              <div className="skeleton-player-video skeleton"></div>
+              <div className="skeleton-player-title skeleton"></div>
+              <div className="skeleton-player-meta skeleton"></div>
+              <div className="skeleton-player-desc skeleton"></div>
+              <div className="skeleton-player-desc skeleton" style={{ width: '80%' }}></div>
+            </div>
+            {/* Right Playlist skeleton */}
+            <div className="side-playlist-container">
+              <h3>{lang === 'en' ? 'Up Next' : 'அடுத்ததாக'}</h3>
+              <div className="side-playlist">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="skeleton-sidebar-item">
+                    <div className="skeleton-sidebar-thumb skeleton"></div>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <div className="skeleton-sidebar-text1 skeleton"></div>
+                      <div className="skeleton-sidebar-text2 skeleton"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : videos.length === 0 ? (
+          <div className="empty-videos-message" style={{ margin: '40px 0' }}>
+            <i className="fas fa-video-slash"></i>
+            <h3>{lang === 'en' ? 'No Videos Found' : 'வீடியோக்கள் எதுவும் இல்லை'}</h3>
+            <p>{lang === 'en' ? 'Currently there are no videos available from this channel.' : 'இந்த சேனலில் தற்சமயம் வீடியோக்கள் எதுவும் கிடைக்கவில்லை.'}</p>
+          </div>
+        ) : (
+          <div className="main-video-layout" id="main-video-player">
+            {/* Main Video Player Panel */}
+            <div className="video-player-container">
+              {selectedVideo ? (
+                <div className="responsive-iframe-container">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${selectedVideo.id}?autoplay=1`}
+                    title={selectedVideo.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+              ) : (
+                <div className="no-video-placeholder">
+                  <i className="fas fa-video-slash"></i>
+                  <p>{lang === 'en' ? 'Select a video to start watching' : 'பார்க்க ஒரு வீடியோவைத் தேர்ந்தெடுக்கவும்'}</p>
+                </div>
+              )}
+              {selectedVideo && (
+                <div className="player-details">
+                  {selectedVideo.isLive && (
+                    <span className="badge-live"><i className="fas fa-broadcast-tower"></i> LIVE</span>
+                  )}
+                  <h2>{selectedVideo.title}</h2>
+                  <div className="player-meta">
+                    {selectedVideo.publishedAt && (
+                      <span><i className="far fa-calendar-alt"></i> {new Date(selectedVideo.publishedAt).toLocaleDateString()}</span>
+                    )}
+                  </div>
+                  <p className="description">{selectedVideo.description}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Up Next List Side Panel */}
+            <div className="side-playlist-container">
+              <h3>{lang === 'en' ? 'Up Next' : 'அடுத்ததாக'}</h3>
+              <div className="side-playlist">
+                {videos.filter(vid => vid.id !== selectedVideo?.id).map((vid) => (
+                  <div 
+                    key={vid.id}
+                    className="playlist-item"
+                    onClick={() => handleSelectVideo(vid)}
+                  >
+                    <div className="item-thumb">
+                      <img 
+                        src={vid.thumbnailUrl} 
+                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=300'; }}
+                        alt={vid.title} 
+                      />
+                      {vid.isLive ? (
+                        <span className="duration-tag live">LIVE</span>
+                      ) : (
+                        <span className="duration-tag">{vid.duration || '3:15'}</span>
+                      )}
+                    </div>
+                    <div className="item-info">
+                      <h4>{vid.title}</h4>
+                      {vid.isLive ? (
+                        <span className="live-label"><i className="fas fa-circle"></i> Live Now</span>
+                      ) : (
+                        <span>{new Date(vid.publishedAt).toLocaleDateString()}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Video Catalog Grid Section */}
         <div className="video-catalog-section">
@@ -248,7 +277,18 @@ const Videos = () => {
           </div>
 
           {/* Videos Grid */}
-          {filteredVideos.length > 0 ? (
+          {loading ? (
+            <div className="videos-grid-container">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="grid-video-card" style={{ cursor: 'default' }}>
+                  <div className="skeleton-grid-thumb skeleton"></div>
+                  <div className="skeleton-grid-title skeleton"></div>
+                  <div className="skeleton-grid-desc skeleton"></div>
+                  <div className="skeleton-grid-meta skeleton"></div>
+                </div>
+              ))}
+            </div>
+          ) : filteredVideos.length > 0 ? (
             <div className="videos-grid-container">
               {filteredVideos.map((vid) => (
                 <div 
@@ -258,20 +298,24 @@ const Videos = () => {
                 >
                   <div className="card-thumb">
                     <img 
-                      src={`https://img.youtube.com/vi/${getYoutubeId(vid.youtubeUrl)}/hqdefault.jpg`} 
-                      onError={(e) => { e.target.src = vid.thumbnailUrl || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=500'; }}
+                      src={vid.thumbnailUrl} 
+                      onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=500'; }}
                       alt={vid.title} 
                     />
                     <div className="play-btn-overlay">
                       <i className="fas fa-play"></i>
                     </div>
-                    <span className="duration-label">{vid.duration || '3:15'}</span>
+                    {vid.isLive ? (
+                      <span className="duration-label" style={{ backgroundColor: '#EF4444' }}>LIVE</span>
+                    ) : (
+                      <span className="duration-label">{vid.duration || '3:15'}</span>
+                    )}
                   </div>
                   <div className="card-body">
                     <h3>{vid.title}</h3>
                     <p className="desc-text">{vid.description}</p>
                     <div className="card-meta-info">
-                      <span><i className="far fa-eye"></i> {vid.viewsCount || '12K'} {lang === 'en' ? 'views' : 'பார்வைகள்'}</span>
+                      <span>{new Date(vid.publishedAt).toLocaleDateString()}</span>
                     </div>
                   </div>
                 </div>

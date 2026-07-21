@@ -19,7 +19,7 @@ const LiveTv = () => {
       .catch(err => {
         console.warn("Could not fetch live video, using fallback", err);
         setLiveVideo({
-          youtubeUrl: 'https://www.youtube.com/embed/live_stream?channel=UC_fake_live',
+          youtubeUrl: 'https://www.youtube.com/embed/live_stream?channel=UCfBx2Jiac84Rgpgku52CgwX',
           title: 'KINGS 24x7 Live TV News Stream',
           description: 'Watch continuous Tamil and English live news coverage, debates and special updates.'
         });

@@ -56,6 +56,24 @@ const BizDirectoryMain = () => {
   const [newBizLogo, setNewBizLogo] = useState('');
   const [newBizCover, setNewBizCover] = useState('');
 
+  // Tabs for general users (defaulting to deals as normal user has no listings)
+  const [activeDirectoryTab, setActiveDirectoryTab] = useState('deals'); // deals, rfqs, businesses
+  const [deals, setDeals] = useState([]);
+  const [dealsLoading, setDealsLoading] = useState(false);
+  const [rfqs, setRfqs] = useState([]);
+  const [rfqsLoading, setRfqsLoading] = useState(false);
+
+  // RFQ Quote submission form details
+  const [selectedRfqForQuote, setSelectedRfqForQuote] = useState(null);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [quotePrice, setQuotePrice] = useState('');
+  const [quoteTimeline, setQuoteTimeline] = useState('');
+  const [quoteNotes, setQuoteNotes] = useState('');
+  const [userBusinesses, setUserBusinesses] = useState([]);
+  const [selectedBizIdForQuote, setSelectedBizIdForQuote] = useState('');
+  const [quoteError, setQuoteError] = useState('');
+  const [quoteSuccess, setQuoteSuccess] = useState('');
+
   const loadData = () => {
     setLoading(true);
     fetchApi('/directory')
@@ -74,8 +92,103 @@ const BizDirectoryMain = () => {
       });
   };
 
+  const loadDeals = () => {
+    setDealsLoading(true);
+    fetchApi('/deals/public')
+      .then(res => {
+        if (res && res.content) {
+          setDeals(res.content);
+        } else if (Array.isArray(res)) {
+          setDeals(res);
+        } else {
+          setDeals([]);
+        }
+        setDealsLoading(false);
+      })
+      .catch(() => {
+        setDeals([]);
+        setDealsLoading(false);
+      });
+  };
+
+  const loadRfqs = () => {
+    setRfqsLoading(true);
+    fetchApi('/rfq')
+      .then(res => {
+        setRfqs(Array.isArray(res) ? res : []);
+        setRfqsLoading(false);
+      })
+      .catch(() => {
+        setRfqs([]);
+        setRfqsLoading(false);
+      });
+  };
+
+  const loadUserBusinessesForQuote = () => {
+    if (!isAuthenticated) return;
+    fetchApi('/directory/my-business')
+      .then(res => {
+        const approved = Array.isArray(res) ? res.filter(b => b.kycStatus === 'approved') : [];
+        setUserBusinesses(approved);
+        if (approved.length > 0) {
+          setSelectedBizIdForQuote(approved[0].id.toString());
+        }
+      })
+      .catch(() => {
+        setUserBusinesses([]);
+      });
+  };
+
+  const handleOpenQuoteModal = (rfqItem) => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: '/directory' } });
+      return;
+    }
+    setSelectedRfqForQuote(rfqItem);
+    setQuoteError('');
+    setQuoteSuccess('');
+    setQuotePrice('');
+    setQuoteTimeline('');
+    setQuoteNotes('');
+    setShowQuoteModal(true);
+    loadUserBusinessesForQuote();
+  };
+
+  const handleSubmitQuote = (e) => {
+    e.preventDefault();
+    if (!selectedRfqForQuote) return;
+    if (userBusinesses.length === 0) {
+      setQuoteError(lang === 'en' ? 'You must register a business and get KYC approval to submit quotes.' : 'சலுகைகளை சமர்ப்பிக்க நீங்கள் ஒரு வணிகத்தை பதிவு செய்து KYC ஒப்புதல் பெற வேண்டும்.');
+      return;
+    }
+
+    const payload = {
+      sellerBusinessId: parseInt(selectedBizIdForQuote),
+      quotedPrice: parseFloat(quotePrice),
+      timelineDays: parseInt(quoteTimeline),
+      notes: quoteNotes
+    };
+
+    fetchApi(`/rfq/${selectedRfqForQuote.id}/quotes`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+      .then(() => {
+        setQuoteSuccess(lang === 'en' ? 'Quotation submitted successfully!' : 'மதிப்பீட்டு சலுகை வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது!');
+        setTimeout(() => {
+          setShowQuoteModal(false);
+          loadRfqs();
+        }, 2000);
+      })
+      .catch((err) => {
+        setQuoteError(lang === 'en' ? 'Failed to submit quote.' : 'சலுகையை சமர்ப்பிக்க முடியவில்லை.');
+      });
+  };
+
   useEffect(() => {
     loadData();
+    loadDeals();
+    loadRfqs();
   }, []);
 
   const handleBizClick = (biz) => {
@@ -247,7 +360,19 @@ const BizDirectoryMain = () => {
   ];
 
   return (
-    <main className="container biz-module-container" style={{ paddingTop: '20px' }}>
+    <main 
+      className="biz-module-container" 
+      style={{ 
+        paddingTop: '20px',
+        maxWidth: '1280px',
+        marginLeft: 'auto',
+        marginRight: 'auto',
+        paddingLeft: '20px',
+        paddingRight: '20px',
+        width: '100%',
+        boxSizing: 'border-box'
+      }}
+    >
       {/* Breadcrumbs */}
       <div className="breadcrumbs" style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
         <Link to="/" style={{ color: 'var(--primary)', textDecoration: 'none' }}>{lang === 'en' ? 'Home' : 'முகப்பு'}</Link>
@@ -306,122 +431,323 @@ const BizDirectoryMain = () => {
         </div>
       </section>
 
-      {/* BROWSE CATEGORIES GRID */}
-      <section className="mb-12">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: '850' }}>{lang === 'en' ? 'Browse Categories' : 'வகைகளை உலாவுக'}</h2>
-        </div>
-        
-        <div className="biz-cat-grid">
-          {categories.map((c, i) => (
-            <button 
-              key={i}
-              onClick={() => setSelectedCategory(c.name)}
-              className={`biz-cat-card-btn ${selectedCategory === c.name ? 'active' : ''}`}
-            >
-              <div className={`biz-cat-icon-circle ${c.color}`}>
-                <i className={`fas ${c.icon}`}></i>
-              </div>
-              <span className="biz-cat-title-lbl">{getCategoryLabel(c.name)}</span>
-            </button>
-          ))}
-        </div>
-      </section>
+      {/* DIRECTORY NAVIGATION TABS */}
+      <div className="directory-tabs" style={{ display: 'flex', gap: '15px', borderBottom: '2px solid #e2e8f0', marginBottom: '24px', paddingBottom: '2px' }}>
+        <button 
+          onClick={() => setActiveDirectoryTab('deals')}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            background: 'none',
+            fontSize: '15px',
+            fontWeight: 'bold',
+            color: activeDirectoryTab === 'deals' ? 'var(--primary, #B3732A)' : '#64748B',
+            borderBottom: activeDirectoryTab === 'deals' ? '3px solid var(--primary, #B3732A)' : 'none',
+            cursor: 'pointer'
+          }}
+        >
+          <i className="fas fa-tags" style={{ marginRight: '8px' }}></i>
+          {lang === 'en' ? 'Promotional Deals' : 'விளம்பர சலுகைகள்'}
+        </button>
+        <button 
+          onClick={() => setActiveDirectoryTab('rfqs')}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            background: 'none',
+            fontSize: '15px',
+            fontWeight: 'bold',
+            color: activeDirectoryTab === 'rfqs' ? 'var(--primary, #B3732A)' : '#64748B',
+            borderBottom: activeDirectoryTab === 'rfqs' ? '3px solid var(--primary, #B3732A)' : 'none',
+            cursor: 'pointer'
+          }}
+        >
+          <i className="fas fa-gavel" style={{ marginRight: '8px' }}></i>
+          {lang === 'en' ? 'Customer RFQs' : 'வாடிக்கையாளர் RFQ கோரிக்கைகள்'}
+        </button>
+        <button 
+          onClick={() => setActiveDirectoryTab('businesses')}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            background: 'none',
+            fontSize: '15px',
+            fontWeight: 'bold',
+            color: activeDirectoryTab === 'businesses' ? 'var(--primary, #B3732A)' : '#64748B',
+            borderBottom: activeDirectoryTab === 'businesses' ? '3px solid var(--primary, #B3732A)' : 'none',
+            cursor: 'pointer'
+          }}
+        >
+          <i className="fas fa-store" style={{ marginRight: '8px' }}></i>
+          {lang === 'en' ? 'Verified Listings' : 'சரிபார்க்கப்பட்ட நிறுவனங்கள்'}
+        </button>
+      </div>
 
-      {/* TWO COLUMN BUSINESS LAYOUT */}
+      {/* TWO COLUMN CONTENT LAYOUT */}
       <div className="flex flex-col lg:flex-row gap-8" style={{ marginBottom: '40px' }}>
         
-        {/* Left Column: Listings */}
+        {/* Left Column: Tab contents */}
         <div className="flex-grow">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '850' }}>
-              {selectedCategory === 'all' ? (lang === 'en' ? 'Featured Businesses' : 'சிறப்பு வணிகங்கள்') : getCategoryLabel(selectedCategory)}
-            </h2>
-            <button 
-              onClick={() => {
-                if (!isAuthenticated) {
-                  navigate('/login', { state: { from: '/directory/register' } });
-                } else {
-                  fetchApi('/directory/my-business')
-                    .then(res => {
-                      if (res && res.length > 0) {
-                        navigate('/directory/dashboard');
-                      } else {
-                        navigate('/directory/register');
-                      }
-                    })
-                    .catch(() => {
-                      navigate('/directory/register');
-                    });
-                }
-              }}
-              style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '10px 20px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}
-            >
-              + {lang === 'en' ? 'Add Business' : 'வணிகத்தைச் சேர்'}
-            </button>
-          </div>
+          {activeDirectoryTab === 'deals' && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ fontSize: '18px', fontWeight: '850', margin: 0 }}>
+                  {lang === 'en' ? 'Exclusive Promotional Deals' : 'பிரத்யேக விளம்பர சலுகைகள்'}
+                </h2>
+                <button 
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      navigate('/login', { state: { from: '/directory/register' } });
+                    } else {
+                      fetchApi('/directory/my-business')
+                        .then(res => {
+                          if (res && res.length > 0) {
+                            navigate('/directory/dashboard');
+                          } else {
+                            navigate('/directory/register');
+                          }
+                        })
+                        .catch(() => {
+                          navigate('/directory/register');
+                        });
+                    }
+                  }}
+                  style={{ background: 'var(--primary, #B3732A)', color: 'white', border: 'none', borderRadius: '8px', padding: '10px 20px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}
+                >
+                  {lang === 'en' ? 'Manage My Business' : 'எனது வணிகத்தை நிர்வகி'}
+                </button>
+              </div>
 
-          {loading ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
-              {[1, 2].map(n => (
-                <div key={n} style={{ height: '240px', background: '#f1f5f9', borderRadius: '16px', animation: 'pulse 1.5s infinite' }}></div>
-              ))}
-            </div>
-          ) : filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px', border: '1.5px dashed #cbd5e1', borderRadius: '16px' }}>
-              <i className="fas fa-store-slash" style={{ fontSize: '42px', color: '#94a3b8', marginBottom: '14px' }}></i>
-              <h3>{lang === 'en' ? 'No businesses found' : 'வணிகங்கள் எதுவும் காணப்படவில்லை'}</h3>
-            </div>
-          ) : (
-            <div className="biz-listings-grid">
-              {filtered.map(biz => (
-                <div className="biz-listing-card" key={biz.id} onClick={() => handleBizClick(biz)}>
-                  <div className="biz-card-image-cover" style={{ backgroundImage: `url(${biz.coverUrl})` }}>
-                    <span className="biz-card-tag">{lang === 'en' ? 'FEATURED' : 'சிறப்பு'}</span>
-                    {biz.kycStatus === 'verified' && (
-                      <span className="biz-card-kyc-badge">
-                        <i className="fas fa-check-circle"></i> {lang === 'en' ? 'Verified' : 'சரிபார்க்கப்பட்டது'}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="biz-card-body">
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span className="biz-card-category">{getCategoryLabel(biz.category)}</span>
-                        <div className="biz-card-rating">
-                          <i className="fas fa-star"></i> {biz.ratingAvg || 5.0} <span>({biz.ratingCount || 0})</span>
+              {dealsLoading ? (
+                <div style={{ textAlign: 'center', padding: '40px' }}><i className="fas fa-spinner fa-spin fa-2x"></i></div>
+              ) : deals.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '60px', border: '1.5px dashed #cbd5e1', borderRadius: '16px' }}>
+                  <i className="fas fa-tags" style={{ fontSize: '42px', color: '#94a3b8', marginBottom: '14px' }}></i>
+                  <h3>{lang === 'en' ? 'No deals available' : 'சலுகைகள் எதுவும் இல்லை'}</h3>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                  {deals.map(deal => (
+                    <div className="biz-listing-card" key={deal.id} style={{ display: 'flex', flexDirection: 'column', height: '100%', cursor: 'default' }}>
+                      <div className="biz-card-image-cover" style={{ backgroundImage: `url(${deal.bannerUrl || 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600'})`, height: '140px' }}>
+                        <span className="biz-card-tag" style={{ background: '#ef4444' }}>{deal.discountValue} {deal.discountType === 'percentage' ? '% OFF' : '₹ OFF'}</span>
+                      </div>
+                      <div className="biz-card-body" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '16px' }}>
+                        <div>
+                          <span className="biz-card-category" style={{ fontSize: '11px', background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: '12px' }}>{deal.category}</span>
+                          <h3 className="biz-card-name" style={{ fontSize: '15px', fontWeight: 'bold', margin: '8px 0 4px 0', minHeight: '44px' }}>{deal.title}</h3>
+                          <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 12px 0' }}>{deal.terms || 'Valid on all services/products.'}</p>
+                        </div>
+                        <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                              <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#94a3b8' }}>{lang === 'en' ? 'Use Coupon' : 'கூப்பன் குறியீடு'}</div>
+                              <div style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--primary, #B3732A)' }}>{deal.couponCode || 'NO CODE NEEDED'}</div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontSize: '10px', color: '#94a3b8' }}>{lang === 'en' ? 'Valid Until' : 'காலாவதி தேதி'}</div>
+                              <div style={{ fontSize: '11px', color: '#ef4444', fontWeight: '500' }}>{new Date(deal.validUntil).toLocaleDateString()}</div>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <h3 className="biz-card-name">{biz.businessName}</h3>
                     </div>
-
-                    <div>
-                      <div className="biz-card-info-row">
-                        <i className="fas fa-map-marker-alt"></i>
-                        <span>{biz.addressLocality}</span>
-                      </div>
-                      <div className="biz-card-info-row">
-                        <i className="fas fa-clock"></i>
-                        <span>{biz.workingHours}</span>
-                      </div>
-                      <div className="biz-card-info-row">
-                        <i className="fas fa-phone-alt"></i>
-                        <span>{biz.phoneNumber}</span>
-                      </div>
-                    </div>
-
-                    <div className="biz-card-footer">
-                      <span className="biz-status-online">
-                        <span></span> {lang === 'en' ? 'Open Now' : 'இப்போது திறந்துள்ளது'}
-                      </span>
-                      <span style={{ color: '#ef4444', fontWeight: 'bold' }}>
-                        {lang === 'en' ? 'View Details' : 'விவரங்களைக் காண்க'} &rarr;
-                      </span>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              )}
+            </div>
+          )}
+
+          {activeDirectoryTab === 'rfqs' && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ fontSize: '18px', fontWeight: '850', margin: 0 }}>
+                  {lang === 'en' ? 'Procurement Requests (RFQs)' : 'வாங்குதல் கோரிக்கைகள் (RFQ)'}
+                </h2>
+                <button 
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      navigate('/login', { state: { from: '/directory/register' } });
+                    } else {
+                      fetchApi('/directory/my-business')
+                        .then(res => {
+                          if (res && res.length > 0) {
+                            navigate('/directory/dashboard');
+                          } else {
+                            navigate('/directory/register');
+                          }
+                        })
+                        .catch(() => {
+                          navigate('/directory/register');
+                        });
+                    }
+                  }}
+                  style={{ background: 'var(--primary, #B3732A)', color: 'white', border: 'none', borderRadius: '8px', padding: '10px 20px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}
+                >
+                  {lang === 'en' ? 'Manage My Business' : 'எனது வணிகத்தை நிர்வகி'}
+                </button>
+              </div>
+
+              {rfqsLoading ? (
+                <div style={{ textAlign: 'center', padding: '40px' }}><i className="fas fa-spinner fa-spin fa-2x"></i></div>
+              ) : rfqs.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '60px', border: '1.5px dashed #cbd5e1', borderRadius: '16px' }}>
+                  <i className="fas fa-gavel" style={{ fontSize: '42px', color: '#94a3b8', marginBottom: '14px' }}></i>
+                  <h3>{lang === 'en' ? 'No RFQs available' : 'RFQ கோரிக்கைகள் எதுவும் இல்லை'}</h3>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {rfqs.map(item => {
+                    const r = item.rfq;
+                    return (
+                      <div className="biz-listing-card" key={r.id} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px', cursor: 'default' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
+                          <div>
+                            <span className="biz-card-category" style={{ fontSize: '11px', background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: '12px' }}>{r.category}</span>
+                            <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '6px 0 2px 0' }}>{r.title}</h3>
+                            <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>{r.description}</p>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ background: '#ecfdf5', color: '#10b981', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', display: 'inline-block' }}>{r.status}</div>
+                            <div style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--primary, #B3732A)', marginTop: '6px' }}>₹{r.budget || 'Open'}</div>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '20px', fontSize: '12px', color: '#64748b', borderTop: '1px solid #f1f5f9', paddingTop: '10px', marginTop: '4px', flexWrap: 'wrap' }}>
+                          <span><i className="fas fa-boxes" style={{ marginRight: '6px' }}></i>Qty: <strong>{r.quantity}</strong></span>
+                          <span><i className="fas fa-map-marker-alt" style={{ marginRight: '6px' }}></i>Location: <strong>{r.location}</strong></span>
+                          <span><i className="fas fa-calendar-alt" style={{ marginRight: '6px' }}></i>Deadline: <strong style={{ color: '#ef4444' }}>{new Date(r.deadline).toLocaleDateString()}</strong></span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+                          <button 
+                            onClick={() => handleOpenQuoteModal(r)}
+                            style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', padding: '8px 16px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+                          >
+                            <i className="fas fa-paper-plane" style={{ marginRight: '6px' }}></i>
+                            {lang === 'en' ? 'Submit Quotation Bid' : 'மதிப்பீட்டு சலுகை அளி'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeDirectoryTab === 'businesses' && (
+            <div>
+              {/* Category Selector */}
+              <section className="mb-8">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h2 style={{ fontSize: '18px', fontWeight: '850', margin: 0 }}>{lang === 'en' ? 'Browse Categories' : 'வகைகளை உலாவுக'}</h2>
+                </div>
+                <div className="biz-cat-grid">
+                  {categories.map((c, i) => (
+                    <button 
+                      key={i}
+                      onClick={() => setSelectedCategory(c.name)}
+                      className={`biz-cat-card-btn ${selectedCategory === c.name ? 'active' : ''}`}
+                    >
+                      <div className={`biz-cat-icon-circle ${c.color}`}>
+                        <i className={`fas ${c.icon}`}></i>
+                      </div>
+                      <span className="biz-cat-title-lbl">{getCategoryLabel(c.name)}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ fontSize: '18px', fontWeight: '850', margin: 0 }}>
+                  {selectedCategory === 'all' ? (lang === 'en' ? 'Featured Businesses' : 'சிறப்பு வணிகங்கள்') : getCategoryLabel(selectedCategory)}
+                </h2>
+                <button 
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      navigate('/login', { state: { from: '/directory/register' } });
+                    } else {
+                      fetchApi('/directory/my-business')
+                        .then(res => {
+                          if (res && res.length > 0) {
+                            navigate('/directory/dashboard');
+                          } else {
+                            navigate('/directory/register');
+                          }
+                        })
+                        .catch(() => {
+                          navigate('/directory/register');
+                        });
+                    }
+                  }}
+                  style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '10px 20px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}
+                >
+                  + {lang === 'en' ? 'Add Business' : 'வணிகத்தைச் சேர்'}
+                </button>
+              </div>
+
+              {loading ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
+                  {[1, 2].map(n => (
+                    <div key={n} style={{ height: '240px', background: '#f1f5f9', borderRadius: '16px', animation: 'pulse 1.5s infinite' }}></div>
+                  ))}
+                </div>
+              ) : filtered.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '60px', border: '1.5px dashed #cbd5e1', borderRadius: '16px' }}>
+                  <i className="fas fa-store-slash" style={{ fontSize: '42px', color: '#94a3b8', marginBottom: '14px' }}></i>
+                  <h3>{lang === 'en' ? 'No businesses found' : 'வணிகங்கள் எதுவும் காணப்படவில்லை'}</h3>
+                </div>
+              ) : (
+                <div className="biz-listings-grid">
+                  {filtered.map(biz => (
+                    <div className="biz-listing-card" key={biz.id} onClick={() => handleBizClick(biz)}>
+                      <div className="biz-card-image-cover" style={{ backgroundImage: `url(${biz.coverUrl})` }}>
+                        <span className="biz-card-tag">{lang === 'en' ? 'FEATURED' : 'சிறப்பு'}</span>
+                        {biz.kycStatus === 'verified' && (
+                          <span className="biz-card-kyc-badge">
+                            <i className="fas fa-check-circle"></i> {lang === 'en' ? 'Verified' : 'சரிபார்க்கப்பட்டது'}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="biz-card-body">
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span className="biz-card-category">{getCategoryLabel(biz.category)}</span>
+                            <div className="biz-card-rating">
+                              <i className="fas fa-star"></i> {biz.ratingAvg || 5.0} <span>({biz.ratingCount || 0})</span>
+                            </div>
+                          </div>
+                          <h3 className="biz-card-name">{biz.businessName}</h3>
+                        </div>
+
+                        <div>
+                          <div className="biz-card-info-row">
+                            <i className="fas fa-map-marker-alt"></i>
+                            <span>{biz.addressLocality}</span>
+                          </div>
+                          <div className="biz-card-info-row">
+                            <i className="fas fa-clock"></i>
+                            <span>{biz.workingHours}</span>
+                          </div>
+                          <div className="biz-card-info-row">
+                            <i className="fas fa-phone-alt"></i>
+                            <span>{biz.phoneNumber}</span>
+                          </div>
+                        </div>
+
+                        <div className="biz-card-footer">
+                          <span className="biz-status-online">
+                            <span></span> {lang === 'en' ? 'Open Now' : 'இப்போது திறந்துள்ளது'}
+                          </span>
+                          <span style={{ color: '#ef4444', fontWeight: 'bold' }}>
+                            {lang === 'en' ? 'View Details' : 'விவரங்களைக் காண்க'} &rarr;
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -677,6 +1003,101 @@ const BizDirectoryMain = () => {
                   {lang === 'en' ? 'Register Business' : 'வணிகத்தைப் பதிவு செய்'}
                 </button>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* RFQ QUOTATION BID MODAL */}
+      {showQuoteModal && selectedRfqForQuote && (
+        <div className="modal open" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: '1100' }}>
+          <div className="modal-content" style={{ maxWidth: '500px', width: '95%', padding: '24px' }}>
+            <div className="modal-header" style={{ paddingBottom: '12px', borderBottom: '1px solid #e2e8f0', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0 }}>{lang === 'en' ? 'Submit Quotation Bid' : 'மதிப்பீட்டு சலுகை சமர்ப்பி'}</h3>
+              <button className="modal-close" onClick={() => setShowQuoteModal(false)}>&times;</button>
+            </div>
+
+            <div className="modal-body">
+              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px' }}>
+                <strong>RFQ:</strong> {selectedRfqForQuote.title}<br/>
+                <strong>Budget:</strong> ₹{selectedRfqForQuote.budget || 'Open'}
+              </div>
+
+              {quoteError && <div style={{ background: '#fee2e2', color: '#ef4444', padding: '10px', borderRadius: '6px', fontSize: '12px', marginBottom: '12px', fontWeight: '500' }}><i className="fas fa-exclamation-circle" style={{ marginRight: '6px' }}></i>{quoteError}</div>}
+              {quoteSuccess && <div style={{ background: '#d1fae5', color: '#10b981', padding: '10px', borderRadius: '6px', fontSize: '12px', marginBottom: '12px', fontWeight: '500' }}><i className="fas fa-check-circle" style={{ marginRight: '6px' }}></i>{quoteSuccess}</div>}
+
+              {userBusinesses.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>
+                    {lang === 'en' ? 'You must have a registered business with approved KYC to quote on RFQ procurement demands.'
+                                   : 'RFQ கோரிக்கைகளுக்கு சலுகை அளிக்க சரிபார்க்கப்பட்ட வணிக கணக்கு தேவை.'}
+                  </p>
+                  <button 
+                    onClick={() => {
+                      setShowQuoteModal(false);
+                      navigate('/directory/register');
+                    }}
+                    style={{ background: '#ef4444', color: 'white', border: 'none', padding: '10px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}
+                  >
+                    + {lang === 'en' ? 'Register Business Now' : 'இப்போது வணிகத்தைப் பதிவு செய்'}
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmitQuote} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div className="form-group">
+                    <label style={{ fontSize: '13px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{lang === 'en' ? 'Select Bidding Business *' : 'சலுகை அளிக்கும் நிறுவனம் *'}</label>
+                    <select 
+                      value={selectedBizIdForQuote} 
+                      onChange={(e) => setSelectedBizIdForQuote(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
+                    >
+                      {userBusinesses.map(b => (
+                        <option key={b.id} value={b.id}>{b.businessName} ({b.addressLocality})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="form-group">
+                      <label style={{ fontSize: '13px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{lang === 'en' ? 'Quoted Price (₹) *' : 'விலைச் சலுகை (₹) *'}</label>
+                      <input 
+                        type="number" 
+                        value={quotePrice} 
+                        onChange={(e) => setQuotePrice(e.target.value)} 
+                        required 
+                        placeholder={lang === 'en' ? 'e.g. 45000' : 'எ.கா. 45000'}
+                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label style={{ fontSize: '13px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{lang === 'en' ? 'Delivery Timeline (Days) *' : 'டெலிவரி காலம் (நாட்கள்) *'}</label>
+                      <input 
+                        type="number" 
+                        value={quoteTimeline} 
+                        onChange={(e) => setQuoteTimeline(e.target.value)} 
+                        required 
+                        placeholder={lang === 'en' ? 'e.g. 7' : 'எ.கா. 7'}
+                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label style={{ fontSize: '13px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{lang === 'en' ? 'Cover Note / Terms' : 'விளக்கக் குறிப்பு'}</label>
+                    <textarea 
+                      value={quoteNotes} 
+                      onChange={(e) => setQuoteNotes(e.target.value)} 
+                      rows="3" 
+                      placeholder={lang === 'en' ? 'Write brief terms, delivery conditions, material details...' : 'சலுகையின் நிபந்தனைகள் மற்றும் விபரங்களை குறிப்பிடவும்...'}
+                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
+                    ></textarea>
+                  </div>
+
+                  <button type="submit" style={{ background: '#ef4444', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', marginTop: '6px' }}>
+                    {lang === 'en' ? 'Submit Bid' : 'சலுகையைச் சமர்ப்பி'}
+                  </button>
+                </form>
+              )}
             </div>
           </div>
         </div>

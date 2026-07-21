@@ -44,6 +44,13 @@ public class RfqController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "User not found"));
         }
 
+        // Verify user has an approved business directory listing
+        List<DirectoryListing> listings = directoryRepository.findByCreatedBy((long) userOpt.get().getId());
+        boolean hasApprovedBusiness = listings.stream().anyMatch(l -> "approved".equalsIgnoreCase(l.getKycStatus()));
+        if (!hasApprovedBusiness) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You must have an approved business listing to post an RFQ"));
+        }
+
         if (rfq.getTitle() == null || rfq.getCategory() == null || rfq.getQuantity() == null || rfq.getLocation() == null || rfq.getDeadline() == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Required fields are missing"));
         }
@@ -53,6 +60,37 @@ public class RfqController {
         
         Rfq saved = rfqRepository.save(rfq);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    @GetMapping("/my-rfqs")
+    public ResponseEntity<?> getMyRfqs(Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
+        }
+        Optional<User> userOpt = userRepository.findByEmail(principal.getName());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "User not found"));
+        }
+        List<Rfq> rfqs = rfqRepository.findByBuyerId(userOpt.get().getId());
+        List<Map<String, Object>> responses = new ArrayList<>();
+        
+        for (Rfq rfq : rfqs) {
+            if ("deleted".equalsIgnoreCase(rfq.getStatus())) continue;
+            List<RfqQuote> quotes = rfqQuoteRepository.findByRfqId(rfq.getId());
+            List<Map<String, Object>> quotesDetail = new ArrayList<>();
+            for (RfqQuote quote : quotes) {
+                Optional<DirectoryListing> dirOpt = directoryRepository.findById(quote.getSellerBusinessId());
+                Map<String, Object> qMap = new HashMap<>();
+                qMap.put("quote", quote);
+                qMap.put("seller", dirOpt.orElse(null));
+                quotesDetail.add(qMap);
+            }
+            Map<String, Object> map = new HashMap<>();
+            map.put("rfq", rfq);
+            map.put("quotes", quotesDetail);
+            responses.add(map);
+        }
+        return ResponseEntity.ok(responses);
     }
 
     @PutMapping("/{id}")

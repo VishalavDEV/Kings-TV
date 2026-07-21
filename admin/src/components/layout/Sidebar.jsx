@@ -16,7 +16,8 @@ import {
   Key,
   Activity,
   Calendar,
-  DollarSign
+  DollarSign,
+  Shield
 } from 'lucide-react';
 import { useI18n } from '../../context/I18nContext';
 
@@ -59,6 +60,10 @@ const Sidebar = () => {
             <NavLink to="/admin/breaking" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               <AlertTriangle size={18} />
               Breaking News
+            </NavLink>
+            <NavLink to="/admin/kyc" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              <Shield size={18} />
+              KYC Verification
             </NavLink>
 
             <div className="nav-section-title">📊 ANALYTICS</div>

@@ -73,4 +73,19 @@ public class AdminRBACIntegrationTest {
                 .content("{}"))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    public void testUpdateKycStatusUnauthenticated() throws Exception {
+        mockMvc.perform(post("/api/v1/directory/1/approve-kyc")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void testRequestNfcUnauthenticated() throws Exception {
+        mockMvc.perform(post("/api/v1/nfc/request")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"listingId\":1,\"linkType\":\"profile\"}"))
+                .andExpect(status().isUnauthorized());
+    }
 }

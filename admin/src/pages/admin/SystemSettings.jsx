@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
-import { Save, Server, Mail, Smartphone, MapPin, Video, HardDrive, Send } from 'lucide-react';
+import { Save, Server, Mail, Smartphone, MapPin, Video, HardDrive, Send, Youtube, Cloud } from 'lucide-react';
 
 const SystemSettings = () => {
   const [config, setConfig] = useState({
@@ -16,7 +16,11 @@ const SystemSettings = () => {
     cdnApiKey: '',
     telegramBotToken: '',
     telegramChatId: '',
-    telegramEnabled: 'false'
+    telegramEnabled: 'false',
+    youtubeApiKey: '',
+    youtubeChannelId: '',
+    renderApiKey: '',
+    vercelApiKey: ''
   });
   const [loading, setLoading] = useState(true);
   const [savingGroup, setSavingGroup] = useState('');
@@ -41,6 +45,10 @@ const SystemSettings = () => {
             if (item.configKey === 'telegram.bot_token') mapped.telegramBotToken = item.configValue || '';
             if (item.configKey === 'telegram.chat_id') mapped.telegramChatId = item.configValue || '';
             if (item.configKey === 'telegram.enabled') mapped.telegramEnabled = item.configValue || 'false';
+            if (item.configKey === 'youtube.api_key') mapped.youtubeApiKey = item.configValue || '';
+            if (item.configKey === 'youtube.channel_id') mapped.youtubeChannelId = item.configValue || '';
+            if (item.configKey === 'hosting.render_api_key') mapped.renderApiKey = item.configValue || '';
+            if (item.configKey === 'hosting.vercel_api_key') mapped.vercelApiKey = item.configValue || '';
           });
           setConfig(prev => ({ ...prev, ...mapped }));
         }
@@ -83,6 +91,16 @@ const SystemSettings = () => {
           chatId: config.telegramChatId,
           enabled: String(config.telegramEnabled)
         });
+      } else if (group === 'youtube') {
+        await api.put('/admin/config/youtube', { 
+          apiKey: config.youtubeApiKey, 
+          channelId: config.youtubeChannelId 
+        });
+      } else if (group === 'hosting') {
+        await api.put('/admin/config/hosting', { 
+          renderApiKey: config.renderApiKey, 
+          vercelApiKey: config.vercelApiKey 
+        });
       }
       alert(`${group.toUpperCase()} settings saved successfully.`);
     } catch (error) {
@@ -111,6 +129,14 @@ const SystemSettings = () => {
           botToken: config.telegramBotToken, 
           chatId: config.telegramChatId,
           enabled: String(config.telegramEnabled)
+        }),
+        api.put('/admin/config/youtube', { 
+          apiKey: config.youtubeApiKey, 
+          channelId: config.youtubeChannelId 
+        }),
+        api.put('/admin/config/hosting', { 
+          renderApiKey: config.renderApiKey, 
+          vercelApiKey: config.vercelApiKey 
         })
       ]);
       alert('All settings saved successfully.');
@@ -289,6 +315,66 @@ const SystemSettings = () => {
           </div>
           <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('telegram')} disabled={savingGroup !== ''}>
             {savingGroup === 'telegram' ? 'Saving Telegram...' : 'Save Telegram Settings'}
+          </button>
+        </div>
+
+        {/* YouTube API Integration */}
+        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '300px' }}>
+          <div>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', fontSize: '16px', fontWeight: 700 }}>
+              <Youtube size={20} color="var(--primary)" /> YouTube API Config
+            </h3>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" style={{ fontWeight: 600, fontSize: '13px' }}>YouTube API Key</label>
+              <input 
+                type="password" name="youtubeApiKey" className="form-control" 
+                value={config.youtubeApiKey} onChange={handleChange} 
+                placeholder="YouTube API Key (Encrypted)"
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" style={{ fontWeight: 600, fontSize: '13px' }}>YouTube Channel ID</label>
+              <input 
+                type="text" name="youtubeChannelId" className="form-control" 
+                value={config.youtubeChannelId} onChange={handleChange} 
+                placeholder="e.g. UCxxxxxxxxx"
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
+              />
+            </div>
+          </div>
+          <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('youtube')} disabled={savingGroup !== ''}>
+            {savingGroup === 'youtube' ? 'Saving YouTube...' : 'Save YouTube Settings'}
+          </button>
+        </div>
+
+        {/* Hosting Gateways Config */}
+        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '300px' }}>
+          <div>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', fontSize: '16px', fontWeight: 700 }}>
+              <Cloud size={20} color="var(--primary)" /> Hosting Gateways Config
+            </h3>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" style={{ fontWeight: 600, fontSize: '13px' }}>Render API Key</label>
+              <input 
+                type="password" name="renderApiKey" className="form-control" 
+                value={config.renderApiKey} onChange={handleChange} 
+                placeholder="Render Deployment API Key"
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" style={{ fontWeight: 600, fontSize: '13px' }}>Vercel API Key</label>
+              <input 
+                type="password" name="vercelApiKey" className="form-control" 
+                value={config.vercelApiKey} onChange={handleChange} 
+                placeholder="Vercel Deployment API Key"
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
+              />
+            </div>
+          </div>
+          <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('hosting')} disabled={savingGroup !== ''}>
+            {savingGroup === 'hosting' ? 'Saving Hosting...' : 'Save Hosting Settings'}
           </button>
         </div>
 

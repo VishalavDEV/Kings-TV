@@ -5,6 +5,7 @@ import { I18nProvider } from './context/I18nContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/admin/UserManagement';
+import KycManagement from './pages/admin/KycManagement';
 import ProfanityFilter from './pages/admin/ProfanityFilter';
 import SystemSettings from './pages/admin/SystemSettings';
 import AnalyticsDashboard from './pages/admin/AnalyticsDashboard';
@@ -62,6 +63,12 @@ function App() {
           <Route path="/admin/users" element={
             <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
               <UserManagement />
+            </ProtectedLayout>
+          } />
+          
+          <Route path="/admin/kyc" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
+              <KycManagement />
             </ProtectedLayout>
           } />
           

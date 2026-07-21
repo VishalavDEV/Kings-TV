@@ -225,9 +225,14 @@ const DealsListing = () => {
         {/* COLUMN 1: Sidebar Filters */}
         <div className="deals-sidebar-filters-column">
 
-          <div className={`p-6 rounded-2xl border shadow-sm ${
-            theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-100'
-          }`}>
+          <div 
+            className="p-6 border shadow-sm"
+            style={{
+              borderRadius: '16px',
+              backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
+              borderColor: theme === 'dark' ? '#1f2937' : '#f1f5f9'
+            }}
+          >
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-extrabold text-sm text-gray-800 dark:text-white">Filter Deals</h3>
               <button 
@@ -240,15 +245,19 @@ const DealsListing = () => {
             </div>
 
             {/* Category Dropdown */}
-            <div className="mb-5 flex flex-col gap-1.5">
+            <div style={{ marginBottom: '22px' }} className="flex flex-col gap-1.5">
               <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Category</label>
               <div className="relative">
                 <select 
                   value={selectedCategory} 
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className={`w-full p-2.5 rounded-xl border text-xs focus:outline-none appearance-none cursor-pointer ${
+                  className={`w-full p-2.5 border text-xs focus:outline-none appearance-none cursor-pointer ${
                     theme === 'dark' ? 'bg-[#1f2937] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'
                   }`}
+                  style={{
+                    borderRadius: '12px',
+                    border: theme === 'dark' ? '1px solid #1f2937' : '1px solid #e2e8f0'
+                  }}
                 >
                    <option value="all">{lang === 'en' ? 'All Categories' : 'அனைத்துப் பிரிவுகள்'}</option>
                    {categories.map((c, idx) => (
@@ -262,13 +271,17 @@ const DealsListing = () => {
             </div>
 
             {/* Location Dropdown */}
-            <div className="mb-5 flex flex-col gap-1.5">
+            <div style={{ marginBottom: '22px' }} className="flex flex-col gap-1.5">
               <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Location</label>
               <div className="relative">
                 <select 
-                  className={`w-full p-2.5 rounded-xl border text-xs focus:outline-none appearance-none cursor-pointer ${
+                  className={`w-full p-2.5 border text-xs focus:outline-none appearance-none cursor-pointer ${
                     theme === 'dark' ? 'bg-[#1f2937] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'
                   }`}
+                  style={{
+                    borderRadius: '12px',
+                    border: theme === 'dark' ? '1px solid #1f2937' : '1px solid #e2e8f0'
+                  }}
                 >
                   <option>Current Location</option>
                   <option>Chennai</option>
@@ -282,12 +295,17 @@ const DealsListing = () => {
             </div>
 
             {/* Distance Dropdown */}
-            <div className="mb-5">
+            <div style={{ marginBottom: '22px' }} className="flex flex-col gap-1.5">
+              <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Distance</label>
               <div className="relative">
                 <select 
-                  className={`w-full p-2.5 rounded-xl border text-xs focus:outline-none appearance-none cursor-pointer ${
+                  className={`w-full p-2.5 border text-xs focus:outline-none appearance-none cursor-pointer ${
                     theme === 'dark' ? 'bg-[#1f2937] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'
                   }`}
+                  style={{
+                    borderRadius: '12px',
+                    border: theme === 'dark' ? '1px solid #1f2937' : '1px solid #e2e8f0'
+                  }}
                 >
                   <option>Within 10 km</option>
                   <option>Within 20 km</option>
@@ -300,8 +318,8 @@ const DealsListing = () => {
             </div>
 
             {/* Discount Type Checkboxes */}
-            <div className="mb-6">
-              <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-3">Discount Type</label>
+            <div style={{ marginBottom: '22px' }} className="flex flex-col gap-1.5">
+              <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Discount Type</label>
               <div className="flex flex-col gap-3 text-xs text-gray-650 dark:text-gray-300">
                 <label className="flex items-center gap-2.5 cursor-pointer">
                   <input 
@@ -343,7 +361,7 @@ const DealsListing = () => {
             </div>
 
             {/* Price Range Slider */}
-            <div className="mb-6 flex flex-col gap-1.5">
+            <div style={{ marginBottom: '22px' }} className="flex flex-col gap-1.5">
               <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Price Range</label>
               <input 
                 type="range" 
@@ -361,13 +379,17 @@ const DealsListing = () => {
             </div>
 
             {/* Expiry Dropdown */}
-            <div className="mb-6 flex flex-col gap-1.5">
+            <div style={{ marginBottom: '24px' }} className="flex flex-col gap-1.5">
               <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Expiry Date</label>
               <div className="relative">
                 <select 
-                  className={`w-full p-2.5 rounded-xl border text-xs focus:outline-none appearance-none cursor-pointer ${
+                  className={`w-full p-2.5 border text-xs focus:outline-none appearance-none cursor-pointer ${
                     theme === 'dark' ? 'bg-[#1f2937] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'
                   }`}
+                  style={{
+                    borderRadius: '12px',
+                    border: theme === 'dark' ? '1px solid #1f2937' : '1px solid #e2e8f0'
+                  }}
                 >
                   <option>Anytime</option>
                   <option>Expiring Today</option>
@@ -380,7 +402,12 @@ const DealsListing = () => {
             </div>
 
             {/* Apply Filters Button */}
-            <button className="w-full py-2.5 bg-[#6366f1] hover:bg-[#4f46e5] text-white text-xs font-bold rounded-xl transition shadow-sm border-0 cursor-pointer">
+            <button 
+              className="w-full py-2.5 bg-[#6366f1] hover:bg-[#4f46e5] text-white text-xs font-bold transition shadow-sm border-0 cursor-pointer"
+              style={{
+                borderRadius: '12px'
+              }}
+            >
               Apply Filters
             </button>
           </div>
@@ -530,12 +557,17 @@ const DealsListing = () => {
         </div>
 
         {/* COLUMN 4: Right Sidebar */}
-        <div className="xl:col-span-1 flex flex-col gap-6">
+        <div className="xl:col-span-1" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
           {/* Featured Deal */}
-          <div className={`p-5 rounded-2xl border shadow-sm ${
-            theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-100'
-          }`}>
+          <div 
+            className="p-5 border shadow-sm"
+            style={{
+              borderRadius: '16px',
+              backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
+              borderColor: theme === 'dark' ? '#1f2937' : '#f1f5f9'
+            }}
+          >
             <div className="flex items-center gap-2 mb-4">
               <i className="fas fa-fire text-orange-500"></i>
               <h3 className="font-extrabold text-xs text-gray-400 uppercase tracking-wider">Featured Deal</h3>
@@ -543,35 +575,54 @@ const DealsListing = () => {
 
             {/* Countdown Clock */}
             <div className="flex justify-between items-center gap-1.5 mb-4 text-center">
-              <div className="flex-1 bg-[#f5f3ff] dark:bg-purple-950/20 p-2 rounded-xl border border-purple-100/50 dark:border-purple-900/10">
+              <div 
+                className="flex-1 bg-[#f5f3ff] dark:bg-purple-950/20 p-2 border border-purple-100/50 dark:border-purple-900/10"
+                style={{ borderRadius: '12px' }}
+              >
                 <h4 className="text-sm font-black text-purple-650">02</h4>
                 <p className="text-[8px] text-purple-400 uppercase tracking-widest font-bold">Days</p>
               </div>
-              <div className="flex-1 bg-[#f5f3ff] dark:bg-purple-950/20 p-2 rounded-xl border border-purple-100/50 dark:border-purple-900/10">
+              <div 
+                className="flex-1 bg-[#f5f3ff] dark:bg-purple-950/20 p-2 border border-purple-100/50 dark:border-purple-900/10"
+                style={{ borderRadius: '12px' }}
+              >
                 <h4 className="text-sm font-black text-purple-650">12</h4>
                 <p className="text-[8px] text-purple-400 uppercase tracking-widest font-bold">Hrs</p>
               </div>
-              <div className="flex-1 bg-[#f5f3ff] dark:bg-purple-950/20 p-2 rounded-xl border border-purple-100/50 dark:border-purple-900/10">
+              <div 
+                className="flex-1 bg-[#f5f3ff] dark:bg-purple-950/20 p-2 border border-purple-100/50 dark:border-purple-900/10"
+                style={{ borderRadius: '12px' }}
+              >
                 <h4 className="text-sm font-black text-purple-650">45</h4>
                 <p className="text-[8px] text-purple-400 uppercase tracking-widest font-bold">Mins</p>
               </div>
-              <div className="flex-1 bg-[#f5f3ff] dark:bg-purple-950/20 p-2 rounded-xl border border-purple-100/50 dark:border-purple-900/10">
+              <div 
+                className="flex-1 bg-[#f5f3ff] dark:bg-purple-950/20 p-2 border border-purple-100/50 dark:border-purple-900/10"
+                style={{ borderRadius: '12px' }}
+              >
                 <h4 className="text-sm font-black text-purple-650">36</h4>
                 <p className="text-[8px] text-purple-400 uppercase tracking-widest font-bold">Secs</p>
               </div>
             </div>
 
             {/* Featured Deal Body info */}
-            <div className="rounded-xl overflow-hidden border border-gray-150 mb-4 cursor-pointer">
+            <div 
+              className="mb-4 cursor-pointer"
+              style={{
+                borderRadius: '16px',
+                border: '1px solid #e2e8f0',
+                overflow: 'hidden'
+              }}
+            >
               <div className="h-32 bg-cover bg-center relative" style={{ backgroundImage: `url(https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400)` }}>
                 <span className="absolute top-2 left-2 text-white bg-red-500 text-[8px] font-black px-1.5 py-0.5 rounded">
                   30% OFF
                 </span>
               </div>
-              <div className="p-3.5 space-y-2">
+              <div className="p-3.5 space-y-2 bg-white dark:bg-slate-900">
                 <span className="text-[8px] font-bold text-gray-400 uppercase">Restaurants</span>
                 <h4 className="font-extrabold text-xs leading-tight">30% Off on Family Dining</h4>
-                <p className="text-[10px] text-gray-505 font-semibold">The Grand Restaurant</p>
+                <p className="text-[10px] text-gray-500 font-semibold">The Grand Restaurant</p>
                 <p className="text-[9px] text-gray-450 flex items-center gap-1">
                   <i className="fas fa-map-marker-alt text-[#6366f1]"></i> Nungambakkam, Chennai
                 </p>
@@ -582,14 +633,21 @@ const DealsListing = () => {
               <button 
                 type="button"
                 onClick={() => alert("Viewing featured family dining deal detail...")}
-                className="flex-1 py-2.5 bg-[#6366f1] hover:bg-[#4f46e5] text-white text-xs font-bold rounded-xl transition border-0 cursor-pointer"
+                className="flex-1 py-2.5 bg-[#6366f1] hover:bg-[#4f46e5] text-white text-xs font-bold transition border-0 cursor-pointer"
+                style={{
+                  borderRadius: '12px'
+                }}
               >
                 View Deal
               </button>
               <button 
                 type="button"
                 onClick={() => alert("Added featured deal to wishlist!")}
-                className="w-10 h-10 rounded-xl border border-gray-150 flex items-center justify-center text-gray-400 hover:text-red-500 bg-transparent cursor-pointer"
+                className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-500 bg-transparent cursor-pointer"
+                style={{
+                  borderRadius: '12px',
+                  border: '1px solid #e2e8f0'
+                }}
               >
                 <i className="far fa-heart"></i>
               </button>
@@ -644,26 +702,6 @@ const DealsListing = () => {
                   </div>
                 );
               })}
-            </div>
-          </div>
-
-          {/* Are you a business? */}
-          <div className="p-5 rounded-2xl border shadow-sm bg-gradient-to-br from-[#e0e7ff] to-[#f5f3ff] dark:from-slate-900 dark:to-purple-950/20 border-indigo-100/50 flex items-center justify-between gap-4">
-            <div className="space-y-2">
-              <h4 className="font-extrabold text-xs text-indigo-950 dark:text-indigo-200">Are you a business?</h4>
-              <p className="text-[10px] text-indigo-750 dark:text-indigo-400 leading-normal">List your deals and reach thousands of customers</p>
-              <button 
-                type="button" 
-                onClick={() => setShowCreateModal(true)}
-                className="py-1.5 px-3 bg-white text-indigo-650 hover:bg-[#6366f1] hover:text-white border border-[#6366f1]/20 font-bold text-[10px] rounded-lg transition cursor-pointer shadow-sm"
-              >
-                Create a Deal
-              </button>
-            </div>
-            <div className="w-14 h-14 flex-shrink-0 text-indigo-500 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="w-full h-full" fill="currentColor">
-                <path d="M12 3L2 12h3v8h14v-8h3L12 3zm0 4.83l5 4.5V18H7v-5.67l5-4.5z"/>
-              </svg>
             </div>
           </div>
 

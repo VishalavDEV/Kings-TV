@@ -45,7 +45,10 @@ public class DealsController {
 
     // --- Business Console CRUD ---
     @PostMapping
-    public ResponseEntity<?> createDeal(@RequestBody Deal deal) {
+    public ResponseEntity<?> createDeal(@RequestBody Deal deal, Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
+        }
         if (deal.getListingId() == null || deal.getTitle() == null || deal.getCategory() == null || deal.getDiscountType() == null || deal.getDiscountValue() == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Required fields are missing"));
         }
@@ -53,6 +56,16 @@ public class DealsController {
         Optional<DirectoryListing> listingOpt = directoryRepository.findById(deal.getListingId());
         if (listingOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Merchant business listing not found"));
+        }
+
+        DirectoryListing listing = listingOpt.get();
+        Optional<User> userOpt = userRepository.findByEmail(principal.getName());
+        if (userOpt.isEmpty() || !Objects.equals(listing.getCreatedBy(), (long) userOpt.get().getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You do not own this business listing"));
+        }
+
+        if (!"approved".equalsIgnoreCase(listing.getKycStatus())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Deals can only be created for KYC approved business listings"));
         }
 
         deal.setStatus("pending");
@@ -67,12 +80,24 @@ public class DealsController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateDeal(@PathVariable Long id, @RequestBody Deal entity) {
+    public ResponseEntity<?> updateDeal(@PathVariable Long id, @RequestBody Deal entity, Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
+        }
         Optional<Deal> dealOpt = dealRepository.findById(id);
         if (dealOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Deal not found"));
         }
         Deal deal = dealOpt.get();
+        Optional<DirectoryListing> listingOpt = directoryRepository.findById(deal.getListingId());
+        if (listingOpt.isPresent()) {
+            DirectoryListing listing = listingOpt.get();
+            Optional<User> userOpt = userRepository.findByEmail(principal.getName());
+            if (userOpt.isEmpty() || !Objects.equals(listing.getCreatedBy(), (long) userOpt.get().getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You do not own the business listing for this deal"));
+            }
+        }
+
         deal.setTitle(entity.getTitle());
         deal.setCategory(entity.getCategory());
         deal.setSubCategory(entity.getSubCategory());
@@ -92,13 +117,31 @@ public class DealsController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteDeal(@PathVariable Long id) {
+    public ResponseEntity<?> deleteDeal(@PathVariable Long id, Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
+        }
         Optional<Deal> dealOpt = dealRepository.findById(id);
         if (dealOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Deal not found"));
         }
-        dealRepository.delete(dealOpt.get());
+        Deal deal = dealOpt.get();
+        Optional<DirectoryListing> listingOpt = directoryRepository.findById(deal.getListingId());
+        if (listingOpt.isPresent()) {
+            DirectoryListing listing = listingOpt.get();
+            Optional<User> userOpt = userRepository.findByEmail(principal.getName());
+            if (userOpt.isEmpty() || !Objects.equals(listing.getCreatedBy(), (long) userOpt.get().getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You do not own the business listing for this deal"));
+            }
+        }
+        dealRepository.delete(deal);
         return ResponseEntity.ok(Map.of("message", "Deal deleted successfully"));
+    }
+
+    @GetMapping("/listing/{listingId}")
+    public ResponseEntity<?> getDealsByListing(@PathVariable Long listingId) {
+        List<Deal> deals = dealRepository.findByListingId(listingId);
+        return ResponseEntity.ok(deals);
     }
 
     @PatchMapping("/{id}/close")

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {
   --primary: #B3732A;
@@ -5707,4 +5708,14 @@ ul {
 h1, h2, h3, h4, h5, h6 {
   font-weight: 800;
   letter-spacing: -0.5px;
+}
+
+/* Center RFQ and Deals pages */
+.rfq-module-container, .biz-module-container {
+  max-width: 1280px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+  width: 100% !important;
 }
