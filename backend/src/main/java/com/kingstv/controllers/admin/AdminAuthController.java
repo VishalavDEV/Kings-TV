@@ -29,7 +29,7 @@ public class AdminAuthController {
 
     // Admin roles that are permitted to log in via the admin portal
     private static final Set<String> ADMIN_ROLES = Set.of(
-        "SUPER_ADMIN", "CHIEF_EDITOR", "DISTRICT_ADMIN", "MOBILE_JOURNALIST", "INSTITUTION_LOGIN"
+        "SUPER_ADMIN", "ADMIN", "ROLE_ADMIN", "ADMINISTRATOR", "CHIEF_EDITOR", "DISTRICT_ADMIN", "MOBILE_JOURNALIST", "INSTITUTION_LOGIN"
     );
 
     @Autowired private UserRepository userRepository;
@@ -231,8 +231,8 @@ public class AdminAuthController {
     }
 
     private List<String> getModulePermissions(String roleName) {
-        // SUPER_ADMIN gets all module keys
-        if ("SUPER_ADMIN".equals(roleName)) {
+        // SUPER_ADMIN and ADMIN get all module keys
+        if (roleName != null && (roleName.contains("ADMIN") || roleName.contains("SUPER"))) {
             return List.of(
                 "admin_panel", "add_post", "manage_all_posts", "navigation", "pages",
                 "rss_feeds", "categories", "widgets", "polls", "gallery", "comments",

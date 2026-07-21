@@ -64,11 +64,8 @@ public class BackendJavaApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        updatePasswordIfPresent("admin@king24x7.com", "admin123");
-        updatePasswordIfPresent("vendor@king24x7.com", "vendor123");
-        updatePasswordIfPresent("editor@king24x7.com", "editor123");
-        updatePasswordIfPresent("reporter@king24x7.com", "reporter123");
-        updatePasswordIfPresent("user@king24x7.com", "user123");
+        ensureAdminUser("admin@king24x7.com", "admin123");
+        ensureAdminUser("admin@kingstv.com", "admin123");
 
         seedCategories();
         seedFrameTemplates();
@@ -122,14 +119,22 @@ public class BackendJavaApplication implements CommandLineRunner {
         wishFrameTemplateRepository.save(t);
     }
 
-    private void updatePasswordIfPresent(String email, String rawPassword) {
+    private void ensureAdminUser(String email, String rawPassword) {
         Optional<User> userOpt = userRepository.findByEmail(email);
+        User user;
         if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            user.setPassword(passwordEncoder.encode(rawPassword));
-            userRepository.save(user);
-            System.out.println("Updated password for " + email);
+            user = userOpt.get();
+        } else {
+            user = new User();
+            user.setEmail(email);
+            user.setFullName("Super Administrator");
+            user.setCreatedAt(java.time.LocalDateTime.now());
         }
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        user.setRole("SUPER_ADMIN");
+        user.setIsActive(true);
+        userRepository.save(user);
+        System.out.println("Admin credentials ensured for " + email + " with password: " + rawPassword);
     }
 
 
