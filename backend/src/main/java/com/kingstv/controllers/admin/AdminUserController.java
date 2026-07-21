@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * Delete of MJ/Institution posts restricted to Super Admin only (#21).
  */
 @RestController
-@RequestMapping("/api/v1/admin/users")
+@RequestMapping({"/api/admin/users", "/api/v1/admin/users"})
 public class AdminUserController {
 
     @Autowired private UserRepository userRepository;
@@ -34,6 +34,56 @@ public class AdminUserController {
     @Autowired private UserCategoryRepository userCategoryRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private AuditLogRepository auditLogRepository;
+
+    /**
+     * List administrators
+     */
+    @GetMapping("/administrators")
+    public ResponseEntity<?> listAdministrators() {
+        List<String> adminRoles = List.of("SUPER_ADMIN", "CHIEF_EDITOR", "DISTRICT_ADMIN", "MOBILE_JOURNALIST", "INSTITUTION_LOGIN");
+        List<User> list = userRepository.findAll().stream()
+                .filter(u -> u.getRole() != null && adminRoles.contains(u.getRole().toUpperCase()))
+                .sorted(Comparator.comparing(User::getId).reversed())
+                .collect(Collectors.toList());
+        List<Map<String, Object>> res = list.stream().map(this::toUserResponse).collect(Collectors.toList());
+        return ResponseEntity.ok(res);
+    }
+
+    /**
+     * List front-end public registered users
+     */
+    @GetMapping("/public-users")
+    public ResponseEntity<?> listPublicUsers() {
+        List<String> adminRoles = List.of("SUPER_ADMIN", "CHIEF_EDITOR", "DISTRICT_ADMIN", "MOBILE_JOURNALIST", "INSTITUTION_LOGIN");
+        List<User> list = userRepository.findAll().stream()
+                .filter(u -> u.getRole() == null || !adminRoles.contains(u.getRole().toUpperCase()))
+                .sorted(Comparator.comparing(User::getId).reversed())
+                .collect(Collectors.toList());
+        List<Map<String, Object>> res = list.stream().map(this::toUserResponse).collect(Collectors.toList());
+        return ResponseEntity.ok(res);
+    }
+
+    @DeleteMapping("/public-users/{id}")
+    public ResponseEntity<?> deletePublicUser(@PathVariable Long id) {
+        if (!userRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        userRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("message", "Public user deleted successfully"));
+    }
+
+    @PutMapping("/administrators/{id}/reset-password")
+    public ResponseEntity<?> resetPassword(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        String newPassword = body.get("password");
+        if (newPassword == null || newPassword.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "password is required"));
+        }
+        return userRepository.findById(id).map(user -> {
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+            return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
+        }).orElse(ResponseEntity.notFound().build());
+    }
 
     /**
      * List all users with optional filters

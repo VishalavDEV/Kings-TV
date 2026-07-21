@@ -1,23 +1,40 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import AdminLayout from './layouts/AdminLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Administrators from './pages/users/Administrators';
 import PublicUsers from './pages/users/PublicUsers';
+import AddUser from './pages/users/AddUser';
 import RolesPermissions from './pages/roles/RolesPermissions';
 import EditRole from './pages/roles/EditRole';
+
+// Rewards & Ads
+import RewardSystem from './pages/rewards/RewardSystem';
+import Earnings from './pages/rewards/Earnings';
+import Payouts from './pages/rewards/Payouts';
+import AddPayout from './pages/rewards/AddPayout';
+import Pageviews from './pages/rewards/Pageviews';
+import AdSpaces from './pages/ads/AdSpaces';
 
 // Comments, Contact, Newsletter
 import Comments from './pages/Comments';
 import ContactMessages from './pages/ContactMessages';
 import Newsletter from './pages/Newsletter';
 
+// SEO, Languages, Routes
+import SeoTools from './pages/seo/SeoTools';
+import Languages from './pages/languages/Languages';
+import EditTranslations from './pages/languages/EditTranslations';
+import RouteSettings from './pages/settings/RouteSettings';
+
 // Settings
 import Preferences from './pages/settings/Preferences';
 import VisualSettings from './pages/settings/VisualSettings';
 import GeneralSettings from './pages/settings/GeneralSettings';
+import SocialLoginConfig from './pages/settings/SocialLoginConfig';
 
 // RSS
 import RssFeeds from './pages/rss/RssFeeds';
@@ -61,6 +78,7 @@ function AppRoutes() {
         <Route index element={<Dashboard />} />
 
         {/* Users */}
+        <Route path="users/add" element={<AddUser />} />
         <Route path="users/administrators" element={<Administrators />} />
         <Route path="users" element={<PublicUsers />} />
 
@@ -68,7 +86,8 @@ function AppRoutes() {
         <Route path="roles-permissions" element={<RolesPermissions />} />
         <Route path="roles-permissions/:id/edit" element={<EditRole />} />
 
-        {/* Settings */}
+        {/* Settings & Social Login */}
+        <Route path="social-login" element={<SocialLoginConfig />} />
         <Route path="preferences" element={<Preferences />} />
         <Route path="settings/visual" element={<VisualSettings />} />
         <Route path="settings/general" element={<GeneralSettings />} />
@@ -83,6 +102,30 @@ function AppRoutes() {
         <Route path="comments" element={<Comments />} />
         <Route path="contact" element={<ContactMessages />} />
         <Route path="newsletter" element={<Newsletter />} />
+
+        {/* Rewards */}
+        <Route path="rewards" element={<RewardSystem />} />
+        <Route path="reward-system" element={<Navigate to="/rewards" replace />} />
+        <Route path="earnings" element={<Earnings />} />
+        <Route path="payouts" element={<Payouts />} />
+        <Route path="payouts/add" element={<AddPayout />} />
+        <Route path="pageviews" element={<Pageviews />} />
+
+        {/* Ad Spaces */}
+        <Route path="ads" element={<AdSpaces />} />
+        <Route path="ad-spaces" element={<Navigate to="/ads" replace />} />
+
+        {/* SEO Tools */}
+        <Route path="seo" element={<SeoTools />} />
+        <Route path="seo-tools" element={<Navigate to="/seo" replace />} />
+
+        {/* Languages */}
+        <Route path="languages" element={<Languages />} />
+        <Route path="languages/:id/translations" element={<EditTranslations />} />
+
+        {/* Route Settings */}
+        <Route path="navigation" element={<RouteSettings />} />
+        <Route path="route-settings" element={<Navigate to="/navigation" replace />} />
 
         {/* System */}
         <Route path="storage" element={<Storage />} />
@@ -111,9 +154,11 @@ function ComingSoon() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 }

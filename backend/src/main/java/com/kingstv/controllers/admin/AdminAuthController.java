@@ -160,6 +160,20 @@ public class AdminAuthController {
     }
 
     /**
+     * POST /api/admin/auth/logout
+     * Server-side logout token invalidation
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestBody(required = false) Map<String, String> body) {
+        if (body != null && body.containsKey("refreshToken")) {
+            refreshTokenRepository.findByToken(body.get("refreshToken"))
+                .ifPresent(token -> refreshTokenRepository.delete(token));
+        }
+        SecurityContextHolder.clearContext();
+        return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+    }
+
+    /**
      * GET /api/admin/auth/me
      * Returns the current admin's profile and their module permissions.
      * Used by the frontend to build the dynamic sidebar.

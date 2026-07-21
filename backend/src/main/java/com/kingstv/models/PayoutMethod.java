@@ -16,6 +16,9 @@ public class PayoutMethod {
     @Column(nullable = false)
     private Boolean enabled = false;
 
+    @Column(name = "account_details", columnDefinition = "TEXT")
+    private String accountDetails;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -24,4 +27,7 @@ public class PayoutMethod {
 
     public Boolean getEnabled() { return enabled; }
     public void setEnabled(Boolean enabled) { this.enabled = enabled; }
+
+    public String getAccountDetails() { return accountDetails; }
+    public void setAccountDetails(String accountDetails) { this.accountDetails = accountDetails; }
 }
