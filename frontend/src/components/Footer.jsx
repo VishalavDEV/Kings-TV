@@ -50,8 +50,6 @@ const Footer = () => {
               <a href="https://x.com/onlinethamizhan" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
               <a href="https://www.instagram.com/king24x7/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
               <a href="https://www.youtube.com/@king24x7" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
-              <a href="https://whatsapp.com" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><i className="fab fa-whatsapp"></i></a>
-              <a href="https://telegram.org" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i className="fab fa-telegram-plane"></i></a>
             </div>
           </div>
         </div>

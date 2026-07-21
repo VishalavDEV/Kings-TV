@@ -918,7 +918,7 @@ const Header = () => {
   const renderSocials = () => (
     <div style={{ display: 'flex', gap: '8px' }}>
       <a href="https://www.facebook.com/profile.php?id=61551357861905" className="social-icon" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
-      <a href=" https://x.com/onlinethamizhan" className="social-icon" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
+      <a href="https://x.com/onlinethamizhan" className="social-icon" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
       <a href="https://www.instagram.com/king24x7/" className="social-icon" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
       <a href="https://www.youtube.com/@king24x7" className="social-icon" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
     </div>
