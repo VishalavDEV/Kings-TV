@@ -39,8 +39,8 @@ const ProtectedLayout = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
 
   if (loading) return <div className="app-container"><div className="glass-panel" style={{margin: 'auto', padding: '2rem'}}>Loading...</div></div>;
-  if (!user) return <Navigate to="/login" replace />;
-  if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/dashboard" replace />;
+  if (!user) return <Navigate to="/admin/login" replace />;
+  if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/admin/dashboard" replace />;
 
   return (
     <div className="app-container">
@@ -60,9 +60,11 @@ function App() {
       <I18nProvider>
         <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<Navigate to="/admin/login" replace />} />
+          <Route path="/admin/login" element={<Login />} />
           
-          <Route path="/dashboard" element={
+          <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/dashboard" element={
             <ProtectedLayout>
               <Dashboard />
             </ProtectedLayout>
@@ -243,8 +245,9 @@ function App() {
             </ProtectedLayout>
           } />
 
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
      </I18nProvider>

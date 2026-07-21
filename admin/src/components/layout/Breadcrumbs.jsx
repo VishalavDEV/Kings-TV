@@ -45,13 +45,13 @@ const Breadcrumbs = () => {
     return translationMap[segment.toLowerCase()] || segment.charAt(0).toUpperCase() + segment.slice(1);
   };
 
-  if (location.pathname === '/' || location.pathname === '/dashboard') {
+  if (location.pathname === '/' || location.pathname === '/admin/dashboard' || location.pathname === '/dashboard') {
     return null; // Don't show breadcrumbs on the main landing dashboard
   }
 
   return (
     <nav aria-label="breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-      <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }}>
+      <Link to="/admin/dashboard" style={{ display: 'flex', alignItems: 'center', color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }}>
         <Home size={14} style={{ marginRight: '0.2rem' }} />
         <span>{t('dashboard')}</span>
       </Link>

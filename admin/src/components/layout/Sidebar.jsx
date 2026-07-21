@@ -120,7 +120,7 @@ const Sidebar = () => {
       <nav className="sidebar-nav">
         {/* ═══ MAIN ═══ */}
         <SidebarSection id="main" title={t('main')} icon={LayoutDashboard} defaultOpen={true}>
-          <SidebarNavLink to="/dashboard" icon={LayoutDashboard} label={t('dashboard')} />
+          <SidebarNavLink to="/admin/dashboard" icon={LayoutDashboard} label={t('dashboard')} />
           {isEditor && (
             <SidebarNavLink to="/admin/analytics" icon={PieChart} label={t('analytics')} />
           )}
