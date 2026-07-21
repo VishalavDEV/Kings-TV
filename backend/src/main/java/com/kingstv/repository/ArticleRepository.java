@@ -14,7 +14,9 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
     long countByStatus(String status);
     List<Article> findByStatusOrderByPublishedAtDesc(String status);
     List<Article> findTop50ByStatusOrderByPublishedAtDesc(String status);
+    List<Article> findByPublishedAtAfter(java.time.LocalDateTime date);
     Optional<Article> findBySlug(String slug);
+    boolean existsByCanonicalUrl(String canonicalUrl);
     org.springframework.data.domain.Page<Article> findByStatus(String status, org.springframework.data.domain.Pageable pageable);
     List<Article> findTop5ByStatusOrderByViewsCountDesc(String status);
     List<Article> findByAuthorNameInAndStatusOrderByPublishedAtDesc(List<String> authorNames, String status);

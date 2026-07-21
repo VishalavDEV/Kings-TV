@@ -141,6 +141,7 @@ const Sidebar = () => {
             <SidebarNavLink to="/admin/media" icon={ImageIcon} label={t('mediaLibrary') || 'Media Library'} />
             <SidebarNavLink to="/admin/ugc-queue" icon={Users} label={t('ugcQueue')} badge={counts.pendingUgc} />
             <SidebarNavLink to="/admin/breaking" icon={AlertTriangle} label={t('breakingNews')} badge={counts.activeBreaking} />
+            <SidebarNavLink to="/admin/rss" icon={Globe} label="RSS Importer" />
             <SidebarNavLink to="/admin/kyc" icon={Shield} label={t('kycVerification') || 'KYC Verification'} />
           </SidebarSection>
         )}
@@ -178,6 +179,7 @@ const Sidebar = () => {
         {isAdmin && (
           <SidebarSection id="monetization" title={t('monetization')} icon={DollarSign} defaultOpen={false}>
             <SidebarNavLink to="/admin/ads" icon={DollarSign} label={t('adManagement')} />
+            <SidebarNavLink to="/admin/rewards" icon={Activity} label="Reward System" />
           </SidebarSection>
         )}
 
@@ -192,7 +194,9 @@ const Sidebar = () => {
           >
             <SidebarNavLink to="/admin/users" icon={Users} label={t('userAccounts')} />
             <SidebarNavLink to="/admin/roles" icon={Key} label={t('rolesPermissions')} />
+            <SidebarNavLink to="/admin/subscribers" icon={Users} label="Subscribers" />
             <SidebarNavLink to="/admin/taxonomy" icon={Tags} label={t('taxonomy')} />
+            <SidebarNavLink to="/admin/notifications" icon={BellRing} label="Notifications" />
             <SidebarNavLink to="/admin/seo" icon={Search} label={t('seoConsole') || 'SEO & Sitemap'} />
             <SidebarNavLink to="/admin/surveys" icon={HelpCircle} label={t('surveys')} />
             <SidebarNavLink to="/admin/settings" icon={Settings} label={t('settings')} />

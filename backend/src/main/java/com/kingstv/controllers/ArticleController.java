@@ -112,6 +112,52 @@ public class ArticleController {
         articleRepository.incrementViewsCount(article.getId());
         article.setViewsCount((article.getViewsCount() != null ? article.getViewsCount() : 0) + 1);
 
+        // Record ArticleView and calculate earnings asynchronously
+        String ip = request.getRemoteAddr();
+        if (ip != null && !ip.isEmpty()) {
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                try {
+                    com.kingstv.repository.ArticleViewRepository viewRepo = org.springframework.web.context.support.WebApplicationContextUtils.getWebApplicationContext(request.getServletContext()).getBean(com.kingstv.repository.ArticleViewRepository.class);
+                    com.kingstv.repository.EarningLedgerRepository ledgerRepo = org.springframework.web.context.support.WebApplicationContextUtils.getWebApplicationContext(request.getServletContext()).getBean(com.kingstv.repository.EarningLedgerRepository.class);
+                    com.kingstv.repository.SystemConfigRepository configRepo = org.springframework.web.context.support.WebApplicationContextUtils.getWebApplicationContext(request.getServletContext()).getBean(com.kingstv.repository.SystemConfigRepository.class);
+                    
+                    if (viewRepo.findByArticleIdAndIpAddress(article.getId(), ip).isEmpty()) {
+                        com.kingstv.models.ArticleView view = new com.kingstv.models.ArticleView();
+                        view.setArticleId(article.getId());
+                        view.setIpAddress(ip);
+                        view.setUserAgent(request.getHeader("User-Agent"));
+                        
+                        // Handle earnings if the article has an author
+                        if (article.getAuthorName() != null && !article.getAuthorName().equalsIgnoreCase("Kings TV News Desk")) {
+                            Optional<User> authorOpt = userRepository.findByFullName(article.getAuthorName());
+                            if (authorOpt.isPresent()) {
+                                User author = authorOpt.get();
+                                view.setAuthorId(author.getId());
+                                view.setIsCountedForEarnings(true);
+                                
+                                // Fetch cost_per_view (default 0.01)
+                                Double costPerView = 0.01;
+                                Optional<com.kingstv.models.SystemConfig> costConfig = configRepo.findByConfigKey("cost_per_view");
+                                if (costConfig.isPresent()) {
+                                    try { costPerView = Double.parseDouble(costConfig.get().getConfigValue()); } catch (Exception e) {}
+                                }
+                                
+                                com.kingstv.models.EarningLedger ledger = new com.kingstv.models.EarningLedger();
+                                ledger.setAuthorId(author.getId());
+                                ledger.setArticleId(article.getId());
+                                ledger.setAmount(costPerView);
+                                ledger.setTransactionType("PAGEVIEW");
+                                ledgerRepo.save(ledger);
+                            }
+                        }
+                        viewRepo.save(view);
+                    }
+                } catch (Exception e) {
+                    // Ignore async errors
+                }
+            });
+        }
+
         if (article.getAuthorName() != null) {
             userRepository.findByFullName(article.getAuthorName()).ifPresent(user -> {
                 article.setAuthorProfileImage(user.getProfileImage());

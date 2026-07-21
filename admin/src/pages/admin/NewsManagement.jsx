@@ -238,6 +238,7 @@ const NewsManagement = () => {
                 <th style={{ padding: '0.75rem 0.5rem', textAlign: 'left', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, width: '100px' }}>STATUS</th>
                 <th style={{ padding: '0.75rem 0.5rem', textAlign: 'left', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, width: '110px' }}>AUTHOR</th>
                 <th style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, width: '70px' }}>VIEWS</th>
+                <th style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, width: '70px' }}>PRIORITY</th>
                 <th style={{ padding: '0.75rem 0.5rem', textAlign: 'left', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, width: '130px' }}>PUBLISHED</th>
                 <th style={{ padding: '0.75rem 1rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, width: '160px' }}>ACTIONS</th>
               </tr>
@@ -269,6 +270,9 @@ const NewsManagement = () => {
                   </td>
                   <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                     {(art.viewsCount ?? 0).toLocaleString()}
+                  </td>
+                  <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    {(art.priorityScore ?? 0.0).toFixed(1)}
                   </td>
                   <td style={{ padding: '0.75rem 0.5rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                     {art.publishedAt ? new Date(art.publishedAt).toLocaleDateString() : '—'}

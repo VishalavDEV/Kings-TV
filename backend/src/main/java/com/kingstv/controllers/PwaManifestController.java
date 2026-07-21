@@ -14,7 +14,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/config")
-public class SystemConfigController {
+public class PwaManifestController {
 
     @Autowired
     private SystemConfigRepository configRepository;

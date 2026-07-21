@@ -30,6 +30,10 @@ import BreakingNewsDashboard from './pages/admin/BreakingNewsDashboard';
 import UgcQueue from './pages/admin/UgcQueue';
 import EditorialCalendar from './pages/admin/EditorialCalendar';
 import AdManagement from './pages/admin/AdManagement';
+import RssManager from './pages/admin/RssManager';
+import RewardSystem from './pages/admin/RewardSystem';
+import SubscribersManagement from './pages/admin/SubscribersManagement';
+import NotificationPreferences from './pages/admin/NotificationPreferences';
 
 const ProtectedLayout = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
@@ -146,6 +150,30 @@ function App() {
           <Route path="/admin/ads" element={
             <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
               <AdManagement />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/subscribers" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
+              <SubscribersManagement />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/notifications" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
+              <NotificationPreferences />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/rewards" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
+              <RewardSystem />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/rss" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
+              <RssManager />
             </ProtectedLayout>
           } />
 
