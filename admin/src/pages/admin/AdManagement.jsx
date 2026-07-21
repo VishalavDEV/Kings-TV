@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api";
 import { DollarSign, Plus, Eye, EyeOff, Trash2, Edit2, BarChart2 } from "lucide-react";
+import ImageUploadPreview from "../../components/common/ImageUploadPreview";
 
 const AD_POSITIONS = [
   { value: "LEADERBOARD_TOP", label: "Leaderboard Top (728x90)" },
@@ -186,7 +187,15 @@ const AdManagement = () => {
                 </select>
               </div>
             </div>
-            {form.type === "IMAGE" && <div><label style={labelStyle}>Image URL</label><input style={inputStyle} value={form.imageUrl} onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))} placeholder="https://cdn.king24x7.com/ads/banner.jpg" /></div>}
+            {form.type === "IMAGE" && (
+              <ImageUploadPreview
+                label="Ad Creative Image"
+                value={form.imageUrl}
+                onChange={val => setForm(f => ({ ...f, imageUrl: val }))}
+                uploadEndpoint="/articles/upload"
+                placeholder="Image URL or upload ad banner..."
+              />
+            )}
             {form.type === "HTML_CODE" && <div><label style={labelStyle}>Ad HTML/JS Code</label><textarea value={form.adCode} onChange={e => setForm(f => ({ ...f, adCode: e.target.value }))} style={{ ...inputStyle, minHeight: "120px", resize: "vertical", fontFamily: "monospace" }} placeholder="<script>..." /></div>}
             <div><label style={labelStyle}>Click Target URL</label><input style={inputStyle} value={form.targetUrl} onChange={e => setForm(f => ({ ...f, targetUrl: e.target.value }))} placeholder="https://advertiser-website.com" /></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>

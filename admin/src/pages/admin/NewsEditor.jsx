@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { Save, ArrowLeft, Send, CheckCircle, MapPin, Image, Video, Link, Copy, Plus } from 'lucide-react';
+import { Save, ArrowLeft, Send, CheckCircle, MapPin, Image, Video, Link, Copy, Plus, Sparkles } from 'lucide-react';
+import ImageUploadPreview from '../../components/common/ImageUploadPreview';
+import CategorySubcategorySelect from '../../components/common/CategorySubcategorySelect';
 
 const TABS = ['Tamil', 'English', 'SEO', 'Settings'];
 
@@ -1267,36 +1269,14 @@ const NewsEditor = () => {
             </select>
           </div>
 
-          {/* Category */}
-          <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
-            <label style={labelStyle}>Category</label>
-            <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.categoryId} onChange={e => set('categoryId', e.target.value)}>
-              <option value="" style={{ color: '#000000', backgroundColor: '#ffffff' }}>— Select Category —</option>
-              {categories.map(c => (
-                <option key={c.id} value={c.id} style={{ color: '#000000', backgroundColor: '#ffffff' }}>
-                  {c.icon ? c.icon + ' ' : ''}{c.nameTa ? `${c.nameTa} / ${c.name}` : c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Subcategory */}
-          <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
-            <label style={labelStyle}>Subcategory {!form.categoryId && <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 400 }}>(select category first)</span>}</label>
-            <select 
-              style={{ ...inputStyle, cursor: form.categoryId ? 'pointer' : 'not-allowed', opacity: form.categoryId ? 1 : 0.5 }} 
-              value={form.subcategoryId} 
-              onChange={e => set('subcategoryId', e.target.value)}
-              disabled={!form.categoryId}
-            >
-              <option value="" style={{ color: '#000000', backgroundColor: '#ffffff' }}>— Select Subcategory —</option>
-              {subCategories.map(sc => (
-                <option key={sc.subcategoryId} value={sc.subcategoryId} style={{ color: '#000000', backgroundColor: '#ffffff' }}>
-                  {sc.nameTa ? `${sc.nameTa} / ${sc.name}` : sc.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Category & Subcategory Cascading Select */}
+          <CategorySubcategorySelect
+            categoryId={form.categoryId}
+            subcategoryId={form.subcategoryId}
+            onCategoryChange={val => set('categoryId', val)}
+            onSubcategoryChange={val => set('subcategoryId', val)}
+            required={true}
+          />
 
           {/* District */}
           <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
@@ -1322,21 +1302,15 @@ const NewsEditor = () => {
             />
           </div>
 
-          {/* Featured Image */}
+          {/* Featured Image Upload with Instant Preview */}
           <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
-            <label style={labelStyle}>Featured Image</label>
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <input style={{ ...inputStyle, flex: 1 }} value={form.imageUrl}
-                onChange={e => set('imageUrl', e.target.value)} placeholder="Image URL..." />
-              <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '0 0.75rem', borderRadius: '8px' }}>
-                <Plus size={16} /> Upload
-                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFeaturedImageUpload} />
-              </label>
-            </div>
-            {form.imageUrl && (
-              <img src={getPreviewUrl(form.imageUrl)} alt="preview" onError={e => e.target.style.display = 'none'}
-                style={{ width: '100%', borderRadius: '8px', marginTop: '0.75rem', maxHeight: '140px', objectFit: 'cover' }} />
-            )}
+            <ImageUploadPreview
+              label="Featured Image"
+              value={form.imageUrl}
+              onChange={val => set('imageUrl', val)}
+              uploadEndpoint="/articles/upload"
+              placeholder="Image URL or upload file..."
+            />
           </div>
 
           {/* News Tags */}
