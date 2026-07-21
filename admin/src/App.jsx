@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { I18nProvider } from './context/I18nContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/admin/UserManagement';
-import KycManagement from './pages/admin/KycManagement';
 import ProfanityFilter from './pages/admin/ProfanityFilter';
 import SystemSettings from './pages/admin/SystemSettings';
 import AnalyticsDashboard from './pages/admin/AnalyticsDashboard';
@@ -15,28 +14,35 @@ import PushNotifications from './pages/admin/PushNotifications';
 import HomeLayoutBuilder from './pages/admin/HomeLayoutBuilder';
 import SurveyBuilder from './pages/admin/SurveyBuilder';
 import AuditLogs from './pages/admin/AuditLogs';
-import CommentsModeration from './pages/admin/CommentsModeration';
-import MediaLibrary from './pages/admin/MediaLibrary';
-import SeoConsole from './pages/admin/SeoConsole';
 import ContentQueue from './pages/editor/ContentQueue';
 import MyPosts from './pages/journalist/MyPosts';
 import PostEditor from './pages/journalist/PostEditor';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
-import Breadcrumbs from './components/layout/Breadcrumbs';
 import NewsManagement from './pages/admin/NewsManagement';
 import NewsEditor from './pages/admin/NewsEditor';
 import BreakingNewsDashboard from './pages/admin/BreakingNewsDashboard';
 import UgcQueue from './pages/admin/UgcQueue';
 import EditorialCalendar from './pages/admin/EditorialCalendar';
 import AdManagement from './pages/admin/AdManagement';
-import RssManager from './pages/admin/RssManager';
-import RewardSystem from './pages/admin/RewardSystem';
-import SubscribersManagement from './pages/admin/SubscribersManagement';
-import NotificationPreferences from './pages/admin/NotificationPreferences';
 
 const ProtectedLayout = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const closeSidebar = () => setIsSidebarOpen(false);
+
+  React.useEffect(() => {
+    if (isSidebarOpen && window.innerWidth < 768) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isSidebarOpen]);
 
   if (loading) return <div className="app-container"><div className="glass-panel" style={{margin: 'auto', padding: '2rem'}}>Loading...</div></div>;
   if (!user) return <Navigate to="/admin/login" replace />;
@@ -44,10 +50,10 @@ const ProtectedLayout = ({ children, allowedRoles }) => {
 
   return (
     <div className="app-container">
-      <Sidebar />
-      <Header />
+      <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
+      {isSidebarOpen && <div className="sidebar-backdrop" onClick={closeSidebar}></div>}
+      <Header onToggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
       <main className="main-content">
-        <Breadcrumbs />
         {children}
       </main>
     </div>
@@ -74,12 +80,6 @@ function App() {
           <Route path="/admin/users" element={
             <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
               <UserManagement />
-            </ProtectedLayout>
-          } />
-          
-          <Route path="/admin/kyc" element={
-            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
-              <KycManagement />
             </ProtectedLayout>
           } />
           
@@ -155,36 +155,6 @@ function App() {
             </ProtectedLayout>
           } />
 
-          <Route path="/admin/subscribers" element={
-            <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
-              <SubscribersManagement />
-            </ProtectedLayout>
-          } />
-
-          <Route path="/admin/notifications" element={
-            <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
-              <NotificationPreferences />
-            </ProtectedLayout>
-          } />
-
-          <Route path="/admin/rewards" element={
-            <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
-              <RewardSystem />
-            </ProtectedLayout>
-          } />
-
-          <Route path="/admin/rss" element={
-            <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
-              <RssManager />
-            </ProtectedLayout>
-          } />
-
-          <Route path="/admin/seo" element={
-            <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
-              <SeoConsole />
-            </ProtectedLayout>
-          } />
-
 
           <Route path="/admin/news/:id/edit" element={
             <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
@@ -207,18 +177,6 @@ function App() {
           <Route path="/admin/audit-logs" element={
             <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
               <AuditLogs />
-            </ProtectedLayout>
-          } />
-
-          <Route path="/admin/comments" element={
-            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
-              <CommentsModeration />
-            </ProtectedLayout>
-          } />
-
-          <Route path="/admin/media" element={
-            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
-              <MediaLibrary />
             </ProtectedLayout>
           } />
           {/* Chief Editor routes */}
