@@ -1,6 +1,6 @@
 :root {
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-title: 'Outfit', sans-serif;
+  --font-sans: 'Inter', 'Noto Sans Tamil', system-ui, -apple-system, sans-serif;
+  --font-title: 'Outfit', 'Noto Sans Tamil', sans-serif;
 
   /* Custom Color Palette (Modern Deep Royal Dark Mode & Warm Slate Light Mode) */
   --bg-primary: #0B0F19;
