@@ -50,6 +50,27 @@ import Districts from './pages/Districts';
 import InstitutionNewsAdmin from './pages/InstitutionNewsAdmin';
 import MediaLibrary from './pages/MediaLibrary';
 
+// New Core Pages & Colleague Modules
+import AddPost from './pages/AddPost';
+import EditPost from './pages/EditPost';
+import PostsList from './pages/PostsList';
+import AdminBulkPostUpload from './pages/AdminBulkPostUpload';
+import AdminCategories from './pages/AdminCategories';
+import AdminSubcategories from './pages/AdminSubcategories';
+import AdminBusinessDirectory from './pages/AdminBusinessDirectory';
+import AdminClassifieds from './pages/AdminClassifieds';
+import AdminDeals from './pages/AdminDeals';
+import AdminJobs from './pages/AdminJobs';
+import AdminNfc from './pages/AdminNfc';
+import AdminRfq from './pages/AdminRfq';
+import AdminObituariesWishes from './pages/AdminObituariesWishes';
+import AdminGallery from './pages/AdminGallery';
+import AdminPages from './pages/AdminPages';
+import AdminPolls from './pages/AdminPolls';
+import AdminWidgets from './pages/AdminWidgets';
+import AdminNavigation from './pages/AdminNavigation';
+import AdminThemes from './pages/AdminThemes';
+
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
 
@@ -81,6 +102,40 @@ function AppRoutes() {
         }
       >
         <Route index element={<Dashboard />} />
+
+        {/* Post/Article management */}
+        <Route path="posts" element={<PostsList />} />
+        <Route path="posts/add" element={<AddPost />} />
+        <Route path="posts/edit/:id" element={<EditPost />} />
+        <Route path="posts/pending" element={<PostsList />} />
+        <Route path="posts/slider" element={<PostsList />} />
+        <Route path="posts/featured" element={<PostsList />} />
+        <Route path="posts/breaking" element={<PostsList />} />
+        <Route path="posts/recommended" element={<PostsList />} />
+        <Route path="posts/scheduled" element={<PostsList />} />
+        <Route path="posts/drafts" element={<PostsList />} />
+        <Route path="posts/bulk-upload" element={<AdminBulkPostUpload />} />
+        
+        {/* Categories & Subcategories */}
+        <Route path="categories" element={<AdminCategories />} />
+        <Route path="categories/subcategories" element={<AdminSubcategories />} />
+
+        {/* Colleague Modules */}
+        <Route path="admin-directory" element={<AdminBusinessDirectory />} />
+        <Route path="classifieds-manager" element={<AdminClassifieds />} />
+        <Route path="admin-deals" element={<AdminDeals />} />
+        <Route path="admin-jobs" element={<AdminJobs />} />
+        <Route path="admin-nfc" element={<AdminNfc />} />
+        <Route path="admin-rfq" element={<AdminRfq />} />
+        <Route path="admin-obituaries-wishes" element={<AdminObituariesWishes />} />
+
+        {/* Missing Core Pages */}
+        <Route path="gallery" element={<AdminGallery />} />
+        <Route path="pages" element={<AdminPages />} />
+        <Route path="polls" element={<AdminPolls />} />
+        <Route path="widgets" element={<AdminWidgets />} />
+        <Route path="navigation-builder" element={<AdminNavigation />} />
+        <Route path="themes" element={<AdminThemes />} />
 
         {/* Users */}
         <Route path="users/add" element={<AddUser />} />

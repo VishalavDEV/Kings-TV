@@ -1,0 +1,12 @@
+.admin-classifieds-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.classified-ad-form {
+  border: 1px solid #cbd5e1;
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}

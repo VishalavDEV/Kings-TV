@@ -1,0 +1,15 @@
+.admin-comments-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.status-badge.approved {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.status-badge.rejected {
+  background: #fff1f2;
+  color: #9f1239;
+}

@@ -35,13 +35,18 @@ import {
   Building2,
   Newspaper,
   FolderOpen,
+  Briefcase,
+  CreditCard,
+  FileSignature,
+  Heart,
+  Store,
 } from 'lucide-react';
 
 const PUBLIC_SITE_URL = import.meta.env.VITE_PUBLIC_SITE_URL || 'https://kings-tv.vercel.app';
 
 const NAV_ITEMS = [
   { key: 'admin_panel',      label: 'Dashboard',         icon: LayoutDashboard, path: '/' },
-  { key: 'add_post',         label: 'Add Post',           icon: PenSquare,       path: '/add-post' },
+  { key: 'add_post',         label: 'Add Post',           icon: PenSquare,       path: '/posts/add' },
   { key: 'my_content',       label: 'My Content',         icon: FileText,        path: '/posts' },
   { key: 'manage_all_posts', label: 'All Posts',          icon: FileText,        path: '/posts' },
   { key: 'content_review',   label: 'Content Review',     icon: ShieldCheck,     path: '/posts' },
@@ -75,6 +80,13 @@ const NAV_ITEMS = [
   { key: 'districts',        label: 'Districts',          icon: MapPin,          path: '/districts' },
   { key: 'institution_news', label: 'Institution News',   icon: Building2,       path: '/institution-news' },
   { key: 'media_library',    label: 'Media Library',      icon: FolderOpen,      path: '/media-library' },
+  { key: 'admin_directory',  label: 'Directory',          icon: Store,           path: '/admin-directory' },
+  { key: 'classifieds_manager', label: 'Classifieds',     icon: Tag,             path: '/classifieds-manager' },
+  { key: 'admin_deals',      label: 'Deals & Discounts',  icon: Tag,             path: '/admin-deals' },
+  { key: 'admin_jobs',       label: 'Jobs Board',         icon: Briefcase,       path: '/admin-jobs' },
+  { key: 'admin_nfc',        label: 'NFC Cards',          icon: CreditCard,      path: '/admin-nfc' },
+  { key: 'admin_rfq',        label: 'RFQ Workspace',      icon: FileSignature,   path: '/admin-rfq' },
+  { key: 'admin_obituaries_wishes', label: 'Obits & Wishes', icon: Heart,        path: '/admin-obituaries-wishes' },
   { key: 'seo_tools',        label: 'SEO Tools',          icon: Search,          path: '/seo' },
   { key: 'social_login',     label: 'Social Login',       icon: Share2,          path: '/social-login' },
   { key: 'languages',        label: 'Languages',          icon: Globe,           path: '/languages' },
@@ -197,7 +209,13 @@ export default function AdminLayout() {
   const pageTitle = currentNav?.label || 'Admin';
 
   // Filter nav items to only show permitted sections
-  const visibleNavItems = NAV_ITEMS.filter(item => hasPermission(item.key));
+  const visibleNavItems = NAV_ITEMS.filter(item => {
+    const colleagueKeys = ['admin_directory', 'classifieds_manager', 'admin_deals', 'admin_jobs', 'admin_nfc', 'admin_rfq', 'admin_obituaries_wishes'];
+    if (colleagueKeys.includes(item.key)) {
+      return hasPermission('admin_panel');
+    }
+    return hasPermission(item.key);
+  });
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f4f6fa]">

@@ -1,0 +1,33 @@
+.admin-rss-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.feed-info-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.feed-url-link {
+  font-size: 0.75rem;
+  color: #3b82f6;
+  text-decoration: none;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feed-url-link:hover {
+  text-decoration: underline;
+}
+
+.action-btn.publish-btn {
+  background: #10b981;
+  color: white;
+}
+
+.action-btn.publish-btn:hover {
+  background: #059669;
+}

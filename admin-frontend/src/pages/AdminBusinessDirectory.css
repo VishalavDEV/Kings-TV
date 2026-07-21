@@ -1,0 +1,14 @@
+.admin-business-directory-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.tab-btn {
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease-in-out;
+}
+
+.tab-btn.active {
+  border-bottom: 2px solid #B3732A !important;
+}
