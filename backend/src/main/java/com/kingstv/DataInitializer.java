@@ -1001,6 +1001,7 @@ public class DataInitializer {
             {"widgets",            "Can manage sidebar/footer widgets",      "site"},
             {"polls",              "Can manage polls and surveys",           "engagement"},
             {"gallery",            "Can manage photo/video gallery",         "media"},
+            {"media_library",      "Can access the central Media Library",   "media"},
             {"comments",           "Can moderate comments",                  "engagement"},
             {"contact_messages",   "Can view contact form submissions",      "communication"},
             {"newsletter",         "Can manage newsletter subscribers",      "communication"},

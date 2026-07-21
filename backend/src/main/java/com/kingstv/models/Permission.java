@@ -127,6 +127,7 @@ public class Permission {
     public static final String MODULE_SETTINGS = "settings";
     public static final String MODULE_CONTENT_REVIEW = "content_review";
     public static final String MODULE_MY_CONTENT = "my_content";
+    public static final String MODULE_MEDIA_LIBRARY = "media_library";
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

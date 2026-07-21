@@ -48,6 +48,7 @@ import Backup from './pages/system/Backup';
 // Districts & Institution News
 import Districts from './pages/Districts';
 import InstitutionNewsAdmin from './pages/InstitutionNewsAdmin';
+import MediaLibrary from './pages/MediaLibrary';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -93,6 +94,7 @@ function AppRoutes() {
         {/* Districts & Institution News */}
         <Route path="districts" element={<Districts />} />
         <Route path="institution-news" element={<InstitutionNewsAdmin />} />
+        <Route path="media-library" element={<MediaLibrary />} />
 
         {/* Settings & Social Login */}
         <Route path="social-login" element={<SocialLoginConfig />} />

@@ -1,33 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { Image, Upload, Link as LinkIcon, Check, X, Search, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Image, Upload, Check, X, Search, Info } from 'lucide-react';
 import api from '../utils/axios';
 
 export default function MediaPickerModal({ isOpen, onClose, onSelectImage }) {
   const [activeTab, setActiveTab] = useState('gallery'); // 'gallery' | 'upload' | 'url'
-  const [uploadedImages, setUploadedImages] = useState([
-    'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&auto=format&fit=crop&q=60',
-    'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&auto=format&fit=crop&q=60',
-    'https://images.unsplash.com/photo-1495020689067-958852a7765e?w=800&auto=format&fit=crop&q=60',
-    'https://images.unsplash.com/photo-1526470608268-f674ce90ebd4?w=800&auto=format&fit=crop&q=60'
-  ]);
+  const [uploadedAssets, setUploadedAssets] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [selectedUrl, setSelectedUrl] = useState('');
   const [altText, setAltText] = useState('');
   const [urlInput, setUrlInput] = useState('');
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    if (isOpen) {
-      api.get('/api/admin/storage/usage')
-        .then(res => {
-          if (res.data?.sampleFiles && Array.isArray(res.data.sampleFiles)) {
-            const files = res.data.sampleFiles.map(f => `/uploads/${f}`);
-            setUploadedImages(prev => Array.from(new Set([...files, ...prev])));
-          }
-        })
-        .catch(() => {});
+  const loadMedia = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: 0,
+        size: 40,
+        type: 'image',
+        search
+      });
+      const res = await api.get(`/api/admin/media?${params}`);
+      setUploadedAssets(res.data.content || []);
+    } catch (e) {
+      console.error("Failed to load media assets in picker", e);
+    } finally {
+      setLoading(false);
     }
-  }, [isOpen]);
+  }, [search]);
+
+  useEffect(() => {
+    if (isOpen && activeTab === 'gallery') {
+      loadMedia();
+    }
+  }, [isOpen, activeTab, loadMedia]);
 
   if (!isOpen) return null;
 
@@ -46,33 +53,32 @@ export default function MediaPickerModal({ isOpen, onClose, onSelectImage }) {
     if (!file) return;
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('files', file);
+    formData.append('altText', altText);
 
     setUploading(true);
     try {
-      const res = await api.post('/api/v1/articles/upload-image', formData, {
+      const res = await api.post('/api/admin/media/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      const newUrl = res.data?.url || URL.createObjectURL(file);
-      setUploadedImages(prev => [newUrl, ...prev]);
-      setSelectedUrl(newUrl);
-      setActiveTab('gallery');
-    } catch {
-      // Fallback preview
-      const localUrl = URL.createObjectURL(file);
-      setUploadedImages(prev => [localUrl, ...prev]);
-      setSelectedUrl(localUrl);
-      setActiveTab('gallery');
+      if (res.data && res.data.length > 0) {
+        const newAsset = res.data[0];
+        setUploadedAssets(prev => [newAsset, ...prev]);
+        setSelectedUrl(newAsset.url);
+        if (newAsset.altText) setAltText(newAsset.altText);
+        setActiveTab('gallery');
+      }
+    } catch (err) {
+      console.error("Upload failed in picker", err);
+      alert('Upload failed. Verify file type and size.');
     } finally {
       setUploading(false);
     }
   };
 
-  const filteredImages = uploadedImages.filter(img => img.toLowerCase().includes(search.toLowerCase()));
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full flex flex-col max-h-[85vh] overflow-hidden animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full flex flex-col max-h-[85vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
@@ -127,29 +133,35 @@ export default function MediaPickerModal({ isOpen, onClose, onSelectImage }) {
                 />
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-h-64 overflow-y-auto p-1">
-                {filteredImages.map((img, idx) => {
-                  const isSelected = selectedUrl === img;
-                  return (
-                    <div
-                      key={idx}
-                      onClick={() => setSelectedUrl(img)}
-                      className={`relative aspect-video rounded-xl overflow-hidden border-2 cursor-pointer transition-all ${
-                        isSelected ? 'border-[#B3732A] ring-2 ring-[#B3732A]/20 scale-[0.98]' : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
-                      {isSelected && (
-                        <div className="absolute inset-0 bg-[#B3732A]/30 flex items-center justify-center">
-                          <div className="w-7 h-7 bg-[#B3732A] text-white rounded-full flex items-center justify-center">
-                            <Check size={16} />
+              {loading ? (
+                <div className="text-center py-10 text-gray-400 text-xs">Loading media assets...</div>
+              ) : uploadedAssets.length === 0 ? (
+                <div className="text-center py-10 text-gray-400 text-xs">No media assets found in library.</div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-h-64 overflow-y-auto p-1">
+                  {uploadedAssets.map((asset, idx) => {
+                    const isSelected = selectedUrl === asset.url;
+                    return (
+                      <div
+                        key={asset.id || idx}
+                        onClick={() => { setSelectedUrl(asset.url); if (asset.altText) setAltText(asset.altText); }}
+                        className={`relative aspect-video rounded-xl overflow-hidden border-2 cursor-pointer transition-all ${
+                          isSelected ? 'border-[#B3732A] ring-2 ring-[#B3732A]/20 scale-[0.98]' : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <img src={asset.url} alt={asset.altText || ''} className="w-full h-full object-cover" />
+                        {isSelected && (
+                          <div className="absolute inset-0 bg-[#B3732A]/30 flex items-center justify-center">
+                            <div className="w-7 h-7 bg-[#B3732A] text-white rounded-full flex items-center justify-center">
+                              <Check size={16} />
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 

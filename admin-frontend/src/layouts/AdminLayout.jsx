@@ -34,6 +34,7 @@ import {
   MapPin,
   Building2,
   Newspaper,
+  FolderOpen,
 } from 'lucide-react';
 
 const PUBLIC_SITE_URL = import.meta.env.VITE_PUBLIC_SITE_URL || 'https://kings-tv.vercel.app';
@@ -73,6 +74,7 @@ const NAV_ITEMS = [
   { key: 'roles_permissions',label: 'Roles & Permissions',icon: ShieldCheck,    path: '/roles-permissions' },
   { key: 'districts',        label: 'Districts',          icon: MapPin,          path: '/districts' },
   { key: 'institution_news', label: 'Institution News',   icon: Building2,       path: '/institution-news' },
+  { key: 'media_library',    label: 'Media Library',      icon: FolderOpen,      path: '/media-library' },
   { key: 'seo_tools',        label: 'SEO Tools',          icon: Search,          path: '/seo' },
   { key: 'social_login',     label: 'Social Login',       icon: Share2,          path: '/social-login' },
   { key: 'languages',        label: 'Languages',          icon: Globe,           path: '/languages' },
