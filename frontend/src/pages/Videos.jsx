@@ -247,39 +247,49 @@ const Videos = () => {
               })()}
             </div>
 
-            {/* Up Next List Side Panel */}
-            <div className="side-playlist-container">
-              <h3>{lang === 'en' ? 'Up Next' : 'அடுத்ததாக'}</h3>
-              <div className="side-playlist">
-                {videos.filter(vid => vid.id !== selectedVideo?.id).map((vid) => (
-                  <div 
-                    key={vid.id}
-                    className="playlist-item"
-                    onClick={() => handleSelectVideo(vid)}
-                  >
-                    <div className="item-thumb">
-                      <img 
-                        src={vid.thumbnailUrl} 
-                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=300'; }}
-                        alt={vid.title} 
-                      />
-                      {vid.isLive ? (
-                        <span className="duration-tag live">LIVE</span>
-                      ) : (
-                        <span className="duration-tag">{vid.duration || '3:15'}</span>
-                      )}
+            {/* Right Sidebar column container */}
+            <div className="side-column-container" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              
+              {/* Comments Card Panel */}
+              {selectedVideo && (
+                <VideoComments videoId={selectedVideo.id} lang={lang} />
+              )}
+
+              {/* Up Next List Side Panel */}
+              <div className="side-playlist-container" style={{ maxHeight: '450px' }}>
+                <h3>{lang === 'en' ? 'Up Next' : 'அடுத்ததாக'}</h3>
+                <div className="side-playlist">
+                  {videos.filter(vid => vid.id !== selectedVideo?.id).map((vid) => (
+                    <div 
+                      key={vid.id}
+                      className="playlist-item"
+                      onClick={() => handleSelectVideo(vid)}
+                    >
+                      <div className="item-thumb">
+                        <img 
+                          src={vid.thumbnailUrl} 
+                          onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=300'; }}
+                          alt={vid.title} 
+                        />
+                        {vid.isLive ? (
+                          <span className="duration-tag live">LIVE</span>
+                        ) : (
+                          <span className="duration-tag">{vid.duration || '3:15'}</span>
+                        )}
+                      </div>
+                      <div className="item-info">
+                        <h4>{vid.title}</h4>
+                        {vid.isLive ? (
+                          <span className="live-label"><i className="fas fa-circle"></i> Live Now</span>
+                        ) : (
+                          <span>{new Date(vid.publishedAt).toLocaleDateString()}</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="item-info">
-                      <h4>{vid.title}</h4>
-                      {vid.isLive ? (
-                        <span className="live-label"><i className="fas fa-circle"></i> Live Now</span>
-                      ) : (
-                        <span>{new Date(vid.publishedAt).toLocaleDateString()}</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
+
             </div>
           </div>
         )}
@@ -364,6 +374,141 @@ const Videos = () => {
           )}
         </div>
       </div>
+    </div>
+  );
+};
+
+const VideoComments = ({ videoId, lang }) => {
+  const [comments, setComments] = useState([]);
+  const [name, setName] = useState('');
+  const [text, setText] = useState('');
+
+  // Load comments when videoId changes
+  useEffect(() => {
+    const storageKey = `comments_video_${videoId}`;
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      setComments(JSON.parse(stored));
+    } else {
+      // Mock initial comments for a premium feel!
+      const initialMock = [
+        {
+          id: 1,
+          name: lang === 'en' ? 'Kumar' : 'குமார்',
+          text: lang === 'en' 
+            ? 'Very informative video! Thanks for the clean analysis.' 
+            : 'மிகவும் பயனுள்ள வீடியோ! தெளிவான அலசலுக்கு நன்றி.',
+          date: new Date(Date.now() - 3600000 * 2).toLocaleDateString(), // 2 hours ago
+        },
+        {
+          id: 2,
+          name: lang === 'en' ? 'Meena' : 'மீனா',
+          text: lang === 'en' 
+            ? 'Good explanation. Looking forward to more updates.' 
+            : 'நல்ல விளக்கம். அடுத்தடுத்த அப்டேட்டுகளுக்காக காத்திருக்கிறேன்.',
+          date: new Date(Date.now() - 3600000 * 5).toLocaleDateString(), // 5 hours ago
+        }
+      ];
+      setComments(initialMock);
+      localStorage.setItem(storageKey, JSON.stringify(initialMock));
+    }
+  }, [videoId, lang]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!name.trim() || !text.trim()) return;
+
+    const newComment = {
+      id: Date.now(),
+      name: name.trim(),
+      text: text.trim(),
+      date: new Date().toLocaleDateString(),
+    };
+
+    const updated = [newComment, ...comments];
+    setComments(updated);
+    localStorage.setItem(`comments_video_${videoId}`, JSON.stringify(updated));
+
+    // Reset form
+    setName('');
+    setText('');
+  };
+
+  return (
+    <div className="side-playlist-container video-comments-container">
+      <h3 style={{ margin: 0, marginBottom: '12px' }}>
+        <span>
+          <i className="far fa-comments text-primary" style={{ marginRight: '8px' }}></i>
+          {lang === 'en' ? 'Comments' : 'கருத்துக்கள்'}
+        </span>
+        <span style={{ fontSize: '13px', color: 'var(--text-gray)', fontWeight: 'normal', float: 'right' }}>
+          ({comments.length})
+        </span>
+      </h3>
+
+      {/* List of comments */}
+      <div className="side-playlist" style={{ maxHeight: '180px', marginBottom: '15px' }}>
+        {comments.length === 0 ? (
+          <p style={{ fontSize: '12px', color: 'var(--text-gray)', textAlign: 'center', padding: '15px 0' }}>
+            {lang === 'en' ? 'Be the first to comment!' : 'முதல் நபராக கருத்து தெரிவியுங்கள்!'}
+          </p>
+        ) : (
+          comments.map(c => {
+            const initial = (c.name || 'K').charAt(0).toUpperCase();
+            return (
+              <div key={c.id} style={{ display: 'flex', gap: '10px', padding: '8px 0', borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                <div style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--primary)',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 'bold',
+                  fontSize: '12px',
+                  flexShrink: 0
+                }}>
+                  {initial}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2px' }}>
+                    <h5 style={{ margin: 0, fontSize: '12px', fontWeight: 'bold', color: 'var(--text-dark)' }}>{c.name}</h5>
+                    <span style={{ fontSize: '9px', color: 'var(--text-gray)' }}>{c.date}</span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-gray)', lineHeight: '1.4' }}>{c.text}</p>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Comment Form */}
+      <form onSubmit={handleSubmit} className="comment-form" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <input 
+          type="text" 
+          placeholder={lang === 'en' ? 'Your Name' : 'உங்கள் பெயர்'} 
+          value={name}
+          onChange={e => setName(e.target.value)}
+          required
+        />
+        <textarea 
+          placeholder={lang === 'en' ? 'Add a public comment...' : 'கருத்து தெரிவிக்கவும்...'} 
+          value={text}
+          onChange={e => setText(e.target.value)}
+          required
+          rows="2"
+          style={{ resize: 'none' }}
+        />
+        <button 
+          type="submit" 
+          className="comment-submit-btn"
+        >
+          {lang === 'en' ? 'Comment' : 'கருத்து'}
+        </button>
+      </form>
     </div>
   );
 };
