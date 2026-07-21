@@ -157,6 +157,7 @@ const UserManagement = () => {
               <th>Role</th>
               <th>Status</th>
               <th>Joined</th>
+              <th>Last Active</th>
               <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
@@ -166,7 +167,7 @@ const UserManagement = () => {
             ) : error ? (
               <tr><td colSpan="5" style={{ textAlign: 'center', color: 'var(--danger)' }}>{error}</td></tr>
             ) : users.length === 0 ? (
-              <tr><td colSpan="5" style={{ textAlign: 'center' }}>No users found.</td></tr>
+              <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}><UserX size={32} style={{ opacity: 0.5, marginBottom: '0.5rem' }} /><br/>No users found.</td></tr>
             ) : (
               users.map(u => (
                 <tr key={u.id}>
@@ -185,7 +186,12 @@ const UserManagement = () => {
                       {u.isActive ? 'Active' : 'Suspended'}
                     </span>
                   </td>
-                  <td>{new Date(u.createdAt).toLocaleDateString()}</td>
+                  <td><div style={{ fontSize: '0.9rem' }}>{new Date(u.createdAt).toLocaleDateString()}</div></td>
+                  <td>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                      {u.lastLogin ? new Date(u.lastLogin).toLocaleString() : 'Never'}
+                    </div>
+                  </td>
                   <td style={{ textAlign: 'right' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                       {currentUser?.role === 'SUPER_ADMIN' && (

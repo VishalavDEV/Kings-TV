@@ -34,8 +34,16 @@ const NewsManagement = () => {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [startDateFilter, setStartDateFilter] = useState('');
+  const [endDateFilter, setEndDateFilter] = useState('');
+  const [categories, setCategories] = useState([]);
   const [selected, setSelected] = useState(new Set());
   const [actionMsg, setActionMsg] = useState(null);
+
+  useEffect(() => {
+    api.get('/categories').then(res => setCategories(res.data || [])).catch(() => {});
+  }, []);
 
   const fetchArticles = useCallback(async () => {
     setLoading(true);
@@ -48,6 +56,9 @@ const NewsManagement = () => {
       });
       if (search) params.set('search', search);
       if (statusFilter) params.set('status', statusFilter);
+      if (categoryFilter) params.set('categoryId', categoryFilter);
+      if (startDateFilter) params.set('startDateStr', startDateFilter);
+      if (endDateFilter) params.set('endDateStr', endDateFilter);
 
       const res = await api.get(`/articles/getAll?${params}`);
       const data = res.data;
@@ -59,7 +70,7 @@ const NewsManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, search, statusFilter]);
+  }, [page, search, statusFilter, categoryFilter, startDateFilter, endDateFilter]);
 
   useEffect(() => {
     const t = setTimeout(fetchArticles, search ? 400 : 0);
@@ -167,10 +178,24 @@ const NewsManagement = () => {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Filter size={14} style={{ color: 'var(--text-muted)' }} />
-          <select className="form-control" style={{ minWidth: '160px' }}
+          <select className="form-control" style={{ minWidth: '140px' }}
+            value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(0); }}>
+            <option value="">All Categories</option>
+            {categories.map(c => <option key={c.id} value={c.id}>{c.nameTa ? `${c.nameTa} / ${c.name}` : c.name}</option>)}
+          </select>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <select className="form-control" style={{ minWidth: '130px' }}
             value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(0); }}>
             {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <input type="date" className="form-control" style={{ maxWidth: '130px' }} title="Start Date"
+            value={startDateFilter} onChange={e => { setStartDateFilter(e.target.value); setPage(0); }} />
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>to</span>
+          <input type="date" className="form-control" style={{ maxWidth: '130px' }} title="End Date"
+            value={endDateFilter} onChange={e => { setEndDateFilter(e.target.value); setPage(0); }} />
         </div>
         <button onClick={fetchArticles} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <RefreshCw size={14} /> Refresh

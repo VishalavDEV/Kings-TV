@@ -256,11 +256,50 @@ const HomeLayoutBuilder = () => {
                 />
               </div>
 
+              {/* Structured Config */}
+              {(() => {
+                let parsedConfig = {};
+                try { parsedConfig = JSON.parse(editConfigJson); } catch(e){}
+                
+                const updateConfig = (key, value) => {
+                   parsedConfig[key] = value;
+                   setEditConfigJson(JSON.stringify(parsedConfig, null, 2));
+                };
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Quick Configuration</h4>
+                    <div className="form-group">
+                      <label style={{ fontSize: '0.8rem' }}>Component Type / Style</label>
+                      <select className="form-control" value={parsedConfig.type || ''} onChange={e => updateConfig('type', e.target.value)}>
+                        <option value="">Default</option>
+                        <option value="hero_slider">Hero Slider (Full Width)</option>
+                        <option value="carousel">Standard Carousel</option>
+                        <option value="grid">Grid Layout</option>
+                        <option value="list">List Layout</option>
+                      </select>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.8rem' }}>Category ID (Data Source)</label>
+                        <input type="text" className="form-control" value={parsedConfig.categoryId || ''} onChange={e => updateConfig('categoryId', e.target.value)} placeholder="Leave blank for Latest" />
+                      </div>
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.8rem' }}>Item Limit</label>
+                        <input type="number" className="form-control" value={parsedConfig.limit || ''} onChange={e => updateConfig('limit', parseInt(e.target.value))} placeholder="e.g. 5" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="form-group">
-                <label className="form-label">Configuration (JSON format)</label>
+                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Advanced Configuration (JSON format)</span>
+                </label>
                 <textarea 
                   className="form-control" 
-                  style={{ height: '200px', fontFamily: 'monospace', fontSize: '0.85rem' }}
+                  style={{ height: '120px', fontFamily: 'monospace', fontSize: '0.85rem' }}
                   value={editConfigJson}
                   onChange={(e) => setEditConfigJson(e.target.value)}
                   placeholder="{}"

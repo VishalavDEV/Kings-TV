@@ -1,17 +1,15 @@
 package com.kingstv.controllers;
 
 import com.kingstv.models.AggregatedNews;
-import com.kingstv.repository.AggregatedNewsRepository;
 import com.kingstv.services.RssAggregatorService;
-import com.kingstv.security.RequiresPermission;
-import com.kingstv.models.Role;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import java.util.Map;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/rss-aggregator")
@@ -20,25 +18,14 @@ public class RssAggregatorController {
     @Autowired
     private RssAggregatorService rssAggregatorService;
 
-    @Autowired
-    private AggregatedNewsRepository aggregatedNewsRepository;
-
-    @GetMapping("/latest")
-    public Page<AggregatedNews> getLatestAggregated(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return aggregatedNewsRepository.findAllByOrderByPublishedTimeDesc(pageable);
+    @GetMapping
+    public ResponseEntity<List<AggregatedNews>> getLatestFeeds() {
+        return ResponseEntity.ok(rssAggregatorService.getLatestItems());
     }
 
-    @PostMapping("/fetch")
-    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR})
-    public ResponseEntity<?> forceFetch() {
-        try {
-            rssAggregatorService.fetchAggregatedFeeds();
-            return ResponseEntity.ok(Map.of("message", "RSS feeds fetch triggered and completed successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("message", "Error triggering RSS feeds fetch", "error", e.getMessage()));
-        }
+    @PostMapping("/sync")
+    public ResponseEntity<?> triggerSync() {
+        rssAggregatorService.fetchAggregatedFeeds();
+        return ResponseEntity.ok().build();
     }
 }

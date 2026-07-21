@@ -17,6 +17,10 @@ const SystemSettings = () => {
     telegramBotToken: '',
     telegramChatId: '',
     telegramEnabled: 'false',
+    pwaName: '',
+    pwaShortName: '',
+    pwaThemeColor: '#000000',
+    pwaBackgroundColor: '#ffffff',
     youtubeApiKey: '',
     youtubeChannelId: '',
     renderApiKey: '',
@@ -45,6 +49,10 @@ const SystemSettings = () => {
             if (item.configKey === 'telegram.bot_token') mapped.telegramBotToken = item.configValue || '';
             if (item.configKey === 'telegram.chat_id') mapped.telegramChatId = item.configValue || '';
             if (item.configKey === 'telegram.enabled') mapped.telegramEnabled = item.configValue || 'false';
+            if (item.configKey === 'pwa.name') mapped.pwaName = item.configValue || '';
+            if (item.configKey === 'pwa.short_name') mapped.pwaShortName = item.configValue || '';
+            if (item.configKey === 'pwa.theme_color') mapped.pwaThemeColor = item.configValue || '#000000';
+            if (item.configKey === 'pwa.background_color') mapped.pwaBackgroundColor = item.configValue || '#ffffff';
             if (item.configKey === 'youtube.api_key') mapped.youtubeApiKey = item.configValue || '';
             if (item.configKey === 'youtube.channel_id') mapped.youtubeChannelId = item.configValue || '';
             if (item.configKey === 'hosting.render_api_key') mapped.renderApiKey = item.configValue || '';
@@ -91,6 +99,13 @@ const SystemSettings = () => {
           chatId: config.telegramChatId,
           enabled: String(config.telegramEnabled)
         });
+      } else if (group === 'pwa') {
+        await api.put('/admin/config/pwa', {
+          name: config.pwaName,
+          shortName: config.pwaShortName,
+          themeColor: config.pwaThemeColor,
+          backgroundColor: config.pwaBackgroundColor
+        });
       } else if (group === 'youtube') {
         await api.put('/admin/config/youtube', { 
           apiKey: config.youtubeApiKey, 
@@ -130,6 +145,12 @@ const SystemSettings = () => {
           chatId: config.telegramChatId,
           enabled: String(config.telegramEnabled)
         }),
+        api.put('/admin/config/pwa', {
+          name: config.pwaName,
+          shortName: config.pwaShortName,
+          themeColor: config.pwaThemeColor,
+          backgroundColor: config.pwaBackgroundColor
+        }),
         api.put('/admin/config/youtube', { 
           apiKey: config.youtubeApiKey, 
           channelId: config.youtubeChannelId 
@@ -163,6 +184,52 @@ const SystemSettings = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '2rem' }}>
         
+        {/* Branding & PWA Settings */}
+        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '300px' }}>
+          <div>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', fontSize: '16px', fontWeight: 700 }}>
+              <Smartphone size={20} color="var(--primary)" /> General Branding & PWA
+            </h3>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" style={{ fontWeight: 600, fontSize: '13px' }}>Site / App Name</label>
+              <input 
+                type="text" name="pwaName" className="form-control" 
+                value={config.pwaName} onChange={handleChange} 
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" style={{ fontWeight: 600, fontSize: '13px' }}>Short Name</label>
+              <input 
+                type="text" name="pwaShortName" className="form-control" 
+                value={config.pwaShortName} onChange={handleChange} 
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label className="form-label" style={{ fontWeight: 600, fontSize: '13px' }}>Theme Color</label>
+                <input 
+                  type="color" name="pwaThemeColor" className="form-control" 
+                  value={config.pwaThemeColor} onChange={handleChange} 
+                  style={{ width: '100%', padding: '4px', height: '40px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--body-bg)' }}
+                />
+              </div>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label className="form-label" style={{ fontWeight: 600, fontSize: '13px' }}>Background Color</label>
+                <input 
+                  type="color" name="pwaBackgroundColor" className="form-control" 
+                  value={config.pwaBackgroundColor} onChange={handleChange} 
+                  style={{ width: '100%', padding: '4px', height: '40px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--body-bg)' }}
+                />
+              </div>
+            </div>
+          </div>
+          <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('pwa')} disabled={savingGroup !== ''}>
+            {savingGroup === 'pwa' ? 'Saving Branding...' : 'Save Branding Settings'}
+          </button>
+        </div>
+
         {/* S3 Asset CDN Settings */}
         <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '300px' }}>
           <div>
@@ -274,6 +341,36 @@ const SystemSettings = () => {
           </div>
           <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('sms')} disabled={savingGroup !== ''}>
             {savingGroup === 'sms' ? 'Saving SMS...' : 'Save SMS Settings'}
+          </button>
+        </div>
+
+        {/* YouTube / Social Links */}
+        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '300px' }}>
+          <div>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', fontSize: '16px', fontWeight: 700 }}>
+              <Video size={20} color="var(--primary)" /> YouTube Integration
+            </h3>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" style={{ fontWeight: 600, fontSize: '13px' }}>YouTube Channel ID</label>
+              <input 
+                type="text" name="youtubeChannelId" className="form-control" 
+                value={config.youtubeChannelId} onChange={handleChange} 
+                placeholder="e.g. UCxxxxxxxxxxxx"
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" style={{ fontWeight: 600, fontSize: '13px' }}>YouTube API Key</label>
+              <input 
+                type="password" name="youtubeApiKey" className="form-control" 
+                value={config.youtubeApiKey} onChange={handleChange} 
+                placeholder="Google Cloud API Key"
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
+              />
+            </div>
+          </div>
+          <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('youtube')} disabled={savingGroup !== ''}>
+            {savingGroup === 'youtube' ? 'Saving YouTube...' : 'Save YouTube Settings'}
           </button>
         </div>
 
