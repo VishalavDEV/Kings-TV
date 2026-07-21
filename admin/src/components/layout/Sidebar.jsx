@@ -114,7 +114,10 @@ const Sidebar = () => {
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <img src="assets/logo-banner-light.png" alt="King TV Admin" />
+        <Link to="/admin/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+          <img src="/admin/assets/logo-banner-light.png" onError={(e) => { e.target.style.display = 'none'; }} alt="King TV Admin" style={{ maxHeight: '36px', width: 'auto' }} />
+          <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', letterSpacing: '0.5px', textTransform: 'uppercase' }}>KING 24x7</span>
+        </Link>
       </div>
       
       <nav className="sidebar-nav">

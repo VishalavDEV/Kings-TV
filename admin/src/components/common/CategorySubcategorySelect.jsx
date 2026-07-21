@@ -102,11 +102,16 @@ const CategorySubcategorySelect = ({
           <option value="" style={{ color: '#000000', backgroundColor: '#ffffff' }}>
             {loadingCats ? 'Loading categories...' : '— Select Category —'}
           </option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id} style={{ color: '#000000', backgroundColor: '#ffffff' }}>
-              {c.icon ? c.icon + ' ' : ''}{c.nameTa ? `${c.nameTa} / ${c.name}` : c.name}
-            </option>
-          ))}
+          {categories.map((c) => {
+            const cleanLabel = (c.icon && !c.icon.startsWith('fa') && !c.icon.includes('fa-'))
+              ? `${c.icon} ${c.nameTa ? `${c.nameTa} / ${c.name}` : c.name}`
+              : (c.nameTa ? `${c.nameTa} / ${c.name}` : c.name);
+            return (
+              <option key={c.id} value={c.id} style={{ color: '#000000', backgroundColor: '#ffffff' }}>
+                {cleanLabel}
+              </option>
+            );
+          })}
         </select>
       </div>
 
