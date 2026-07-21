@@ -141,7 +141,8 @@ public class SeoController {
             String desc = art.getShortDescTa() != null ? art.getShortDescTa() : art.getContentTa();
             if (desc != null) {
                 if (desc.length() > 300) {
-                    desc = desc.substring(0, 297) + "...";
+                    int end = desc.offsetByCodePoints(0, Math.min(297, desc.codePointCount(0, desc.length())));
+                    desc = desc.substring(0, end) + "...";
                 }
                 xml.append("      <description><![CDATA[").append(desc).append("]]></description>\n");
             }
