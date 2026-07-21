@@ -45,6 +45,10 @@ import Storage from './pages/system/Storage';
 import CacheSystem from './pages/system/CacheSystem';
 import Backup from './pages/system/Backup';
 
+// Districts & Institution News
+import Districts from './pages/Districts';
+import InstitutionNewsAdmin from './pages/InstitutionNewsAdmin';
+
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
 
@@ -85,6 +89,10 @@ function AppRoutes() {
         {/* Roles */}
         <Route path="roles-permissions" element={<RolesPermissions />} />
         <Route path="roles-permissions/:id/edit" element={<EditRole />} />
+
+        {/* Districts & Institution News */}
+        <Route path="districts" element={<Districts />} />
+        <Route path="institution-news" element={<InstitutionNewsAdmin />} />
 
         {/* Settings & Social Login */}
         <Route path="social-login" element={<SocialLoginConfig />} />

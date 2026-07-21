@@ -119,6 +119,11 @@ export default function RolesPermissions() {
                       <ShieldCheck size={15} className="text-[#B3732A]" />
                     </div>
                     <span className="font-semibold text-gray-800">{role.name?.replace(/_/g, ' ')}</span>
+                    {['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN', 'READER'].includes(role.name) && (
+                      <span className="px-2 py-0.5 text-[10px] font-semibold tracking-wide bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
+                        System Default
+                      </span>
+                    )}
                   </div>
                 </td>
                 <td className="px-5 py-4 text-gray-500 text-sm">{role.description || '—'}</td>
@@ -136,7 +141,7 @@ export default function RolesPermissions() {
                       <Edit size={13} />
                       Edit
                     </button>
-                    {role.name !== 'SUPER_ADMIN' && (
+                    {!['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN', 'READER'].includes(role.name) && (
                       <button
                         onClick={() => setDeleteId(role.id)}
                         className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"

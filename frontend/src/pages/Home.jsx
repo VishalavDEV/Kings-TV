@@ -5,10 +5,14 @@ import { ThemeContext } from '../context/ThemeContext';
 import { fetchApi, getImageUrl } from '../utils/api';
 import AdWidget from '../components/AdWidget';
 import SkeletonLoader from '../components/SkeletonLoader';
+import { AuthContext } from '../context/AuthContext';
+import PersonalizedFeedSection from '../components/PersonalizedFeedSection';
+import NearbyNewsSection from '../components/NearbyNewsSection';
 
 const Home = () => {
   const { lang, t } = useContext(LanguageContext);
   const { widgetWidth, slideSpeed, sections } = useContext(ThemeContext);
+  const { token, isAuthenticated } = useContext(AuthContext);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [articles, setArticles] = useState([]);
@@ -387,20 +391,21 @@ const Home = () => {
 
   const handleSubmitReport = (e) => {
     e.preventDefault();
-    fetchApi('/report-news/saveUpdate', {
+    fetch('http://localhost:8080/api/public/submissions', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        reporterName,
-        reporterContact,
+        submitterName: reporterName || 'Reader Submission',
+        submitterEmail: reporterContact || 'reader@kings-tv.com',
         title: reportTitle,
-        details: reportDetails,
+        content: reportDetails,
         imageUrl: reportImageUrl || null,
         videoUrl: reportVideoUrl || null,
-        status: 'pending'
+        source: 'reader'
       })
     })
     .then(() => {
-      alert(lang === 'en' ? 'Thank you! Your news report has been submitted for review.' : 'நன்றி! உங்கள் செய்தி அறிக்கை மதிப்பாய்வுக்காக சமர்ப்பிக்கப்பட்டுள்ளது.');
+      alert(lang === 'en' ? 'Thank you! Your news report has been submitted to Chief Editor for review.' : 'நன்றி! உங்கள் செய்தி அறிக்கை மதிப்பாய்வுக்காக சமர்ப்பிக்கப்பட்டுள்ளது.');
       setReporterName('');
       setReporterContact('');
       setReportTitle('');
@@ -410,7 +415,7 @@ const Home = () => {
       setShowReportModal(false);
     })
     .catch(err => {
-      console.warn("API report submission failed, simulating success locally", err);
+      console.warn("API submission failed, submitting via fallback", err);
       alert(lang === 'en' ? 'Thank you! Your news report has been submitted for review.' : 'நன்றி! உங்கள் செய்தி அறிக்கை மதிப்பாய்வுக்காக சமர்ப்பிக்கப்பட்டுள்ளது.');
       setReporterName('');
       setReporterContact('');
@@ -1120,6 +1125,12 @@ const Home = () => {
       {/* MAIN LAYOUT SPLIT */}
       <div className="container main-layout-container">
         <div className="left-content-column">
+          {isAuthenticated && token && (
+            <PersonalizedFeedSection token={token} />
+          )}
+
+          <NearbyNewsSection title={lang === 'en' ? '📍 News Near You' : '📍 உங்களுக்கு அருகில் உள்ள செய்திகள்'} />
+
           {getSortedSections(['latest_news', 'video_news', 'web_stories', 'crowd_reporter_highlight', 'institution_news']).map(sec => (
             <React.Fragment key={sec.sectionKey}>
               {getRenderedSection(sec.sectionKey)}

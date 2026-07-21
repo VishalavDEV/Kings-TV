@@ -40,6 +40,9 @@ public class UgcSubmission {
     @Column(nullable = false, length = 30)
     private String status = "PENDING";
 
+    @Column(name = "source", length = 50)
+    private String source = "reader";
+
     @Column(name = "review_reason", columnDefinition = "TEXT")
     private String reviewReason;
 
@@ -78,6 +81,8 @@ public class UgcSubmission {
     public void setDistrictId(Long districtId) { this.districtId = districtId; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
     public String getReviewReason() { return reviewReason; }
     public void setReviewReason(String reviewReason) { this.reviewReason = reviewReason; }
     public Long getReviewedBy() { return reviewedBy; }

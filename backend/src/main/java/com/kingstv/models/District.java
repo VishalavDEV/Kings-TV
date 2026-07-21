@@ -17,6 +17,18 @@ public class District {
     @Column(name = "name_en", nullable = false, unique = true)
     private String nameEn;
 
+    @Column(name = "state", length = 100)
+    private String state = "Tamil Nadu";
+
+    @Column(name = "center_latitude")
+    private Double centerLatitude;
+
+    @Column(name = "center_longitude")
+    private Double centerLongitude;
+
+    @Column(name = "radius_km")
+    private Double radiusKm = 15.0;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -31,4 +43,16 @@ public class District {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getState() { return state; }
+    public void setState(String state) { this.state = state; }
+
+    public Double getCenterLatitude() { return centerLatitude; }
+    public void setCenterLatitude(Double centerLatitude) { this.centerLatitude = centerLatitude; }
+
+    public Double getCenterLongitude() { return centerLongitude; }
+    public void setCenterLongitude(Double centerLongitude) { this.centerLongitude = centerLongitude; }
+
+    public Double getRadiusKm() { return radiusKm; }
+    public void setRadiusKm(Double radiusKm) { this.radiusKm = radiusKm; }
 }

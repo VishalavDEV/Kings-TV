@@ -16,7 +16,7 @@ import java.util.*;
  */
 @RestController
 @RequestMapping("/api/v1/admin/analytics")
-@RequiresPermission(Permission.ANALYTICS_VIEW)
+@RequiresPermission(anyOf = {Permission.ANALYTICS_VIEW, Permission.ANALYTICS_DISTRICT_ONLY})
 public class AnalyticsController {
 
     @Autowired private ArticleRepository articleRepository;

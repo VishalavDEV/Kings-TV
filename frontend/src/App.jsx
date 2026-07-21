@@ -23,6 +23,7 @@ import Classifieds from './pages/Classifieds';
 import BusinessStudies from './pages/BusinessStudies';
 import Advertise from './pages/Advertise';
 import NotFound from './pages/NotFound';
+import InstitutionNews from './pages/InstitutionNews';
 import BizDirectoryMain from './pages/BizDirectoryMain';
 import NfcCardDashboard from './pages/NfcCardDashboard';
 import DealsListing from './pages/DealsListing';
@@ -167,6 +168,7 @@ function AppContent() {
           <Route path="/classifieds" element={<Classifieds />} />
           <Route path="/business-studies" element={<BusinessStudies />} />
           <Route path="/advertise" element={<Advertise />} />
+          <Route path="/institution-news" element={<InstitutionNews />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

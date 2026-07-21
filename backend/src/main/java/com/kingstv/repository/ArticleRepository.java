@@ -50,4 +50,23 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
     @org.springframework.transaction.annotation.Transactional
     @Query("DELETE FROM Article a WHERE (a.status = 'draft' OR a.status = 'UGC_draft') AND a.updatedAt < :threshold")
     void deleteOlderDrafts(@Param("threshold") java.time.LocalDateTime threshold);
+
+    // Institution News
+    List<Article> findBySourceAndStatusOrderByPublishedAtDesc(String source, String status);
+    org.springframework.data.domain.Page<Article> findBySource(String source, org.springframework.data.domain.Pageable pageable);
+    org.springframework.data.domain.Page<Article> findBySourceAndStatus(String source, String status, org.springframework.data.domain.Pageable pageable);
+
+    // Nearby articles by source+radius
+    @Query(value = "SELECT * FROM articles WHERE source = :source AND status = 'published' AND (" +
+           "latitude IS NULL OR longitude IS NULL OR " +
+           "(6371 * acos(cos(radians(:userLat)) * cos(radians(latitude)) * " +
+           "cos(radians(longitude) - radians(:userLon)) + " +
+           "sin(radians(:userLat)) * sin(radians(latitude)))) <= :radiusKm) " +
+           "ORDER BY published_at DESC LIMIT :limit", nativeQuery = true)
+    List<Article> findNearbyArticlesBySource(@Param("source") String source, @Param("userLat") Double userLat, @Param("userLon") Double userLon, @Param("radiusKm") Double radiusKm, @Param("limit") int limit);
+
+    // District-scoped for District Admin
+    List<Article> findByDistrictIdAndStatusOrderByPublishedAtDesc(Long districtId, String status);
+    org.springframework.data.domain.Page<Article> findByDistrictId(Long districtId, org.springframework.data.domain.Pageable pageable);
 }
+

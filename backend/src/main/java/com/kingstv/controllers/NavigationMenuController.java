@@ -1,7 +1,11 @@
 package com.kingstv.controllers;
 
+import com.kingstv.models.Constituency;
+import com.kingstv.models.District;
 import com.kingstv.models.NavigationMenu;
 import com.kingstv.models.Permission;
+import com.kingstv.repository.ConstituencyRepository;
+import com.kingstv.repository.DistrictRepository;
 import com.kingstv.repository.NavigationMenuRepository;
 import com.kingstv.security.RequiresPermission;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,24 +25,22 @@ public class NavigationMenuController {
     @Autowired
     private NavigationMenuRepository menuRepository;
 
+    @Autowired
+    private DistrictRepository districtRepository;
+
+    @Autowired
+    private ConstituencyRepository constituencyRepository;
+
     @GetMapping("/public/menus")
     public ResponseEntity<?> getPublicMenus() {
         List<NavigationMenu> allActive = menuRepository.findByIsActiveOrderByDisplayOrderAsc(true);
-        
+
         // Group menu items hierarchically
         List<Map<String, Object>> result = new ArrayList<>();
         Map<Long, Map<String, Object>> lookup = new HashMap<>();
 
         for (NavigationMenu menu : allActive) {
-            Map<String, Object> node = new HashMap<>();
-            node.put("id", menu.getId());
-            node.put("titleTa", menu.getTitleTa());
-            node.put("titleEn", menu.getTitleEn());
-            node.put("linkUrl", menu.getLinkUrl());
-            node.put("displayOrder", menu.getDisplayOrder());
-            node.put("parentId", menu.getParentId());
-            node.put("subcategories", new ArrayList<>()); // Matching existing frontend key name for children!
-
+            Map<String, Object> node = buildMenuNode(menu);
             lookup.put(menu.getId(), node);
         }
 
@@ -49,11 +51,64 @@ public class NavigationMenuController {
                 List<Map<String, Object>> subs = (List<Map<String, Object>>) parentNode.get("subcategories");
                 subs.add(node);
             } else if (menu.getParentId() == null) {
+                // For top-level items with dynamicType, inject dynamic submenus
+                if ("DISTRICTS".equals(menu.getDynamicType())) {
+                    injectDistrictSubmenus(node, menu.getId());
+                } else if ("CONSTITUENCIES".equals(menu.getDynamicType()) && menu.getDynamicDistrictId() != null) {
+                    injectConstituencySubmenus(node, menu.getDynamicDistrictId(), menu.getId());
+                }
                 result.add(node);
             }
         }
 
         return ResponseEntity.ok(result);
+    }
+
+    private Map<String, Object> buildMenuNode(NavigationMenu menu) {
+        Map<String, Object> node = new HashMap<>();
+        node.put("id", menu.getId());
+        node.put("titleTa", menu.getTitleTa());
+        node.put("titleEn", menu.getTitleEn());
+        node.put("linkUrl", menu.getLinkUrl());
+        node.put("displayOrder", menu.getDisplayOrder());
+        node.put("parentId", menu.getParentId());
+        node.put("dynamicType", menu.getDynamicType());
+        node.put("subcategories", new ArrayList<>());
+        return node;
+    }
+
+    /** Injects districts from the districts table as submenus */
+    private void injectDistrictSubmenus(Map<String, Object> parentNode, Long parentMenuId) {
+        List<District> districts = districtRepository.findAll();
+        List<Map<String, Object>> subs = (List<Map<String, Object>>) parentNode.get("subcategories");
+        for (District d : districts) {
+            Map<String, Object> child = new HashMap<>();
+            child.put("id", "district-" + d.getId());
+            child.put("titleTa", d.getNameTa());
+            child.put("titleEn", d.getNameEn());
+            child.put("linkUrl", "/district/" + d.getId());
+            child.put("parentId", parentMenuId);
+            child.put("dynamic", true);
+            child.put("subcategories", new ArrayList<>());
+            subs.add(child);
+        }
+    }
+
+    /** Injects constituencies for a given district as submenus */
+    private void injectConstituencySubmenus(Map<String, Object> parentNode, Long districtId, Long parentMenuId) {
+        List<Constituency> constituencies = constituencyRepository.findByDistrictIdOrderByNameEnAsc(districtId);
+        List<Map<String, Object>> subs = (List<Map<String, Object>>) parentNode.get("subcategories");
+        for (Constituency c : constituencies) {
+            Map<String, Object> child = new HashMap<>();
+            child.put("id", "constituency-" + c.getId());
+            child.put("titleTa", c.getNameTa());
+            child.put("titleEn", c.getNameEn());
+            child.put("linkUrl", "/constituency/" + c.getId());
+            child.put("parentId", parentMenuId);
+            child.put("dynamic", true);
+            child.put("subcategories", new ArrayList<>());
+            subs.add(child);
+        }
     }
 
     @GetMapping("/admin/menus")
@@ -84,6 +139,8 @@ public class NavigationMenuController {
                     existing.setLinkUrl(updated.getLinkUrl());
                     existing.setDisplayOrder(updated.getDisplayOrder());
                     existing.setParentId(updated.getParentId());
+                    existing.setDynamicType(updated.getDynamicType());
+                    existing.setDynamicDistrictId(updated.getDynamicDistrictId());
                     if (updated.getIsActive() != null) {
                         existing.setIsActive(updated.getIsActive());
                     }

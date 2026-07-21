@@ -97,6 +97,37 @@ public class Permission {
     // AI Rewriter
     public static final String AI_REWRITER_USE = "ai_rewriter:use";
 
+    // Article unpublish (District Admin can unpublish but not hard-delete)
+    public static final String ARTICLE_UNPUBLISH = "article:unpublish";
+
+    // Analytics — district-scoped variant
+    public static final String ANALYTICS_DISTRICT_ONLY = "analytics:district_only";
+
+    // Module-key permissions for sidebar visibility
+    public static final String MODULE_ADMIN_PANEL = "admin_panel";
+    public static final String MODULE_ADD_POST = "add_post";
+    public static final String MODULE_MANAGE_ALL_POSTS = "manage_all_posts";
+    public static final String MODULE_NAVIGATION = "navigation";
+    public static final String MODULE_PAGES = "pages";
+    public static final String MODULE_RSS_FEEDS = "rss_feeds";
+    public static final String MODULE_CATEGORIES = "categories";
+    public static final String MODULE_WIDGETS = "widgets";
+    public static final String MODULE_POLLS = "polls";
+    public static final String MODULE_GALLERY = "gallery";
+    public static final String MODULE_COMMENTS = "comments";
+    public static final String MODULE_CONTACT_MESSAGES = "contact_messages";
+    public static final String MODULE_NEWSLETTER = "newsletter";
+    public static final String MODULE_REWARD_SYSTEM = "reward_system";
+    public static final String MODULE_AD_SPACES = "ad_spaces";
+    public static final String MODULE_USERS = "users";
+    public static final String MODULE_ROLES_PERMISSIONS = "roles_permissions";
+    public static final String MODULE_SEO_TOOLS = "seo_tools";
+    public static final String MODULE_SOCIAL_LOGIN = "social_login";
+    public static final String MODULE_LANGUAGES = "languages";
+    public static final String MODULE_SETTINGS = "settings";
+    public static final String MODULE_CONTENT_REVIEW = "content_review";
+    public static final String MODULE_MY_CONTENT = "my_content";
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

@@ -198,8 +198,32 @@ public class JournalistContentController {
         return ResponseEntity.ok(Map.of("original", text, "rewritten", rewritten, "style", style));
     }
 
-    // NOTE: DELETE endpoint intentionally omitted for MJ and Institution roles.
-    // This is server-side enforcement — the API simply does not expose a delete capability.
+    /**
+     * Request deletion of a submitted post.
+     * Marks the article status as 'deletion_requested' for Chief Editor / District Admin review.
+     */
+    @DeleteMapping("/{id}/request-delete")
+    @RequiresPermission(Permission.ARTICLE_UPDATE)
+    @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
+    public ResponseEntity<?> requestDeletePost(@PathVariable Long id) {
+        Long userId = getCallerId();
+        Optional<Article> articleOpt = articleRepository.findById(id);
+        if (articleOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Article article = articleOpt.get();
+        if (userId != null && !String.valueOf(userId).equals(article.getAuthorName())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "You can only request deletion of your own posts"));
+        }
+
+        article.setStatus("deletion_requested");
+        articleRepository.save(article);
+        logAudit("REQUEST_DELETE", "Article", id, "Requested deletion of article: " + article.getTitleEn());
+
+        return ResponseEntity.ok(Map.of("message", "Deletion request submitted to editors for review", "articleId", id));
+    }
 
     private Long getCallerId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

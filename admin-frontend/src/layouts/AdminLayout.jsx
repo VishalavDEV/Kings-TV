@@ -31,6 +31,9 @@ import {
   ChevronDown,
   User,
   Menu,
+  MapPin,
+  Building2,
+  Newspaper,
 } from 'lucide-react';
 
 const PUBLIC_SITE_URL = import.meta.env.VITE_PUBLIC_SITE_URL || 'https://kings-tv.vercel.app';
@@ -38,7 +41,9 @@ const PUBLIC_SITE_URL = import.meta.env.VITE_PUBLIC_SITE_URL || 'https://kings-t
 const NAV_ITEMS = [
   { key: 'admin_panel',      label: 'Dashboard',         icon: LayoutDashboard, path: '/' },
   { key: 'add_post',         label: 'Add Post',           icon: PenSquare,       path: '/add-post' },
+  { key: 'my_content',       label: 'My Content',         icon: FileText,        path: '/posts' },
   { key: 'manage_all_posts', label: 'All Posts',          icon: FileText,        path: '/posts' },
+  { key: 'content_review',   label: 'Content Review',     icon: ShieldCheck,     path: '/posts' },
   { key: 'navigation',       label: 'Navigation',         icon: Navigation,      path: '/navigation' },
   { key: 'pages',            label: 'Pages',              icon: BookOpen,        path: '/pages' },
   { key: 'rss_feeds',        label: 'RSS Feeds',          icon: Rss,             path: '/rss-feeds' },
@@ -66,6 +71,8 @@ const NAV_ITEMS = [
     ]
   },
   { key: 'roles_permissions',label: 'Roles & Permissions',icon: ShieldCheck,    path: '/roles-permissions' },
+  { key: 'districts',        label: 'Districts',          icon: MapPin,          path: '/districts' },
+  { key: 'institution_news', label: 'Institution News',   icon: Building2,       path: '/institution-news' },
   { key: 'seo_tools',        label: 'SEO Tools',          icon: Search,          path: '/seo' },
   { key: 'social_login',     label: 'Social Login',       icon: Share2,          path: '/social-login' },
   { key: 'languages',        label: 'Languages',          icon: Globe,           path: '/languages' },

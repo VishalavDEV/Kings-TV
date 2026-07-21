@@ -119,6 +119,9 @@ public class AdminAuthController {
         userInfo.put("role", user.getRole());
         userInfo.put("profileImage", user.getProfileImage());
         userInfo.put("permissions", moduleKeys);
+        userInfo.put("districtId", user.getDistrictId());
+        userInfo.put("gpScope", user.getGpScope());
+        userInfo.put("institutionName", user.getInstitutionName());
         response.put("user", userInfo);
 
         return ResponseEntity.ok(response);
@@ -207,6 +210,9 @@ public class AdminAuthController {
         response.put("profileImage", user.getProfileImage());
         response.put("permissions", moduleKeys);
         response.put("lastLogin", user.getLastLogin());
+        response.put("districtId", user.getDistrictId());
+        response.put("gpScope", user.getGpScope());
+        response.put("institutionName", user.getInstitutionName());
 
         return ResponseEntity.ok(response);
     }
@@ -234,32 +240,23 @@ public class AdminAuthController {
     }
 
     private List<String> getModulePermissions(String roleName) {
-        // SUPER_ADMIN and ADMIN get all module keys
-        if (roleName != null && (roleName.contains("ADMIN") || roleName.contains("SUPER"))) {
+        // SUPER_ADMIN bypasses — gets all module keys
+        if (roleName != null && (roleName.equals("SUPER_ADMIN") || roleName.equals("ADMIN"))) {
             return List.of(
                 "admin_panel", "add_post", "manage_all_posts", "navigation", "pages",
                 "rss_feeds", "categories", "widgets", "polls", "gallery", "comments",
                 "contact_messages", "newsletter", "reward_system", "ad_spaces",
-                "users", "roles_permissions", "seo_tools", "social_login", "languages", "settings"
+                "users", "roles_permissions", "seo_tools", "social_login", "languages", "settings",
+                "content_review", "my_content"
             );
         }
 
-        // For other roles, look up their permissions and filter to module keys
+        // For other roles, look up their permissions from the DB role → role_permissions join table
         return roleRepository.findByName(roleName)
             .map(role -> role.getPermissions().stream()
                 .map(com.kingstv.models.Permission::getName)
-                .filter(name -> isModuleKey(name))
                 .collect(Collectors.toList()))
             .orElse(Collections.emptyList());
-    }
-
-    private boolean isModuleKey(String name) {
-        return Set.of(
-            "admin_panel", "add_post", "manage_all_posts", "navigation", "pages",
-            "rss_feeds", "categories", "widgets", "polls", "gallery", "comments",
-            "contact_messages", "newsletter", "reward_system", "ad_spaces",
-            "users", "roles_permissions", "seo_tools", "social_login", "languages", "settings"
-        ).contains(name);
     }
 
     private String createRefreshToken(User user) {

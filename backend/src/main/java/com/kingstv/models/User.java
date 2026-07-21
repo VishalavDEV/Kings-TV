@@ -71,6 +71,15 @@ public class User {
     @Column(name = "updated_at", insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "district_id")
+    private Long districtId;
+
+    @Column(name = "gp_scope", length = 255)
+    private String gpScope;
+
+    @Column(name = "institution_name", length = 255)
+    private String institutionName;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -133,4 +142,13 @@ public class User {
 
     public Boolean getTwoFactorEnabled() { return twoFactorEnabled; }
     public void setTwoFactorEnabled(Boolean twoFactorEnabled) { this.twoFactorEnabled = twoFactorEnabled; }
+
+    public Long getDistrictId() { return districtId; }
+    public void setDistrictId(Long districtId) { this.districtId = districtId; }
+
+    public String getGpScope() { return gpScope; }
+    public void setGpScope(String gpScope) { this.gpScope = gpScope; }
+
+    public String getInstitutionName() { return institutionName; }
+    public void setInstitutionName(String institutionName) { this.institutionName = institutionName; }
 }

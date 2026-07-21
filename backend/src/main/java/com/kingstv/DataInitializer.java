@@ -24,6 +24,9 @@ public class DataInitializer {
     private DistrictRepository districtRepository;
 
     @Autowired
+    private ConstituencyRepository constituencyRepository;
+
+    @Autowired
     private ArticleRepository articleRepository;
 
     @Autowired
@@ -146,17 +149,75 @@ public class DataInitializer {
         };
         for (String[] dist : allDistricts) {
             try {
-                boolean exists = districtRepository.findAll().stream()
-                    .anyMatch(d -> dist[0].equalsIgnoreCase(d.getNameEn()));
-                if (!exists) {
-                    District d = new District();
+                Optional<District> existingOpt = districtRepository.findAll().stream()
+                    .filter(d -> dist[0].equalsIgnoreCase(d.getNameEn()))
+                    .findFirst();
+                District d;
+                if (!existingOpt.isPresent()) {
+                    d = new District();
                     d.setNameEn(dist[0]);
                     d.setNameTa(dist[1]);
-                    districtRepository.save(d);
+                } else {
+                    d = existingOpt.get();
                 }
+
+                // Apply defaults and center points
+                d.setState("Tamil Nadu");
+                if (d.getRadiusKm() == null) {
+                    d.setRadiusKm(15.0);
+                }
+                if (d.getCenterLatitude() == null || d.getCenterLongitude() == null) {
+                    if ("Chennai".equals(dist[0])) {
+                        d.setCenterLatitude(13.0827);
+                        d.setCenterLongitude(80.2707);
+                    } else if ("Coimbatore".equals(dist[0])) {
+                        d.setCenterLatitude(11.0168);
+                        d.setCenterLongitude(76.9558);
+                    } else if ("Madurai".equals(dist[0])) {
+                        d.setCenterLatitude(9.9252);
+                        d.setCenterLongitude(78.1198);
+                    } else {
+                        // Generate reasonably consistent pseudo-random coordinate in Tamil Nadu
+                        int hash = dist[0].hashCode();
+                        double latOffset = (double) (hash % 100) / 100.0 - 0.5; // -0.5 to 0.5
+                        double lngOffset = (double) ((hash / 100) % 100) / 100.0 - 0.5;
+                        d.setCenterLatitude(11.0 + latOffset);
+                        d.setCenterLongitude(78.5 + lngOffset);
+                    }
+                }
+                districtRepository.save(d);
             } catch (Exception e) {
                 System.out.println("Could not seed district " + dist[0] + ": " + e.getMessage());
             }
+        }
+
+        // Seed sample constituencies for Chennai if none exist
+        try {
+            if (constituencyRepository.count() == 0) {
+                Optional<District> chennaiOpt = districtRepository.findAll().stream()
+                    .filter(d -> "Chennai".equalsIgnoreCase(d.getNameEn()))
+                    .findFirst();
+                if (chennaiOpt.isPresent()) {
+                    Long chennaiId = chennaiOpt.get().getId();
+                    String[][] chennaiConsts = {
+                        {"Chepauk", "சேப்பாக்கம்", "13.0642", "80.2762"},
+                        {"Mylapore", "மயிலாப்பூர்", "13.0330", "80.2685"},
+                        {"Royapuram", "ராயபுரம்", "13.1137", "80.2940"}
+                    };
+                    for (String[] cc : chennaiConsts) {
+                        Constituency c = new Constituency();
+                        c.setDistrictId(chennaiId);
+                        c.setNameEn(cc[0]);
+                        c.setNameTa(cc[1]);
+                        c.setLatitude(Double.parseDouble(cc[2]));
+                        c.setLongitude(Double.parseDouble(cc[3]));
+                        c.setRadiusKm(10.0);
+                        constituencyRepository.save(c);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Could not seed sample constituencies: " + e.getMessage());
         }
 
         seedAdvertisements();
