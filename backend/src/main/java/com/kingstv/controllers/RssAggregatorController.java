@@ -24,6 +24,7 @@ public class RssAggregatorController {
     }
 
     @PostMapping("/sync")
+    @com.kingstv.security.RequiresPermission(anyOf = {com.kingstv.models.Role.SUPER_ADMIN, com.kingstv.models.Role.CHIEF_EDITOR})
     public ResponseEntity<?> triggerSync() {
         rssAggregatorService.fetchAggregatedFeeds();
         return ResponseEntity.ok().build();

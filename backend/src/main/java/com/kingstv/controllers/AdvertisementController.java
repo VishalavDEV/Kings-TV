@@ -6,6 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.kingstv.security.RequiresPermission;
+import com.kingstv.models.Role;
+import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -41,12 +44,14 @@ public class AdvertisementController {
     }
 
     @PostMapping
-    public ResponseEntity<Advertisement> createAdvertisement(@RequestBody Advertisement advertisement) {
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR})
+    public ResponseEntity<Advertisement> createAdvertisement(@Valid @RequestBody Advertisement advertisement) {
         return ResponseEntity.ok(advertisementRepository.save(advertisement));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateAdvertisement(@PathVariable Long id, @RequestBody Advertisement advertisement) {
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR})
+    public ResponseEntity<?> updateAdvertisement(@PathVariable Long id, @Valid @RequestBody Advertisement advertisement) {
         Optional<Advertisement> existing = advertisementRepository.findById(id);
         if (existing.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -56,6 +61,7 @@ public class AdvertisementController {
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR})
     public ResponseEntity<?> deleteAdvertisement(@PathVariable Long id) {
         advertisementRepository.deleteById(id);
         return ResponseEntity.ok().build();

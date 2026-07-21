@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -34,8 +35,9 @@ public class AdminRBACIntegrationTest {
 
     @Test
     public void testForceFetchRssUnauthenticated() throws Exception {
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
         // Without Authorization header, should be blocked and return 401 Unauthorized by RbacInterceptor
-        mockMvc.perform(post("/api/v1/rss-aggregator/fetch")
+        mockMvc.perform(post("/api/v1/rss-aggregator/sync")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
@@ -45,7 +47,7 @@ public class AdminRBACIntegrationTest {
         // Generate a token for SUPER_ADMIN role with required permissions
         String token = jwtUtil.generateToken("admin", "SUPER_ADMIN", 1L, List.of("ARTICLE_PUBLISH", "ARTICLE_REVIEW"));
 
-        mockMvc.perform(post("/api/v1/rss-aggregator/fetch")
+        mockMvc.perform(post("/api/v1/rss-aggregator/sync")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -55,9 +57,10 @@ public class AdminRBACIntegrationTest {
 
     @Test
     public void testSaveAdvertisementUnauthenticated() throws Exception {
-        mockMvc.perform(post("/api/v1/advertisements/saveUpdate")
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        mockMvc.perform(post("/api/v1/advertisements")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"title\":\"Promo Ad\",\"imageUrl\":\"http://example.com/ad.png\"}"))
+                .content("{\"placementId\":\"sidebar\",\"title\":\"Promo Ad\",\"imageUrl\":\"http://example.com/ad.png\"}"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -67,7 +70,7 @@ public class AdminRBACIntegrationTest {
         String token = jwtUtil.generateToken("admin", "SUPER_ADMIN", 1L, List.of("ARTICLE_PUBLISH", "ARTICLE_REVIEW"));
 
         // Validation should trigger 400 Bad Request because fields are missing, but NOT 401/403!
-        mockMvc.perform(post("/api/v1/advertisements/saveUpdate")
+        mockMvc.perform(post("/api/v1/advertisements")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
@@ -76,13 +79,17 @@ public class AdminRBACIntegrationTest {
 
     @Test
     public void testUpdateKycStatusUnauthenticated() throws Exception {
-        mockMvc.perform(post("/api/v1/directory/1/approve-kyc")
-                .contentType(MediaType.APPLICATION_JSON))
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        // PATCH /api/v1/directory/{id}/kyc has @RequiresPermission, so unauthenticated returns 401
+        mockMvc.perform(patch("/api/v1/directory/1/kyc")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"approved\"}"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     public void testRequestNfcUnauthenticated() throws Exception {
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
         mockMvc.perform(post("/api/v1/nfc/request")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"listingId\":1,\"linkType\":\"profile\"}"))
