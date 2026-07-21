@@ -13,9 +13,9 @@ USE kings_tv_db;
 -- -----------------------------------------------------
 CREATE TABLE `users` (
     `user_id` BIGINT AUTO_INCREMENT PRIMARY KEY,
-    `username` VARCHAR(50) NOT NULL UNIQUE,
+    `username` VARCHAR(50) NULL UNIQUE,
     `email` VARCHAR(100) NOT NULL UNIQUE,
-    `password_hash` VARCHAR(255) NOT NULL,
+    `password_hash` VARCHAR(255) NULL,
     `role` VARCHAR(50) DEFAULT 'user',
     `is_active` BOOLEAN DEFAULT TRUE,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -37,6 +37,16 @@ public class CategoryController {
     @GetMapping("/nav")
     public List<Map<String, Object>> getNavMenu() {
         List<Category> categories = categoryRepository.findByIsActiveAndIsNavOrderByDisplayOrderAsc(true, true);
+        
+        // Fetch all active subcategories in a single query to prevent N+1 query loops
+        List<SubCategory> allActiveSubs = subCategoryRepository.findByStatusOrderByDisplayOrderAsc("active");
+        
+        // Group subcategories by categoryId in memory
+        Map<Long, List<SubCategory>> subsByCategoryId = new java.util.HashMap<>();
+        for (SubCategory sub : allActiveSubs) {
+            subsByCategoryId.computeIfAbsent(sub.getCategoryId(), k -> new ArrayList<>()).add(sub);
+        }
+        
         List<Map<String, Object>> result = new ArrayList<>();
 
         for (Category cat : categories) {
@@ -48,7 +58,7 @@ public class CategoryController {
             map.put("icon", cat.getIcon());
             map.put("displayOrder", cat.getDisplayOrder());
 
-            List<SubCategory> subs = subCategoryRepository.findByCategoryIdAndStatusOrderByDisplayOrderAsc(cat.getId(), "active");
+            List<SubCategory> subs = subsByCategoryId.getOrDefault(cat.getId(), new ArrayList<>());
             
             // Build tree hierarchy of subcategories
             Map<Long, Map<String, Object>> subMapById = new LinkedHashMap<>();

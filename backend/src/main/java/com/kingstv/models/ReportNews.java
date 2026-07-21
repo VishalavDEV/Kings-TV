@@ -1,6 +1,8 @@
 package com.kingstv.models;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 @Entity
@@ -11,15 +13,23 @@ public class ReportNews {
     private Long id;
 
     @Column(name = "reporter_name", nullable = false)
+    @NotBlank(message = "Reporter name is required")
+    @Size(max = 100, message = "Reporter name cannot exceed 100 characters")
     private String reporterName;
 
     @Column(name = "reporter_contact", nullable = false)
+    @NotBlank(message = "Reporter contact is required")
+    @Size(max = 50, message = "Reporter contact cannot exceed 50 characters")
     private String reporterContact;
 
     @Column(nullable = false)
+    @NotBlank(message = "Title is required")
+    @Size(max = 200, message = "Title cannot exceed 200 characters")
     private String title;
 
     @Column(nullable = false, columnDefinition = "TEXT")
+    @NotBlank(message = "Details are required")
+    @Size(max = 2000, message = "Details cannot exceed 2000 characters")
     private String details;
 
     @Column(name = "image_url")

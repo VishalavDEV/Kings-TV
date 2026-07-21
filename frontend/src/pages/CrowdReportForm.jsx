@@ -13,15 +13,47 @@ const CrowdReportForm = () => {
   const [reportImageUrl, setReportImageUrl] = useState('');
   const [reportVideoUrl, setReportVideoUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!reporterName || !reporterContact || !reportTitle || !reportDetails) {
-      alert(lang === 'en' ? 'Please fill in all required fields.' : 'தேவையான அனைத்து விவரங்களையும் நிரப்பவும்.');
+    
+    // Inline Validations
+    const errors = {};
+    if (!reporterName.trim()) {
+      errors.reporterName = lang === 'en' ? 'Reporter name is required' : 'செய்தியாளர் பெயர் தேவை';
+    } else if (reporterName.length > 100) {
+      errors.reporterName = lang === 'en' ? 'Name cannot exceed 100 characters' : 'பெயர் 100 எழுத்துகளுக்குள் இருக்க வேண்டும்';
+    }
+
+    if (!reporterContact.trim()) {
+      errors.reporterContact = lang === 'en' ? 'Contact details are required' : 'தொடர்பு விவரங்கள் தேவை';
+    } else if (reporterContact.length > 50) {
+      errors.reporterContact = lang === 'en' ? 'Contact cannot exceed 50 characters' : 'தொடர்பு விவரங்கள் 50 எழுத்துகளுக்குள் இருக்க வேண்டும்';
+    }
+
+    if (!reportTitle.trim()) {
+      errors.reportTitle = lang === 'en' ? 'Report title is required' : 'செய்தித் தலைப்பு தேவை';
+    } else if (reportTitle.length > 200) {
+      errors.reportTitle = lang === 'en' ? 'Title cannot exceed 200 characters' : 'தலைப்பு 200 எழுத்துகளுக்குள் இருக்க வேண்டும்';
+    }
+
+    if (!reportDetails.trim()) {
+      errors.reportDetails = lang === 'en' ? 'Description details are required' : 'செய்தி விவரங்கள் தேவை';
+    } else if (reportDetails.length > 2000) {
+      errors.reportDetails = lang === 'en' ? 'Details cannot exceed 2000 characters' : 'விவரங்கள் 2000 எழுத்துகளுக்குள் இருக்க வேண்டும்';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
 
+    setFormErrors({});
     setSubmitting(true);
+    setSubmitSuccess(false);
+
     fetchApi('/report-news/saveUpdate', {
       method: 'POST',
       body: JSON.stringify({
@@ -35,7 +67,7 @@ const CrowdReportForm = () => {
       })
     })
     .then(() => {
-      alert(lang === 'en' ? 'Thank you! Your news report has been submitted for review.' : 'நன்றி! உங்கள் செய்தி அறிக்கை மதிப்பாய்வுக்காக சமர்ப்பிக்கப்பட்டுள்ளது.');
+      setSubmitSuccess(true);
       setReporterName('');
       setReporterContact('');
       setReportTitle('');
@@ -45,8 +77,8 @@ const CrowdReportForm = () => {
       setSubmitting(false);
     })
     .catch(err => {
-      console.warn("API report submission failed, simulating success locally", err);
-      alert(lang === 'en' ? 'Thank you! Your news report has been submitted for review.' : 'நன்றி! உங்கள் செய்தி அறிக்கை மதிப்பாய்வுக்காக சமர்ப்பிக்கப்பட்டுள்ளது.');
+      console.warn("API report submission failed, simulating local success offline", err);
+      setSubmitSuccess(true);
       setReporterName('');
       setReporterContact('');
       setReportTitle('');
@@ -104,6 +136,12 @@ const CrowdReportForm = () => {
             {lang === 'en' ? 'News Submission Form' : 'செய்தி சமர்ப்பிக்கும் படிவம்'}
           </h2>
           
+          {submitSuccess && (
+            <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10B981', padding: '12px 16px', borderRadius: '8px', marginBottom: '20px', fontSize: '14px', fontWeight: 600 }}>
+              <i className="fas fa-check-circle"></i> {lang === 'en' ? 'Thank you! Your news report has been submitted for review.' : 'நன்றி! உங்கள் செய்தி அறிக்கை மதிப்பாய்வுக்காக சமர்ப்பிக்கப்பட்டுள்ளது.'}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }} className="form-row-2">
               <div>
@@ -115,8 +153,9 @@ const CrowdReportForm = () => {
                   value={reporterName} 
                   onChange={(e) => setReporterName(e.target.value)} 
                   required 
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: formErrors.reporterName ? '1px solid #EF4444' : '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
                 />
+                {formErrors.reporterName && <span style={{ color: '#EF4444', fontSize: '11px', display: 'block', marginTop: '4px' }}>{formErrors.reporterName}</span>}
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '8px' }}>
@@ -127,8 +166,9 @@ const CrowdReportForm = () => {
                   value={reporterContact} 
                   onChange={(e) => setReporterContact(e.target.value)} 
                   required 
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: formErrors.reporterContact ? '1px solid #EF4444' : '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
                 />
+                {formErrors.reporterContact && <span style={{ color: '#EF4444', fontSize: '11px', display: 'block', marginTop: '4px' }}>{formErrors.reporterContact}</span>}
               </div>
             </div>
 
@@ -141,8 +181,9 @@ const CrowdReportForm = () => {
                 value={reportTitle} 
                 onChange={(e) => setReportTitle(e.target.value)} 
                 required 
-                style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: formErrors.reportTitle ? '1px solid #EF4444' : '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
               />
+              {formErrors.reportTitle && <span style={{ color: '#EF4444', fontSize: '11px', display: 'block', marginTop: '4px' }}>{formErrors.reportTitle}</span>}
             </div>
 
             <div>
@@ -154,8 +195,9 @@ const CrowdReportForm = () => {
                 value={reportDetails} 
                 onChange={(e) => setReportDetails(e.target.value)} 
                 required 
-                style={{ width: '100%', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)', resize: 'vertical', fontFamily: 'inherit' }}
+                style={{ width: '100%', padding: '12px 14px', borderRadius: '8px', border: formErrors.reportDetails ? '1px solid #EF4444' : '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)', resize: 'vertical', fontFamily: 'inherit' }}
               />
+              {formErrors.reportDetails && <span style={{ color: '#EF4444', fontSize: '11px', display: 'block', marginTop: '4px' }}>{formErrors.reportDetails}</span>}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }} className="form-row-2">

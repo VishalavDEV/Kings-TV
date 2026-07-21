@@ -5,6 +5,7 @@ import com.kingstv.repository.ContentEditLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -25,6 +26,7 @@ public class ContentEditService {
      * @return true if edit is allowed, false if max edits reached
      * @throws MaxEditsExceededException if limit is exceeded
      */
+    @Transactional
     public boolean attemptEdit(String contentType, Long contentId, Long editorId) {
         Optional<ContentEditLog> logOpt = contentEditLogRepository
                 .findByContentTypeAndContentId(contentType, contentId);

@@ -23,6 +23,7 @@
   --top-bar-switcher-bg: rgba(30, 41, 59, 0.05);
   --header-bg: #FFFFFF;
   --header-text: #1E293B;
+  --border-color: #E2E8F0;
 }
 
 [data-theme="dark"] {
@@ -41,6 +42,7 @@
   --top-bar-switcher-bg: rgba(255, 255, 255, 0.08);
   --header-bg: #0F172A;
   --header-text: #F8FAFC;
+  --border-color: rgba(255, 255, 255, 0.15);
 }
 
 ::-webkit-scrollbar {

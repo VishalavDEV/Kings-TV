@@ -3,6 +3,9 @@ package com.kingstv.controllers;
 import com.kingstv.models.ReportNews;
 import com.kingstv.repository.ReportNewsRepository;
 import com.kingstv.services.EmailService;
+import com.kingstv.security.RequiresPermission;
+import com.kingstv.models.Role;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +31,7 @@ public class ReportNewsController {
     private EmailService emailService;
 
     @GetMapping("/getAll")
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN})
     public Page<ReportNews> getAll(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
@@ -54,10 +58,7 @@ public class ReportNewsController {
     }
 
     @PostMapping("/saveUpdate")
-    public ResponseEntity<?> save(@RequestBody ReportNews entity) {
-        if (entity.getReporterName() == null || entity.getReporterContact() == null || entity.getTitle() == null || entity.getDetails() == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "reporterName, reporterContact, title, and details are required"));
-        }
+    public ResponseEntity<?> save(@Valid @RequestBody ReportNews entity) {
         if (entity.getCreatedAt() == null) {
             entity.setCreatedAt(LocalDateTime.now());
         }
@@ -83,7 +84,8 @@ public class ReportNewsController {
     }
 
     @PutMapping("/saveUpdate")
-    public ResponseEntity<?> update(@RequestBody ReportNews entity) {
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN})
+    public ResponseEntity<?> update(@Valid @RequestBody ReportNews entity) {
         if (entity.getId() == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Id is required for update"));
         }
@@ -105,6 +107,7 @@ public class ReportNewsController {
     }
 
     @PatchMapping("/changeStatus")
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN})
     public ResponseEntity<?> changeStatus(@RequestBody Map<String, Object> request) {
         if (!request.containsKey("id") || !request.containsKey("status")) {
             return ResponseEntity.badRequest().body(Map.of("message", "id and status are required"));
@@ -123,6 +126,7 @@ public class ReportNewsController {
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN})
     public ResponseEntity<?> delete(@PathVariable Long id) {
         Optional<ReportNews> opt = reportNewsRepository.findById(id);
         if (opt.isEmpty()) {

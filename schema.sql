@@ -490,3 +490,11 @@ CREATE TABLE IF NOT EXISTS `navigation_menus` (
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
+-- -----------------------------------------------------
+-- Performance Tuning Indexes
+-- -----------------------------------------------------
+CREATE INDEX `idx_articles_status_published` ON `articles` (`status`, `published_at` DESC);
+CREATE INDEX `idx_articles_category_status` ON `articles` (`category_id`, `status`);
+CREATE INDEX `idx_articles_district_status` ON `articles` (`district_id`, `status`);
+CREATE INDEX `idx_articles_views` ON `articles` (`views_count` DESC);
+

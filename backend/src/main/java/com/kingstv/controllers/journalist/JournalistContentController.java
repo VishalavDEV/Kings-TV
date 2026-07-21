@@ -170,10 +170,13 @@ public class JournalistContentController {
         if (request.containsKey("longitude")) article.setLongitude(request.get("longitude") != null ? ((Number) request.get("longitude")).doubleValue() : null);
         if (request.containsKey("visibilityRadiusKm")) article.setVisibilityRadiusKm(request.get("visibilityRadiusKm") != null ? ((Number) request.get("visibilityRadiusKm")).doubleValue() : null);
 
+        // Reset status to submitted so it must be reviewed again
+        article.setStatus("submitted");
+
         Article saved = articleRepository.save(article);
         logAudit("UPDATE", "Article", id, "Edited article");
         return ResponseEntity.ok(Map.of(
-            "message", "Post updated",
+            "message", "Post updated and resubmitted for review",
             "remainingEdits", contentEditService.getRemainingEdits("ARTICLE", id)
         ));
     }
