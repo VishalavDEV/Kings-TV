@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import { Shield, Plus, Edit2, Check, X, ShieldAlert, Key, Trash2 } from 'lucide-react';
@@ -101,9 +102,9 @@ const RoleManagement = () => {
 
   if (!currentUser || currentUser.role !== 'SUPER_ADMIN') {
     return (
-      <div className="admin-page">
+      <div className="animate-fade-in">
         <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center', color: 'var(--danger)' }}>
-          <ShieldAlert size={48} style={{ margin: '0 auto 1rem' }} />
+          <ShieldAlert size={48} style={{ margin: '0 auto 1rem', display: 'block' }} />
           <h2>Access Denied</h2>
           <p>Only Super Administrators can access this page.</p>
         </div>
@@ -112,8 +113,8 @@ const RoleManagement = () => {
   }
 
   return (
-    <div className="admin-page">
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+    <div className="animate-fade-in">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Key size={24} /> Roles & Permissions
@@ -188,7 +189,7 @@ const RoleManagement = () => {
         </table>
       </div>
 
-      {isModalOpen && (
+      {isModalOpen && createPortal(
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="glass-panel" style={{ width: '800px', padding: '2rem', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
@@ -251,7 +252,8 @@ const RoleManagement = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

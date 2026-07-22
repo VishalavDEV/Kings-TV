@@ -28,7 +28,9 @@ import {
   MessageSquare,
   Image as ImageIcon,
   Search,
-  Sparkles
+  Sparkles,
+  Building2,
+  Languages
 } from 'lucide-react';
 
 /**
@@ -176,6 +178,7 @@ const Sidebar = () => {
           <SidebarSection id="engagement" title={t('engagement')} icon={Megaphone} defaultOpen={false}>
             <SidebarNavLink to="/admin/push" icon={BellRing} label={t('push')} />
             <SidebarNavLink to="/admin/layout" icon={Layout} label={t('layout')} />
+            <SidebarNavLink to="/admin/community" icon={Building2} label="Community Modules" />
           </SidebarSection>
         )}
 
@@ -205,6 +208,7 @@ const Sidebar = () => {
             <SidebarNavLink to="/admin/surveys" icon={HelpCircle} label={t('surveys')} />
             <SidebarNavLink to="/admin/settings" icon={Settings} label={t('settings')} />
             <SidebarNavLink to="/admin/settings/ai" icon={Sparkles} label="AI Configuration" />
+            <SidebarNavLink to="/admin/settings/language" icon={Languages} label="Language & Fonts" />
             <SidebarNavLink to="/admin/profanity" icon={AlertTriangle} label={t('profanity')} badge={counts.pendingProfanity} />
             <SidebarNavLink to="/admin/audit-logs" icon={Activity} label={t('audit')} />
           </SidebarSection>

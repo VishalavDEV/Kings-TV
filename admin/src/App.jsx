@@ -37,6 +37,8 @@ import SubscribersManagement from './pages/admin/SubscribersManagement';
 import NotificationPreferences from './pages/admin/NotificationPreferences';
 import Profile from './pages/admin/Profile';
 import AiConfiguration from './pages/admin/AiConfiguration';
+import CommunityModules from './pages/admin/CommunityModules';
+import LanguageFontSettings from './pages/admin/LanguageFontSettings';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -134,6 +136,18 @@ function App() {
           <Route path="/admin/settings/ai" element={
             <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
               <AiConfiguration />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/community" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'CHIEF_EDITOR']}>
+              <CommunityModules />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/settings/language" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
+              <LanguageFontSettings />
             </ProtectedLayout>
           } />
 

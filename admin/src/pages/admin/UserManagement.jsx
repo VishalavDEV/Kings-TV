@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../../api';
 import { Plus, Edit2, Trash2, Shield, UserX, UserCheck, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -285,7 +286,7 @@ const UserManagement = () => {
       </div>
 
       {/* Edit User Modal */}
-      {editingUser && (
+      {editingUser && createPortal(
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="glass-panel" style={{ width: '500px', padding: '2rem', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
@@ -342,11 +343,12 @@ const UserManagement = () => {
               <button className="btn btn-primary" style={{ flex: 1 }} onClick={submitEditUser}>Save Changes</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Add User Modal */}
-      {isAddingUser && (
+      {isAddingUser && createPortal(
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="glass-panel" style={{ width: '450px', padding: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
@@ -403,7 +405,8 @@ const UserManagement = () => {
               <button className="btn btn-primary" style={{ flex: 1 }} onClick={submitNewUser}>Create User</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
