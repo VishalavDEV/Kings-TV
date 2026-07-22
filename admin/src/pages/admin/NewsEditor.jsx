@@ -25,12 +25,25 @@ export const getGeminiUrl = () => {
 
 const callGemini = async (prompt) => {
   const url = getGeminiUrl();
+  const apiKey = activeAiConfig.apiKey || '';
+  const headers = { 'Content-Type': 'application/json' };
+  if (apiKey) {
+    headers['X-goog-api-key'] = apiKey;
+  }
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
   });
-  if (!res.ok) throw new Error(`Gemini ${res.status}`);
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    let errorMsg = errorData?.error?.message || `HTTP ${res.status}`;
+    if (res.status === 429) {
+      errorMsg = 'Rate limit / Free tier quota exceeded (HTTP 429). Please wait 60 seconds or generate a key on a project with active billing quota.';
+    }
+    console.error('Gemini API Error:', errorMsg);
+    throw new Error(`Gemini ${res.status}: ${errorMsg}`);
+  }
   const data = await res.json();
   return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
 };
