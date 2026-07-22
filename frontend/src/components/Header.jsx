@@ -85,7 +85,7 @@ const Header = () => {
 
 
 
-  const regionalPaths = ['/directory', '/wishes', '/obituaries', '/jobs', '/classifieds', '/business-studies'];
+  const regionalPaths = ['/directory', '/wishes', '/obituaries', '/jobs', '/classifieds', '/business-studies', '/deals', '/rfq', '/my-rfqs'];
   const isRegionalPage = regionalPaths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
 
   const [timeStr, setTimeStr] = useState('');
@@ -982,7 +982,9 @@ const Header = () => {
         padding: '8px 0'
       }}>
         {navItems.map((item, idx) => {
-          const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+          const isActive = (item.id === 'regional' && isRegionalPage) ||
+                           location.pathname === item.path ||
+                           (item.path !== '/' && location.pathname.startsWith(item.path));
 
           const handleLinkClick = (e) => {
             onLinkClick();
@@ -1196,7 +1198,9 @@ const Header = () => {
     return (
       <ul style={{ display: 'flex', flexDirection: 'column', gap: '15px', padding: 0, listStyle: 'none', margin: 0 }}>
         {navItems.map((item, idx) => {
-          const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+          const isActive = (item.id === 'regional' && isRegionalPage) ||
+                           location.pathname === item.path ||
+                           (item.path !== '/' && location.pathname.startsWith(item.path));
           const hasSubs = item.subcategories && item.subcategories.length > 0;
           const isExpanded = mobileExpandedCat === item.id;
 
