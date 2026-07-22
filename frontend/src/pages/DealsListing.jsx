@@ -5,6 +5,7 @@ import { ThemeContext } from '../context/ThemeContext';
 import { AuthContext } from '../context/AuthContext';
 import { fetchApi } from '../utils/api';
 import './DealsListing.css';
+import './Classifieds.css';
 
 
 const DealsListing = () => {
@@ -217,152 +218,164 @@ const DealsListing = () => {
     { name: 'Sports', nameTa: 'விளையாட்டு', count: 2 }
   ];
   return (
-    <div className="container mx-auto deals-module-container" style={{ paddingBottom: '60px', paddingTop: '20px' }}>
-
+    <div className="container mx-auto class-module-container" style={{ paddingBottom: '60px', paddingTop: '20px' }}>
       
-      <div className="deals-content-columns-grid">
+      {/* PREMIUM HERO BANNER */}
+      <section className="class-hero-banner" style={{ background: 'linear-gradient(135deg, #b3732a 0%, #a26219 50%, #8c500b 100%)' }}>
+        <div className="class-hero-left">
+          <h2 className="class-hero-title">
+            {lang === 'en' ? 'Exclusive Deals & Offers' : 'பிரத்தியேக சலுகைகள் & தள்ளுபடிகள்'}
+          </h2>
+          <p className="class-hero-subtitle">
+            {lang === 'en' ? 'Grab the best offers and coupons from verified local businesses around you.' : 'உங்களைச் சுற்றியுள்ள சரிபார்க்கப்பட்ட உள்ளூர் வணிகங்களிடமிருந்து சிறந்த சலுகைகளைப் பெறுங்கள்.'}
+          </p>
+          <div className="class-hero-btns">
+            <button className="class-hero-btn-find" style={{ background: 'var(--primary)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }} onClick={() => alert("Exploring local business coupons...")}>
+              {lang === 'en' ? 'Explore Deals' : 'சலுகைகளை ஆராய்க'}
+            </button>
+            <button className="class-hero-btn-post" style={{ color: '#8c500b' }} onClick={() => setShowCreateModal(true)}>
+              {lang === 'en' ? 'Post a Free Deal' : 'இலவச சலுகையை பதிவிடுக'}
+            </button>
+          </div>
+        </div>
+        <div className="class-stat-badge-float active-ads">
+          <i className="fas fa-fire"></i>
+          <div>
+            <div className="class-stat-number">{deals.length}</div>
+            <div className="class-stat-label">{lang === 'en' ? 'Active Offers' : 'செயலில் உள்ள சலுகைகள்'}</div>
+          </div>
+        </div>
+        <div className="class-stat-badge-float verified-users">
+          <i className="fas fa-user-check"></i>
+          <div>
+            <div className="class-stat-number">100% Free</div>
+            <div className="class-stat-label">{lang === 'en' ? 'To Claim Coupons' : 'கூப்பன்களைப் பெற'}</div>
+          </div>
+        </div>
+        <div className="class-banner-illustration" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400")' }}></div>
+      </section>
+
+      {/* HORIZONTAL SEARCH FILTER PANEL */}
+      <div className="class-filter-panel">
+        <div className="class-filter-row">
+          <div className="class-filter-input-wrap" style={{ flex: 1.5 }}>
+            <i className="fas fa-search"></i>
+            <input 
+              type="text" 
+              placeholder={lang === 'en' ? 'Search deals by keyword...' : 'சலுகைகளைத் தேடுக...'} 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="class-filter-input-wrap">
+            <i className="fas fa-tags"></i>
+            <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
+              <option value="all">{lang === 'en' ? 'All Categories' : 'அனைத்துப் பிரிவுகள்'}</option>
+              {categories.map((c, idx) => (
+                <option key={idx} value={c.name}>{getCategoryLabel(c.name)}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="class-filter-input-wrap">
+            <i className="fas fa-map-marker-alt"></i>
+            <select>
+              <option>Chennai</option>
+              <option>Coimbatore</option>
+              <option>Madurai</option>
+            </select>
+          </div>
+
+          <button className="class-search-action-btn" style={{ background: 'var(--primary)' }}>
+            {lang === 'en' ? 'Search' : 'தேடுக'}
+          </button>
+        </div>
+      </div>
+
+      {/* QUICK CATEGORIES PILL ROW */}
+      <div className="class-quick-cats-row">
+        <button 
+          className={`class-quick-cat-btn ${selectedCategory === 'all' ? 'active' : ''}`}
+          onClick={() => setSelectedCategory('all')}
+          style={{ background: selectedCategory === 'all' ? 'var(--primary)' : '' }}
+        >
+          <i className="fas fa-border-all"></i>
+          <span>{lang === 'en' ? 'All' : 'அனைத்தும்'}</span>
+        </button>
+        {categories.map((c, idx) => {
+          let iconClass = 'fa-utensils';
+          if (c.name === 'Fashion') iconClass = 'fa-tshirt';
+          else if (c.name === 'Health & Wellness') iconClass = 'fa-heartbeat';
+          else if (c.name === 'Automotive') iconClass = 'fa-car';
+          else if (c.name === 'Electronics') iconClass = 'fa-laptop';
+          else if (c.name === 'Home & Living') iconClass = 'fa-couch';
+          else if (c.name === 'Beauty & Salon') iconClass = 'fa-spa';
+          else if (c.name === 'Sports') iconClass = 'fa-running';
+
+          return (
+            <button 
+              key={idx} 
+              className={`class-quick-cat-btn ${selectedCategory === c.name ? 'active' : ''}`}
+              onClick={() => setSelectedCategory(c.name)}
+              style={{ background: selectedCategory === c.name ? 'var(--primary)' : '' }}
+            >
+              <i className={`fas ${iconClass}`}></i>
+              <span>{getCategoryLabel(c.name)}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* THREE COLUMN GRID LAYOUT */}
+      <div className="class-main-layout">
         
-        {/* COLUMN 1: Sidebar Filters */}
-        <div className="deals-sidebar-filters-column">
-
-          <div 
-            className="p-6 border shadow-sm"
-            style={{
-              borderRadius: '16px',
-              backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
-              borderColor: theme === 'dark' ? '#1f2937' : '#f1f5f9'
-            }}
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-extrabold text-sm text-gray-800 dark:text-white">Filter Deals</h3>
-              <button 
-                type="button" 
-                onClick={handleResetFilters} 
-                className="text-xs text-[#6366f1] hover:underline font-bold bg-transparent border-0 cursor-pointer p-0"
+        {/* Left Column: Categories List */}
+        <div className="class-sidebar-left">
+          <div style={{ background: theme === 'dark' ? '#111827' : '#ffffff', border: theme === 'dark' ? '1px solid #1f2937' : '1px solid #e2e8f0', borderRadius: '16px', padding: '16px' }}>
+            <h4 style={{ fontSize: '13px', fontWeight: '800', marginBottom: '12px' }}>{lang === 'en' ? 'Browse Categories' : 'வகைகளை உலாவுக'}</h4>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div 
+                className="class-category-sidebar-item" 
+                style={{ background: selectedCategory === 'all' ? (theme === 'dark' ? '#1f2937' : '#f8fafc') : 'none' }}
+                onClick={() => setSelectedCategory('all')}
               >
-                Clear All
-              </button>
-            </div>
-
-            {/* Category Dropdown */}
-            <div style={{ marginBottom: '22px' }} className="flex flex-col gap-1.5">
-              <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Category</label>
-              <div className="relative">
-                <select 
-                  value={selectedCategory} 
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className={`w-full p-2.5 border text-xs focus:outline-none appearance-none cursor-pointer ${
-                    theme === 'dark' ? 'bg-[#1f2937] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'
-                  }`}
-                  style={{
-                    borderRadius: '12px',
-                    border: theme === 'dark' ? '1px solid #1f2937' : '1px solid #e2e8f0'
-                  }}
-                >
-                   <option value="all">{lang === 'en' ? 'All Categories' : 'அனைத்துப் பிரிவுகள்'}</option>
-                   {categories.map((c, idx) => (
-                     <option key={idx} value={c.name}>{getCategoryLabel(c.name)}</option>
-                   ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                  <i className="fas fa-chevron-down text-[9px]"></i>
+                <div className="class-category-sidebar-item-left">
+                  <i className="fas fa-border-all"></i>
+                  <span>{lang === 'en' ? 'All Categories' : 'அனைத்துப் பிரிவுகள்'}</span>
                 </div>
+                <span className="class-category-sidebar-item-right">{deals.length}</span>
               </div>
+              {categories.map((c, idx) => {
+                let iconClass = 'fa-utensils';
+                if (c.name === 'Fashion') iconClass = 'fa-tshirt';
+                else if (c.name === 'Health & Wellness') iconClass = 'fa-heartbeat';
+                else if (c.name === 'Automotive') iconClass = 'fa-car';
+                else if (c.name === 'Electronics') iconClass = 'fa-laptop';
+                else if (c.name === 'Home & Living') iconClass = 'fa-couch';
+                else if (c.name === 'Beauty & Salon') iconClass = 'fa-spa';
+                else if (c.name === 'Sports') iconClass = 'fa-running';
+
+                return (
+                  <div 
+                    className="class-category-sidebar-item" 
+                    key={idx} 
+                    style={{ background: selectedCategory === c.name ? (theme === 'dark' ? '#1f2937' : '#f8fafc') : 'none' }}
+                    onClick={() => setSelectedCategory(c.name)}
+                  >
+                    <div className="class-category-sidebar-item-left">
+                      <i className={`fas ${iconClass}`}></i>
+                      <span>{getCategoryLabel(c.name)}</span>
+                    </div>
+                    <span className="class-category-sidebar-item-right">{c.count}</span>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Location Dropdown */}
-            <div style={{ marginBottom: '22px' }} className="flex flex-col gap-1.5">
-              <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Location</label>
-              <div className="relative">
-                <select 
-                  className={`w-full p-2.5 border text-xs focus:outline-none appearance-none cursor-pointer ${
-                    theme === 'dark' ? 'bg-[#1f2937] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'
-                  }`}
-                  style={{
-                    borderRadius: '12px',
-                    border: theme === 'dark' ? '1px solid #1f2937' : '1px solid #e2e8f0'
-                  }}
-                >
-                  <option>Current Location</option>
-                  <option>Chennai</option>
-                  <option>Coimbatore</option>
-                  <option>Madurai</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                  <i className="fas fa-chevron-down text-[9px]"></i>
-                </div>
-              </div>
-            </div>
-
-            {/* Distance Dropdown */}
-            <div style={{ marginBottom: '22px' }} className="flex flex-col gap-1.5">
-              <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Distance</label>
-              <div className="relative">
-                <select 
-                  className={`w-full p-2.5 border text-xs focus:outline-none appearance-none cursor-pointer ${
-                    theme === 'dark' ? 'bg-[#1f2937] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'
-                  }`}
-                  style={{
-                    borderRadius: '12px',
-                    border: theme === 'dark' ? '1px solid #1f2937' : '1px solid #e2e8f0'
-                  }}
-                >
-                  <option>Within 10 km</option>
-                  <option>Within 20 km</option>
-                  <option>Within 50 km</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                  <i className="fas fa-chevron-down text-[9px]"></i>
-                </div>
-              </div>
-            </div>
-
-            {/* Discount Type Checkboxes */}
-            <div style={{ marginBottom: '22px' }} className="flex flex-col gap-1.5">
-              <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Discount Type</label>
-              <div className="flex flex-col gap-3 text-xs text-gray-650 dark:text-gray-300">
-                <label className="flex items-center gap-2.5 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    className="w-4 h-4 rounded text-[#6366f1] border-gray-300 focus:ring-[#6366f1] cursor-pointer" 
-                    checked={discountType === 'percentage'} 
-                    onChange={() => setDiscountType(discountType === 'percentage' ? 'all' : 'percentage')} 
-                  />
-                  <span className="font-semibold">% Off</span>
-                </label>
-                <label className="flex items-center gap-2.5 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    className="w-4 h-4 rounded text-[#6366f1] border-gray-300 focus:ring-[#6366f1] cursor-pointer" 
-                    checked={discountType === 'flat'} 
-                    onChange={() => setDiscountType(discountType === 'flat' ? 'all' : 'flat')} 
-                  />
-                  <span className="font-semibold">Flat Amount Off</span>
-                </label>
-                <label className="flex items-center gap-2.5 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    className="w-4 h-4 rounded text-[#6366f1] border-gray-300 focus:ring-[#6366f1] cursor-pointer" 
-                    checked={discountType === 'bogo'} 
-                    onChange={() => setDiscountType(discountType === 'bogo' ? 'all' : 'bogo')} 
-                  />
-                  <span className="font-semibold">Buy One Get One</span>
-                </label>
-                <label className="flex items-center gap-2.5 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    className="w-4 h-4 rounded text-[#6366f1] border-gray-300 focus:ring-[#6366f1] cursor-pointer" 
-                    checked={discountType === 'combo'} 
-                    onChange={() => setDiscountType(discountType === 'combo' ? 'all' : 'combo')} 
-                  />
-                  <span className="font-semibold">Combo Offers</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Price Range Slider */}
-            <div style={{ marginBottom: '22px' }} className="flex flex-col gap-1.5">
-              <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Price Range</label>
+            {/* Price Filter inside Sidebar */}
+            <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: theme === 'dark' ? '1px solid #1f2937' : '1px solid #e2e8f0' }}>
+              <h4 style={{ fontSize: '12px', fontWeight: '800', marginBottom: '12px' }}>{lang === 'en' ? 'Price Range' : 'விலை வரம்பு'}</h4>
               <input 
                 type="range" 
                 min="0" 
@@ -370,112 +383,32 @@ const DealsListing = () => {
                 step="100"
                 value={priceRange} 
                 onChange={(e) => setPriceRange(Number(e.target.value))}
-                className="w-full accent-[#6366f1] cursor-pointer h-1.5 bg-gray-200 rounded-lg appearance-none"
+                style={{ width: '100%', accentColor: 'var(--primary)', cursor: 'pointer' }}
               />
-              <div className="flex justify-between text-[10px] text-gray-400 font-bold mt-1">
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8', fontWeight: '700', marginTop: '6px' }}>
                 <span>₹0</span>
                 <span>₹{priceRange.toLocaleString()}+</span>
               </div>
             </div>
-
-            {/* Expiry Dropdown */}
-            <div style={{ marginBottom: '24px' }} className="flex flex-col gap-1.5">
-              <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Expiry Date</label>
-              <div className="relative">
-                <select 
-                  className={`w-full p-2.5 border text-xs focus:outline-none appearance-none cursor-pointer ${
-                    theme === 'dark' ? 'bg-[#1f2937] border-gray-800 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'
-                  }`}
-                  style={{
-                    borderRadius: '12px',
-                    border: theme === 'dark' ? '1px solid #1f2937' : '1px solid #e2e8f0'
-                  }}
-                >
-                  <option>Anytime</option>
-                  <option>Expiring Today</option>
-                  <option>Expiring This Week</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-                  <i className="fas fa-chevron-down text-[9px]"></i>
-                </div>
-              </div>
-            </div>
-
-            {/* Apply Filters Button */}
-            <button 
-              className="w-full py-2.5 bg-[#6366f1] hover:bg-[#4f46e5] text-white text-xs font-bold transition shadow-sm border-0 cursor-pointer"
-              style={{
-                borderRadius: '12px'
-              }}
-            >
-              Apply Filters
-            </button>
           </div>
         </div>
 
-        {/* COLUMN 2-3: Middle Content Column */}
-        <div className="deals-main-content-column">
-          
-          {/* Purple Hero Banner */}
-          <div className="deals-hero-banner">
-            
-            <div className="deals-hero-left">
-              <span className="bg-[#fbbf24] text-black text-[9px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5" style={{ width: 'fit-content' }}>
-                <i className="fas fa-fire"></i> Deal of the Day
-              </span>
-              <h2 className="deals-hero-title">Up to 50% OFF</h2>
-              <p className="deals-hero-subtitle">On Fashion, Electronics & More. Grab the best offers from verified local businesses.</p>
-              <button 
-                onClick={() => alert("Opening today's best deals list...")}
-                className="deals-hero-explore-btn"
-              >
-                Explore Deals <i className="fas fa-arrow-right"></i>
-              </button>
-            </div>
-            
-            {/* Illustration on the right */}
-            <div className="deals-hero-illustration">
-              <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-2xl">
-                <path d="M60,80 L140,80 L130,170 L70,170 Z" fill="#4f46e5" opacity="0.85" />
-                <path d="M80,80 C80,50 120,50 120,80" stroke="#fbcfe8" strokeWidth="4" fill="none" />
-                <rect x="110" y="120" width="50" height="50" rx="4" fill="#a78bfa" />
-                <rect x="106" y="130" width="58" height="10" fill="#c084fc" />
-                <path d="M135,120 L135,170 M110,145 L160,145" stroke="#ffffff" strokeWidth="3" />
-                <circle cx="130" cy="90" r="28" fill="#fbbf24" stroke="#ffffff" strokeWidth="3" />
-                <text x="130" y="87" fill="#000000" fontSize="13" fontWeight="900" textAnchor="middle">50%</text>
-                <text x="130" y="99" fill="#000000" fontSize="10" fontWeight="900" textAnchor="middle">OFF</text>
-              </svg>
-            </div>
-          </div>
-
-          {/* Filters Tab Row */}
-          <div className="deals-filter-tabs-row">
-            {['All Deals', 'Expiring Soon', 'Near Me', 'Saved Deals', 'Top Rated'].map((tab, idx) => (
-              <button 
-                key={idx}
-                className={`deals-filter-tab-btn ${tab === 'All Deals' ? 'active' : ''}`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-
-          {/* Sort and count Row */}
-          <div className="flex flex-wrap justify-between items-center gap-2 text-xs text-gray-400 font-bold my-1">
-
-            <span>Showing {filteredDeals.length} deals</span>
-            <div className="flex items-center gap-1.5">
-              <span>Sort by:</span>
+        {/* Center Column: Deals Grid */}
+        <div className="class-main-content">
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '700' }}>
+              {lang === 'en' ? `Showing ${filteredDeals.length} Deals` : `சலுகைகள் ${filteredDeals.length} காட்டப்படுகின்றன`}
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#94a3b8', fontWeight: '700' }}>
+              <span>{lang === 'en' ? 'Sort by:' : 'வரிசைப்படுத்து:'}</span>
               <select className="bg-transparent border-0 font-extrabold text-gray-700 dark:text-gray-300 focus:outline-none cursor-pointer">
-                <option>Most Popular</option>
-                <option>Newest</option>
-                <option>Highest Discount</option>
+                <option>{lang === 'en' ? 'Most Popular' : 'பிரபலமானவை'}</option>
+                <option>{lang === 'en' ? 'Newest' : 'புதியவை'}</option>
               </select>
             </div>
           </div>
 
-          {/* Grid of Deals Cards */}
-          <div className="deals-cards-grid">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '20px' }}>
             {filteredDeals.map(item => {
               const d = item.deal;
               const m = item.merchant || {};
@@ -483,19 +416,10 @@ const DealsListing = () => {
               const isFlat = d.discountType === 'flat';
               const isCombo = d.discountType === 'combo';
               
-              // Badge color mapping
-              let badgeBg = 'bg-red-500';
               let badgeText = `${Math.round(d.discountValue)}% OFF`;
-              if (isBogo) {
-                badgeBg = 'bg-green-600';
-                badgeText = 'BUY 1 GET 1';
-              } else if (isFlat) {
-                badgeBg = 'bg-purple-600';
-                badgeText = `₹${Math.round(d.discountValue)} OFF`;
-              } else if (isCombo) {
-                badgeBg = 'bg-orange-500';
-                badgeText = 'COMBO';
-              }
+              if (isBogo) badgeText = 'BUY 1 GET 1';
+              else if (isFlat) badgeText = `₹${Math.round(d.discountValue)} OFF`;
+              else if (isCombo) badgeText = 'COMBO';
 
               return (
                 <div 
@@ -507,41 +431,78 @@ const DealsListing = () => {
                       setSelectedDeal(d);
                     }
                   }}
-                  className="deal-card"
+                  className="class-card-item"
+                  style={{
+                    backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
+                    border: theme === 'dark' ? '1px solid #1f2937' : '1px solid #e2e8f0',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+                    transition: 'all 0.3s'
+                  }}
                 >
-                  <div className="deal-card-img-box" style={{ backgroundImage: `url(${d.bannerUrl})` }}>
-                    <span className="deal-card-discount-badge">
+                  <div style={{ position: 'relative', height: '140px', overflow: 'hidden' }}>
+                    <img 
+                      src={d.bannerUrl} 
+                      alt={d.title} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <span 
+                      style={{
+                        position: 'absolute',
+                        top: '10px',
+                        left: '10px',
+                        backgroundColor: 'var(--primary)',
+                        color: 'white',
+                        fontSize: '9px',
+                        fontWeight: '900',
+                        padding: '4px 8px',
+                        borderRadius: '6px'
+                      }}
+                    >
                       {badgeText}
                     </span>
                     <button 
                       type="button" 
                       onClick={(e) => { e.stopPropagation(); alert("Saved to favorites!"); }}
-                      className="deal-card-heart"
+                      style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(255,255,255,0.8)',
+                        border: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#ef4444',
+                        cursor: 'pointer'
+                      }}
                     >
                       <i className="far fa-heart"></i>
                     </button>
                   </div>
-                  <div className="deal-card-body">
-                    <div>
-                      <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest block">{d.category}</span>
-                      <h4 className="deal-card-title">{d.title}</h4>
-                      <p className="deal-card-seller">{m.businessName}</p>
-                      <p className="deal-card-loc">
-                        <i className="fas fa-map-marker-alt text-[#6366f1]"></i> {m.addressLocality}
-                      </p>
-                    </div>
+
+                  <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span style={{ fontSize: '8px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{d.category}</span>
+                    <h4 style={{ fontSize: '13px', fontWeight: '800', margin: 0, height: '36px', overflow: 'hidden', color: theme === 'dark' ? '#ffffff' : '#1e293b' }}>{d.title}</h4>
+                    <p style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', margin: 0 }}>{m.businessName}</p>
                     
-                    <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100 dark:border-gray-800/10">
-                      <span className="deal-card-validity">
-                        <i className="far fa-clock"></i> Valid till {new Date(d.validUntil).getDate()} {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][new Date(d.validUntil).getMonth()]} {new Date(d.validUntil).getFullYear()}
+                    {d.originalPrice && d.discountedPrice ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                        <span style={{ fontSize: '13px', fontWeight: '900', color: 'var(--primary)' }}>₹{d.discountedPrice}</span>
+                        <span style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', textDecoration: 'line-through' }}>₹{d.originalPrice}</span>
+                      </div>
+                    ) : null}
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '8px', borderTop: theme === 'dark' ? '1px solid #1f2937' : '1px solid #f1f5f9' }}>
+                      <span style={{ fontSize: '9px', color: '#94a3b8', fontWeight: '600' }}>
+                        <i className="far fa-clock" style={{ marginRight: '4px' }}></i> Valid till {new Date(d.validUntil).getDate()} {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][new Date(d.validUntil).getMonth()]}
                       </span>
-                      <button 
-                        type="button" 
-                        onClick={(e) => { e.stopPropagation(); alert("Bookmarked deal!"); }}
-                        className="w-5 h-5 rounded bg-transparent hover:bg-gray-50 flex items-center justify-center text-gray-400 border-0 cursor-pointer p-0"
-                      >
-                        <i className="far fa-bookmark text-xs"></i>
-                      </button>
+                      <i className="far fa-bookmark" style={{ color: '#94a3b8', fontSize: '11px' }}></i>
                     </div>
                   </div>
                 </div>
@@ -549,160 +510,67 @@ const DealsListing = () => {
             })}
           </div>
 
-          {/* Load More Button */}
-          <button className="w-full py-3 bg-white hover:bg-gray-50 border border-gray-150 text-gray-600 font-bold text-xs rounded-2xl flex items-center justify-center gap-2 transition cursor-pointer shadow-sm">
-            Load More Deals <i className="fas fa-chevron-down text-[10px]"></i>
+          <button className="class-load-more-btn" style={{ width: '100%', marginTop: '24px', padding: '12px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', color: '#64748b' }}>
+            {lang === 'en' ? 'Load More Deals' : 'மேலும் சலுகைகளை ஏற்றுக'}
           </button>
-
         </div>
 
-        {/* COLUMN 4: Right Sidebar */}
-        <div className="xl:col-span-1" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        {/* Right Column: Widgets */}
+        <div className="class-sidebar-right">
           
-          {/* Featured Deal */}
-          <div 
-            className="p-5 border shadow-sm"
-            style={{
-              borderRadius: '16px',
-              backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
-              borderColor: theme === 'dark' ? '#1f2937' : '#f1f5f9'
-            }}
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <i className="fas fa-fire text-orange-500"></i>
-              <h3 className="font-extrabold text-xs text-gray-400 uppercase tracking-wider">Featured Deal</h3>
+          {/* Featured Deal Card */}
+          <div style={{ background: theme === 'dark' ? '#111827' : '#ffffff', border: theme === 'dark' ? '1px solid #1f2937' : '1px solid #e2e8f0', borderRadius: '16px', padding: '20px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <i className="fas fa-fire" style={{ color: '#f59e0b' }}></i>
+              <h4 style={{ fontSize: '11px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>{lang === 'en' ? 'Featured Deal' : 'சிறப்புச் சலுகை'}</h4>
             </div>
 
-            {/* Countdown Clock */}
-            <div className="flex justify-between items-center gap-1.5 mb-4 text-center">
-              <div 
-                className="flex-1 bg-[#f5f3ff] dark:bg-purple-950/20 p-2 border border-purple-100/50 dark:border-purple-900/10"
-                style={{ borderRadius: '12px' }}
-              >
-                <h4 className="text-sm font-black text-purple-650">02</h4>
-                <p className="text-[8px] text-purple-400 uppercase tracking-widest font-bold">Days</p>
+            {/* Countdown timer */}
+            <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
+              <div style={{ flex: 1, background: theme === 'dark' ? '#1f2937' : '#f8fafc', padding: '8px', borderRadius: '10px', textAlign: 'center' }}>
+                <div style={{ fontSize: '14px', fontWeight: '900', color: 'var(--primary)' }}>02</div>
+                <div style={{ fontSize: '7px', fontWeight: '850', color: '#94a3b8', textTransform: 'uppercase' }}>Days</div>
               </div>
-              <div 
-                className="flex-1 bg-[#f5f3ff] dark:bg-purple-950/20 p-2 border border-purple-100/50 dark:border-purple-900/10"
-                style={{ borderRadius: '12px' }}
-              >
-                <h4 className="text-sm font-black text-purple-650">12</h4>
-                <p className="text-[8px] text-purple-400 uppercase tracking-widest font-bold">Hrs</p>
+              <div style={{ flex: 1, background: theme === 'dark' ? '#1f2937' : '#f8fafc', padding: '8px', borderRadius: '10px', textAlign: 'center' }}>
+                <div style={{ fontSize: '14px', fontWeight: '900', color: 'var(--primary)' }}>12</div>
+                <div style={{ fontSize: '7px', fontWeight: '850', color: '#94a3b8', textTransform: 'uppercase' }}>Hours</div>
               </div>
-              <div 
-                className="flex-1 bg-[#f5f3ff] dark:bg-purple-950/20 p-2 border border-purple-100/50 dark:border-purple-900/10"
-                style={{ borderRadius: '12px' }}
-              >
-                <h4 className="text-sm font-black text-purple-650">45</h4>
-                <p className="text-[8px] text-purple-400 uppercase tracking-widest font-bold">Mins</p>
-              </div>
-              <div 
-                className="flex-1 bg-[#f5f3ff] dark:bg-purple-950/20 p-2 border border-purple-100/50 dark:border-purple-900/10"
-                style={{ borderRadius: '12px' }}
-              >
-                <h4 className="text-sm font-black text-purple-650">36</h4>
-                <p className="text-[8px] text-purple-400 uppercase tracking-widest font-bold">Secs</p>
+              <div style={{ flex: 1, background: theme === 'dark' ? '#1f2937' : '#f8fafc', padding: '8px', borderRadius: '10px', textAlign: 'center' }}>
+                <div style={{ fontSize: '14px', fontWeight: '900', color: 'var(--primary)' }}>45</div>
+                <div style={{ fontSize: '7px', fontWeight: '850', color: '#94a3b8', textTransform: 'uppercase' }}>Mins</div>
               </div>
             </div>
 
-            {/* Featured Deal Body info */}
-            <div 
-              className="mb-4 cursor-pointer"
-              style={{
-                borderRadius: '16px',
-                border: '1px solid #e2e8f0',
-                overflow: 'hidden'
-              }}
+            <div style={{ border: theme === 'dark' ? '1px solid #1f2937' : '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', marginBottom: '16px' }}>
+              <div style={{ height: '100px', backgroundImage: 'url("https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400")', backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
+                <span style={{ position: 'absolute', top: '8px', left: '8px', backgroundColor: '#ef4444', color: 'white', fontSize: '8px', fontWeight: '900', padding: '2px 6px', borderRadius: '4px' }}>30% OFF</span>
+              </div>
+              <div style={{ padding: '12px', background: theme === 'dark' ? '#111827' : 'white' }}>
+                <span style={{ fontSize: '8px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>{lang === 'en' ? 'Restaurants' : 'உணவகங்கள்'}</span>
+                <h5 style={{ fontSize: '12px', fontWeight: '800', margin: '4px 0', color: theme === 'dark' ? '#ffffff' : '#1e293b' }}>30% Off on Family Dining</h5>
+                <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>The Grand Restaurant</p>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => alert("Viewing featured family dining deal...")}
+              style={{ width: '100%', padding: '10px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '12px', cursor: 'pointer' }}
             >
-              <div className="h-32 bg-cover bg-center relative" style={{ backgroundImage: `url(https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400)` }}>
-                <span className="absolute top-2 left-2 text-white bg-red-500 text-[8px] font-black px-1.5 py-0.5 rounded">
-                  30% OFF
-                </span>
-              </div>
-              <div className="p-3.5 space-y-2 bg-white dark:bg-slate-900">
-                <span className="text-[8px] font-bold text-gray-400 uppercase">Restaurants</span>
-                <h4 className="font-extrabold text-xs leading-tight">30% Off on Family Dining</h4>
-                <p className="text-[10px] text-gray-500 font-semibold">The Grand Restaurant</p>
-                <p className="text-[9px] text-gray-450 flex items-center gap-1">
-                  <i className="fas fa-map-marker-alt text-[#6366f1]"></i> Nungambakkam, Chennai
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <button 
-                type="button"
-                onClick={() => alert("Viewing featured family dining deal detail...")}
-                className="flex-1 py-2.5 bg-[#6366f1] hover:bg-[#4f46e5] text-white text-xs font-bold transition border-0 cursor-pointer"
-                style={{
-                  borderRadius: '12px'
-                }}
-              >
-                View Deal
-              </button>
-              <button 
-                type="button"
-                onClick={() => alert("Added featured deal to wishlist!")}
-                className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-500 bg-transparent cursor-pointer"
-                style={{
-                  borderRadius: '12px',
-                  border: '1px solid #e2e8f0'
-                }}
-              >
-                <i className="far fa-heart"></i>
-              </button>
-            </div>
+              {lang === 'en' ? 'View Deal' : 'சலுகையைக் காண்க'}
+            </button>
           </div>
 
-          {/* Top Categories */}
-          <div className={`p-5 rounded-2xl border shadow-sm ${
-            theme === 'dark' ? 'bg-[#111827] border-gray-800' : 'bg-white border-gray-100'
-          }`}>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-extrabold text-xs text-gray-400 uppercase tracking-wider">Top Categories</h3>
-              <a href="#" onClick={(e) => { e.preventDefault(); alert("Viewing all categories..."); }} className="text-xs text-[#6366f1] hover:underline font-bold">View All</a>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              {categories.map((c, idx) => {
-                let iconClass = 'fas fa-utensils';
-                let iconBg = 'bg-orange-500/10 text-orange-500';
-                if (c.name === 'Fashion') {
-                  iconClass = 'fas fa-tshirt';
-                  iconBg = 'bg-blue-500/10 text-blue-500';
-                } else if (c.name === 'Health & Wellness') {
-                  iconClass = 'fas fa-heartbeat';
-                  iconBg = 'bg-red-500/10 text-red-500';
-                } else if (c.name === 'Automotive') {
-                  iconClass = 'fas fa-car';
-                  iconBg = 'bg-gray-500/10 text-gray-500';
-                } else if (c.name === 'Electronics') {
-                  iconClass = 'fas fa-laptop';
-                  iconBg = 'bg-purple-500/10 text-purple-500';
-                } else if (c.name === 'Home & Living') {
-                  iconClass = 'fas fa-couch';
-                  iconBg = 'bg-green-500/10 text-green-500';
-                } else if (c.name === 'Beauty & Salon') {
-                  iconClass = 'fas fa-spa';
-                  iconBg = 'bg-pink-500/10 text-pink-500';
-                } else if (c.name === 'Sports') {
-                  iconClass = 'fas fa-running';
-                  iconBg = 'bg-yellow-500/10 text-yellow-500';
-                }
-
-                return (
-                  <div key={idx} className="flex justify-between items-center text-xs">
-                    <div className="flex items-center gap-3">
-                      <span className={`w-7 h-7 rounded-lg flex items-center justify-center ${iconBg}`}>
-                        <i className={iconClass}></i>
-                      </span>
-                      <span className="font-semibold text-gray-700 dark:text-gray-300">{getCategoryLabel(c.name)}</span>
-                    </div>
-                    <span className="font-bold text-gray-400">{c.count}</span>
-                  </div>
-                );
-              })}
-            </div>
+          {/* Action card: Post a deal */}
+          <div style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #311042 100%)', borderRadius: '16px', padding: '20px', color: 'white', textAlign: 'center' }}>
+            <i className="fas fa-bullhorn" style={{ fontSize: '28px', color: '#fbbf24', marginBottom: '12px' }}></i>
+            <h4 style={{ fontSize: '14px', fontWeight: '800', margin: '0 0 8px 0' }}>{lang === 'en' ? 'Grow Your Business' : 'உங்கள் வணிகத்தை வளர்க்க'}</h4>
+            <p style={{ fontSize: '11px', opacity: 0.8, margin: '0 0 16px 0', lineHeight: 1.4 }}>{lang === 'en' ? 'Post custom deals and attract local customers near Chennai!' : 'தனிப்பயன் சலுகைகளை பதிவிட்டு சென்னைக்கு அருகிலுள்ள வாடிக்கையாளர்களை ஈர்க்கவும்!'}</p>
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              style={{ width: '100%', padding: '10px', background: '#fbbf24', color: '#1e1b4b', border: 'none', borderRadius: '10px', fontWeight: '800', fontSize: '12px', cursor: 'pointer' }}
+            >
+              {lang === 'en' ? '+ Post a Deal' : '+ சலுகையை பதிவிடுக'}
+            </button>
           </div>
 
         </div>
