@@ -214,136 +214,6 @@ const RfqMarketplace = () => {
   return (
     <div style={{ background: '#f8fafc', minHeight: '100vh', width: '100%', paddingBottom: '60px' }}>
       
-      {/* Standalone Dashboard Header */}
-      <div style={{
-        background: '#ffffff',
-        borderBottom: '1px solid #e2e8f0',
-        padding: '16px 40px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        width: '100%',
-        boxSizing: 'border-box',
-        marginBottom: '28px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <button style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <i className="fas fa-bars"></i>
-          </button>
-          <div>
-            <h1 style={{ fontSize: '18px', fontWeight: '850', color: '#0f172a', margin: '0 0 4px 0', letterSpacing: '-0.3px' }}>RFQ - Request for Quote</h1>
-            <p style={{ fontSize: '11px', color: '#64748b', margin: 0, fontWeight: '500' }}>Post what you need. Get multiple quotes from verified businesses.</p>
-          </div>
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* Location button */}
-          <button 
-            style={{
-              padding: '8px 18px',
-              borderRadius: '24px',
-              border: '1px solid #e2e8f0',
-              backgroundColor: '#ffffff',
-              fontSize: '12px',
-              fontWeight: '700',
-              color: '#334155',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
-            }}
-          >
-            <i className="fas fa-map-marker-alt text-gray-400"></i> Chennai, Tamil Nadu <i className="fas fa-chevron-down text-[8px] text-gray-400"></i>
-          </button>
-          
-          {/* Notification Button */}
-          <button 
-            style={{
-              position: 'relative',
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              border: '1px solid #e2e8f0',
-              backgroundColor: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#64748b',
-              cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
-            }}
-          >
-            <i className="far fa-bell" style={{ fontSize: '14px' }}></i>
-            <span style={{
-              position: 'absolute',
-              top: '-2px',
-              right: '-2px',
-              backgroundColor: '#ef4444',
-              color: '#ffffff',
-              fontSize: '8px',
-              fontWeight: '900',
-              borderRadius: '50%',
-              width: '15px',
-              height: '15px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>3</span>
-          </button>
-          
-          {/* Chat Button */}
-          <button 
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              border: '1px solid #e2e8f0',
-              backgroundColor: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#64748b',
-              cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
-            }}
-          >
-            <i className="far fa-comment-alt" style={{ fontSize: '14px' }}></i>
-          </button>
-          
-          {/* User profile info */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '6px 14px 6px 6px',
-            borderRadius: '24px',
-            border: '1px solid #e2e8f0',
-            backgroundColor: '#ffffff',
-            cursor: 'pointer',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
-          }}>
-            <span style={{
-              width: '26px',
-              height: '26px',
-              borderRadius: '50%',
-              backgroundColor: '#8b5cf6',
-              color: '#ffffff',
-              fontWeight: '800',
-              fontSize: '11px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>SJ</span>
-            <div style={{ textAlign: 'left', lineHeight: '1.2' }}>
-              <span style={{ fontSize: '11px', fontWeight: '800', color: '#1e293b', display: 'block' }}>Sharmitha J</span>
-              <span style={{ fontSize: '9px', fontWeight: '700', color: '#d97706', display: 'block' }}>Premium</span>
-            </div>
-            <i className="fas fa-chevron-down" style={{ fontSize: '8px', color: '#94a3b8', marginLeft: '4px' }}></i>
-          </div>
-        </div>
-      </div>
-
       <div 
         className="rfq-module-container" 
         style={{ 
@@ -352,6 +222,7 @@ const RfqMarketplace = () => {
           marginRight: 'auto',
           paddingLeft: '20px',
           paddingRight: '20px',
+          paddingTop: '20px',
           width: '100%',
           boxSizing: 'border-box'
         }}

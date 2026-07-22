@@ -93,7 +93,7 @@ function AppContent() {
     <div className="app-container">
       <OfflineBanner />
       {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
-      {!location.pathname.startsWith('/rfq') && <Header />}
+      <Header />
       
       <main className="main-content">
         <Routes>
@@ -148,7 +148,7 @@ function AppContent() {
         </Routes>
       </main>
 
-      {!location.pathname.startsWith('/rfq') && <Footer />}
+      <Footer />
       <MobileBottomNav />
       <Customizer />
       <AiAssistant />
