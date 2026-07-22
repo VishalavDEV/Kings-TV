@@ -404,7 +404,7 @@
         const heroImg = document.getElementById('heroImgGradient');
         if (currentArticle.imageUrl) {
           const resolvedImgUrl = currentArticle.imageUrl.startsWith('http') ? currentArticle.imageUrl : `${API_BASE}${currentArticle.imageUrl}`;
-          heroImg.style.background = `url('${resolvedImgUrl}') center/cover no-repeat`;
+          heroImg.style.background = `#0f172a url('${resolvedImgUrl}') center/contain no-repeat`;
           heroImg.innerHTML = '';
         } else {
           heroImg.style.background = 'linear-gradient(135deg, #1E3A8A, #3B82F6)';

@@ -135,10 +135,10 @@ const ImageUploadPreview = ({
             overflow: 'hidden',
             border: '1px solid var(--border-color)',
             background: 'var(--bg-secondary)',
-            maxHeight: '160px',
+            maxHeight: '300px',
             display: 'flex',
             alignItems: 'center',
-            justify: 'center'
+            justifyContent: 'center'
           }}
         >
           {isVideo ? (
@@ -149,7 +149,7 @@ const ImageUploadPreview = ({
                 e.target.style.display = 'none';
                 setError('Failed to load video preview from URL.');
               }}
-              style={{ width: '100%', maxHeight: '160px', objectFit: 'contain' }}
+              style={{ width: '100%', maxHeight: '300px', objectFit: 'contain' }}
             />
           ) : (
             <img
@@ -159,7 +159,7 @@ const ImageUploadPreview = ({
                 e.target.style.display = 'none';
                 setError('Failed to load image preview from URL.');
               }}
-              style={{ width: '100%', maxHeight: '160px', objectFit: 'cover' }}
+              style={{ width: '100%', maxHeight: '300px', objectFit: 'contain' }}
             />
           )}
 

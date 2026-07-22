@@ -70,7 +70,8 @@ export const AuthProvider = ({ children }) => {
           id: userData?.id || payload?.userId || 1,
           permissions: payload ? (payload.permissions || []) : []
         });
-        return { success: true };
+        const userRole = userData?.role || payload?.role || 'SUPER_ADMIN';
+        return { success: true, role: userRole };
       } else {
         throw new Error("Invalid token format");
       }

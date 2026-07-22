@@ -3564,6 +3564,14 @@ ul {
   margin-bottom: 18px;
 }
 
+.article-body-text img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 16px auto;
+  display: block;
+}
+
 .article-tags {
   margin-top: 32px;
   padding-top: 16px;

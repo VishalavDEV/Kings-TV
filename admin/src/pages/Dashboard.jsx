@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import api from "../api";
-import { Users, FileText, Activity, TrendingUp, BarChart2, Plus, Radio, Clock, Eye, AlertCircle, Send, Inbox, ShieldAlert } from "lucide-react";
+import { Users, FileText, Activity, TrendingUp, BarChart2, Plus, Radio, Clock, Eye, AlertCircle, Send, Inbox, ShieldAlert, ChevronRight } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid, Legend } from "recharts";
 
 const StatCard = ({ label, value, icon: Icon, color, subLabel, subColor }) => (
@@ -29,7 +29,10 @@ const QuickPublishWidget = ({ onPublished }) => {
   const [msg, setMsg] = useState(null);
 
   useEffect(() => {
-    api.get("/categories").then(r => setCategories(r.data || []));
+    api.get("/admin/taxonomy/categories").then(r => setCategories(r.data || [])).catch(() => {
+      // Fallback to public endpoint
+      api.get("/categories").then(r => setCategories(r.data || [])).catch(() => {});
+    });
   }, []);
 
   const handlePublish = async (e) => {
@@ -86,6 +89,7 @@ const QuickPublishWidget = ({ onPublished }) => {
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [kpis, setKpis] = useState(null);
   const [newsPerf, setNewsPerf] = useState(null);
   const [categoryData, setCategoryData] = useState([]);
@@ -199,14 +203,21 @@ const Dashboard = () => {
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
                 {[
-                  { label: "Pending Reviews", value: counts.pendingArticles || 0, color: "#F59E0B", desc: "Awaiting approval" },
-                  { label: "UGC Submissions", value: counts.pendingUgc || 0, color: "#8B5CF6", desc: "Citizen reports queue" },
-                  { label: "Active Breaking", value: counts.activeBreaking || 0, color: "#EF4444", desc: "Currently live tickers" }
+                  { label: "Pending Reviews", value: counts.pendingArticles || 0, color: "#F59E0B", desc: "Awaiting approval", link: "/admin/news?status=pending" },
+                  { label: "UGC Submissions", value: counts.pendingUgc || 0, color: "#8B5CF6", desc: "Citizen reports queue", link: "/admin/crowd-reporter" },
+                  { label: "Active Breaking", value: counts.activeBreaking || 0, color: "#EF4444", desc: "Currently live tickers", link: "/admin/breaking-news" }
                 ].map(s => (
-                  <div key={s.label} style={{ padding: "1rem", borderRadius: "10px", background: `${s.color}11`, border: `1px solid ${s.color}33`, textAlign: "center" }}>
+                  <div
+                    key={s.label}
+                    onClick={() => navigate(s.link)}
+                    style={{ padding: "1rem", borderRadius: "10px", background: `${s.color}11`, border: `1px solid ${s.color}33`, textAlign: "center", cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s" }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.boxShadow = `0 4px 16px ${s.color}44`; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
+                  >
                     <div style={{ fontSize: "2rem", fontWeight: 800, color: s.color, marginBottom: "0.25rem" }}>{s.value}</div>
                     <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" }}>{s.label}</div>
                     <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>{s.desc}</div>
+                    <div style={{ fontSize: "0.7rem", color: s.color, marginTop: "0.4rem", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>View <ChevronRight size={10} /></div>
                   </div>
                 ))}
               </div>

@@ -176,6 +176,7 @@ const NewsEditor = () => {
 
   const [districts, setDistricts] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
+  const [reporters, setReporters] = useState([]);
 
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
@@ -688,6 +689,19 @@ Content: "${contentVal.substring(0, 2000)}"`;
   useEffect(() => {
     api.get('/categories').then(r => setCategories(r.data || [])).catch(() => {});
     api.get('/districts').then(r => setDistricts(r.data || [])).catch(() => {});
+    // Fetch reporters/journalists for the reporter name dropdown
+    api.get('/admin/users?role=MOBILE_JOURNALIST&size=100').then(r => {
+      const users = r.data?.users || [];
+      setReporters(users);
+    }).catch(() => {
+      // Also try fetching all journalist-type roles
+      api.get('/admin/users?size=200').then(r => {
+        const users = (r.data?.users || []).filter(u => 
+          ['MOBILE_JOURNALIST', 'DISTRICT_ADMIN', 'CHIEF_EDITOR', 'INSTITUTION_LOGIN'].includes(u.role)
+        );
+        setReporters(users);
+      }).catch(() => {});
+    });
     api.get('/admin/config')
       .then(res => {
         if (Array.isArray(res.data)) {
@@ -1372,6 +1386,7 @@ Article: "${textToAnalyze}"`;
       if (isEdit) {
         await api.put('/articles/saveUpdate', payload);
         showMsg('Article updated successfully!');
+        setTimeout(() => navigate('/admin/news'), 1500);
       } else {
         await api.post('/articles/saveUpdate', payload);
         showMsg('Article created successfully!');
@@ -2047,8 +2062,20 @@ Article: "${textToAnalyze}"`;
                 </div>
                 <div>
                   <label style={labelStyle}>Reporter Name</label>
-                  <input style={inputStyle} value={form.reporterName}
-                    onChange={e => set('reporterName', e.target.value)} placeholder="Name of reporter on the ground..." />
+                  <input
+                    list="reporter-list"
+                    style={inputStyle}
+                    value={form.reporterName}
+                    onChange={e => set('reporterName', e.target.value)}
+                    placeholder="Select or type reporter name..."
+                  />
+                  <datalist id="reporter-list">
+                    {reporters.map(r => (
+                      <option key={r.id} value={r.fullName || r.email}>
+                        {r.fullName ? `${r.fullName} (${r.role?.replace(/_/g, ' ')})` : r.email}
+                      </option>
+                    ))}
+                  </datalist>
                 </div>
               </div>
               <div>

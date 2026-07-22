@@ -122,10 +122,31 @@ public class AdminRoleController {
     }
 
     /**
-     * List all available permissions grouped by module
+     * Delete a custom role (SUPER_ADMIN role is protected)
      */
+    @DeleteMapping("/{id}")
+    @RequiresPermission(anyOf = {"SUPER_ADMIN"})
+    public ResponseEntity<?> deleteRole(@PathVariable Long id) {
+        Optional<Role> roleOpt = roleRepository.findById(id);
+        if (roleOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Role not found"));
+        }
+        Role role = roleOpt.get();
+        // Protect system-critical roles from deletion
+        List<String> protectedRoles = List.of("SUPER_ADMIN", "CHIEF_EDITOR", "MOBILE_JOURNALIST");
+        if (protectedRoles.contains(role.getName())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("message", "Cannot delete system-critical role: " + role.getName()));
+        }
+        roleRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("message", "Role deleted successfully"));
+    }
+
     @GetMapping("/permissions")
     @RequiresPermission(anyOf = {"SUPER_ADMIN"})
+    /**
+     * List all available permissions grouped by module
+     */
     public ResponseEntity<?> listPermissions() {
         List<Permission> permissions = permissionRepository.findAll();
         

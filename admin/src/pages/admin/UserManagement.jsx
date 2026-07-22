@@ -3,6 +3,24 @@ import api from '../../api';
 import { Plus, Edit2, Trash2, Shield, UserX, UserCheck, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
+// Helper: handles LocalDateTime array [y,m,d,h,min,s] or ISO string or epoch ms
+const formatDate = (val, opts = {}) => {
+  if (!val) return '—';
+  let d;
+  if (Array.isArray(val)) {
+    // Java LocalDateTime serialized as [year, month, day, hour, minute, second, nano]
+    const [year, month, day, hour = 0, min = 0, sec = 0] = val;
+    d = new Date(year, month - 1, day, hour, min, sec);
+  } else if (typeof val === 'number') {
+    // Epoch milliseconds
+    d = new Date(val > 1e10 ? val : val * 1000);
+  } else {
+    d = new Date(val);
+  }
+  if (isNaN(d.getTime())) return '—';
+  return opts.full ? d.toLocaleString() : d.toLocaleDateString();
+};
+
 const UserManagement = () => {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
@@ -223,10 +241,10 @@ const UserManagement = () => {
                       {u.isActive ? 'Active' : 'Suspended'}
                     </span>
                   </td>
-                  <td><div style={{ fontSize: '0.9rem' }}>{new Date(u.createdAt).toLocaleDateString()}</div></td>
+                  <td><div style={{ fontSize: '0.9rem' }}>{formatDate(u.createdAt)}</div></td>
                   <td>
                     <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                      {u.lastLogin ? new Date(u.lastLogin).toLocaleString() : 'Never'}
+                      {u.lastLogin ? formatDate(u.lastLogin, { full: true }) : 'Never'}
                     </div>
                   </td>
                   <td style={{ textAlign: 'right' }}>

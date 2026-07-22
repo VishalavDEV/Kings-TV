@@ -20,7 +20,13 @@ const Login = () => {
     const result = await login(email, password);
     
     if (result.success) {
-      navigate('/admin/dashboard');
+      // Role-based post-login redirect
+      const role = result.role;
+      if (role === 'MOBILE_JOURNALIST' || role === 'INSTITUTION_LOGIN') {
+        navigate('/journalist/posts');
+      } else {
+        navigate('/admin/dashboard');
+      }
     } else {
       setError(result.message || 'Login failed');
     }

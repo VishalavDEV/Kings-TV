@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // ===== INTEGRATE HOME LAYOUT MANAGER WITH BACKEND =====
   async function syncHomepageLayout() {
     try {
-      const response = await fetch(`${API_BASE}/api/v1/public/layout/web');
+      const response = await fetch(`${API_BASE}/api/v1/public/layout/web`);
       if (!response.ok) return;
       const sections = await response.json();
       
@@ -109,6 +109,46 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     } catch (err) {
       console.warn("Failed to synchronize layout builder settings:", err);
+    }
+  }
+
+  // ===== LOAD DYNAMIC NAV MENU FROM BACKEND CATEGORIES =====
+  async function loadDynamicNavMenu() {
+    var navMenu = document.getElementById('navMenu');
+    if (!navMenu) return;
+    try {
+      var response = await fetch(`${API_BASE}/api/v1/categories/nav`);
+      if (!response.ok) return;
+      var categories = await response.json();
+      if (!Array.isArray(categories) || categories.length === 0) return;
+
+      // Build new nav HTML, always keep home as first item
+      var html = '<li class="nav-item active" id="nav-home"><a href="index.html" class="nav-link">' +
+        (document.documentElement.lang === 'ta' ? 'முகப்பு' : 'Home') + '</a></li>';
+
+      categories.forEach(function(cat) {
+        var displayName = cat.nameTa || cat.name || cat.slug;
+        var slug = sanitize(cat.slug || '');
+        var hasDropdown = cat.subcategories && cat.subcategories.length > 0;
+        if (hasDropdown) {
+          html += '<li class="nav-item has-dropdown">' +
+            '<a href="category.html?cat=' + slug + '" class="nav-link">' + sanitize(displayName) + ' <i class="fas fa-chevron-down" style="font-size:0.7em"></i></a>' +
+            '<ul class="dropdown-menu">';
+          cat.subcategories.forEach(function(sub) {
+            var subName = sub.nameTa || sub.name;
+            var subSlug = sanitize(sub.slug || sub.id);
+            html += '<li><a href="category.html?cat=' + slug + '&sub=' + subSlug + '" class="nav-link">' + sanitize(subName) + '</a></li>';
+          });
+          html += '</ul></li>';
+        } else {
+          html += '<li class="nav-item" id="nav-' + slug + '">' +
+            '<a href="category.html?cat=' + slug + '" class="nav-link">' + sanitize(displayName) + '</a></li>';
+        }
+      });
+
+      navMenu.innerHTML = html;
+    } catch (err) {
+      console.warn("Failed to load dynamic nav menu:", err);
     }
   }
 
@@ -1479,7 +1519,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // 1. Breaking News Ticker
   async function loadBreakingNews() {
     try {
-      const response = await fetch(`${API_BASE}/api/v1/breaking-news/getAllWeb?size=10');
+      const response = await fetch(`${API_BASE}/api/v1/breaking-news/getAllWeb?size=10`);
       if (!response.ok) return;
       const data = await response.json();
       const items = data.content || [];
@@ -1499,7 +1539,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // 2. Hero Section
   async function loadHeroSection() {
     try {
-      const response = await fetch(`${API_BASE}/api/v1/public/news?limit=4');
+      const response = await fetch(`${API_BASE}/api/v1/public/news?limit=4`);
       if (!response.ok) return;
       const articles = await response.json();
       if (!articles || articles.length === 0) return;
@@ -1555,7 +1595,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // 4. Latest News
   async function loadLatestNews() {
     try {
-      const response = await fetch(`${API_BASE}/api/v1/articles/getAllWeb?size=6');
+      const response = await fetch(`${API_BASE}/api/v1/articles/getAllWeb?size=6`);
       if (!response.ok) return;
       const data = await response.json();
       const articles = data.content || [];
@@ -1591,7 +1631,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // 5. Video News
   async function loadVideoNews() {
     try {
-      const response = await fetch(`${API_BASE}/api/v1/videos/getAllWeb?size=4');
+      const response = await fetch(`${API_BASE}/api/v1/videos/getAllWeb?size=4`);
       if (!response.ok) return;
       const data = await response.json();
       const videos = data.content || [];
@@ -1622,7 +1662,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // 6. Web Stories
   async function loadWebStories() {
     try {
-      const response = await fetch(`${API_BASE}/api/v1/web-stories/getAllWeb?size=6');
+      const response = await fetch(`${API_BASE}/api/v1/web-stories/getAllWeb?size=6`);
       if (!response.ok) return;
       const data = await response.json();
       const stories = data.content || [];
@@ -1652,7 +1692,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // 7. Trending Sidebar
   async function loadTrendingNews() {
     try {
-      const response = await fetch(`${API_BASE}/api/v1/articles/getAllWeb?size=5&sortBy=viewsCount&direction=desc');
+      const response = await fetch(`${API_BASE}/api/v1/articles/getAllWeb?size=5&sortBy=viewsCount&direction=desc`);
       if (!response.ok) return;
       const data = await response.json();
       const articles = data.content || [];
@@ -1713,6 +1753,7 @@ document.addEventListener('DOMContentLoaded', function() {
   loadVideoNews();
   loadWebStories();
   loadTrendingNews();
+  loadDynamicNavMenu(); // Populate nav from backend categories (Issue #7)
   
   // Apply default language on load
   var defaultLang = Storage.get('lang', 'en');

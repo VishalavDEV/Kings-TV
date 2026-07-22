@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import { useAuth } from '../../context/AuthContext';
-import { Shield, Plus, Edit2, Check, X, ShieldAlert, Key } from 'lucide-react';
+import { Shield, Plus, Edit2, Check, X, ShieldAlert, Key, Trash2 } from 'lucide-react';
 
 const RoleManagement = () => {
   const { user: currentUser } = useAuth();
@@ -85,6 +85,20 @@ const RoleManagement = () => {
     }
   };
 
+  const handleDelete = async (role) => {
+    if (role.name === 'SUPER_ADMIN') {
+      alert('Cannot delete the SUPER_ADMIN role.');
+      return;
+    }
+    if (!window.confirm(`Delete the "${role.name}" role? This action cannot be undone.`)) return;
+    try {
+      await api.delete(`/admin/roles/${role.id}`);
+      fetchRoles();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete role.');
+    }
+  };
+
   if (!currentUser || currentUser.role !== 'SUPER_ADMIN') {
     return (
       <div className="admin-page">
@@ -146,15 +160,26 @@ const RoleManagement = () => {
                     <span className="badge badge-primary">{r.permissions.length} permissions</span>
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    <button 
-                      className="btn btn-secondary" 
-                      style={{ padding: '0.4rem' }} 
-                      title="Edit Role"
-                      onClick={() => handleOpenModal(r)}
-                      disabled={r.name === 'SUPER_ADMIN'}
-                    >
-                      <Edit2 size={16} />
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                      <button 
+                        className="btn btn-secondary" 
+                        style={{ padding: '0.4rem' }} 
+                        title="Edit Role"
+                        onClick={() => handleOpenModal(r)}
+                        disabled={r.name === 'SUPER_ADMIN'}
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button
+                        className="btn"
+                        style={{ padding: '0.4rem', background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)' }}
+                        title="Delete Role"
+                        onClick={() => handleDelete(r)}
+                        disabled={r.name === 'SUPER_ADMIN'}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
