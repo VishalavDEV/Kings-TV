@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
 import { LanguageContext } from '../context/LanguageContext';
 import './DashboardLayout.css';
+import Header from './Header';
 
 const DashboardLayout = ({ children }) => {
   const { theme } = useContext(ThemeContext);
@@ -77,7 +78,10 @@ const DashboardLayout = ({ children }) => {
       <div className="db-main-container">
         
         {/* Top Header */}
-        <header className="db-header">
+        {activePath === '/rfq' ? (
+          <Header />
+        ) : (
+          <header className="db-header">
           <div className="db-header-left">
             {headerDetails.type === 'title' ? (
               <div className="db-header-titles">
@@ -188,6 +192,7 @@ const DashboardLayout = ({ children }) => {
 
           </div>
         </header>
+        )}
 
         {/* Dashboard Main Content area */}
         <main className="db-content">

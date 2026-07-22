@@ -187,11 +187,11 @@ const Header = () => {
   const activeCategorySlug = matches ? matches[1] : null;
   const isCategoryPage = !!activeCategorySlug;
 
-  const activeCat = navCategories.find(c => c.slug === activeCategorySlug);
+  const activeCat = navCategories.find(c => c && c.slug === activeCategorySlug);
   const resolvedSubcategories = activeCat
     ? (lang === 'en'
-      ? ['All', ...activeCat.subcategories.map(s => getSubcatEn(s))]
-      : ['அனைத்தும்', ...activeCat.subcategories.map(s => s.nameTa)])
+      ? ['All', ...(activeCat.subcategories || []).map(s => getSubcatEn(s))]
+      : ['அனைத்தும்', ...(activeCat.subcategories || []).map(s => s ? s.nameTa : '')])
     : (fallbackSubcats[activeCategorySlug]
       ? (lang === 'en' ? fallbackSubcats[activeCategorySlug].en : fallbackSubcats[activeCategorySlug].ta)
       : []);
@@ -210,16 +210,16 @@ const Header = () => {
 
   const getDynamicNavItems = () => {
     if (menuItems && menuItems.length > 0) {
-      return menuItems.map(item => ({
+      return menuItems.filter(Boolean).map(item => ({
         id: item.id,
         path: item.linkUrl,
         label: lang === 'en' ? item.titleEn : item.titleTa,
-        subcategories: (item.subcategories || []).map(sub => ({
+        subcategories: (item.subcategories || []).filter(Boolean).map(sub => ({
           id: sub.id,
           path: sub.linkUrl,
           name: sub.titleEn,
           nameTa: sub.titleTa,
-          subcategories: (sub.subcategories || []).map(subsub => ({
+          subcategories: (sub.subcategories || []).filter(Boolean).map(subsub => ({
             id: subsub.id,
             path: subsub.linkUrl,
             name: subsub.titleEn,
@@ -232,10 +232,11 @@ const Header = () => {
     let dynamicItems = [];
     if (navCategories && navCategories.length > 0) {
       const dbItems = navCategories.map(cat => {
-        let path = `/category/${cat.slug}`;
-        if (cat.slug === 'web-stories') path = '/web-stories';
-        else if (cat.slug === 'video') path = '/videos';
-        else if (cat.slug === 'regional') path = '/directory';
+        const catSlug = cat.slug || '';
+        let path = `/category/${catSlug}`;
+        if (catSlug === 'web-stories') path = '/web-stories';
+        else if (catSlug === 'video') path = '/videos';
+        else if (catSlug === 'regional') path = '/directory';
 
         const enTranslations = {
           'politics': 'Politics',
@@ -253,12 +254,12 @@ const Header = () => {
         };
 
         const labelVal = lang === 'en'
-          ? (enTranslations[cat.slug.toLowerCase()] || cat.name)
+          ? (enTranslations[catSlug.toLowerCase()] || cat.name)
           : cat.nameTa;
 
         return {
           id: cat.id,
-          slug: cat.slug,
+          slug: catSlug,
           path,
           label: labelVal,
           subcategories: cat.subcategories || []

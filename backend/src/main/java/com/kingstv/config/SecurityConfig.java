@@ -84,6 +84,8 @@ public class SecurityConfig {
                     "/v3/api-docs/**",
                     "/api/v1/public/**",
                     "/ws/**",
+                    "/api/uptime",
+                    "/api/v1/uptime",
                     "/error",
                     "/"
                 ).permitAll()

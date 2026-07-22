@@ -60,13 +60,13 @@ const SeoConsole = () => {
   const pingSearchEngines = async () => {
     setPingStatus('Pinging Google and Bing...');
     try {
-      await api.post('/admin/sitemap-ping');
-      setPingStatus('Sitemaps successfully submitted to search engines!');
-      setTimeout(() => setPingStatus(null), 5000);
+      const res = await api.post('/admin/sitemap-config/ping');
+      setPingStatus('Sitemaps submitted successfully! Logs: ' + (res.data.logs || []).join(' | '));
     } catch (err) {
-      setPingStatus('Failed to ping search engines');
-      setTimeout(() => setPingStatus(null), 5000);
+      console.error(err);
+      setPingStatus('Failed to ping search engines. Backend service offline.');
     }
+    setTimeout(() => setPingStatus(null), 8000);
   };
 
   return (
