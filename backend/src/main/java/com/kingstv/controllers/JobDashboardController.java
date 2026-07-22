@@ -372,4 +372,24 @@ public class JobDashboardController {
         JobApplication saved = jobApplicationRepository.save(app);
         return ResponseEntity.ok(saved);
     }
+
+    @GetMapping("/jobs/admin/applications/{id}")
+    public ResponseEntity<?> getJobApplicationsForAdmin(@PathVariable Long id) {
+        List<JobApplication> applications = jobService.getJobApplications(id);
+        List<Map<String, Object>> enrichedApps = new java.util.ArrayList<>();
+        for (JobApplication app : applications) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("applicationId", app.getId());
+            map.put("jobId", app.getJobId());
+            map.put("applicantName", app.getApplicantName());
+            map.put("applicantPhone", app.getApplicantPhone());
+            map.put("experience", app.getExperience());
+            map.put("summary", app.getSummary());
+            map.put("appliedAt", app.getAppliedAt());
+            map.put("applicationStatus", app.getApplicationStatus());
+            map.put("resumeId", app.getResumeId());
+            enrichedApps.add(map);
+        }
+        return ResponseEntity.ok(enrichedApps);
+    }
 }

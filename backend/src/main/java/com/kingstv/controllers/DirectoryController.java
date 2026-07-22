@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Objects;
+import java.util.ArrayList;
+import java.util.HashMap;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -373,5 +375,46 @@ public class DirectoryController {
         
         favoriteRepository.delete(existing.get());
         return ResponseEntity.ok(Map.of("message", "Removed from favorites successfully"));
+    }
+
+    @GetMapping("/admin/reviews")
+    public ResponseEntity<?> getAllReviewsForAdmin() {
+        List<BusinessReview> reviews = reviewRepository.findAll();
+        List<Map<String, Object>> responses = new ArrayList<>();
+        for (BusinessReview r : reviews) {
+            Optional<DirectoryListing> listingOpt = directoryRepository.findById(r.getListingId());
+            Map<String, Object> map = new HashMap<>();
+            map.put("review", r);
+            map.put("business", listingOpt.orElse(null));
+            responses.add(map);
+        }
+        return ResponseEntity.ok(responses);
+    }
+
+    @DeleteMapping("/admin/reviews/{id}")
+    public ResponseEntity<?> deleteReviewForAdmin(@PathVariable Long id) {
+        Optional<BusinessReview> revOpt = reviewRepository.findById(id);
+        if (revOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Review not found"));
+        }
+        BusinessReview review = revOpt.get();
+        reviewRepository.delete(review);
+        
+        // Recalculate average rating
+        Optional<DirectoryListing> listingOpt = directoryRepository.findById(review.getListingId());
+        if (listingOpt.isPresent()) {
+            DirectoryListing listing = listingOpt.get();
+            List<BusinessReview> reviews = reviewRepository.findByListingIdAndStatus(listing.getId(), "approved");
+            double sum = 0.0;
+            for (BusinessReview r : reviews) {
+                sum += r.getRating();
+            }
+            double avg = reviews.isEmpty() ? 0.0 : sum / reviews.size();
+            listing.setRatingAvg(avg);
+            listing.setRatingCount(reviews.size());
+            directoryRepository.save(listing);
+        }
+        
+        return ResponseEntity.ok(Map.of("message", "Review deleted successfully"));
     }
 }

@@ -313,4 +313,57 @@ public class RfqController {
         }
         return ResponseEntity.ok(responses);
     }
+
+    @GetMapping("/admin/quotes/reported")
+    public ResponseEntity<?> getReportedQuotes() {
+        List<RfqQuote> quotes = rfqQuoteRepository.findAll();
+        List<Map<String, Object>> responses = new ArrayList<>();
+        for (RfqQuote q : quotes) {
+            if ("reported".equalsIgnoreCase(q.getStatus())) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("quote", q);
+                Optional<Rfq> rfqOpt = rfqRepository.findById(q.getRfqId());
+                map.put("rfq", rfqOpt.orElse(null));
+                Optional<DirectoryListing> sellerOpt = directoryRepository.findById(q.getSellerBusinessId());
+                map.put("seller", sellerOpt.orElse(null));
+                responses.add(map);
+            }
+        }
+        return ResponseEntity.ok(responses);
+    }
+
+    @PatchMapping("/quotes/{id}/dismiss")
+    public ResponseEntity<?> dismissQuoteReport(@PathVariable Long id) {
+        Optional<RfqQuote> qOpt = rfqQuoteRepository.findById(id);
+        if (qOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Quote not found"));
+        }
+        RfqQuote q = qOpt.get();
+        if ("reported".equalsIgnoreCase(q.getStatus())) {
+            q.setStatus("pending");
+            rfqQuoteRepository.save(q);
+        }
+        return ResponseEntity.ok(Map.of("message", "Report dismissed successfully"));
+    }
+
+    @DeleteMapping("/quotes/{id}")
+    public ResponseEntity<?> deleteQuote(@PathVariable Long id) {
+        if (!rfqQuoteRepository.existsById(id)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Quote not found"));
+        }
+        rfqQuoteRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("message", "Quote deleted successfully"));
+    }
+
+    @PatchMapping("/quotes/{id}/report")
+    public ResponseEntity<?> reportQuote(@PathVariable Long id) {
+        Optional<RfqQuote> qOpt = rfqQuoteRepository.findById(id);
+        if (qOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Quote not found"));
+        }
+        RfqQuote q = qOpt.get();
+        q.setStatus("reported");
+        rfqQuoteRepository.save(q);
+        return ResponseEntity.ok(Map.of("message", "Quote reported successfully"));
+    }
 }

@@ -22,6 +22,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,21 @@ public class ObituaryController {
 
     @Autowired
     private DistrictRepository districtRepository;
+
+    @Autowired
+    private com.kingstv.repository.ObituaryRepository obituaryRepository;
+
+    @Autowired
+    private com.kingstv.repository.ObituaryReportRepository obituaryReportRepository;
+
+    @Autowired
+    private com.kingstv.repository.UserRepository userRepository;
+
+    @Autowired
+    private com.kingstv.repository.AuditLogRepository auditLogRepository;
+
+    @Autowired
+    private com.kingstv.repository.ObituaryGuestbookRepository guestbookRepository;
 
     @GetMapping
     public ResponseEntity<?> getObituaries(
@@ -374,5 +390,127 @@ public class ObituaryController {
     @PostMapping("/{id}/share-card")
     public ResponseEntity<?> logShareCard(@PathVariable Long id) {
         return ResponseEntity.ok(Map.of("message", "Share card logged successfully"));
+    }
+
+    // --- Template Management CRUD ---
+    @GetMapping("/admin/frames/all")
+    public ResponseEntity<?> getAllFramesForAdmin() {
+        return ResponseEntity.ok(frameTemplateRepository.findAll());
+    }
+
+    @PostMapping("/admin/frames")
+    public ResponseEntity<?> createFrameTemplate(@RequestBody ObituaryFrameTemplate template) {
+        if (template.getName() == null || template.getAssetUrl() == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Name and asset url are required"));
+        }
+        if (template.getIsActive() == null) template.setIsActive(true);
+        if (template.getDisplayOrder() == null) template.setDisplayOrder(0);
+        return ResponseEntity.ok(frameTemplateRepository.save(template));
+    }
+
+    @PutMapping("/admin/frames/{id}")
+    public ResponseEntity<?> updateFrameTemplate(@PathVariable Long id, @RequestBody ObituaryFrameTemplate template) {
+        Optional<ObituaryFrameTemplate> opt = frameTemplateRepository.findById(id);
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Template not found"));
+        }
+        ObituaryFrameTemplate existing = opt.get();
+        if (template.getName() != null) existing.setName(template.getName());
+        if (template.getCategory() != null) existing.setCategory(template.getCategory());
+        if (template.getAssetUrl() != null) existing.setAssetUrl(template.getAssetUrl());
+        if (template.getThumbnail() != null) existing.setThumbnail(template.getThumbnail());
+        if (template.getIsActive() != null) existing.setIsActive(template.getIsActive());
+        if (template.getDisplayOrder() != null) existing.setDisplayOrder(template.getDisplayOrder());
+        return ResponseEntity.ok(frameTemplateRepository.save(existing));
+    }
+
+    @DeleteMapping("/admin/frames/{id}")
+    public ResponseEntity<?> deleteFrameTemplate(@PathVariable Long id) {
+        if (!frameTemplateRepository.existsById(id)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Template not found"));
+        }
+        frameTemplateRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("message", "Template deleted successfully"));
+    }
+
+    // --- Admin Moderation Endpoints ---
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<?> updateObituaryStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        Optional<Obituary> obitOpt = obituaryRepository.findById(id);
+        if (obitOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Obituary not found"));
+        }
+        Obituary obit = obitOpt.get();
+        String status = request.get("status");
+        if (status == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "status is required"));
+        }
+        obit.setStatus(status);
+        if ("rejected".equalsIgnoreCase(status)) {
+            String reason = request.get("reason");
+            if (reason == null || reason.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Rejection reason is required"));
+            }
+            obit.setRejectionReason(reason);
+        } else if ("published".equalsIgnoreCase(status)) {
+            obit.setRejectionReason(null);
+        }
+        Obituary saved = obituaryRepository.save(obit);
+        return ResponseEntity.ok(saved);
+    }
+
+    @GetMapping("/admin/reports")
+    public ResponseEntity<?> getReports() {
+        List<ObituaryReport> reports = obituaryReportRepository.findAll();
+        List<Map<String, Object>> responses = new java.util.ArrayList<>();
+        for (ObituaryReport r : reports) {
+            Optional<Obituary> obitOpt = obituaryRepository.findById(r.getObituaryId());
+            Map<String, Object> map = new HashMap<>();
+            map.put("report", r);
+            map.put("obituary", obitOpt.orElse(null));
+            responses.add(map);
+        }
+        return ResponseEntity.ok(responses);
+    }
+
+    @DeleteMapping("/admin/reports/{id}")
+    public ResponseEntity<?> dismissReport(@PathVariable Long id) {
+        if (!obituaryReportRepository.existsById(id)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Report not found"));
+        }
+        obituaryReportRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("message", "Report dismissed"));
+    }
+
+    @PostMapping("/admin/unmask-log")
+    public ResponseEntity<?> logUnmaskReason(@RequestBody Map<String, String> body, Principal principal) {
+        String reason = body.get("reason");
+        String obitId = body.get("obituaryId");
+        if (reason == null || reason.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Reason is required for unmasking contact info"));
+        }
+        
+        try {
+            String actorEmail = principal != null ? principal.getName() : "system";
+            User actorUser = principal != null ? userRepository.findByEmail(actorEmail).orElse(null) : null;
+            AuditLog auditLog = new AuditLog();
+            if (actorUser != null) {
+                auditLog.setActorId((long) actorUser.getId());
+                auditLog.setActorRole(actorUser.getRole());
+                auditLog.setActorEmail(actorUser.getEmail());
+            } else {
+                auditLog.setActorEmail(actorEmail);
+            }
+            auditLog.setActionType("OBITUARY_UNMASK_CONTACT");
+            auditLog.setEntityType("Obituary");
+            if (obitId != null) {
+                auditLog.setEntityId(Long.valueOf(obitId));
+            }
+            auditLog.setDetails("Admin unmasked contact details. Reason: " + reason);
+            auditLogRepository.save(auditLog);
+        } catch (Exception e) {
+            // ignore
+        }
+        return ResponseEntity.ok(Map.of("message", "Logged successfully"));
     }
 }

@@ -366,4 +366,43 @@ public class WishController {
                     .body(Map.of("message", "Failed to upload image: " + e.getMessage()));
         }
     }
+
+    // --- Admin Wish Frame Templates Management ---
+    @PostMapping("/admin/templates")
+    public ResponseEntity<?> createWishTemplate(@RequestBody WishFrameTemplate template) {
+        if (template.getName() == null || template.getSlug() == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Name and slug are required"));
+        }
+        if (template.getDeleted() == null) template.setDeleted(false);
+        return ResponseEntity.ok(wishFrameTemplateRepository.save(template));
+    }
+
+    @PutMapping("/admin/templates/{id}")
+    public ResponseEntity<?> updateWishTemplate(@PathVariable Long id, @RequestBody WishFrameTemplate template) {
+        Optional<WishFrameTemplate> opt = wishFrameTemplateRepository.findById(id);
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Template not found"));
+        }
+        WishFrameTemplate existing = opt.get();
+        if (template.getName() != null) existing.setName(template.getName());
+        if (template.getBackgroundUrl() != null) existing.setBackgroundUrl(template.getBackgroundUrl());
+        if (template.getOverlayUrl() != null) existing.setOverlayUrl(template.getOverlayUrl());
+        if (template.getBorderColor() != null) existing.setBorderColor(template.getBorderColor());
+        if (template.getTextColor() != null) existing.setTextColor(template.getTextColor());
+        if (template.getSlug() != null) existing.setSlug(template.getSlug());
+        if (template.getDeleted() != null) existing.setDeleted(template.getDeleted());
+        return ResponseEntity.ok(wishFrameTemplateRepository.save(existing));
+    }
+
+    @DeleteMapping("/admin/templates/{id}")
+    public ResponseEntity<?> deleteWishTemplate(@PathVariable Long id) {
+        Optional<WishFrameTemplate> opt = wishFrameTemplateRepository.findById(id);
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Template not found"));
+        }
+        WishFrameTemplate existing = opt.get();
+        existing.setDeleted(true);
+        wishFrameTemplateRepository.save(existing);
+        return ResponseEntity.ok(Map.of("message", "Template soft-deleted successfully"));
+    }
 }

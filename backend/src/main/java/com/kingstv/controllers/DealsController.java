@@ -43,6 +43,11 @@ public class DealsController {
     @Autowired
     private UserRepository userRepository;
 
+    @GetMapping
+    public ResponseEntity<?> getAllDeals() {
+        return ResponseEntity.ok(dealRepository.findAll());
+    }
+
     // --- Business Console CRUD ---
     @PostMapping
     public ResponseEntity<?> createDeal(@RequestBody Deal deal, Principal principal) {
@@ -340,5 +345,27 @@ public class DealsController {
         }
         Deal saved = dealRepository.save(deal);
         return ResponseEntity.ok(saved);
+    }
+
+    @GetMapping("/admin/redemptions")
+    public ResponseEntity<?> getAllRedemptions() {
+        List<DealRedemption> redemptions = dealRedemptionRepository.findAll();
+        List<Map<String, Object>> responses = new ArrayList<>();
+        for (DealRedemption r : redemptions) {
+            Optional<Deal> dealOpt = dealRepository.findById(r.getDealId());
+            Map<String, Object> map = new HashMap<>();
+            map.put("redemption", r);
+            if (dealOpt.isPresent()) {
+                Deal deal = dealOpt.get();
+                map.put("deal", deal);
+                Optional<DirectoryListing> listingOpt = directoryRepository.findById(deal.getListingId());
+                map.put("merchant", listingOpt.orElse(null));
+            } else {
+                map.put("deal", null);
+                map.put("merchant", null);
+            }
+            responses.add(map);
+        }
+        return ResponseEntity.ok(responses);
     }
 }

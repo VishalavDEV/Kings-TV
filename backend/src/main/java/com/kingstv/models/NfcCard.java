@@ -37,6 +37,18 @@ public class NfcCard {
     @Column(name = "tracking_number")
     private String trackingNumber;
 
+    @Column(name = "requested_at")
+    private LocalDateTime requestedAt;
+
+    @Column(name = "processing_at")
+    private LocalDateTime processingAt;
+
+    @Column(name = "issued_at")
+    private LocalDateTime issuedAt;
+
+    @Column(name = "delivered_at")
+    private LocalDateTime deliveredAt;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -77,6 +89,18 @@ public class NfcCard {
 
     public String getTrackingNumber() { return trackingNumber; }
     public void setTrackingNumber(String trackingNumber) { this.trackingNumber = trackingNumber; }
+
+    public LocalDateTime getRequestedAt() { return requestedAt; }
+    public void setRequestedAt(LocalDateTime requestedAt) { this.requestedAt = requestedAt; }
+
+    public LocalDateTime getProcessingAt() { return processingAt; }
+    public void setProcessingAt(LocalDateTime processingAt) { this.processingAt = processingAt; }
+
+    public LocalDateTime getIssuedAt() { return issuedAt; }
+    public void setIssuedAt(LocalDateTime issuedAt) { this.issuedAt = issuedAt; }
+
+    public LocalDateTime getDeliveredAt() { return deliveredAt; }
+    public void setDeliveredAt(LocalDateTime deliveredAt) { this.deliveredAt = deliveredAt; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

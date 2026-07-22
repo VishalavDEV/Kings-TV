@@ -25,6 +25,12 @@ public class ClassifiedController {
     @Autowired
     private ClassifiedService classifiedService;
 
+    @Autowired
+    private com.kingstv.repository.ClassifiedRepository classifiedRepository;
+
+    @Autowired
+    private com.kingstv.repository.ClassifiedReportRepository classifiedReportRepository;
+
     @GetMapping
     public ResponseEntity<?> getClassifieds(
             @RequestParam(required = false) String search,
@@ -221,5 +227,29 @@ public class ClassifiedController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
         }
+    }
+
+    // --- Admin Moderation Endpoints ---
+    @GetMapping("/admin/reports")
+    public ResponseEntity<?> getReports() {
+        List<ClassifiedReport> reports = classifiedReportRepository.findAll();
+        List<Map<String, Object>> responses = new ArrayList<>();
+        for (ClassifiedReport r : reports) {
+            Optional<ClassifiedListing> listOpt = classifiedRepository.findById(r.getClassifiedId());
+            Map<String, Object> map = new HashMap<>();
+            map.put("report", r);
+            map.put("classified", listOpt.orElse(null));
+            responses.add(map);
+        }
+        return ResponseEntity.ok(responses);
+    }
+
+    @DeleteMapping("/admin/reports/{id}")
+    public ResponseEntity<?> dismissReport(@PathVariable Long id) {
+        if (!classifiedReportRepository.existsById(id)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Report not found"));
+        }
+        classifiedReportRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("message", "Report dismissed"));
     }
 }

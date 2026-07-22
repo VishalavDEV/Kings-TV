@@ -51,9 +51,9 @@ public class ObituaryService {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("deleted"), false));
 
-            if (status != null && !status.isEmpty()) {
+            if (status != null && !status.isEmpty() && !"all".equalsIgnoreCase(status)) {
                 predicates.add(cb.equal(root.get("status"), status));
-            } else {
+            } else if (status == null || status.isEmpty()) {
                 predicates.add(cb.equal(root.get("status"), "published"));
             }
 

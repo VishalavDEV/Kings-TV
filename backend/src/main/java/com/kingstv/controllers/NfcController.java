@@ -4,10 +4,12 @@ import com.kingstv.models.NfcCard;
 import com.kingstv.models.NfcTapHistory;
 import com.kingstv.models.DirectoryListing;
 import com.kingstv.models.User;
+import com.kingstv.models.AuditLog;
 import com.kingstv.repository.NfcCardRepository;
 import com.kingstv.repository.NfcTapHistoryRepository;
 import com.kingstv.repository.DirectoryRepository;
 import com.kingstv.repository.UserRepository;
+import com.kingstv.repository.AuditLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +34,9 @@ public class NfcController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private AuditLogRepository auditLogRepository;
 
     // --- Dynamic Shortcode Redirector ---
     @GetMapping("/t/{shortCode}")
@@ -111,6 +116,7 @@ public class NfcController {
         card.setUpiName(upiName);
         card.setIsPaymentEnabled("payment".equalsIgnoreCase(linkType));
         card.setCardStatus("requested");
+        card.setRequestedAt(LocalDateTime.now());
         card.setShortCode(UUID.randomUUID().toString().substring(0, 8));
         card.setOtpHash(String.format("%04d", new Random().nextInt(10000))); // Plain 4-digit code simulated
         
@@ -136,7 +142,7 @@ public class NfcController {
     }
 
     @PatchMapping("/api/v1/nfc/{id}/status")
-    public ResponseEntity<?> changeCardStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
+    public ResponseEntity<?> changeCardStatus(@PathVariable Long id, @RequestBody Map<String, String> request, Principal principal) {
         Optional<NfcCard> cardOpt = nfcCardRepository.findById(id);
         if (cardOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "NFC Card not found"));
@@ -146,8 +152,58 @@ public class NfcController {
         if (status == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "status is required"));
         }
-        card.setCardStatus(status);
+        
+        String current = card.getCardStatus() != null ? card.getCardStatus().toLowerCase() : "requested";
+        String next = status.toLowerCase();
+        
+        boolean isValid = false;
+        if (current.equals("requested") && next.equals("processing")) {
+            isValid = true;
+            card.setProcessingAt(LocalDateTime.now());
+        } else if (current.equals("processing") && next.equals("issued")) {
+            isValid = true;
+            card.setIssuedAt(LocalDateTime.now());
+            String cardUid = request.get("cardUid");
+            if (cardUid != null && !cardUid.trim().isEmpty()) {
+                card.setShortCode(cardUid);
+            }
+        } else if (current.equals("issued") && next.equals("delivered")) {
+            isValid = true;
+            card.setDeliveredAt(LocalDateTime.now());
+        } else if (next.equals("blocked") || next.equals("reissued")) {
+            // Allow blocking or reissuing at any state
+            isValid = true;
+        }
+        
+        if (!isValid) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid workflow transition. Next status must be '" + 
+                (current.equals("requested") ? "processing" : current.equals("processing") ? "issued" : "delivered") + "'"));
+        }
+        
+        card.setCardStatus(next);
         NfcCard saved = nfcCardRepository.save(card);
+        
+        // Log Audit
+        try {
+            String actorEmail = principal != null ? principal.getName() : "system";
+            User actorUser = principal != null ? userRepository.findByEmail(actorEmail).orElse(null) : null;
+            AuditLog auditLog = new AuditLog();
+            if (actorUser != null) {
+                auditLog.setActorId((long) actorUser.getId());
+                auditLog.setActorRole(actorUser.getRole());
+                auditLog.setActorEmail(actorUser.getEmail());
+            } else {
+                auditLog.setActorEmail(actorEmail);
+            }
+            auditLog.setActionType("NFC_STATUS_UPDATE");
+            auditLog.setEntityType("NfcCard");
+            auditLog.setEntityId(card.getId());
+            auditLog.setDetails("NFC card status changed from " + current + " to " + next);
+            auditLogRepository.save(auditLog);
+        } catch (Exception e) {
+            // Silently log or ignore audit logging exceptions
+        }
+        
         return ResponseEntity.ok(saved);
     }
 
@@ -269,6 +325,7 @@ public class NfcController {
             Optional<DirectoryListing> dirOpt = directoryRepository.findById(card.getListingId());
             Map<String, Object> map = new HashMap<>();
             map.put("card", card);
+            map.put("business", dirOpt.orElse(null));
             map.put("businessName", dirOpt.isPresent() ? dirOpt.get().getBusinessName() : "Unknown");
             responses.add(map);
         }

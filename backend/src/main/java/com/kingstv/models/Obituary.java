@@ -110,6 +110,9 @@ public class Obituary {
     @Column(nullable = false)
     private String status = "published";
 
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
+
     @Column(name = "is_celebrity")
     private Boolean isCelebrity = false;
 
@@ -270,4 +273,7 @@ public class Obituary {
 
     public String getProofDocument() { return proofDocument; }
     public void setProofDocument(String proofDocument) { this.proofDocument = proofDocument; }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
 }
