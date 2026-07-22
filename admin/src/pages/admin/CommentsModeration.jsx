@@ -62,7 +62,7 @@ const CommentsModeration = () => {
   );
 
   return (
-    <div className="animate-fade-in" style={{ padding: "1.5rem", maxWidth: "1200px", margin: "0 auto" }}>
+    <div className="animate-fade-in" style={{ padding: "1.5rem" }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.25rem", fontSize: "1.75rem", fontWeight: 700 }}>

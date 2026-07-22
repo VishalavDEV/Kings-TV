@@ -386,7 +386,6 @@ const MediaLibrary = () => {
   return (
     <div
       className="animate-fade-in"
-      style={{ maxWidth: '1300px', margin: '0 auto' }}
       onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
       onDragLeave={() => setIsDragging(false)}
       onDrop={handleDrop}
