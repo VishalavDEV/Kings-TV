@@ -7,14 +7,14 @@ import {
 } from 'lucide-react';
 
 const MODULE_TABS = [
-  { key: 'directory',   label: 'Business Directory', icon: Building2,    endpoint: '/business-directory',   color: '#3B82F6' },
-  { key: 'jobs',        label: 'Jobs',               icon: Briefcase,    endpoint: '/jobs',                 color: '#10B981' },
-  { key: 'classifieds', label: 'Classifieds',        icon: ShoppingBag,  endpoint: '/classifieds',          color: '#F59E0B' },
-  { key: 'obituaries',  label: 'Obituaries',         icon: Heart,        endpoint: '/obituaries',           color: '#8B5CF6' },
-  { key: 'wishes',      label: 'Wishes',             icon: Gift,         endpoint: '/wishes',               color: '#EC4899' },
-  { key: 'deals',       label: 'Deals',              icon: Tag,          endpoint: '/deals',                color: '#EF4444' },
-  { key: 'rfq',         label: 'RFQ',                icon: FileQuestion, endpoint: '/rfq',                  color: '#06B6D4' },
-  { key: 'nfc',         label: 'NFC Cards',          icon: Wifi,         endpoint: '/nfc',                  color: '#14B8A6' },
+  { key: 'directory', label: 'Business Directory', icon: Building2, endpoint: '/business-directory', color: '#3B82F6' },
+  { key: 'jobs', label: 'Jobs', icon: Briefcase, endpoint: '/jobs', color: '#10B981' },
+  { key: 'classifieds', label: 'Classifieds', icon: ShoppingBag, endpoint: '/classifieds', color: '#F59E0B' },
+  { key: 'obituaries', label: 'Obituaries', icon: Heart, endpoint: '/obituaries', color: '#8B5CF6' },
+  { key: 'wishes', label: 'Wishes', icon: Gift, endpoint: '/wishes', color: '#EC4899' },
+  { key: 'deals', label: 'Deals', icon: Tag, endpoint: '/deals', color: '#EF4444' },
+  { key: 'rfq', label: 'RFQ', icon: FileQuestion, endpoint: '/rfq', color: '#06B6D4' },
+  { key: 'nfc', label: 'NFC Cards', icon: Wifi, endpoint: '/nfc', color: '#14B8A6' },
 ];
 
 const formatDate = (val) => {
