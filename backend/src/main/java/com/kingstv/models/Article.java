@@ -121,6 +121,12 @@ public class Article {
     @Column(name = "featured_category")
     private String featuredCategory;
 
+    @Column(name = "allow_comments")
+    private Boolean allowComments = true;
+
+    @Column(name = "allow_pingbacks")
+    private Boolean allowPingbacks = true;
+
     @Transient
     private String authorProfileImage;
 
@@ -245,4 +251,10 @@ public class Article {
 
     public String getFeaturedCategory() { return featuredCategory; }
     public void setFeaturedCategory(String featuredCategory) { this.featuredCategory = featuredCategory; }
+
+    public Boolean getAllowComments() { return allowComments != null ? allowComments : true; }
+    public void setAllowComments(Boolean allowComments) { this.allowComments = allowComments; }
+
+    public Boolean getAllowPingbacks() { return allowPingbacks != null ? allowPingbacks : true; }
+    public void setAllowPingbacks(Boolean allowPingbacks) { this.allowPingbacks = allowPingbacks; }
 }
