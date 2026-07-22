@@ -37,6 +37,16 @@ public class NfcCard {
     @Column(name = "tracking_number")
     private String trackingNumber;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status")
+    private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
+
+    @Column(name = "payment_amount")
+    private java.math.BigDecimal paymentAmount;
+
+    @Column(name = "payment_method")
+    private String paymentMethod;
+
     @Column(name = "requested_at")
     private LocalDateTime requestedAt;
 
@@ -89,6 +99,15 @@ public class NfcCard {
 
     public String getTrackingNumber() { return trackingNumber; }
     public void setTrackingNumber(String trackingNumber) { this.trackingNumber = trackingNumber; }
+
+    public PaymentStatus getPaymentStatus() { return paymentStatus; }
+    public void setPaymentStatus(PaymentStatus paymentStatus) { this.paymentStatus = paymentStatus; }
+
+    public java.math.BigDecimal getPaymentAmount() { return paymentAmount; }
+    public void setPaymentAmount(java.math.BigDecimal paymentAmount) { this.paymentAmount = paymentAmount; }
+
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
 
     public LocalDateTime getRequestedAt() { return requestedAt; }
     public void setRequestedAt(LocalDateTime requestedAt) { this.requestedAt = requestedAt; }
