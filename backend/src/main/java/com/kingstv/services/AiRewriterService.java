@@ -1,13 +1,11 @@
 package com.kingstv.services;
 
-import com.kingstv.models.SystemConfig;
-import com.kingstv.repository.SystemConfigRepository;
+import com.kingstv.models.AiConfiguration;
+import com.kingstv.services.ai.providers.LLMProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.*;
+import java.util.Optional;
 
 /**
  * AI Content Rewriter service.
@@ -18,55 +16,26 @@ import java.util.*;
 public class AiRewriterService {
 
     @Autowired
-    private SystemConfigRepository systemConfigRepository;
-
-    @Autowired
-    private EncryptionService encryptionService;
-
-    private final RestTemplate restTemplate = new RestTemplate();
+    private AiConfigurationService aiConfigurationService;
 
     /**
      * Rewrites/paraphrases the given text using the configured LLM API.
      */
     public String rewriteContent(String text, String style) {
-        String apiUrl = getConfigValue(SystemConfig.AI_LLM_API_URL);
-        String apiKey = getEncryptedConfigValue(SystemConfig.AI_LLM_API_KEY);
-        String model = getConfigValue(SystemConfig.AI_LLM_MODEL);
-
-        if (apiUrl == null || apiKey == null) {
-            return "AI Rewriter is not configured. Please ask your Super Admin to set up the LLM API credentials.";
+        Optional<AiConfiguration> activeOpt = aiConfigurationService.getActiveConfigurationDecrypted();
+        if (activeOpt.isEmpty() || !Boolean.TRUE.equals(activeOpt.get().getEnableAi()) || !Boolean.TRUE.equals(activeOpt.get().getEnableRewrite())) {
+            return "AI Rewriter is not enabled. Please enable it in the AI settings.";
         }
 
-        if (model == null) model = "gpt-3.5-turbo";
-
+        AiConfiguration activeConfig = activeOpt.get();
         String prompt = buildPrompt(text, style);
 
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(apiKey);
-
-            Map<String, Object> message = new HashMap<>();
-            message.put("role", "user");
-            message.put("content", prompt);
-
-            Map<String, Object> body = new HashMap<>();
-            body.put("model", model);
-            body.put("messages", List.of(message));
-            body.put("max_tokens", 2000);
-            body.put("temperature", 0.7);
-
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-            ResponseEntity<Map> response = restTemplate.exchange(apiUrl, HttpMethod.POST, request, Map.class);
-
-            if (response.getBody() != null) {
-                List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
-                if (choices != null && !choices.isEmpty()) {
-                    Map<String, Object> messageResult = (Map<String, Object>) choices.get(0).get("message");
-                    return (String) messageResult.get("content");
-                }
+            LLMProvider providerClient = aiConfigurationService.getProviderClient(activeConfig.getProvider());
+            if (providerClient == null) {
+                return "Unsupported LLM Provider: " + activeConfig.getProvider();
             }
-            return "Unable to generate rewrite. Please try again.";
+            return providerClient.generateContent(prompt, activeConfig);
         } catch (Exception e) {
             return "AI Rewriter error: " + e.getMessage();
         }
@@ -80,24 +49,6 @@ public class AiRewriterService {
             case "detailed" -> "Expand and elaborate on the content, adding more context.";
             default -> "Rewrite professionally for a news publication.";
         };
-
         return styleInstruction + "\n\nOriginal text:\n" + text;
-    }
-
-    private String getConfigValue(String key) {
-        return systemConfigRepository.findByConfigKey(key)
-                .map(SystemConfig::getConfigValue)
-                .orElse(null);
-    }
-
-    private String getEncryptedConfigValue(String key) {
-        return systemConfigRepository.findByConfigKey(key)
-                .map(config -> {
-                    if (Boolean.TRUE.equals(config.getIsEncrypted())) {
-                        return encryptionService.decrypt(config.getConfigValue());
-                    }
-                    return config.getConfigValue();
-                })
-                .orElse(null);
     }
 }

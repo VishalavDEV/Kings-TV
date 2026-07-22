@@ -1,51 +1,59 @@
 package com.kingstv.services;
 
-import com.kingstv.models.SystemConfig;
-import com.kingstv.repository.SystemConfigRepository;
+import com.kingstv.models.AiConfiguration;
+import com.kingstv.services.ai.providers.LLMProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
 /**
  * AI Assistant service for news journalists.
- * Uses Google Gemini API for content generation, translation,
- * summarization, SEO optimization and tag suggestions.
- *
- * Falls back to SystemConfig DB values if env variable is not set.
+ * Uses dynamic LLM provider client delegation strategy (Gemini, OpenAI, Anthropic, etc.)
+ * configured dynamically by the Super Admin in system settings.
  */
 @Service
 public class AiAssistService {
 
     @Autowired
-    private SystemConfigRepository systemConfigRepository;
-
-    @Autowired
-    private EncryptionService encryptionService;
-
-    @Value("${GEMINI_API_KEY:}")
-    private String geminiApiKeyEnv;
-
-    private final RestTemplate restTemplate = new RestTemplate();
-
-    private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+    private AiConfigurationService aiConfigurationService;
 
     /**
      * Main entry point: dispatch to the right prompt based on action type.
      */
     public Map<String, Object> assist(String action, String text, String context) {
-        String apiKey = resolveApiKey();
-        if (apiKey == null || apiKey.isBlank()) {
+        Optional<AiConfiguration> activeOpt = aiConfigurationService.getActiveConfigurationDecrypted();
+        if (activeOpt.isEmpty() || !Boolean.TRUE.equals(activeOpt.get().getEnableAi())) {
             return Map.of("error", true, "result",
-                    "AI Assistant is not configured. Please set GEMINI_API_KEY environment variable or configure ai.llm_api_key in System Settings.");
+                    "AI Assistant is not configured or disabled. Please enable it in AI Settings.");
+        }
+
+        AiConfiguration activeConfig = activeOpt.get();
+
+        // Enforce individual feature toggles
+        if ("seo".equalsIgnoreCase(action) && !Boolean.TRUE.equals(activeConfig.getEnableSeo())) {
+            return Map.of("error", true, "result", "SEO generation AI is disabled in settings.");
+        }
+        if ("translate".equalsIgnoreCase(action) && !Boolean.TRUE.equals(activeConfig.getEnableTranslation())) {
+            return Map.of("error", true, "result", "Translation AI is disabled in settings.");
+        }
+        if ("summarize".equalsIgnoreCase(action) && !Boolean.TRUE.equals(activeConfig.getEnableSummary())) {
+            return Map.of("error", true, "result", "Summarization AI is disabled in settings.");
+        }
+        if ("rewrite".equalsIgnoreCase(action) && !Boolean.TRUE.equals(activeConfig.getEnableRewrite())) {
+            return Map.of("error", true, "result", "AI rewrite is disabled in settings.");
+        }
+        if ("tags".equalsIgnoreCase(action) && !Boolean.TRUE.equals(activeConfig.getEnableTags())) {
+            return Map.of("error", true, "result", "Auto tags AI is disabled in settings.");
         }
 
         String prompt = buildPrompt(action, text, context);
         try {
-            String result = callGemini(apiKey, prompt);
+            LLMProvider providerClient = aiConfigurationService.getProviderClient(activeConfig.getProvider());
+            if (providerClient == null) {
+                return Map.of("error", true, "result", "LLM Provider client not available: " + activeConfig.getProvider());
+            }
+            String result = providerClient.generateContent(prompt, activeConfig);
             return Map.of("error", false, "result", result, "action", action);
         } catch (Exception e) {
             return Map.of("error", true, "result", "AI error: " + e.getMessage());
@@ -56,24 +64,9 @@ public class AiAssistService {
      * Check if AI is configured and available.
      */
     public boolean isAvailable() {
-        String key = resolveApiKey();
-        return key != null && !key.isBlank();
-    }
-
-    private String resolveApiKey() {
-        // 1. Check env variable first
-        if (geminiApiKeyEnv != null && !geminiApiKeyEnv.isBlank()) {
-            return geminiApiKeyEnv;
-        }
-        // 2. Fall back to SystemConfig DB
-        return systemConfigRepository.findByConfigKey(SystemConfig.AI_LLM_API_KEY)
-                .map(config -> {
-                    if (Boolean.TRUE.equals(config.getIsEncrypted())) {
-                        return encryptionService.decrypt(config.getConfigValue());
-                    }
-                    return config.getConfigValue();
-                })
-                .orElse(null);
+        return aiConfigurationService.getActiveConfigurationDecrypted()
+                .map(AiConfiguration::getEnableAi)
+                .orElse(false);
     }
 
     private String buildPrompt(String action, String text, String context) {
@@ -160,32 +153,5 @@ public class AiAssistService {
         };
     }
 
-    @SuppressWarnings("unchecked")
-    private String callGemini(String apiKey, String prompt) {
-        String url = GEMINI_API_URL + "?key=" + apiKey;
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        Map<String, Object> textPart = Map.of("text", prompt);
-        Map<String, Object> contentsPart = Map.of("parts", List.of(textPart));
-        Map<String, Object> body = Map.of("contents", List.of(contentsPart));
-
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, request, Map.class);
-
-        if (response.getBody() != null) {
-            List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.getBody().get("candidates");
-            if (candidates != null && !candidates.isEmpty()) {
-                Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
-                if (content != null) {
-                    List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
-                    if (parts != null && !parts.isEmpty()) {
-                        return (String) parts.get(0).get("text");
-                    }
-                }
-            }
-        }
-        return "Unable to generate AI content. Please try again.";
-    }
 }

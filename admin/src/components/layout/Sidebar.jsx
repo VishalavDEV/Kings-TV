@@ -27,7 +27,8 @@ import {
   User,
   MessageSquare,
   Image as ImageIcon,
-  Search
+  Search,
+  Sparkles
 } from 'lucide-react';
 
 /**
@@ -203,6 +204,7 @@ const Sidebar = () => {
             <SidebarNavLink to="/admin/seo" icon={Search} label={t('seoConsole') || 'SEO & Sitemap'} />
             <SidebarNavLink to="/admin/surveys" icon={HelpCircle} label={t('surveys')} />
             <SidebarNavLink to="/admin/settings" icon={Settings} label={t('settings')} />
+            <SidebarNavLink to="/admin/settings/ai" icon={Sparkles} label="AI Configuration" />
             <SidebarNavLink to="/admin/profanity" icon={AlertTriangle} label={t('profanity')} badge={counts.pendingProfanity} />
             <SidebarNavLink to="/admin/audit-logs" icon={Activity} label={t('audit')} />
           </SidebarSection>

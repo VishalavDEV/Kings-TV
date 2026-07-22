@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
-import { Save, Server, Mail, Smartphone, MapPin, Video, HardDrive, Send, Youtube, Cloud } from 'lucide-react';
+import { Save, Server, Mail, Smartphone, MapPin, Video, HardDrive, Send, Youtube, Cloud, Sparkles } from 'lucide-react';
 
 const SystemSettings = () => {
   const [config, setConfig] = useState({
@@ -27,7 +27,10 @@ const SystemSettings = () => {
     vercelApiKey: '',
     primaryFont: 'Inter',
     secondaryFont: 'Merriweather',
-    tertiaryFont: 'Poppins'
+    tertiaryFont: 'Poppins',
+    aiLlmApiUrl: '',
+    aiLlmApiKey: '',
+    aiLlmModel: 'gemini-2.0-flash'
   });
   const [loading, setLoading] = useState(true);
   const [savingGroup, setSavingGroup] = useState('');
@@ -63,6 +66,9 @@ const SystemSettings = () => {
             if (item.configKey === 'font.primary') mapped.primaryFont = item.configValue || 'Inter';
             if (item.configKey === 'font.secondary') mapped.secondaryFont = item.configValue || 'Merriweather';
             if (item.configKey === 'font.tertiary') mapped.tertiaryFont = item.configValue || 'Poppins';
+            if (item.configKey === 'ai.llm_api_url') mapped.aiLlmApiUrl = item.configValue || '';
+            if (item.configKey === 'ai.llm_api_key') mapped.aiLlmApiKey = item.configValue || '';
+            if (item.configKey === 'ai.llm_model') mapped.aiLlmModel = item.configValue || 'gemini-2.0-flash';
           });
           setConfig(prev => ({ ...prev, ...mapped }));
         }
@@ -128,6 +134,12 @@ const SystemSettings = () => {
           secondaryFont: config.secondaryFont,
           tertiaryFont: config.tertiaryFont
         });
+      } else if (group === 'ai') {
+        await api.put('/admin/config/ai-llm', { 
+          apiUrl: config.aiLlmApiUrl, 
+          apiKey: config.aiLlmApiKey, 
+          model: config.aiLlmModel 
+        });
       }
       alert(`${group.toUpperCase()} settings saved successfully.`);
     } catch (error) {
@@ -175,6 +187,11 @@ const SystemSettings = () => {
           primaryFont: config.primaryFont, 
           secondaryFont: config.secondaryFont,
           tertiaryFont: config.tertiaryFont
+        }),
+        api.put('/admin/config/ai-llm', { 
+          apiUrl: config.aiLlmApiUrl, 
+          apiKey: config.aiLlmApiKey, 
+          model: config.aiLlmModel 
         })
       ]);
       alert('All settings saved successfully.');
@@ -528,6 +545,45 @@ const SystemSettings = () => {
           </div>
           <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('typography')} disabled={savingGroup !== ''}>
             {savingGroup === 'typography' ? 'Saving Fonts...' : 'Save Typography Settings'}
+          </button>
+        </div>
+
+        {/* Google AI Studio / Gemini Config */}
+        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '300px' }}>
+          <div>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', fontSize: '16px', fontWeight: 700 }}>
+              <Sparkles size={20} color="var(--primary)" /> Google AI Studio Config
+            </h3>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" style={{ fontWeight: 600, fontSize: '13px' }}>Gemini API Key</label>
+              <input 
+                type="password" name="aiLlmApiKey" className="form-control" 
+                value={config.aiLlmApiKey} onChange={handleChange} 
+                placeholder="Google AI Studio Gemini API Key"
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" style={{ fontWeight: 600, fontSize: '13px' }}>Google AI API URL</label>
+              <input 
+                type="text" name="aiLlmApiUrl" className="form-control" 
+                value={config.aiLlmApiUrl} onChange={handleChange} 
+                placeholder="Leave blank to use default API URL"
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" style={{ fontWeight: 600, fontSize: '13px' }}>AI Model Name</label>
+              <input 
+                type="text" name="aiLlmModel" className="form-control" 
+                value={config.aiLlmModel} onChange={handleChange} 
+                placeholder="e.g. gemini-2.0-flash"
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--body-bg)', color: 'var(--text-dark)' }}
+              />
+            </div>
+          </div>
+          <button className="btn btn-secondary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleSaveGroup('ai')} disabled={savingGroup !== ''}>
+            {savingGroup === 'ai' ? 'Saving AI Studio...' : 'Save AI Settings'}
           </button>
         </div>
 

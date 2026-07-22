@@ -912,6 +912,17 @@ We have successfully integrated PWA standalone parameters, background offline ca
    - Initialized and loaded the worker natively on startup inside [main.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/main.jsx).
 
 2. **Network Offline Banners (Task 8.4):**
+   - Fixed a pervasive CSS bug where modals rendered inside containers with CSS transforms (`translateY` inside `.animate-fade-in`) lost their viewport-relative positioning.
+   - Lifted the modal out of the transform boundary, restoring `position: fixed` to act as a true 100vw/100vh overlay.
+
+### AI Automation Spec (News Editor)
+- Built a global **"Enable AI"** toggle in the top header row of the News Editor.
+- When toggled ON, writing in Title or Content triggers debounced AI suggestions (via Gemini API) for Excerpt, Meta Title, Focus Keyword, Meta Description, URL Slug, and Tags in parallel.
+- Suggested options are displayed inside visually distinct boxes underneath the fields with a **"Use"** button, preventing any silent auto-fills.
+- Handled edge cases including dismiss (✕), manual refresh (↺), tag chips insertion, and caching by content hash.
+- Logged all "Use" clicks inside `localStorage` for audit.
+- **Reference Errors Fixed**: Resolved the JavaScript Temporal Dead Zone (TDZ) error (`Cannot access 'K' before initialization`) and the `required is not defined` prop error inside the `ImageUploadPreview` component.
+
    - Developed [OfflineBanner.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/components/OfflineBanner.jsx) tracking online status dynamically and displaying absolute warning alerts when the network connection drops.
    - Wired the banner sitewide inside the main [App.jsx](file:///c:/Users/vishal%20AV/Downloads/king/frontend/src/App.jsx) template shell.
 

@@ -29,6 +29,7 @@ const AdManagement = () => {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
   const [filterPosition, setFilterPosition] = useState("ALL");
+  const [recentArticles, setRecentArticles] = useState([]);
 
   const showMsg = (text, isError = false) => { setMsg({ text, isError }); setTimeout(() => setMsg(null), 4000); };
 
@@ -37,6 +38,10 @@ const AdManagement = () => {
       .then(r => setAds(Array.isArray(r.data) ? r.data : (r.data?.content || [])))
       .catch(() => setAds([]))
       .finally(() => setLoading(false));
+
+    api.get("/articles?status=published")
+      .then(r => setRecentArticles(r.data.slice(0, 30) || []))
+      .catch(err => console.warn("Failed to load articles for ad targeting", err));
   }, []);
 
   const openEdit = (ad) => {
@@ -68,11 +73,11 @@ const AdManagement = () => {
       };
       
       if (editingAd) {
-        const res = await api.put(`/advertisements/saveUpdate`, payload);
+        const res = await api.put(`/advertisements/${editingAd.id}`, payload);
         setAds(prev => prev.map(a => a.id === editingAd.id ? res.data : a));
         showMsg("Ad updated successfully!");
       } else {
-        const res = await api.post("/advertisements/saveUpdate", payload);
+        const res = await api.post("/advertisements", payload);
         setAds(prev => [...prev, res.data]);
         showMsg("Ad created successfully!");
       }
@@ -196,10 +201,35 @@ const AdManagement = () => {
                 onChange={val => setForm(f => ({ ...f, imageUrl: val }))}
                 uploadEndpoint="/articles/upload"
                 placeholder={form.type === "IMAGE" ? "Image URL or upload ad banner..." : "Video URL (mp4) or upload..."}
+                isVideo={form.type === "VIDEO"}
               />
             )}
             {form.type === "HTML_CODE" && <div><label style={labelStyle}>Ad HTML/JS Code</label><textarea value={form.adCode} onChange={e => setForm(f => ({ ...f, adCode: e.target.value }))} style={{ ...inputStyle, minHeight: "120px", resize: "vertical", fontFamily: "monospace" }} placeholder="<script>..." /></div>}
-            <div><label style={labelStyle}>Click Target URL</label><input style={inputStyle} value={form.targetUrl} onChange={e => setForm(f => ({ ...f, targetUrl: e.target.value }))} placeholder="https://advertiser-website.com" /></div>
+            <div>
+              <label style={labelStyle}>Click Target URL</label>
+              <input 
+                style={inputStyle} 
+                list="target-url-options"
+                value={form.targetUrl} 
+                onChange={e => setForm(f => ({ ...f, targetUrl: e.target.value }))} 
+                placeholder="https://advertiser-website.com or select content" 
+              />
+              <datalist id="target-url-options">
+                <option value="/category/politics">Category: Politics</option>
+                <option value="/category/business">Category: Business</option>
+                <option value="/category/sports">Category: Sports</option>
+                <option value="/category/cinema">Category: Cinema</option>
+                <option value="/category/tech">Category: Technology</option>
+                <option value="/directory">Directory</option>
+                <option value="/jobs">Jobs</option>
+                <option value="/classifieds">Classifieds</option>
+                <option value="/obituaries">Obituaries</option>
+                <option value="/wishes">Wishes</option>
+                {recentArticles.map(a => (
+                  <option key={a.id} value={`/article/${a.id}`}>Article: {a.title}</option>
+                ))}
+              </datalist>
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
               <div>
                 <DatePickerInput 

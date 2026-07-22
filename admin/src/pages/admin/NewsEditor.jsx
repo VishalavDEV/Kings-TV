@@ -1,11 +1,142 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { Save, ArrowLeft, Send, CheckCircle, MapPin, Image, Video, Link, Copy, Plus, Sparkles } from 'lucide-react';
+import { Save, ArrowLeft, Send, CheckCircle, MapPin, Image, Video, Copy, Plus, Sparkles, X, RefreshCw, Zap } from 'lucide-react';
 import ImageUploadPreview from '../../components/common/ImageUploadPreview';
 import CategorySubcategorySelect from '../../components/common/CategorySubcategorySelect';
 import DatePickerInput from '../../components/common/DatePickerInput';
 import { useAuth } from '../../context/AuthContext';
+
+// ── Gemini AI helper ─────────────────────────────────────────────────────────
+export let activeAiConfig = {
+  apiKey: '',
+  apiUrl: '',
+  model: 'gemini-2.0-flash'
+};
+
+export const getGeminiUrl = () => {
+  const model = activeAiConfig.model || 'gemini-2.0-flash';
+  const apiKey = activeAiConfig.apiKey || '';
+  if (activeAiConfig.apiUrl) {
+    return `${activeAiConfig.apiUrl}?key=${apiKey}`;
+  }
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+};
+
+const callGemini = async (prompt) => {
+  const url = getGeminiUrl();
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+  });
+  if (!res.ok) throw new Error(`Gemini ${res.status}`);
+  const data = await res.json();
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+};
+
+const stripHtml = (html) => (html || '').replace(/<[^>]*>/gm, ' ').replace(/\s+/g, ' ').trim();
+const hashStr  = (s) => s.split('').reduce((h, c) => (Math.imul(31, h) + c.charCodeAt(0)) | 0, 0).toString(36);
+
+// ── AI Suggestion Box ─────────────────────────────────────────────────────────
+const AiSuggestionBox = ({ fieldId, suggestion, loading, onUse, onDismiss, onRegenerate, source }) => {
+  if (!loading && !suggestion) return null;
+  return (
+    <div style={{
+      marginTop: '0.5rem', borderRadius: '8px', border: '1px solid rgba(139,92,246,0.3)',
+      background: 'rgba(139,92,246,0.04)', overflow: 'hidden',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0.45rem 0.75rem', borderBottom: '1px solid rgba(139,92,246,0.15)',
+        background: 'rgba(139,92,246,0.07)',
+      }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.72rem', fontWeight: 700, color: '#8B5CF6', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+          <Sparkles size={11} /> AI Suggestion
+          {source && <span style={{ fontWeight: 400, opacity: 0.7, textTransform: 'none' }}>· from {source}</span>}
+        </span>
+        <div style={{ display: 'flex', gap: '0.35rem' }}>
+          <button onClick={onRegenerate} title="Regenerate" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8B5CF6', padding: '2px', display: 'flex', alignItems: 'center' }}>
+            <RefreshCw size={12} />
+          </button>
+          <button onClick={onDismiss} title="Dismiss" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '2px', display: 'flex', alignItems: 'center' }}>
+            <X size={12} />
+          </button>
+        </div>
+      </div>
+      <div style={{ padding: '0.6rem 0.75rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
+        {loading ? (
+          <span style={{ fontSize: '0.8rem', color: '#8B5CF6', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', border: '2px solid #8B5CF6', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+            Generating…
+          </span>
+        ) : (
+          <span style={{ fontSize: '0.82rem', color: 'var(--text-primary)', lineHeight: '1.5', flex: 1, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{suggestion}</span>
+        )}
+        {!loading && suggestion && (
+          <button
+            onClick={onUse}
+            style={{
+              flexShrink: 0, padding: '0.3rem 0.85rem', fontSize: '0.78rem', fontWeight: 700,
+              background: '#8B5CF6', color: '#fff', border: 'none', borderRadius: '6px',
+              cursor: 'pointer', letterSpacing: '0.02em', transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={e => e.target.style.opacity = '0.85'}
+            onMouseLeave={e => e.target.style.opacity = '1'}
+          >
+            Use
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ── Tag Suggestion Row ────────────────────────────────────────────────────────
+const TagSuggestionBox = ({ tags, loading, onUseOne, onUseAll, onDismiss, onRegenerate }) => {
+  if (!loading && (!tags || tags.length === 0)) return null;
+  return (
+    <div style={{
+      marginTop: '0.5rem', borderRadius: '8px', border: '1px solid rgba(139,92,246,0.3)',
+      background: 'rgba(139,92,246,0.04)', overflow: 'hidden',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0.45rem 0.75rem', borderBottom: '1px solid rgba(139,92,246,0.15)',
+        background: 'rgba(139,92,246,0.07)',
+      }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.72rem', fontWeight: 700, color: '#8B5CF6', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+          <Sparkles size={11} /> AI Suggestion · Tags <span style={{ fontWeight: 400, opacity: 0.7, textTransform: 'none' }}>· from Content</span>
+        </span>
+        <div style={{ display: 'flex', gap: '0.35rem' }}>
+          {!loading && tags?.length > 0 && <button onClick={onUseAll} style={{ fontSize: '0.72rem', fontWeight: 700, color: '#8B5CF6', background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }}>Use All</button>}
+          <button onClick={onRegenerate} title="Regenerate" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8B5CF6', padding: '2px', display: 'flex', alignItems: 'center' }}><RefreshCw size={12} /></button>
+          <button onClick={onDismiss} title="Dismiss" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '2px', display: 'flex', alignItems: 'center' }}><X size={12} /></button>
+        </div>
+      </div>
+      <div style={{ padding: '0.6rem 0.75rem', display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+        {loading ? (
+          <span style={{ fontSize: '0.8rem', color: '#8B5CF6', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', border: '2px solid #8B5CF6', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+            Generating…
+          </span>
+        ) : tags?.map((tag, i) => (
+          <button key={i} onClick={() => onUseOne(tag)} style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+            background: 'var(--bg-secondary)', border: '1px solid rgba(139,92,246,0.3)',
+            borderRadius: '20px', padding: '0.2rem 0.6rem', fontSize: '0.78rem',
+            cursor: 'pointer', color: 'var(--text-primary)', transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = '#8B5CF6'; e.currentTarget.style.color = '#fff'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+          >
+            + {tag}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const TABS = ['Tamil', 'English', 'SEO', 'Settings'];
 
@@ -20,11 +151,19 @@ const NewsEditor = () => {
 
   const getPreviewUrl = (url) => {
     if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+    let finalUrl = url;
+    if (typeof finalUrl === 'string' && finalUrl.includes('kings-tv.onrender.com')) {
+      const path = finalUrl.replace(/^https?:\/\/kings-tv\.onrender\.com/, '');
+      const cleanPath = path.startsWith('/api/v1') ? path.substring(7) : path;
+      const serverBase = (api.defaults.baseURL || 'http://localhost:8080/api/v1')
+        .replace(/\/api\/v1\/?$/, '').replace(/\/api\/?$/, '');
+      finalUrl = serverBase + (cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath);
+    }
+    if (finalUrl.startsWith('http://') || finalUrl.startsWith('https://') || finalUrl.startsWith('data:')) return finalUrl;
     const serverBase = (api.defaults.baseURL || 'http://localhost:8080/api/v1')
       .replace(/\/api\/v1\/?$/, '')
       .replace(/\/api\/?$/, '');
-    const normalizedUrl = url.startsWith('/') ? url : '/' + url;
+    const normalizedUrl = finalUrl.startsWith('/') ? finalUrl : '/' + finalUrl;
     return serverBase + normalizedUrl;
   };
 
@@ -51,6 +190,23 @@ const NewsEditor = () => {
   const [aiSeoSuggestions, setAiSeoSuggestions] = useState(null);
   const [linkSuggestions, setLinkSuggestions] = useState([]);
 
+  // ── Inline AI Suggestion — state only (logic after form is declared) ──────
+  const [aiEnabled, setAiEnabled] = useState(false);
+  const [suggestions, setSuggestions] = useState({});
+  const [suggLoading, setSuggLoading] = useState({});
+  const [suggDismissed, setSuggDismissed] = useState({});
+  const lastGenHash = useRef('');
+  const debounceTimer = useRef(null);
+
+  const [userEditedFields, setUserEditedFields] = useState({});
+  const [aiFieldStates, setAiFieldStates] = useState({
+    titleTa: 'idle', titleEn: 'idle', shortDescTa: 'idle', shortDescEn: 'idle',
+    contentTa: 'idle', contentEn: 'idle', metaTitle: 'idle', metaDescription: 'idle',
+    metaKeywords: 'idle', focusKeywords: 'idle', slug: 'idle', categoryId: 'idle'
+  });
+  const [showAiNote, setShowAiNote] = useState(false);
+  const [docUploadProgress, setDocUploadProgress] = useState({ ta: '', en: '' });
+
   const [form, setForm] = useState({
     titleTa: '', titleEn: '', contentTa: '', contentEn: '',
     shortDescTa: '', shortDescEn: '', imageUrl: '', featuredImage: '',
@@ -62,7 +218,437 @@ const NewsEditor = () => {
     latitude: '', longitude: '', visibilityRadiusKm: '',
     publishedAt: '',
     showRightColumn: true, isPluggedIn: false, featuredCategory: '',
+    aiAutomationEnabled: false,
   });
+
+  // ── Gemini Multimodal OCR helper ──────────────────────────────────────────
+  const callGeminiMultimodal = async (base64Data, mimeType, prompt) => {
+    const url = getGeminiUrl();
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { inlineData: { data: base64Data, mimeType: mimeType } },
+            { text: prompt }
+          ]
+        }]
+      }),
+    });
+    if (!res.ok) throw new Error(`Gemini Multimodal failed: ${res.status}`);
+    const data = await res.json();
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+  };
+
+  // ── SEO & Readability Score Calculators (Rule-based, non-hallucinated) ─────
+  const calculateReadabilityScore = (text, isTamil) => {
+    if (!text) return 0;
+    const clean = text.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+    const words = clean ? clean.split(/\s+/).length : 0;
+    if (words === 0) return 0;
+    
+    if (isTamil) {
+      const charCount = clean.replace(/\s+/g, '').length;
+      const avgWordLength = charCount / words;
+      const score = Math.max(0, Math.min(100, Math.round(130 - (avgWordLength * 12))));
+      return score;
+    } else {
+      const sentences = clean.split(/[.!?]+/).filter(s => s.trim().length > 0).length || 1;
+      const syllables = clean.length / 3; // rough estimate
+      const score = 206.835 - 1.015 * (words / sentences) - 84.6 * (syllables / words);
+      return Math.max(0, Math.min(100, Math.round(score)));
+    }
+  };
+
+  const calculateSeoScore = (formState) => {
+    let score = 0;
+    const titleLen = (formState.metaTitle || formState.titleEn || formState.titleTa || '').length;
+    if (titleLen >= 40 && titleLen <= 60) score += 20;
+    else if (titleLen > 0) score += 10;
+    
+    const descLen = (formState.metaDescription || '').length;
+    if (descLen >= 120 && descLen <= 160) score += 20;
+    else if (descLen > 0) score += 10;
+    
+    const focusKw = (formState.focusKeywords || '').toLowerCase().trim();
+    const content = ((formState.contentTa || '') + ' ' + (formState.contentEn || '')).toLowerCase();
+    if (focusKw && content.includes(focusKw)) {
+      score += 20;
+      const index = content.replace(/<[^>]*>?/gm, ' ').indexOf(focusKw);
+      if (index >= 0 && index < 200) score += 10;
+    }
+    
+    const title = ((formState.titleEn || '') + ' ' + (formState.titleTa || '')).toLowerCase();
+    if (focusKw && title.includes(focusKw)) {
+      score += 15;
+    }
+    
+    const slug = (formState.slug || '');
+    if (slug && /^[a-z0-9-]+$/.test(slug)) {
+      score += 15;
+    }
+    
+    return score;
+  };
+
+  // ── Inline AI Suggestion — full logic (after form is declared) ────────────
+  const SUGG_SOURCE = {
+    excerpt: 'Title + Content', metaTitle: 'Title', focusKeyword: 'Content',
+    metaDescription: 'Content', slug: 'Title', tags: 'Content', category: 'Content',
+  };
+
+  const setFieldSugg = (field, val) => setSuggestions(p => ({ ...p, [field]: val }));
+  const setFieldLoad = (field, v)  => setSuggLoading(p => ({ ...p, [field]: v }));
+  const dismissField = (field)      => setSuggDismissed(p => ({ ...p, [field]: true }));
+  const undismissAll = ()           => setSuggDismissed({});
+
+  const logUse = (field, value, hash) => {
+    try {
+      const log = JSON.parse(localStorage.getItem('ai_use_log') || '[]');
+      log.unshift({ field, value: String(value).slice(0, 200), contentHash: hash, ts: new Date().toISOString() });
+      localStorage.setItem('ai_use_log', JSON.stringify(log.slice(0, 100)));
+    } catch {}
+  };
+
+  const resyncField = (fieldName) => {
+    setUserEditedFields(prev => ({ ...prev, [fieldName]: false }));
+    setAiFieldStates(prev => ({ ...prev, [fieldName]: 'generating' }));
+    triggerFieldGeneration(fieldName);
+  };
+
+  const handleToggleAiAutomation = (checked) => {
+    setForm(f => ({ ...f, aiAutomationEnabled: checked }));
+    if (checked) {
+      setShowAiNote(true);
+      setTimeout(() => setShowAiNote(false), 10000);
+      const title = form.titleEn || form.titleTa || '';
+      const content = form.contentTa || form.contentEn || '';
+      if (title || content) {
+        triggerAiAutomation(form.contentTa ? 'contentTa' : 'contentEn', form.contentTa || form.contentEn);
+      }
+    } else {
+      setShowAiNote(false);
+    }
+  };
+
+  const triggerFieldGeneration = async (field) => {
+    setAiFieldStates(prev => ({ ...prev, [field]: 'generating' }));
+    try {
+      const title = form.titleEn || form.titleTa || '';
+      const content = stripHtml(form.contentEn || form.contentTa || '');
+      const contentShort = content.slice(0, 2000);
+      let resValue = null;
+      
+      if (field === 'titleEn') {
+        const prompt = `You are localizing a Tamil news headline into natural, idiomatic English for a news website. Do not transliterate — write it the way an English news editor would title this story. Tamil title: "${form.titleTa}"\nArticle content for context: "${contentShort.substring(0, 500)}"\nReturn only the English title, max 15 words, no quotes, no explanation.`;
+        resValue = await callGemini(prompt);
+      } else if (field === 'titleTa') {
+        const prompt = `You are localizing an English news headline into natural, idiomatic Tamil for a news website. Do not transliterate — write it the way a Tamil news editor would title this story. English title: "${form.titleEn}"\nArticle content for context: "${contentShort.substring(0, 500)}"\nReturn only the Tamil title, max 15 words, no quotes, no explanation.`;
+        resValue = await callGemini(prompt);
+      } else if (field === 'contentEn') {
+        const prompt = `Translate and localize the following Tamil news content into natural, idiomatic English. Retain original paragraphs. Tamil content:\n"${form.contentTa}"`;
+        resValue = await callGemini(prompt);
+        if (resValue && window.tinymce?.get('tinymce-contentEn')) {
+          window.tinymce.get('tinymce-contentEn').setContent(resValue);
+        }
+      } else if (field === 'contentTa') {
+        const prompt = `Translate and localize the following English news content into natural, idiomatic Tamil. Retain original paragraphs. English content:\n"${form.contentEn}"`;
+        resValue = await callGemini(prompt);
+        if (resValue && window.tinymce?.get('tinymce-contentTa')) {
+          window.tinymce.get('tinymce-contentTa').setContent(resValue);
+        }
+      } else if (field === 'shortDescTa') {
+        const prompt = `Summarize the following news article in Tamil in exactly 1-2 sentences, suitable for a "short description" field on a news CMS. Content: "${form.contentTa || contentShort}"\nReturn only the Tamil summary text.`;
+        resValue = await callGemini(prompt);
+      } else if (field === 'shortDescEn') {
+        const prompt = `Summarize the following news article in English in exactly 1-2 sentences, suitable for a "short description" field on a news CMS. Content: "${form.contentEn || contentShort}"\nReturn only the English summary text.`;
+        resValue = await callGemini(prompt);
+      } else if (field === 'categoryId') {
+        const categoryNames = categories.map(c => `${c.id}:${c.nameEn || c.name}`).join(', ');
+        const prompt = `Given this news content, suggest the single best-fit category ID from this list: ${categoryNames}.\nReturn JSON: {"categoryId": "...", "confidence": 0-1}\nContent: "${contentShort}"`;
+        const raw = await callGemini(prompt);
+        try {
+          const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+          if (parsed.categoryId && parsed.confidence >= 0.5) {
+            resValue = parsed.categoryId;
+          }
+        } catch {}
+      } else if (['metaTitle', 'metaDescription', 'metaKeywords', 'focusKeywords', 'slug'].includes(field)) {
+        const lang = form.contentTa ? 'Tamil' : 'English';
+        const contentVal = form.contentTa || form.contentEn || '';
+        const prompt = `Given this news article content in ${lang}, generate SEO metadata as JSON only, no markdown, no explanation:
+{
+  "seo_title": "max 60 characters, keyword-forward",
+  "meta_description": "max 160 characters",
+  "meta_keywords": ["term1", "term2", ...] (5-8 terms),
+  "focus_keywords": ["term1", "term2", "term3"] (1-3 terms),
+  "url_slug": "lowercase-hyphenated-ascii"
+}
+Content: "${contentVal.substring(0, 2000)}"`;
+        const raw = await callGemini(prompt);
+        try {
+          const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+          const map = {
+            metaTitle: parsed.seo_title,
+            metaDescription: parsed.meta_description,
+            metaKeywords: Array.isArray(parsed.meta_keywords) ? parsed.meta_keywords.join(', ') : '',
+            focusKeywords: Array.isArray(parsed.focus_keywords) ? parsed.focus_keywords.join(', ') : '',
+            slug: parsed.url_slug
+          };
+          
+          setForm(f => {
+            const updates = {};
+            Object.keys(map).forEach(k => {
+              if (!userEditedFields[k]) {
+                updates[k] = map[k];
+                setAiFieldStates(prev => ({ ...prev, [k]: 'done' }));
+              }
+            });
+            const updated = { ...f, ...updates };
+            const readScore = calculateReadabilityScore(updated.contentTa || updated.contentEn, !!updated.contentTa);
+            const seoScoreVal = calculateSeoScore(updated);
+            updated.readabilityScore = readScore || '';
+            updated.seoScore = seoScoreVal || '';
+            return updated;
+          });
+          return;
+        } catch {}
+      }
+      
+      if (resValue !== null) {
+        setForm(f => {
+          const updated = { ...f, [field]: resValue };
+          const readScore = calculateReadabilityScore(updated.contentTa || updated.contentEn, !!updated.contentTa);
+          const seoScoreVal = calculateSeoScore(updated);
+          updated.readabilityScore = readScore || '';
+          updated.seoScore = seoScoreVal || '';
+          return updated;
+        });
+        setAiFieldStates(prev => ({ ...prev, [field]: 'done' }));
+      } else {
+        setAiFieldStates(prev => ({ ...prev, [field]: 'idle' }));
+      }
+    } catch (e) {
+      setAiFieldStates(prev => ({ ...prev, [field]: 'idle' }));
+    }
+  };
+
+  const triggerAiAutomation = async (sourceField, value) => {
+    if (!form.aiAutomationEnabled) return;
+    const title   = form.titleEn || form.titleTa || '';
+    const content = stripHtml(form.contentEn || form.contentTa || '');
+    if (!title && !content) return;
+    
+    const hash = hashStr(title + content);
+    if (hash === lastGenHash.current) return;
+    lastGenHash.current = hash;
+    
+    const targets = [];
+    if (sourceField === 'contentTa' && value) {
+      if (!userEditedFields.contentEn) targets.push('contentEn');
+      if (!userEditedFields.titleTa) targets.push('titleTa');
+      if (!userEditedFields.shortDescTa) targets.push('shortDescTa');
+      if (!userEditedFields.shortDescEn) targets.push('shortDescEn');
+      if (!userEditedFields.categoryId) targets.push('categoryId');
+      ['metaTitle', 'metaDescription', 'metaKeywords', 'focusKeywords', 'slug'].forEach(k => {
+        if (!userEditedFields[k]) targets.push(k);
+      });
+    } else if (sourceField === 'contentEn' && value) {
+      if (!userEditedFields.contentTa) targets.push('contentTa');
+      if (!userEditedFields.titleEn) targets.push('titleEn');
+      if (!userEditedFields.shortDescEn) targets.push('shortDescEn');
+      if (!userEditedFields.shortDescTa) targets.push('shortDescTa');
+      if (!userEditedFields.categoryId) targets.push('categoryId');
+      ['metaTitle', 'metaDescription', 'metaKeywords', 'focusKeywords', 'slug'].forEach(k => {
+        if (!userEditedFields[k]) targets.push(k);
+      });
+    } else if (sourceField === 'titleTa' && value) {
+      if (!userEditedFields.titleEn) targets.push('titleEn');
+      if (!userEditedFields.slug) targets.push('slug');
+    } else if (sourceField === 'titleEn' && value) {
+      if (!userEditedFields.titleTa) targets.push('titleTa');
+      if (!userEditedFields.slug) targets.push('slug');
+    }
+    
+    if (targets.length === 0) return;
+    setAiFieldStates(prev => {
+      const next = { ...prev };
+      targets.forEach(t => { next[t] = 'generating'; });
+      return next;
+    });
+    
+    await Promise.allSettled(
+      targets.map(t => triggerFieldGeneration(t))
+    );
+  };
+
+  const generateSuggestions = useCallback(async (overrideHash) => {
+    const title   = form.titleEn || form.titleTa || '';
+    const content = stripHtml(form.contentEn || form.contentTa || '');
+    if (!title && !content) return;
+    const hash = overrideHash || hashStr(title + content);
+    if (hash === lastGenHash.current && !overrideHash) return;
+    lastGenHash.current = hash;
+    undismissAll();
+    const contentShort = content.slice(0, 2000);
+    const categoryNames = categories.map(c => c.nameTa ? `${c.name} (${c.nameTa})` : c.name).join(', ');
+    const prompts = {
+      excerpt:         `Write a 1-2 sentence excerpt for this news article. Max 300 characters. Neutral, factual tone.\nTitle: "${title}"\nContent: "${contentShort}"\nReturn only the excerpt text.`,
+      metaTitle:       `Generate an SEO meta title. Max 60 chars, keyword-forward.\nTitle: "${title}"\nReturn only the meta title.`,
+      focusKeyword:    `Suggest the single primary focus keyword or phrase.\nTitle: "${title}"\nContent: "${contentShort}"\nReturn only the keyword.`,
+      metaDescription: `Write an SEO meta description. Max 155 chars, compelling but factual.\nTitle: "${title}"\nContent: "${contentShort}"\nReturn only the meta description.`,
+      slug:            `Generate a URL slug. Lowercase, hyphenated, ASCII only, max 70 chars.\nTitle: "${title}"\nReturn only the slug.`,
+      tags:            `Suggest 3-6 relevant tags as a JSON array of short lowercase strings.\nTitle: "${title}"\nContent: "${contentShort}"\nReturn only the JSON array.`,
+      category:        categoryNames ? `Suggest the best-fit category from: ${categoryNames}.\nReturn JSON: {"category": "...", "confidence": 0.0}. If confidence < 0.5 return {"category": null}.\nTitle: "${title}"\nContent: "${contentShort}"` : null,
+    };
+    await Promise.allSettled(
+      Object.entries(prompts).map(async ([field, prompt]) => {
+        if (!prompt) return;
+        setFieldLoad(field, true); setFieldSugg(field, null);
+        try {
+          const raw = await callGemini(prompt);
+          if (field === 'tags') {
+            try { const a = JSON.parse(raw.replace(/```json|```/g, '').trim()); setFieldSugg(field, Array.isArray(a) ? a : []); }
+            catch { setFieldSugg(field, []); }
+          } else if (field === 'category') {
+            try { const o = JSON.parse(raw.replace(/```json|```/g, '').trim()); setFieldSugg(field, o.category && o.confidence >= 0.5 ? o.category : null); }
+            catch { setFieldSugg(field, null); }
+          } else { setFieldSugg(field, raw); }
+        } catch { setFieldSugg(field, null); }
+        finally { setFieldLoad(field, false); }
+      })
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.titleEn, form.titleTa, form.contentEn, form.contentTa, categories]);
+
+  // Debounce trigger on title/content change
+  useEffect(() => {
+    if (!aiEnabled) return;
+    if (!(form.titleEn || form.titleTa) && !(form.contentEn || form.contentTa)) return;
+    clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => generateSuggestions(), 2500);
+    return () => clearTimeout(debounceTimer.current);
+  }, [aiEnabled, form.titleEn, form.titleTa, form.contentEn, form.contentTa]); // eslint-disable-line
+
+  // Clear all when AI turned off
+  useEffect(() => {
+    if (!aiEnabled) { setSuggestions({}); setSuggLoading({}); setSuggDismissed({}); lastGenHash.current = ''; }
+  }, [aiEnabled]);
+
+  const useSuggestion = (formKey, fieldKey, value) => {
+    setForm(f => ({ ...f, [formKey]: value }));
+    logUse(fieldKey, value, lastGenHash.current);
+    dismissField(fieldKey);
+  };
+
+  const useTagChip = (tag) => {
+    const cur = (form.metaKeywords || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (!cur.includes(tag)) { setForm(f => ({ ...f, metaKeywords: [...cur, tag].join(', ') })); logUse('tags_chip', tag, lastGenHash.current); }
+  };
+
+  const useAllTags = () => {
+    if (!suggestions.tags?.length) return;
+    const cur = (form.metaKeywords || '').split(',').map(s => s.trim()).filter(Boolean);
+    const merged = [...new Set([...cur, ...suggestions.tags])].join(', ');
+    setForm(f => ({ ...f, metaKeywords: merged })); logUse('tags_all', merged, lastGenHash.current); dismissField('tags');
+  };
+
+  const handleDocUpload = async (e, lang) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const setProgress = (text) => setDocUploadProgress(prev => ({ ...prev, [lang]: text }));
+    setProgress('Reading document…');
+    try {
+      let extractedText = '';
+      if (file.type === 'text/plain') {
+        extractedText = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsText(file);
+        });
+      } else if (file.type === 'application/pdf' || file.type.startsWith('image/')) {
+        const base64Data = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        setProgress('Running OCR via AI…');
+        const ocrPrompt = `Extract all text from this file. Retain original paragraph formatting. Do not summarize, just extract the exact text.`;
+        extractedText = await callGeminiMultimodal(base64Data, file.type, ocrPrompt);
+      } else {
+        alert('Format not supported. Please upload a .pdf, .txt or an image file.');
+        setProgress('');
+        return;
+      }
+      if (!extractedText || extractedText.trim().length === 0) {
+        setProgress('⚠️ Extraction failed (empty content)');
+        setTimeout(() => setProgress(''), 4000);
+        return;
+      }
+      const wordCount = extractedText.split(/\s+/).length;
+      setProgress(`Extracted ${wordCount} words`);
+      const targetField = lang === 'ta' ? 'contentTa' : 'contentEn';
+      const editorId = lang === 'ta' ? 'tinymce-contentTa' : 'tinymce-contentEn';
+      setForm(f => ({ ...f, [targetField]: extractedText }));
+      if (window.tinymce?.get(editorId)) {
+        window.tinymce.get(editorId).setContent(extractedText);
+      }
+      if (form.aiAutomationEnabled) {
+        setProgress('Generating...');
+        await triggerAiAutomation(targetField, extractedText);
+      }
+      setTimeout(() => setProgress(''), 4000);
+    } catch (err) {
+      console.error('Doc extraction error:', err);
+      setProgress('⚠️ Error reading document');
+      setTimeout(() => setProgress(''), 4000);
+    }
+  };
+
+  const renderAiIndicator = (field) => {
+    if (!form.aiAutomationEnabled) return null;
+    const state = aiFieldStates[field] || 'idle';
+    if (state === 'generating') {
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', marginLeft: '6px', fontSize: '0.72rem', color: '#8B5CF6', fontWeight: 600 }}>
+          <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', border: '1.5px solid #8B5CF6', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+          Auto-generating…
+        </span>
+      );
+    }
+    if (state === 'done') {
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', marginLeft: '6px', fontSize: '0.72rem', color: '#10B981', fontWeight: 600 }} title="AI successfully generated this field.">
+          ✨ Auto-filled
+        </span>
+      );
+    }
+    if (state === 'userEdited') {
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginLeft: '6px', fontSize: '0.72rem', color: '#F59E0B', fontWeight: 600 }}>
+          <span>⚠️ Edited (AI paused)</span>
+          <button
+            type="button"
+            onClick={() => resyncField(field)}
+            style={{
+              background: 'rgba(245,158,11,0.1)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)',
+              borderRadius: '4px', padding: '1px 6px', fontSize: '0.65rem', cursor: 'pointer', fontWeight: 'bold'
+            }}
+          >
+            🔄 Resync
+          </button>
+        </span>
+      );
+    }
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', marginLeft: '6px', fontSize: '0.72rem', color: 'var(--text-muted)' }} title="AI is monitoring this field.">
+        ✨
+      </span>
+    );
+  };
+
 
   const formRef = useRef(form);
   useEffect(() => {
@@ -102,6 +688,23 @@ const NewsEditor = () => {
   useEffect(() => {
     api.get('/categories').then(r => setCategories(r.data || [])).catch(() => {});
     api.get('/districts').then(r => setDistricts(r.data || [])).catch(() => {});
+    api.get('/admin/config')
+      .then(res => {
+        if (Array.isArray(res.data)) {
+          res.data.forEach(item => {
+            if (item.configKey === 'ai.llm_api_key' && item.configValue) {
+              activeAiConfig.apiKey = item.configValue;
+            }
+            if (item.configKey === 'ai.llm_api_url' && item.configValue) {
+              activeAiConfig.apiUrl = item.configValue;
+            }
+            if (item.configKey === 'ai.llm_model' && item.configValue) {
+              activeAiConfig.model = item.configValue;
+            }
+          });
+        }
+      })
+      .catch(() => {});
     
     if (isEdit) {
       api.get(`/articles/${id}`).then(r => {
@@ -408,7 +1011,35 @@ const NewsEditor = () => {
     showMsg('Media inserted successfully!');
   };
 
-  const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
+  const set = (key, val) => {
+    setForm(f => {
+      const next = { ...f, [key]: val };
+      const readScore = calculateReadabilityScore(next.contentTa || next.contentEn, !!next.contentTa);
+      const seoScoreVal = calculateSeoScore(next);
+      next.readabilityScore = readScore || '';
+      next.seoScore = seoScoreVal || '';
+      return next;
+    });
+  };
+
+  const handleUserEdit = (fieldName, value) => {
+    setForm(f => {
+      const next = { ...f, [fieldName]: value };
+      const readScore = calculateReadabilityScore(next.contentTa || next.contentEn, !!next.contentTa);
+      const seoScoreVal = calculateSeoScore(next);
+      next.readabilityScore = readScore || '';
+      next.seoScore = seoScoreVal || '';
+      return next;
+    });
+    setUserEditedFields(prev => ({ ...prev, [fieldName]: true }));
+    setAiFieldStates(prev => ({ ...prev, [fieldName]: 'userEdited' }));
+    if (form.aiAutomationEnabled) {
+      clearTimeout(debounceTimer.current);
+      debounceTimer.current = setTimeout(() => {
+        triggerAiAutomation(fieldName, value);
+      }, 2500);
+    }
+  };
 
   const autoSlug = () => {
     if (!form.slug && form.titleEn) set('slug', slugify(form.titleEn));
@@ -491,22 +1122,45 @@ const NewsEditor = () => {
     }
 
     try {
-      const res = await api.post('/articles/ai-assist', {
-        action: aiAction,
-        text: textToProcess,
-        context: activeTab === 0 ? 'ta' : 'en'
-      });
-      if (res.data && res.data.result) {
-        setAiResult(res.data.result);
-      } else {
-        // Backend returned success but no result — use fallback
-        const fallback = clientSideAiFallback(aiAction, textToProcess, form.titleEn || form.titleTa);
-        setAiResult('ℹ️ [Local Analysis — LLM not configured]\n\n' + fallback);
+      let prompt = '';
+      switch (aiAction) {
+        case 'headlines':
+          prompt = `Suggest 5 compelling, factual news headlines for this article content: "${textToProcess}". Return only the headlines listed 1 to 5.`;
+          break;
+        case 'expand':
+          prompt = `Expand this text professionally into a more detailed, well-written article: "${textToProcess}". Keep the same language.`;
+          break;
+        case 'summarize':
+          prompt = `Provide a concise summary (max 3 sentences) of this text: "${textToProcess}".`;
+          break;
+        case 'grammar':
+          prompt = `Review and correct any grammar, spelling, or styling issues in this text. Provide only the corrected version: "${textToProcess}".`;
+          break;
+        case 'tags':
+          prompt = `Suggest 5-8 relevant tags as a comma-separated list of short lowercase strings for this text: "${textToProcess}".`;
+          break;
+        case 'seo':
+          prompt = `Given this news article, generate SEO fields. Return EXACTLY this format, nothing else:
+SEO_TITLE: [title under 60 chars]
+META_DESC: [description under 155 chars]
+KEYWORDS: [focus keywords comma separated]
+SLUG: [lowercase URL slug]
+TAGS: [tags comma separated]
+
+Article: "${textToProcess}"`;
+          break;
+        case 'translate':
+          prompt = `Translate this text accurately. If it is in Tamil, translate to English. If it is in English, translate to Tamil. Return only the translated text: "${textToProcess}"`;
+          break;
+        default:
+          throw new Error('Unsupported action');
       }
+
+      const result = await callGemini(prompt);
+      setAiResult(result);
     } catch (err) {
-      // Backend AI failed — use smart client-side fallback
       const fallback = clientSideAiFallback(aiAction, textToProcess, form.titleEn || form.titleTa);
-      setAiResult('ℹ️ [Local Analysis — connect an LLM in System Settings for AI-powered results]\n\n' + fallback);
+      setAiResult('ℹ️ [Local Analysis — Gemini failed]\n\n' + fallback);
     } finally {
       setAiLoading(false);
     }
@@ -520,16 +1174,27 @@ const NewsEditor = () => {
     }
     setAiSeoLoading(true);
     try {
+      const seoPrompt = `Given this news article, generate SEO fields. Return EXACTLY this format, nothing else:
+SEO_TITLE: [title under 60 chars]
+META_DESC: [description under 155 chars]
+
+Article: "${textToAnalyze}"`;
+
+      const headlinesPrompt = `Suggest 5 compelling, factual news headlines for this article content: "${form.titleTa || form.titleEn || textToAnalyze.substring(0, 100)}". Return only the headlines listed 1 to 5.`;
+
+      const tagsPrompt = `Suggest 3-6 relevant tags for this news article as a comma-separated list of short lowercase strings.
+Article: "${textToAnalyze}"`;
+
       const [seoRes, headlinesRes, tagsRes] = await Promise.allSettled([
-        api.post('/articles/ai-assist', { action: 'seo', text: textToAnalyze }),
-        api.post('/articles/ai-assist', { action: 'headlines', text: form.titleTa || form.titleEn || textToAnalyze.substring(0, 100) }),
-        api.post('/articles/ai-assist', { action: 'tags', text: textToAnalyze })
+        callGemini(seoPrompt),
+        callGemini(headlinesPrompt),
+        callGemini(tagsPrompt)
       ]);
 
       const suggestions = { titles: [], descriptions: [], tags: [] };
 
-      if (seoRes.status === 'fulfilled' && seoRes.value.data?.result) {
-        const lines = seoRes.value.data.result.split('\n');
+      if (seoRes.status === 'fulfilled' && seoRes.value) {
+        const lines = seoRes.value.split('\n');
         lines.forEach(line => {
           if (line.startsWith('SEO_TITLE:')) {
             suggestions.titles.push(line.replace('SEO_TITLE:', '').trim());
@@ -539,20 +1204,20 @@ const NewsEditor = () => {
         });
       }
 
-      if (headlinesRes.status === 'fulfilled' && headlinesRes.value.data?.result) {
-        const lines = headlinesRes.value.data.result.split('\n');
+      if (headlinesRes.status === 'fulfilled' && headlinesRes.value) {
+        const lines = headlinesRes.value.split('\n');
         lines.forEach(line => {
           const cleaned = line.replace(/^\d+\.\s*/, '').trim();
           if (cleaned) {
             const parts = cleaned.split('|');
-            const englishHeadline = parts[1] ? parts[1].trim() : parts[0].trim();
-            suggestions.titles.push(englishHeadline);
+            const headline = parts[1] ? parts[1].trim() : parts[0].trim();
+            suggestions.titles.push(headline);
           }
         });
       }
 
-      if (tagsRes.status === 'fulfilled' && tagsRes.value.data?.result) {
-        suggestions.tags = tagsRes.value.data.result
+      if (tagsRes.status === 'fulfilled' && tagsRes.value) {
+        suggestions.tags = tagsRes.value
           .split(',')
           .map(t => t.trim())
           .filter(t => t.length > 0);
@@ -577,12 +1242,11 @@ const NewsEditor = () => {
     if (activeTab === 2 && !form.metaKeywords && (form.contentTa || form.contentEn)) {
       const autoGenTags = async () => {
         try {
-          const res = await api.post('/articles/ai-assist', { 
-            action: 'tags', 
-            text: form.contentTa || form.contentEn 
-          });
-          if (res.data?.result) {
-            const cleanedTags = res.data.result.split(',').map(s=>s.trim()).filter(s=>s).join(', ');
+          const tagsPrompt = `Suggest 3-6 relevant tags for this news article as a comma-separated list of short lowercase strings.
+Article: "${form.contentTa || form.contentEn}"`;
+          const result = await callGemini(tagsPrompt);
+          if (result) {
+            const cleanedTags = result.split(',').map(s=>s.trim()).filter(s=>s).join(', ');
             set('metaKeywords', cleanedTags);
             showMsg('AI automatically generated keywords/tags for you!', false);
           }
@@ -616,19 +1280,42 @@ const NewsEditor = () => {
     };
 
     try {
-      const res = await api.post('/articles/ai-assist', { action: 'seo', text: textToAnalyze });
-      if (res.data && res.data.result) {
-        const updates = applyParsedSeo(res.data.result);
-        setForm(f => { const nf = { ...f, ...updates }; formRef.current = nf; return nf; });
+      const seoPrompt = `Given this news article content, generate SEO fields. Return EXACTLY this format, nothing else:
+SEO_TITLE: [title under 60 chars]
+META_DESC: [description under 155 chars]
+SLUG: [lowercase URL slug]
+KEYWORDS: [focus keywords comma separated]
+TAGS: [tags comma separated]
+
+Article: "${textToAnalyze}"`;
+      const result = await callGemini(seoPrompt);
+      if (result) {
+        const updates = applyParsedSeo(result);
+        setForm(f => {
+          const nf = { ...f, ...updates };
+          const readScore = calculateReadabilityScore(nf.contentTa || nf.contentEn, !!nf.contentTa);
+          const seoScoreVal = calculateSeoScore(nf);
+          nf.readabilityScore = readScore || '';
+          nf.seoScore = seoScoreVal || '';
+          formRef.current = nf;
+          return nf;
+        });
         showMsg('✨ AI successfully auto-filled all SEO fields!');
       } else {
         throw new Error('No result');
       }
     } catch (err) {
-      // Client-side fallback
       const fallbackRaw = clientSideAiFallback('seo', textToAnalyze, form.titleEn || form.titleTa);
       const updates = applyParsedSeo(fallbackRaw);
-      setForm(f => { const nf = { ...f, ...updates }; formRef.current = nf; return nf; });
+      setForm(f => {
+        const nf = { ...f, ...updates };
+        const readScore = calculateReadabilityScore(nf.contentTa || nf.contentEn, !!nf.contentTa);
+        const seoScoreVal = calculateSeoScore(nf);
+        nf.readabilityScore = readScore || '';
+        nf.seoScore = seoScoreVal || '';
+        formRef.current = nf;
+        return nf;
+      });
       showMsg('ℹ️ SEO fields filled using local analysis. Configure an LLM for AI-powered results.');
     } finally {
       setAiSeoLoading(false);
@@ -659,13 +1346,15 @@ const NewsEditor = () => {
           needsSeo = true;
         }
         if (!payload.metaDescription && payload.contentTa) {
-          const res = await api.post('/articles/ai-assist', { action: 'summarize', text: payload.contentTa, context: 'ta' });
-          if (res.data?.result) seoUpdates.metaDescription = res.data.result;
+          const summarizePrompt = `Write a concise 1-2 sentence meta description summarizing this Tamil news article. Max 155 characters. Content: "${payload.contentTa}"`;
+          const result = await callGemini(summarizePrompt);
+          if (result) seoUpdates.metaDescription = result;
           needsSeo = true;
         }
         if (!payload.metaKeywords && payload.contentTa) {
-          const res = await api.post('/articles/ai-assist', { action: 'tags', text: payload.contentTa, context: 'ta' });
-          if (res.data?.result) seoUpdates.metaKeywords = res.data.result.split(',').map(s=>s.trim()).filter(s=>s).join(', ');
+          const tagsPrompt = `Suggest 3-6 relevant tags for this news article as a comma-separated list of short lowercase strings. Content: "${payload.contentTa}"`;
+          const result = await callGemini(tagsPrompt);
+          if (result) seoUpdates.metaKeywords = result.split(',').map(s=>s.trim()).filter(s=>s).join(', ');
           needsSeo = true;
         }
         
@@ -809,10 +1498,31 @@ const NewsEditor = () => {
             </p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          {/* ── Enable AI Automation Toggle ─────────────── */}
+          <label
+            title={form.aiAutomationEnabled ? 'AI Automation is ON — click to disable' : 'Enable AI Automation'}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer',
+              padding: '0.45rem 0.9rem', borderRadius: '8px',
+              background: form.aiAutomationEnabled ? 'rgba(16,185,129,0.12)' : 'var(--bg-secondary)',
+              border: `1px solid ${form.aiAutomationEnabled ? 'rgba(16,185,129,0.45)' : 'var(--border-color)'}`,
+              color: form.aiAutomationEnabled ? '#10B981' : 'var(--text-secondary)',
+              fontSize: '0.82rem', fontWeight: 700, userSelect: 'none', transition: 'all 0.2s',
+            }}
+          >
+            <input
+              type="checkbox" checked={form.aiAutomationEnabled}
+              onChange={e => handleToggleAiAutomation(e.target.checked)}
+              style={{ accentColor: '#10B981', width: '14px', height: '14px' }}
+            />
+            <Sparkles size={13} style={{ color: form.aiAutomationEnabled ? '#10B981' : 'var(--text-secondary)' }} />
+            {form.aiAutomationEnabled ? 'AI: ON' : 'AI: OFF'}
+          </label>
+
           <button onClick={() => setAiPanelOpen(!aiPanelOpen)}
             className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', background: aiPanelOpen ? 'var(--primary)' : '', color: aiPanelOpen ? '#fff' : '' }}>
-            ✨ AI Assistant
+            <Zap size={14} /> AI Assistant
           </button>
           <button onClick={() => save('draft')} disabled={saving}
             className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
@@ -830,6 +1540,18 @@ const NewsEditor = () => {
           </button>
         </div>
       </div>
+
+      {/* AI Automation Note Banner */}
+      {showAiNote && (
+        <div style={{
+          padding: '0.6rem 1rem', background: 'rgba(16,185,129,0.1)', color: '#10B981',
+          border: '1px solid rgba(16,185,129,0.3)', borderRadius: '8px',
+          fontSize: '0.82rem', fontWeight: 600, marginBottom: '1rem',
+          display: 'flex', alignItems: 'center', gap: '0.5rem'
+        }}>
+          <Sparkles size={14} /> AI will auto-fill and translate fields as you write. You can still edit anything manually.
+        </div>
+      )}
 
       {/* Alert */}
       {msg && (
@@ -935,19 +1657,45 @@ const NewsEditor = () => {
               opacity: activeTab === 0 ? 1 : 0
             }}>
               <div>
-                <label style={labelStyle}>Tamil Title <span style={{ color: '#EF4444' }}>*</span></label>
+                <label style={labelStyle}>Tamil Title <span style={{ color: '#EF4444' }}>*</span> {renderAiIndicator('titleTa')}</label>
                 <input style={inputStyle} value={form.titleTa}
-                  onChange={e => set('titleTa', e.target.value)} placeholder="தமிழ் தலைப்பு..." />
+                  onChange={e => handleUserEdit('titleTa', e.target.value)} placeholder="தமிழ் தலைப்பு..." />
               </div>
               <div>
-                <label style={labelStyle}>Short Description (Tamil)</label>
+                <label style={labelStyle}>Short Description / Excerpt (Tamil) {renderAiIndicator('shortDescTa')}</label>
                 <textarea style={taStyle} value={form.shortDescTa}
-                  onChange={e => set('shortDescTa', e.target.value)} placeholder="சுருக்கமான விளக்கம்..." rows={3} />
+                  onChange={e => handleUserEdit('shortDescTa', e.target.value)} placeholder="சுருக்கமான விளக்கம்..." rows={3} />
+                {!form.aiAutomationEnabled && aiEnabled && !suggDismissed['excerpt'] && (
+                  <AiSuggestionBox
+                    fieldId="excerpt"
+                    suggestion={suggestions['excerpt']}
+                    loading={suggLoading['excerpt']}
+                    source={SUGG_SOURCE['excerpt']}
+                    onUse={() => useSuggestion('shortDescTa', 'excerpt', suggestions['excerpt'])}
+                    onDismiss={() => dismissField('excerpt')}
+                    onRegenerate={() => generateSuggestions(Date.now().toString())}
+                  />
+                )}
               </div>
               <div>
-                <label style={labelStyle}>Content (Tamil) <span style={{ color: '#EF4444' }}>*</span></label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <label style={{ ...labelStyle, marginBottom: 0 }}>Content (Tamil) <span style={{ color: '#EF4444' }}>*</span> {renderAiIndicator('contentTa')}</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <label htmlFor="doc-upload-ta" className="btn btn-secondary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer', margin: 0 }}>
+                      📎 Attach source document
+                    </label>
+                    <input
+                      type="file"
+                      id="doc-upload-ta"
+                      style={{ display: 'none' }}
+                      accept=".pdf,.txt,.png,.jpg,.jpeg,.webp"
+                      onChange={(e) => handleDocUpload(e, 'ta')}
+                    />
+                    {docUploadProgress.ta && <span style={{ fontSize: '0.72rem', color: '#8B5CF6', fontStyle: 'italic' }}>{docUploadProgress.ta}</span>}
+                  </div>
+                </div>
                 <textarea id="tinymce-contentTa" style={{ ...taStyle, minHeight: '350px' }} value={form.contentTa}
-                  onChange={e => set('contentTa', e.target.value)} placeholder="செய்தி உள்ளடக்கம்..." />
+                  onChange={e => handleUserEdit('contentTa', e.target.value)} placeholder="செய்தி உள்ளடக்கம்..." />
                 <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem', padding: '0.5rem', background: 'var(--bg-secondary)', borderRadius: '4px' }}>
                   <span>📊 {calcStats(form.contentTa).words} words</span>
                   <span>📖 ~{calcStats(form.contentTa).readingTime} min read</span>
@@ -974,20 +1722,46 @@ const NewsEditor = () => {
               opacity: activeTab === 1 ? 1 : 0
             }}>
               <div>
-                <label style={labelStyle}>English Title</label>
+                <label style={labelStyle}>English Title {renderAiIndicator('titleEn')}</label>
                 <input style={inputStyle} value={form.titleEn}
-                  onChange={e => { set('titleEn', e.target.value); if (!form.slug) set('slug', slugify(e.target.value)); }}
+                  onChange={e => { handleUserEdit('titleEn', e.target.value); if (!form.slug) set('slug', slugify(e.target.value)); }}
                   placeholder="English headline..." />
               </div>
               <div>
-                <label style={labelStyle}>Short Description (English)</label>
+                <label style={labelStyle}>Short Description / Excerpt (English) {renderAiIndicator('shortDescEn')}</label>
                 <textarea style={taStyle} value={form.shortDescEn}
-                  onChange={e => set('shortDescEn', e.target.value)} placeholder="Brief summary..." rows={3} />
+                  onChange={e => handleUserEdit('shortDescEn', e.target.value)} placeholder="Brief summary..." rows={3} />
+                {!form.aiAutomationEnabled && aiEnabled && !suggDismissed['excerpt'] && (
+                  <AiSuggestionBox
+                    fieldId="excerpt_en"
+                    suggestion={suggestions['excerpt']}
+                    loading={suggLoading['excerpt']}
+                    source={SUGG_SOURCE['excerpt']}
+                    onUse={() => useSuggestion('shortDescEn', 'excerpt', suggestions['excerpt'])}
+                    onDismiss={() => dismissField('excerpt')}
+                    onRegenerate={() => generateSuggestions(Date.now().toString())}
+                  />
+                )}
               </div>
               <div>
-                <label style={labelStyle}>Content (English)</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <label style={{ ...labelStyle, marginBottom: 0 }}>Content (English) {renderAiIndicator('contentEn')}</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <label htmlFor="doc-upload-en" className="btn btn-secondary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer', margin: 0 }}>
+                      📎 Attach source document
+                    </label>
+                    <input
+                      type="file"
+                      id="doc-upload-en"
+                      style={{ display: 'none' }}
+                      accept=".pdf,.txt,.png,.jpg,.jpeg,.webp"
+                      onChange={(e) => handleDocUpload(e, 'en')}
+                    />
+                    {docUploadProgress.en && <span style={{ fontSize: '0.72rem', color: '#8B5CF6', fontStyle: 'italic' }}>{docUploadProgress.en}</span>}
+                  </div>
+                </div>
                 <textarea id="tinymce-contentEn" style={{ ...taStyle, minHeight: '350px' }} value={form.contentEn}
-                  onChange={e => set('contentEn', e.target.value)} placeholder="Full article content..." />
+                  onChange={e => handleUserEdit('contentEn', e.target.value)} placeholder="Full article content..." />
                 <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem', padding: '0.5rem', background: 'var(--bg-secondary)', borderRadius: '4px' }}>
                   <span>📊 {calcStats(form.contentEn).words} words</span>
                   <span>📖 ~{calcStats(form.contentEn).readingTime} min read</span>
@@ -1105,30 +1879,73 @@ const NewsEditor = () => {
               </div>
               
               <div>
-                <label style={labelStyle}>SEO Title <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(max 60 chars)</span></label>
+                <label style={labelStyle}>SEO Title <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(max 60 chars)</span> {renderAiIndicator('metaTitle')}</label>
                 <input style={inputStyle} value={form.metaTitle}
-                  onChange={e => set('metaTitle', e.target.value)} placeholder="SEO optimized title..." maxLength={60} />
+                  onChange={e => handleUserEdit('metaTitle', e.target.value)} placeholder="SEO optimized title..." maxLength={60} />
                 <div style={{ fontSize: '0.75rem', color: form.metaTitle.length > 55 ? '#F59E0B' : 'var(--text-muted)', marginTop: '4px' }}>
                   {form.metaTitle.length}/60 characters
                 </div>
+                {!form.aiAutomationEnabled && aiEnabled && !suggDismissed['metaTitle'] && (
+                  <AiSuggestionBox
+                    fieldId="metaTitle"
+                    suggestion={suggestions['metaTitle']}
+                    loading={suggLoading['metaTitle']}
+                    source={SUGG_SOURCE['metaTitle']}
+                    onUse={() => useSuggestion('metaTitle', 'metaTitle', suggestions['metaTitle'])}
+                    onDismiss={() => dismissField('metaTitle')}
+                    onRegenerate={() => generateSuggestions(Date.now().toString())}
+                  />
+                )}
               </div>
               <div>
-                <label style={labelStyle}>Meta Description <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(max 160 chars)</span></label>
+                <label style={labelStyle}>Meta Description <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(max 160 chars)</span> {renderAiIndicator('metaDescription')}</label>
                 <textarea style={{ ...taStyle, minHeight: '80px' }} value={form.metaDescription}
-                  onChange={e => set('metaDescription', e.target.value)} placeholder="Meta description for search engines..." maxLength={160} />
+                  onChange={e => handleUserEdit('metaDescription', e.target.value)} placeholder="Meta description for search engines..." maxLength={160} />
                 <div style={{ fontSize: '0.75rem', color: form.metaDescription.length > 150 ? '#F59E0B' : 'var(--text-muted)', marginTop: '4px' }}>
                   {form.metaDescription.length}/160 characters
                 </div>
+                {!form.aiAutomationEnabled && aiEnabled && !suggDismissed['metaDescription'] && (
+                  <AiSuggestionBox
+                    fieldId="metaDescription"
+                    suggestion={suggestions['metaDescription']}
+                    loading={suggLoading['metaDescription']}
+                    source={SUGG_SOURCE['metaDescription']}
+                    onUse={() => useSuggestion('metaDescription', 'metaDescription', suggestions['metaDescription'])}
+                    onDismiss={() => dismissField('metaDescription')}
+                    onRegenerate={() => generateSuggestions(Date.now().toString())}
+                  />
+                )}
               </div>
               <div>
-                <label style={labelStyle}>Meta Keywords / Search Tags</label>
+                <label style={labelStyle}>Meta Keywords / Search Tags {renderAiIndicator('metaKeywords')}</label>
                 <input style={inputStyle} value={form.metaKeywords}
-                  onChange={e => set('metaKeywords', e.target.value)} placeholder="news, tamil, politics..." />
+                  onChange={e => handleUserEdit('metaKeywords', e.target.value)} placeholder="news, tamil, politics..." />
+                {!form.aiAutomationEnabled && aiEnabled && !suggDismissed['tags'] && (
+                  <TagSuggestionBox
+                    tags={suggestions['tags']}
+                    loading={suggLoading['tags']}
+                    onUseOne={useTagChip}
+                    onUseAll={useAllTags}
+                    onDismiss={() => dismissField('tags')}
+                    onRegenerate={() => generateSuggestions(Date.now().toString())}
+                  />
+                )}
               </div>
               <div>
-                <label style={labelStyle}>Focus Keywords</label>
+                <label style={labelStyle}>Focus Keywords {renderAiIndicator('focusKeywords')}</label>
                 <input style={inputStyle} value={form.focusKeywords}
-                  onChange={e => set('focusKeywords', e.target.value)} placeholder="e.g. புதிய இந்திய அணி, இளம் வீரர்கள்..." />
+                  onChange={e => handleUserEdit('focusKeywords', e.target.value)} placeholder="e.g. புதிய இந்திய அணி, இளம் வீரர்கள்..." />
+                {!form.aiAutomationEnabled && aiEnabled && !suggDismissed['focusKeyword'] && (
+                  <AiSuggestionBox
+                    fieldId="focusKeyword"
+                    suggestion={suggestions['focusKeyword']}
+                    loading={suggLoading['focusKeyword']}
+                    source={SUGG_SOURCE['focusKeyword']}
+                    onUse={() => useSuggestion('focusKeywords', 'focusKeyword', suggestions['focusKeyword'])}
+                    onDismiss={() => dismissField('focusKeyword')}
+                    onRegenerate={() => generateSuggestions(Date.now().toString())}
+                  />
+                )}
                 {form.focusKeywords && (
                   <div style={{ marginTop: '0.75rem', padding: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '6px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
@@ -1167,19 +1984,30 @@ const NewsEditor = () => {
                 )}
               </div>
               <div>
-                <label style={labelStyle}>URL Slug</label>
+                <label style={labelStyle}>URL Slug {renderAiIndicator('slug')}</label>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <input style={{ ...inputStyle, flex: 1 }} value={form.slug}
-                    onChange={e => set('slug', e.target.value)} placeholder="auto-generated-from-title" />
+                    onChange={e => handleUserEdit('slug', e.target.value)} placeholder="auto-generated-from-title" />
                   <button onClick={autoSlug} className="btn btn-secondary" style={{ whiteSpace: 'nowrap', fontSize: '0.8rem' }}>
                     Auto-generate
                   </button>
                 </div>
+                {!form.aiAutomationEnabled && aiEnabled && !suggDismissed['slug'] && (
+                  <AiSuggestionBox
+                    fieldId="slug"
+                    suggestion={suggestions['slug']}
+                    loading={suggLoading['slug']}
+                    source={SUGG_SOURCE['slug']}
+                    onUse={() => useSuggestion('slug', 'slug', suggestions['slug'])}
+                    onDismiss={() => dismissField('slug')}
+                    onRegenerate={() => generateSuggestions(Date.now().toString())}
+                  />
+                )}
               </div>
               <div>
                 <label style={labelStyle}>Canonical URL</label>
                 <input style={inputStyle} value={form.canonicalUrl}
-                  onChange={e => set('canonicalUrl', e.target.value)} placeholder="https://king24x7.com/news/slug" />
+                  onChange={e => handleUserEdit('canonicalUrl', e.target.value)} placeholder="https://king24x7.com/news/slug" />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
@@ -1413,9 +2241,10 @@ const NewsEditor = () => {
           <CategorySubcategorySelect
             categoryId={form.categoryId}
             subcategoryId={form.subcategoryId}
-            onCategoryChange={val => set('categoryId', val)}
+            onCategoryChange={val => handleUserEdit('categoryId', val)}
             onSubcategoryChange={val => set('subcategoryId', val)}
             required={true}
+            labelSuffix={renderAiIndicator('categoryId')}
           />
 
           {/* District */}
@@ -1455,11 +2284,11 @@ const NewsEditor = () => {
 
           {/* News Tags */}
           <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
-            <label style={labelStyle}>News Tags (comma-separated)</label>
+            <label style={labelStyle}>News Tags (comma-separated) {renderAiIndicator('metaKeywords')}</label>
             <input 
               style={inputStyle} 
               value={form.metaKeywords}
-              onChange={e => set('metaKeywords', e.target.value)} 
+              onChange={e => handleUserEdit('metaKeywords', e.target.value)} 
               placeholder="e.g. Budget, Assembly, Chennai" 
             />
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>

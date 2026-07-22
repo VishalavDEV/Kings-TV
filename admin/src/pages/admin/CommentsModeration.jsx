@@ -52,20 +52,37 @@ const CommentsModeration = () => {
     }
   };
 
-  const filteredComments = comments.filter(c => (c.status || 'pending') === activeTab);
+  const [search, setSearch] = useState('');
+  
+  const filteredComments = comments.filter(c => 
+    (c.status || 'pending') === activeTab &&
+    (c.commentorName?.toLowerCase().includes(search.toLowerCase()) || 
+     c.commentText?.toLowerCase().includes(search.toLowerCase()) ||
+     c.commentorEmail?.toLowerCase().includes(search.toLowerCase()))
+  );
 
   return (
-    <div className="animate-fade-in" style={{ padding: "1.5rem", maxWidth: "1000px", margin: "0 auto" }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+    <div className="animate-fade-in" style={{ padding: "1.5rem", maxWidth: "1200px", margin: "0 auto" }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.25rem", fontSize: "1.75rem", fontWeight: 700 }}>
             <MessageSquare size={26} color="var(--primary)" /> Comments Moderation
           </h1>
           <p className="text-secondary" style={{ color: "var(--text-secondary)" }}>Review and moderate user comments before they appear on articles.</p>
         </div>
-        <button className="btn btn-secondary" onClick={fetchComments} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <RefreshCw size={16} /> Refresh
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <input 
+            type="text" 
+            className="form-control" 
+            placeholder="Search comments..." 
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ minWidth: '250px' }}
+          />
+          <button className="btn btn-secondary" onClick={fetchComments} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <RefreshCw size={16} /> Refresh
+          </button>
+        </div>
       </div>
 
       {msg && (
@@ -77,6 +94,21 @@ const CommentsModeration = () => {
           {msg.text}
         </div>
       )}
+
+      {/* Stats */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+        {[
+          { label: "Total Comments", value: comments.length, color: "var(--primary)", bg: "var(--primary-glow)" },
+          { label: "Pending", value: comments.filter(c => (c.status || 'pending') === 'pending').length, color: "var(--primary)", bg: "var(--primary-glow)" },
+          { label: "Approved", value: comments.filter(c => c.status === 'approved').length, color: "#10B981", bg: "rgba(16,185,129,0.1)" },
+          { label: "Spam", value: comments.filter(c => c.status === 'spam').length, color: "#EF4444", bg: "rgba(239,68,68,0.1)" },
+        ].map(({ label, value, color, bg }) => (
+          <div key={label} className="glass-panel" style={{ padding: "1.25rem" }}>
+            <div style={{ fontSize: "1.8rem", fontWeight: 800, color }}>{value}</div>
+            <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "4px", fontWeight: 600 }}>{label}</div>
+          </div>
+        ))}
+      </div>
 
       <div className="glass-panel" style={{ padding: '0', borderRadius: '14px', overflow: 'hidden' }}>
         <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.02)' }}>

@@ -36,6 +36,7 @@ import RewardSystem from './pages/admin/RewardSystem';
 import SubscribersManagement from './pages/admin/SubscribersManagement';
 import NotificationPreferences from './pages/admin/NotificationPreferences';
 import Profile from './pages/admin/Profile';
+import AiConfiguration from './pages/admin/AiConfiguration';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -124,9 +125,15 @@ function App() {
             </ProtectedLayout>
           } />
           
-          <Route path="/admin/settings" element={
+           <Route path="/admin/settings" element={
             <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
               <SystemSettings />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/settings/ai" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
+              <AiConfiguration />
             </ProtectedLayout>
           } />
 

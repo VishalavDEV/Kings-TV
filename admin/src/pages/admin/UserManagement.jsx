@@ -9,6 +9,8 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
   const [editingUser, setEditingUser] = useState(null);
   const [editFormData, setEditFormData] = useState({ fullName: '', role: '', phoneNumber: '', websiteUrl: '', location: '', districtId: '', password: '' });
   const [isAddingUser, setIsAddingUser] = useState(false);
@@ -20,7 +22,11 @@ const UserManagement = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get(`/admin/users?page=${page}&size=20`);
+      const queryParams = new URLSearchParams({ page: page, size: 20 });
+      if (search) queryParams.append('search', search);
+      if (roleFilter) queryParams.append('role', roleFilter);
+
+      const res = await api.get(`/admin/users?${queryParams.toString()}`);
       setUsers(res.data.users);
     } catch (err) {
       console.error("Failed to fetch users", err);
@@ -30,12 +36,18 @@ const UserManagement = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
+    const delayDebounceFn = setTimeout(() => {
+      fetchUsers();
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
+  }, [page, search, roleFilter]);
+
+  useEffect(() => {
     fetchAvailableRoles();
     api.get('/districts')
       .then(res => setDistricts(res.data || []))
       .catch(err => console.warn("Failed to load districts", err));
-  }, [page]);
+  }, []);
 
   const fetchAvailableRoles = async () => {
     try {
@@ -147,6 +159,31 @@ const UserManagement = () => {
         <button className="btn btn-primary" onClick={() => setIsAddingUser(true)}>
           <Plus size={16} /> Add User
         </button>
+      </div>
+
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+        <input 
+          type="text" 
+          className="form-control" 
+          placeholder="Search by name or email..." 
+          value={search} 
+          onChange={e => setSearch(e.target.value)}
+          style={{ maxWidth: '300px' }}
+        />
+        <select 
+          className="form-control" 
+          value={roleFilter} 
+          onChange={e => setRoleFilter(e.target.value)}
+          style={{ maxWidth: '200px' }}
+        >
+          <option value="">All Roles</option>
+          <option value="SUPER_ADMIN">Super Admin</option>
+          <option value="CHIEF_EDITOR">Chief Editor</option>
+          <option value="DISTRICT_ADMIN">District Admin</option>
+          <option value="MOBILE_JOURNALIST">Mobile Journalist</option>
+          <option value="SUBSCRIBER">Subscriber</option>
+          <option value="READER">Reader</option>
+        </select>
       </div>
 
       <div className="glass-panel table-container">

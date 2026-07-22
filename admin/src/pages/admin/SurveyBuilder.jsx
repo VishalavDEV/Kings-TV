@@ -77,73 +77,75 @@ const SurveyBuilder = () => {
   };
 
   return (
-    <div className="animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <h1>Survey & Poll Builder</h1>
-          <p className="text-secondary">Create interactive polls and embed them in articles or the homepage.</p>
+    <>
+      <div className="animate-fade-in">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <div>
+            <h1>Survey & Poll Builder</h1>
+            <p className="text-secondary">Create interactive polls and embed them in articles or the homepage.</p>
+          </div>
+          <button 
+            className="btn btn-primary" 
+            onClick={() => { setFormData({ id: null, title: '', description: '', status: 'ACTIVE', options: ['Option 1', 'Option 2'], targetModule: 'GLOBAL' }); setShowModal(true); }}
+          >
+            <Plus size={16} /> Create New Poll
+          </button>
         </div>
-        <button 
-          className="btn btn-primary" 
-          onClick={() => { setFormData({ id: null, title: '', description: '', status: 'ACTIVE', options: ['Option 1', 'Option 2'], targetModule: 'GLOBAL' }); setShowModal(true); }}
-        >
-          <Plus size={16} /> Create New Poll
-        </button>
-      </div>
 
-      <div className="glass-panel table-container">
-        <table className="custom-table">
-          <thead>
-            <tr>
-              <th>Question</th>
-              <th>Status</th>
-              <th>Created At</th>
-              <th style={{ textAlign: 'right' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan="4" style={{ textAlign: 'center' }}>Loading surveys...</td></tr>
-            ) : surveys.length === 0 ? (
+        <div className="glass-panel table-container">
+          <table className="custom-table">
+            <thead>
               <tr>
-                <td colSpan="4" style={{ textAlign: 'center', padding: '3rem' }}>
-                  <HelpCircle size={48} color="var(--primary)" style={{ opacity: 0.5, marginBottom: '1rem' }} />
-                  <div style={{ color: 'var(--text-muted)' }}>No surveys created yet.</div>
-                </td>
+                <th>Question</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
-            ) : (
-              surveys.map(s => (
-                <tr key={s.id}>
-                  <td style={{ fontWeight: 600 }}>{s.title}</td>
-                  <td>
-                    <span className={`badge ${s.status === 'ACTIVE' ? 'badge-success' : 'badge-warning'}`}>
-                      {s.status}
-                    </span>
-                  </td>
-                  <td>{new Date(s.createdAt).toLocaleDateString()}</td>
-                  <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                      <button 
-                        className="btn btn-secondary" 
-                        style={{ padding: '0.4rem' }}
-                        onClick={() => {
-                          const parsedOptions = s.optionsJson ? JSON.parse(s.optionsJson) : ['Option 1', 'Option 2'];
-                          setFormData({ id: s.id, title: s.title, description: s.description || '', status: s.status, options: parsedOptions, targetModule: s.targetModule || 'GLOBAL' });
-                          setShowModal(true);
-                        }}
-                      ><Edit2 size={16} /></button>
-                      <button 
-                        className="btn btn-secondary" 
-                        style={{ padding: '0.4rem', color: 'var(--danger)' }}
-                        onClick={() => handleDelete(s.id)}
-                      ><Trash2 size={16} /></button>
-                    </div>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan="4" style={{ textAlign: 'center' }}>Loading surveys...</td></tr>
+              ) : surveys.length === 0 ? (
+                <tr>
+                  <td colSpan="4" style={{ textAlign: 'center', padding: '3rem' }}>
+                    <HelpCircle size={48} color="var(--primary)" style={{ opacity: 0.5, marginBottom: '1rem' }} />
+                    <div style={{ color: 'var(--text-muted)' }}>No surveys created yet.</div>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                surveys.map(s => (
+                  <tr key={s.id}>
+                    <td style={{ fontWeight: 600 }}>{s.title}</td>
+                    <td>
+                      <span className={`badge ${s.status === 'ACTIVE' ? 'badge-success' : 'badge-warning'}`}>
+                        {s.status}
+                      </span>
+                    </td>
+                    <td>{new Date(s.createdAt).toLocaleDateString()}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                        <button 
+                          className="btn btn-secondary" 
+                          style={{ padding: '0.4rem' }}
+                          onClick={() => {
+                            const parsedOptions = s.optionsJson ? JSON.parse(s.optionsJson) : ['Option 1', 'Option 2'];
+                            setFormData({ id: s.id, title: s.title, description: s.description || '', status: s.status, options: parsedOptions, targetModule: s.targetModule || 'GLOBAL' });
+                            setShowModal(true);
+                          }}
+                        ><Edit2 size={16} /></button>
+                        <button 
+                          className="btn btn-secondary" 
+                          style={{ padding: '0.4rem', color: 'var(--danger)' }}
+                          onClick={() => handleDelete(s.id)}
+                        ><Trash2 size={16} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {showModal && (
@@ -203,8 +205,7 @@ const SurveyBuilder = () => {
           </div>
         </div>
       )}
-
-    </div>
+    </>
   );
 };
 

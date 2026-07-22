@@ -49,8 +49,10 @@ public class AdminUserController {
         Page<User> users;
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by("id").descending());
 
-        if (role != null && !role.isEmpty()) {
-            users = userRepository.findByRole(role, pageRequest);
+        if ((role != null && !role.isEmpty()) || (search != null && !search.isEmpty())) {
+            String roleParam = (role != null && !role.isEmpty()) ? role : null;
+            String searchParam = (search != null && !search.isEmpty()) ? search : null;
+            users = userRepository.searchUsers(roleParam, searchParam, pageRequest);
         } else {
             users = userRepository.findAll(pageRequest);
         }

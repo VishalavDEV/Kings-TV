@@ -4,17 +4,25 @@ import api from '../../api';
 
 export const getPreviewUrl = (url) => {
   if (!url) return '';
-  if (url.startsWith('data:')) return url;
-  if (url.startsWith('http://localhost') || url.startsWith('https://localhost')) {
-    const path = url.replace(/^https?:\/\/[^\/]+/, '');
-    const serverBase = (api.defaults.baseURL || 'https://kings-tv.onrender.com/api/v1')
+  let finalUrl = url;
+  if (typeof finalUrl === 'string' && finalUrl.includes('kings-tv.onrender.com')) {
+    const path = finalUrl.replace(/^https?:\/\/kings-tv\.onrender\.com/, '');
+    const cleanPath = path.startsWith('/api/v1') ? path.substring(7) : path;
+    const serverBase = (api.defaults.baseURL || 'http://localhost:8080/api/v1')
+      .replace(/\/api\/v1\/?$/, '').replace(/\/api\/?$/, '');
+    finalUrl = serverBase + (cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath);
+  }
+  if (finalUrl.startsWith('data:')) return finalUrl;
+  if (finalUrl.startsWith('http://localhost') || finalUrl.startsWith('https://localhost')) {
+    const path = finalUrl.replace(/^https?:\/\/[^\/]+/, '');
+    const serverBase = (api.defaults.baseURL || 'http://localhost:8080/api/v1')
       .replace(/\/api\/v1\/?$/, '').replace(/\/api\/?$/, '');
     return serverBase + path;
   }
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  const serverBase = (api.defaults.baseURL || 'https://kings-tv.onrender.com/api/v1')
+  if (finalUrl.startsWith('http://') || finalUrl.startsWith('https://')) return finalUrl;
+  const serverBase = (api.defaults.baseURL || 'http://localhost:8080/api/v1')
     .replace(/\/api\/v1\/?$/, '').replace(/\/api\/?$/, '');
-  const normalizedUrl = url.startsWith('/') ? url : '/' + url;
+  const normalizedUrl = finalUrl.startsWith('/') ? finalUrl : '/' + finalUrl;
   return serverBase + normalizedUrl;
 };
 
@@ -25,6 +33,7 @@ const ImageUploadPreview = ({
   uploadEndpoint = "/articles/upload",
   accept = "image/*",
   placeholder = "Image URL or upload file...",
+  isVideo = false,
   required = false
 }) => {
   const [uploading, setUploading] = useState(false);
@@ -51,7 +60,7 @@ const ImageUploadPreview = ({
       }
     } catch (err) {
       console.error('Image upload failed:', err);
-      setError(err.response?.data?.message || 'Failed to upload image. Please try again.');
+      setError(err.response?.data?.message || 'Failed to upload file. Please try again.');
     } finally {
       setUploading(false);
     }
@@ -132,15 +141,27 @@ const ImageUploadPreview = ({
             justify: 'center'
           }}
         >
-          <img
-            src={previewSrc}
-            alt="Upload Preview"
-            onError={(e) => {
-              e.target.style.display = 'none';
-              setError('Failed to load image preview from URL.');
-            }}
-            style={{ width: '100%', maxHeight: '160px', objectFit: 'cover' }}
-          />
+          {isVideo ? (
+            <video
+              src={previewSrc}
+              controls
+              onError={(e) => {
+                e.target.style.display = 'none';
+                setError('Failed to load video preview from URL.');
+              }}
+              style={{ width: '100%', maxHeight: '160px', objectFit: 'contain' }}
+            />
+          ) : (
+            <img
+              src={previewSrc}
+              alt="Upload Preview"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                setError('Failed to load image preview from URL.');
+              }}
+              style={{ width: '100%', maxHeight: '160px', objectFit: 'cover' }}
+            />
+          )}
 
           <div
             style={{

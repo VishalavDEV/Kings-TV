@@ -39,8 +39,17 @@ const getServerBase = () =>
 
 const getPreviewUrl = (url) => {
   if (!url) return '';
-  if (url.startsWith('http') || url.startsWith('data:')) return url;
-  return getServerBase() + (url.startsWith('/') ? url : '/' + url);
+  let finalUrl = url;
+  if (typeof finalUrl === 'string' && finalUrl.includes('kings-tv.onrender.com')) {
+    const path = finalUrl.replace(/^https?:\/\/kings-tv\.onrender\.com/, '');
+    const cleanPath = path.startsWith('/api/v1') ? path.substring(7) : path;
+    const serverBase = (api.defaults.baseURL || 'http://localhost:8080/api/v1')
+      .replace(/\/api\/v1\/?$/, '')
+      .replace(/\/api\/?$/, '');
+    finalUrl = serverBase + (cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath);
+  }
+  if (finalUrl.startsWith('http') || finalUrl.startsWith('data:')) return finalUrl;
+  return getServerBase() + (finalUrl.startsWith('/') ? finalUrl : '/' + finalUrl);
 };
 
 // ── Category icons ──────────────────────────────────────────────────────────
@@ -557,34 +566,68 @@ const MediaLibrary = () => {
           </div>
 
           {/* Grid or List */}
-          {viewMode === 'grid' ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-              {pageItems.map(item => (
-                <MediaCard
-                  key={item.id}
-                  item={item}
-                  onCopy={copyUrl}
-                  onDelete={deleteItem}
-                  onPreview={setPreviewItem}
-                  selected={selected.has(item.id)}
-                  onSelect={toggleSelect}
-                />
+          {filterCategory === 'all' && !search ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+              {['image', 'video', 'document', 'audio'].map(cat => (
+                <div
+                  key={cat}
+                  onClick={() => setFilterCategory(cat)}
+                  style={{
+                    background: 'var(--bg-card)',
+                    borderRadius: '10px',
+                    border: '2px solid var(--border-color)',
+                    padding: '2rem 1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
+                >
+                  <CategoryIcon category={cat} size={48} />
+                  <div style={{ marginTop: '1rem', fontWeight: 600, fontSize: '1.1rem', textTransform: 'capitalize' }}>
+                    {cat}s
+                  </div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                    {categoryCounts[cat] || 0} files
+                  </div>
+                </div>
               ))}
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
-              {pageItems.map(item => (
-                <MediaRow
-                  key={item.id}
-                  item={item}
-                  onCopy={copyUrl}
-                  onDelete={deleteItem}
-                  onPreview={setPreviewItem}
-                  selected={selected.has(item.id)}
-                  onSelect={toggleSelect}
-                />
-              ))}
-            </div>
+            viewMode === 'grid' ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                {pageItems.map(item => (
+                  <MediaCard
+                    key={item.id}
+                    item={item}
+                    onCopy={copyUrl}
+                    onDelete={deleteItem}
+                    onPreview={setPreviewItem}
+                    selected={selected.has(item.id)}
+                    onSelect={toggleSelect}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                {pageItems.map(item => (
+                  <MediaRow
+                    key={item.id}
+                    item={item}
+                    onCopy={copyUrl}
+                    onDelete={deleteItem}
+                    onPreview={setPreviewItem}
+                    selected={selected.has(item.id)}
+                    onSelect={toggleSelect}
+                  />
+                ))}
+              </div>
+            )
           )}
 
           {/* Pagination */}

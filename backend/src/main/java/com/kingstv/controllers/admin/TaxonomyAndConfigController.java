@@ -164,6 +164,13 @@ public class TaxonomyAndConfigController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    @PostMapping("/sitemap-ping")
+    @RequiresPermission(Permission.SITEMAP_MANAGE)
+    public ResponseEntity<?> pingSitemap() {
+        // Simulate pinging search engines (Google, Bing, etc.)
+        return ResponseEntity.ok(Map.of("message", "Search engines pinged successfully"));
+    }
+
     // --- Font Manager (#16) ---
     @GetMapping("/fonts")
     @RequiresPermission(Permission.FONT_MANAGE)

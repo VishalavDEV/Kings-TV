@@ -6,7 +6,8 @@ const CategorySubcategorySelect = ({
   subcategoryId = "",
   onCategoryChange,
   onSubcategoryChange,
-  required = false
+  required = false,
+  labelSuffix = null
 }) => {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
@@ -92,7 +93,7 @@ const CategorySubcategorySelect = ({
       {/* Category Select */}
       <div className="glass-panel" style={{ padding: '1.25rem', borderRadius: '12px' }}>
         <label style={labelStyle}>
-          Category {required && <span style={{ color: '#EF4444' }}>*</span>}
+          Category {required && <span style={{ color: '#EF4444' }}>*</span>} {labelSuffix}
         </label>
         <select
           style={selectStyle}
