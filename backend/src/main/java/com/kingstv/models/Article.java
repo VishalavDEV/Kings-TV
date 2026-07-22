@@ -81,6 +81,15 @@ public class Article {
     @Column(name = "seo_status")
     private String seoStatus = "ready";
 
+    @Column(name = "reporter_name")
+    private String reporterName;
+
+    @Column(name = "readability_score")
+    private Integer readabilityScore;
+
+    @Column(name = "seo_score")
+    private Integer seoScore;
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
@@ -197,6 +206,12 @@ public class Article {
     public void setAuthorName(String authorName) { this.authorName = authorName; }
     public String getSeoStatus() { return seoStatus; }
     public void setSeoStatus(String seoStatus) { this.seoStatus = seoStatus; }
+    public String getReporterName() { return reporterName; }
+    public void setReporterName(String reporterName) { this.reporterName = reporterName; }
+    public Integer getReadabilityScore() { return readabilityScore; }
+    public void setReadabilityScore(Integer readabilityScore) { this.readabilityScore = readabilityScore; }
+    public Integer getSeoScore() { return seoScore; }
+    public void setSeoScore(Integer seoScore) { this.seoScore = seoScore; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     

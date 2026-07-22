@@ -126,3 +126,22 @@ This consolidated document provides the complete, phase-by-phase bug sweep repor
 ---
 
 **Final Conclusion**: All 5 phases of the bug sweep have been systematically executed, resolved at the root layer, verified with empirical evidence, deployed live to Hostinger (`king-tv` subdomain), and pushed to GitHub (`test-1` branch).
+
+---
+
+## Admin Portal Fixes (Consolidated)
+
+- **Phase 0 (Cross-cutting UI Bug)**: Fixed the `??` character rendering corruption on text rendering across the admin portal due to incorrect UTF-8 configurations or unescaped characters in JSX. 
+- **Phase 1 (RSS Fetch Crash)**: Handled missing `<enclosure>` tags cleanly in `RssManager.jsx` so the page no longer throws a `TypeError: Cannot read properties of undefined (reading 'url')` and renders standard fallback images.
+- **Phase 2 (Breaking News List View REST Error)**: Added the `GET /api/v1/news/breaking` endpoint in `NewsController.java` to resolve the `404 Not Found` when loading the BreakingNewsDashboard.
+- **Phase 3 (Media Library Upload/Preview Issue)**: Fixed unhandled `HTTP 415 Unsupported Media Type` and fixed broken image previews in `MediaLibrary.jsx` by checking file types and appending `/api/v1/media/` to preview paths correctly.
+- **Phase 4 (KYC Edge Cases for Deals/Ads/Jobs)**: Identified missing KYC protection on Ads and Jobs logic. While no UI modification was made, a `kyc_audit_report.md` was created listing the exact gaps where `listing.getKycStatus() == APPROVED` is missing.
+- **Phase 5 (SEO Console Global Defaults Missing)**: Added a "Google Preview" layout to SEO config and global Meta Keywords in `SystemConfig.jsx`.
+- **Phase 6 (Missing Author/Reporter Info)**: Created `reporterName`, `readabilityScore`, and `seoScore` fields in `Article.java`, populated via `NewsEditor.jsx`, and ensured `AuthContext` injects the real admin's name.
+- **Phase 7 (Ad Management)**: Added a "Video" ad type, and mapped the position dropdown (header, footer, sidebar, inline, popup) to correctly reflect actual frontend hooks in `AdManagement.jsx`.
+- **Phase 8 (Subscribers)**: Corrected `SubscribersManagement.jsx` to pull from `/api/v1/newsletter/getAll` to show newsletter subscribers instead of paid `UserSubscription` instances.
+- **Phase 9 (Notifications UI)**: Transformed `NotificationPreferences.jsx` from raw tailwind to the unified design system (Lucide icons, `glass-panel`, loading/error toasts).
+- **Phase 10 (Surveys Modal)**: Fixed the New Poll modal in `SurveyBuilder.jsx` so it no longer overflows the screen by adding `max-height: 90vh` and `overflow-y: auto`.
+- **Phase 11 (My Profile)**: Built the missing `/admin/profile` route and `Profile.jsx` view to handle user data updates and added `change-password` endpoint to `UserController.java`.
+- **Phase 12 (Comments Moderation)**: Redesigned `CommentsModeration.jsx` with standard tab styling and functional status updates (pending, approved, spam) and View Article context links.
+- **Phase 13 (Push Notifications)**: Upgraded the `PushNotifications.jsx` target audience field to a multi-select for the LOCALIZED (district) segment for true precision targeting.

@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, CheckCircle, XCircle, AlertOctagon, RefreshCw, Trash2, Edit2 } from 'lucide-react';
+import { MessageSquare, CheckCircle, XCircle, AlertOctagon, RefreshCw, Trash2, ExternalLink, Shield } from 'lucide-react';
 import api from '../../api';
 
 const CommentsModeration = () => {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('pending');
+  const [msg, setMsg] = useState(null);
+
+  const showMsg = (text, isError = false) => {
+    setMsg({ text, isError });
+    setTimeout(() => setMsg(null), 3000);
+  };
 
   const fetchComments = async () => {
     setLoading(true);
@@ -28,18 +34,20 @@ const CommentsModeration = () => {
     try {
       await api.put(`/comments/${id}`, { ...currentComment, status: newStatus });
       setComments(comments.map(c => c.id === id ? { ...c, status: newStatus } : c));
+      showMsg(`Comment moved to ${newStatus}`);
     } catch (err) {
-      alert("Failed to update status");
+      showMsg("Failed to update status", true);
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to permanently delete this comment?")) {
+    if (window.confirm("CRITICAL: Are you sure you want to permanently delete this comment?")) {
       try {
         await api.delete(`/comments/${id}`);
         setComments(comments.filter(c => c.id !== id));
+        showMsg("Comment deleted permanently");
       } catch (err) {
-        alert("Failed to delete comment");
+        showMsg("Failed to delete comment", true);
       }
     }
   };
@@ -47,37 +55,55 @@ const CommentsModeration = () => {
   const filteredComments = comments.filter(c => (c.status || 'pending') === activeTab);
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto' }}>
+    <div className="animate-fade-in" style={{ padding: "1.5rem", maxWidth: "1000px", margin: "0 auto" }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
-          <h1><MessageSquare size={24} style={{ display: 'inline', marginRight: '10px' }} /> Comments Moderation</h1>
-          <p className="text-secondary">Review and moderate user comments before they appear on articles.</p>
+          <h1 style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.25rem", fontSize: "1.75rem", fontWeight: 700 }}>
+            <MessageSquare size={26} color="var(--primary)" /> Comments Moderation
+          </h1>
+          <p className="text-secondary" style={{ color: "var(--text-secondary)" }}>Review and moderate user comments before they appear on articles.</p>
         </div>
-        <button className="btn btn-secondary" onClick={fetchComments}>
+        <button className="btn btn-secondary" onClick={fetchComments} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <RefreshCw size={16} /> Refresh
         </button>
       </div>
 
-      <div className="glass-panel" style={{ padding: '0' }}>
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}>
+      {msg && (
+        <div style={{ padding: "0.75rem 1rem", marginBottom: "1.5rem", borderRadius: "8px", fontWeight: 600, fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "0.5rem",
+          background: msg.isError ? "rgba(239,68,68,0.1)" : "rgba(16,185,129,0.1)",
+          color: msg.isError ? "#EF4444" : "#10B981",
+          border: `1px solid ${msg.isError ? "rgba(239,68,68,0.3)" : "rgba(16,185,129,0.3)"}` }}>
+          {msg.isError ? <AlertOctagon size={16} /> : <CheckCircle size={16} />}
+          {msg.text}
+        </div>
+      )}
+
+      <div className="glass-panel" style={{ padding: '0', borderRadius: '14px', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.02)' }}>
           <button 
-            className={`btn-tab ${activeTab === 'pending' ? 'active' : ''}`}
             onClick={() => setActiveTab('pending')}
-            style={{ flex: 1, padding: '1rem', border: 'none', background: activeTab === 'pending' ? 'var(--bg-card)' : 'transparent', color: activeTab === 'pending' ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: activeTab === 'pending' ? 600 : 400, borderBottom: activeTab === 'pending' ? '2px solid var(--primary)' : 'none' }}
+            style={{ flex: 1, padding: '1rem', border: 'none', background: 'transparent', cursor: 'pointer', transition: 'all 0.2s',
+                     color: activeTab === 'pending' ? 'var(--primary)' : 'var(--text-secondary)', 
+                     fontWeight: activeTab === 'pending' ? 600 : 500, 
+                     borderBottom: activeTab === 'pending' ? '2px solid var(--primary)' : '2px solid transparent' }}
           >
             Pending ({comments.filter(c => (c.status || 'pending') === 'pending').length})
           </button>
           <button 
-            className={`btn-tab ${activeTab === 'approved' ? 'active' : ''}`}
             onClick={() => setActiveTab('approved')}
-            style={{ flex: 1, padding: '1rem', border: 'none', background: activeTab === 'approved' ? 'var(--bg-card)' : 'transparent', color: activeTab === 'approved' ? 'var(--success)' : 'var(--text-secondary)', fontWeight: activeTab === 'approved' ? 600 : 400, borderBottom: activeTab === 'approved' ? '2px solid var(--success)' : 'none' }}
+            style={{ flex: 1, padding: '1rem', border: 'none', background: 'transparent', cursor: 'pointer', transition: 'all 0.2s',
+                     color: activeTab === 'approved' ? '#10B981' : 'var(--text-secondary)', 
+                     fontWeight: activeTab === 'approved' ? 600 : 500, 
+                     borderBottom: activeTab === 'approved' ? '2px solid #10B981' : '2px solid transparent' }}
           >
             Approved ({comments.filter(c => c.status === 'approved').length})
           </button>
           <button 
-            className={`btn-tab ${activeTab === 'spam' ? 'active' : ''}`}
             onClick={() => setActiveTab('spam')}
-            style={{ flex: 1, padding: '1rem', border: 'none', background: activeTab === 'spam' ? 'var(--bg-card)' : 'transparent', color: activeTab === 'spam' ? 'var(--danger)' : 'var(--text-secondary)', fontWeight: activeTab === 'spam' ? 600 : 400, borderBottom: activeTab === 'spam' ? '2px solid var(--danger)' : 'none' }}
+            style={{ flex: 1, padding: '1rem', border: 'none', background: 'transparent', cursor: 'pointer', transition: 'all 0.2s',
+                     color: activeTab === 'spam' ? '#EF4444' : 'var(--text-secondary)', 
+                     fontWeight: activeTab === 'spam' ? 600 : 500, 
+                     borderBottom: activeTab === 'spam' ? '2px solid #EF4444' : '2px solid transparent' }}
           >
             Spam ({comments.filter(c => c.status === 'spam').length})
           </button>
@@ -85,44 +111,59 @@ const CommentsModeration = () => {
 
         <div style={{ padding: '1.5rem' }}>
           {loading ? (
-            <div>Loading comments...</div>
+            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Loading comments...</div>
           ) : filteredComments.length === 0 ? (
-            <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 0' }}>No {activeTab} comments found.</div>
+            <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--text-muted)' }}>
+              <Shield size={48} style={{ opacity: 0.2, margin: '0 auto 1rem auto' }} />
+              <div>No {activeTab} comments found.</div>
+            </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {filteredComments.map(c => (
-                <div key={c.id} style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'var(--bg-card)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <div key={c.id} style={{ padding: '1.25rem', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-secondary)', transition: 'transform 0.2s', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                      <strong style={{ color: 'var(--text-primary)' }}>{c.commentorName}</strong>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginLeft: '0.5rem' }}>({c.commentorEmail})</span>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                        Article ID: {c.articleId} • {new Date(c.createdAt).toLocaleString()}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <strong style={{ color: 'var(--text-primary)', fontSize: '1.05rem' }}>{c.commentorName}</strong>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{c.commentorEmail}</span>
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                        Posted on {new Date(c.createdAt).toLocaleString()}
                       </div>
                     </div>
                     
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <a 
+                        href={`http://localhost:3000/article/${c.articleId}`} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="btn btn-secondary" 
+                        style={{ padding: '0.4rem 0.6rem', color: 'var(--text-primary)' }} 
+                        title="View Context/Article"
+                      >
+                        <ExternalLink size={16} />
+                      </a>
                       {activeTab !== 'approved' && (
-                        <button onClick={() => handleStatusChange(c.id, 'approved', c)} className="btn btn-secondary" style={{ padding: '0.3rem 0.6rem', color: 'var(--success)' }} title="Approve">
-                          <CheckCircle size={14} />
+                        <button onClick={() => handleStatusChange(c.id, 'approved', c)} className="btn btn-secondary" style={{ padding: '0.4rem 0.6rem', color: '#10B981' }} title="Approve">
+                          <CheckCircle size={16} />
                         </button>
                       )}
                       {activeTab !== 'spam' && (
-                        <button onClick={() => handleStatusChange(c.id, 'spam', c)} className="btn btn-secondary" style={{ padding: '0.3rem 0.6rem', color: 'var(--warning)' }} title="Mark as Spam">
-                          <AlertOctagon size={14} />
+                        <button onClick={() => handleStatusChange(c.id, 'spam', c)} className="btn btn-secondary" style={{ padding: '0.4rem 0.6rem', color: '#F59E0B' }} title="Mark as Spam">
+                          <AlertOctagon size={16} />
                         </button>
                       )}
                       {activeTab !== 'pending' && (
-                        <button onClick={() => handleStatusChange(c.id, 'pending', c)} className="btn btn-secondary" style={{ padding: '0.3rem 0.6rem', color: 'var(--text-secondary)' }} title="Move to Pending">
-                          <RefreshCw size={14} />
+                        <button onClick={() => handleStatusChange(c.id, 'pending', c)} className="btn btn-secondary" style={{ padding: '0.4rem 0.6rem', color: 'var(--text-secondary)' }} title="Move to Pending">
+                          <RefreshCw size={16} />
                         </button>
                       )}
-                      <button onClick={() => handleDelete(c.id)} className="btn btn-danger" style={{ padding: '0.3rem 0.6rem' }} title="Delete Permanently">
-                        <Trash2 size={14} />
+                      <button onClick={() => handleDelete(c.id)} className="btn btn-danger" style={{ padding: '0.4rem 0.6rem' }} title="Delete Permanently">
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </div>
-                  <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '4px', color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }}>
+                  <div style={{ background: 'var(--bg-card)', padding: '1rem', borderRadius: '8px', color: 'var(--text-primary)', whiteSpace: 'pre-wrap', border: '1px solid var(--border-color)', fontSize: '0.95rem', lineHeight: '1.5' }}>
                     {c.commentText}
                   </div>
                 </div>

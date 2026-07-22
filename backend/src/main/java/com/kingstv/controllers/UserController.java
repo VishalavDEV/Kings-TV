@@ -25,6 +25,9 @@ public class UserController {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Autowired
     private StorageService storageService;
@@ -80,6 +83,39 @@ public class UserController {
             "createdAt", saved.getCreatedAt() != null ? saved.getCreatedAt().toString().substring(0, 10) : LocalDateTime.now().toString().substring(0, 10),
             "lastLogin", saved.getLastLogin() != null ? saved.getLastLogin().toString().substring(0, 10) : LocalDateTime.now().toString().substring(0, 10)
         ));
+    }
+
+    @PutMapping("/profile/change-password")
+    public ResponseEntity<?> changePassword(Principal principal, @RequestBody Map<String, String> request) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
+        }
+        
+        String oldPassword = request.get("oldPassword");
+        String newPassword = request.get("newPassword");
+        
+        if (oldPassword == null || newPassword == null || newPassword.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Old password and new password are required"));
+        }
+        
+        if (newPassword.length() < 8) {
+            return ResponseEntity.badRequest().body(Map.of("message", "New password must be at least 8 characters long"));
+        }
+
+        Optional<User> userOpt = userRepository.findByEmail(principal.getName());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "User not found"));
+        }
+        
+        User user = userOpt.get();
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Incorrect old password"));
+        }
+        
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        
+        return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
     }
 
     @PostMapping("/profile-image")

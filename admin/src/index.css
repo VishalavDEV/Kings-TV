@@ -574,6 +574,8 @@ h1, h2, h3, h4, h5, h6 {
 .modal-content {
   width: 90%;
   max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);

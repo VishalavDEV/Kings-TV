@@ -9,17 +9,20 @@ const inputStyle = {
 };
 const labelStyle = { fontSize: "0.8rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.4rem", display: "block" };
 
-const BreakingNewsCard = ({ item, onToggle, onDelete }) => (
+const BreakingNewsCard = ({ item, onToggle, onDelete, onEdit }) => (
   <div className="glass-panel" style={{
     padding: "1rem 1.25rem", borderRadius: "10px", display: "flex", alignItems: "center", gap: "1rem",
-    borderLeft: `4px solid ${item.isActive ? "#EF4444" : "var(--border-color)"}`,
+    borderLeft: `4px solid ${item.status === 'published' ? "#EF4444" : "var(--border-color)"}`,
+    opacity: item.status === 'published' ? 1 : 0.65,
+    cursor: "pointer"
+  }} onClick={() => onEdit && onEdit(item)}>
     opacity: item.isActive ? 1 : 0.65,
   }}>
     <div style={{ flex: 1 }}>
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
-        {item.isActive && <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#EF4444", display: "inline-block" }} />}
+        {item.status === 'published' && <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#EF4444", display: "inline-block" }} />}
         <span style={{ fontWeight: 700 }}>{item.titleTa || item.title}</span>
-        {item.priority === "HIGH" && <span style={{ fontSize: "0.7rem", background: "rgba(239,68,68,0.2)", color: "#EF4444", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>HIGH</span>}
+        {item.priority === 1 && <span style={{ fontSize: "0.7rem", background: "rgba(239,68,68,0.2)", color: "#EF4444", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>HIGH</span>}
       </div>
       {item.titleEn && <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{item.titleEn}</div>}
       <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
@@ -27,13 +30,13 @@ const BreakingNewsCard = ({ item, onToggle, onDelete }) => (
         {item.expiresAt && ` · Expires: ${new Date(item.expiresAt).toLocaleString()}`}
       </div>
     </div>
-    <div style={{ display: "flex", gap: "0.5rem" }}>
+    <div style={{ display: "flex", gap: "0.5rem" }} onClick={e => e.stopPropagation()}>
       <button onClick={() => onToggle(item)} style={{
         padding: "0.4rem 0.8rem", borderRadius: "6px", border: "none", cursor: "pointer", fontWeight: 600, fontSize: "0.8rem",
-        background: item.isActive ? "rgba(239,68,68,0.1)" : "rgba(16,185,129,0.1)",
-        color: item.isActive ? "#EF4444" : "#10B981"
+        background: item.status === 'published' ? "rgba(239,68,68,0.1)" : "rgba(16,185,129,0.1)",
+        color: item.status === 'published' ? "#EF4444" : "#10B981"
       }}>
-        {item.isActive ? "Deactivate" : "Activate"}
+        {item.status === 'published' ? "Deactivate" : "Activate"}
       </button>
       <button onClick={() => onDelete(item.id)} style={{
         padding: "0.4rem", borderRadius: "6px", border: "1px solid rgba(239,68,68,0.3)",
@@ -58,8 +61,8 @@ const BreakingNewsDashboard = () => {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/breaking-news?page=0&size=30");
-      const data = res.data;
+      const res = await api.get("/breaking-news/getAll?page=0&size=30");
+      const data = res.data || res;
       setItems(Array.isArray(data) ? data : (data?.content || []));
     } catch (err) { console.error(err); }
     setLoading(false);
@@ -69,9 +72,10 @@ const BreakingNewsDashboard = () => {
 
   const toggle = async (item) => {
     try {
-      await api.put(`/breaking-news/${item.id}`, { ...item, isActive: !item.isActive });
-      setItems(prev => prev.map(i => i.id === item.id ? { ...i, isActive: !i.isActive } : i));
-      showMsg(`Alert ${!item.isActive ? "activated" : "deactivated"}.`);
+      const newStatus = item.status === 'published' ? 'inactive' : 'published';
+      await api.patch(`/breaking-news/changeStatus`, { id: item.id, status: newStatus });
+      setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: newStatus } : i));
+      showMsg(`Alert ${newStatus === 'published' ? "activated" : "deactivated"}.`);
     } catch { showMsg("Failed to toggle.", true); }
   };
 
@@ -81,13 +85,37 @@ const BreakingNewsDashboard = () => {
     catch { showMsg("Failed to delete.", true); }
   };
 
+  const handleEdit = (item) => {
+    setForm({
+      id: item.id,
+      titleTa: item.titleTa || "",
+      titleEn: item.title === item.titleTa ? "" : (item.title || ""),
+      expiresInHours: 6,
+      priority: item.priority === 1 ? "HIGH" : item.priority === 2 ? "MEDIUM" : "LOW",
+      linkUrl: item.linkUrl || ""
+    });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!form.titleTa) { showMsg("Tamil title is required.", true); return; }
     setSaving(true);
     try {
-      const expiresAt = new Date(Date.now() + form.expiresInHours * 3600000).toISOString();
-      await api.post("/breaking-news", { ...form, isActive: true, expiresAt });
+      const payload = {
+        id: form.id,
+        title: form.titleEn || form.titleTa,
+        titleTa: form.titleTa,
+        status: "published",
+        priority: form.priority === "HIGH" ? 1 : form.priority === "MEDIUM" ? 2 : 3,
+        linkUrl: form.linkUrl,
+      };
+      if (form.id) {
+        await api.put("/breaking-news/saveUpdate", payload);
+      } else {
+        await api.post("/breaking-news/saveUpdate", payload);
+      }
       showMsg("Breaking news published!");
       setForm({ titleTa: "", titleEn: "", expiresInHours: 6, priority: "HIGH", linkUrl: "" });
       setShowForm(false);
@@ -96,8 +124,8 @@ const BreakingNewsDashboard = () => {
     setSaving(false);
   };
 
-  const activeItems = items.filter(i => i.isActive);
-  const inactiveItems = items.filter(i => !i.isActive);
+  const activeItems = items.filter(i => i.status === 'published');
+  const inactiveItems = items.filter(i => i.status !== 'published');
 
   return (
     <div className="animate-fade-in">
@@ -137,12 +165,12 @@ const BreakingNewsDashboard = () => {
 
       {showForm && (
         <div className="glass-panel" style={{ padding: "1.75rem", borderRadius: "14px", border: "2px solid rgba(239,68,68,0.4)", marginBottom: "2rem" }}>
-          <h3 style={{ marginBottom: "1.25rem", color: "#EF4444" }}>?? Publish Breaking News Alert</h3>
+          <h3 style={{ marginBottom: "1.25rem", color: "#EF4444" }}>🚨 Publish Breaking News Alert</h3>
           <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
               <div>
                 <label style={labelStyle}>Tamil Headline *</label>
-                <input style={inputStyle} value={form.titleTa} onChange={e => setForm(f => ({ ...f, titleTa: e.target.value }))} placeholder="??????? ??????..." />
+                <input style={inputStyle} value={form.titleTa} onChange={e => setForm(f => ({ ...f, titleTa: e.target.value }))} placeholder="முக்கிய செய்திகள்..." />
               </div>
               <div>
                 <label style={labelStyle}>English Headline</label>
@@ -153,9 +181,9 @@ const BreakingNewsDashboard = () => {
               <div>
                 <label style={labelStyle}>Priority</label>
                 <select style={inputStyle} value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}>
-                  <option value="HIGH">?? High</option>
-                  <option value="MEDIUM">?? Medium</option>
-                  <option value="LOW">?? Low</option>
+                  <option value="HIGH">🔴 High</option>
+                  <option value="MEDIUM">🟡 Medium</option>
+                  <option value="LOW">🟢 Low</option>
                 </select>
               </div>
               <div>
@@ -171,12 +199,12 @@ const BreakingNewsDashboard = () => {
             </div>
             {form.titleTa && (
               <div style={{ background: "#EF4444", padding: "0.6rem 1.2rem", borderRadius: "6px", color: "#fff", fontSize: "0.875rem", fontWeight: 600 }}>
-                ?? LIVE PREVIEW: {form.titleTa}
+                🔴 LIVE PREVIEW: {form.titleTa}
               </div>
             )}
             <div style={{ display: "flex", gap: "1rem" }}>
               <button type="submit" disabled={saving} className="btn btn-primary" style={{ background: "#EF4444", border: "none" }}>
-                {saving ? "Publishing..." : "?? Publish Now"}
+                {saving ? "Publishing..." : "🚀 Publish Now"}
               </button>
               <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary">Cancel</button>
             </div>
@@ -185,17 +213,17 @@ const BreakingNewsDashboard = () => {
       )}
 
       <div style={{ marginBottom: "2rem" }}>
-        <h3 style={{ marginBottom: "1rem", color: "#EF4444" }}>?? Live Alerts ({activeItems.length})</h3>
+        <h3 style={{ marginBottom: "1rem", color: "#EF4444" }}>🔴 Live Alerts ({activeItems.length})</h3>
         {loading ? <div className="glass-panel" style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)" }}>Loading...</div>
           : activeItems.length === 0 ? <div className="glass-panel" style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)" }}>No active alerts.</div>
-          : <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>{activeItems.map(item => <BreakingNewsCard key={item.id} item={item} onToggle={toggle} onDelete={deleteItem} />)}</div>}
+          : <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>{activeItems.map(item => <BreakingNewsCard key={item.id} item={item} onToggle={toggle} onDelete={deleteItem} onEdit={handleEdit} />)}</div>}
       </div>
 
       {inactiveItems.length > 0 && (
         <div>
           <h3 style={{ marginBottom: "1rem", color: "var(--text-muted)" }}>Inactive / Expired ({inactiveItems.length})</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            {inactiveItems.map(item => <BreakingNewsCard key={item.id} item={item} onToggle={toggle} onDelete={deleteItem} />)}
+            {inactiveItems.map(item => <BreakingNewsCard key={item.id} item={item} onToggle={toggle} onDelete={deleteItem} onEdit={handleEdit} />)}
           </div>
         </div>
       )}

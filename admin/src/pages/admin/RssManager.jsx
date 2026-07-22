@@ -25,7 +25,7 @@ const RssManager = () => {
       const response = await axios.get('/api/v1/admin/rss-config', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setConfigs(response.data);
+      setConfigs(Array.isArray(response.data) ? response.data : (response.data?.content || response.data?.data || []));
     } catch (error) {
       console.error('Error fetching RSS configs:', error);
     } finally {

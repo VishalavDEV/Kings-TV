@@ -5,6 +5,7 @@ import { Save, ArrowLeft, Send, CheckCircle, MapPin, Image, Video, Link, Copy, P
 import ImageUploadPreview from '../../components/common/ImageUploadPreview';
 import CategorySubcategorySelect from '../../components/common/CategorySubcategorySelect';
 import DatePickerInput from '../../components/common/DatePickerInput';
+import { useAuth } from '../../context/AuthContext';
 
 const TABS = ['Tamil', 'English', 'SEO', 'Settings'];
 
@@ -15,6 +16,7 @@ const NewsEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = !!id;
+  const { user } = useAuth();
 
   const getPreviewUrl = (url) => {
     if (!url) return '';
@@ -52,7 +54,8 @@ const NewsEditor = () => {
   const [form, setForm] = useState({
     titleTa: '', titleEn: '', contentTa: '', contentEn: '',
     shortDescTa: '', shortDescEn: '', imageUrl: '', featuredImage: '',
-    authorName: 'Kings TV News Desk', status: 'draft',
+    authorName: user?.name || user?.username || 'Kings TV News Desk', 
+    reporterName: '', readabilityScore: '', seoScore: '', status: 'draft',
     categoryId: '', subcategoryId: '',
     districtId: '', constituency: '',
     metaTitle: '', metaDescription: '', metaKeywords: '', focusKeywords: '', slug: '', canonicalUrl: '',
@@ -108,7 +111,11 @@ const NewsEditor = () => {
           contentTa: a.contentTa || '', contentEn: a.contentEn || '',
           shortDescTa: a.shortDescTa || '', shortDescEn: a.shortDescEn || '',
           imageUrl: a.imageUrl || '', featuredImage: a.featuredImage || '',
-          authorName: a.authorName || 'Kings TV News Desk', status: a.status || 'draft',
+          authorName: a.authorName || 'Kings TV News Desk', 
+          reporterName: a.reporterName || '',
+          readabilityScore: a.readabilityScore || '',
+          seoScore: a.seoScore || '',
+          status: a.status || 'draft',
           categoryId: a.categoryId || '', subcategoryId: a.subcategoryId || '',
           districtId: a.districtId || '', constituency: a.constituency || '',
           metaTitle: a.metaTitle || '', metaDescription: a.metaDescription || '',
@@ -1174,6 +1181,19 @@ const NewsEditor = () => {
                 <input style={inputStyle} value={form.canonicalUrl}
                   onChange={e => set('canonicalUrl', e.target.value)} placeholder="https://king24x7.com/news/slug" />
               </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Readability Score (0-100)</label>
+                  <input style={inputStyle} type="number" min="0" max="100" value={form.readabilityScore}
+                    onChange={e => set('readabilityScore', e.target.value)} placeholder="e.g. 85" />
+                </div>
+                <div>
+                  <label style={labelStyle}>SEO Score (0-100)</label>
+                  <input style={inputStyle} type="number" min="0" max="100" value={form.seoScore}
+                    onChange={e => set('seoScore', e.target.value)} placeholder="e.g. 92" />
+                </div>
+              </div>
             </div>
 
             {/* Settings Tab */}
@@ -1192,10 +1212,17 @@ const NewsEditor = () => {
               boxSizing: 'border-box',
               opacity: activeTab === 3 ? 1 : 0
             }}>
-              <div>
-                <label style={labelStyle}>Author Name</label>
-                <input style={inputStyle} value={form.authorName}
-                  onChange={e => set('authorName', e.target.value)} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Author Name</label>
+                  <input style={inputStyle} value={form.authorName}
+                    onChange={e => set('authorName', e.target.value)} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Reporter Name</label>
+                  <input style={inputStyle} value={form.reporterName}
+                    onChange={e => set('reporterName', e.target.value)} placeholder="Name of reporter on the ground..." />
+                </div>
               </div>
               <div>
                 <DatePickerInput

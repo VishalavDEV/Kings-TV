@@ -148,7 +148,7 @@ const SurveyBuilder = () => {
 
       {showModal && (
         <div className="modal-overlay">
-          <div className="modal-content glass-panel" style={{ width: '500px' }}>
+          <div className="modal-content glass-panel" style={{ width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
             <div className="modal-header">
               <h2>{formData.id ? 'Edit Poll' : 'Create Poll'}</h2>
               <button className="icon-btn" onClick={() => setShowModal(false)}><X size={20} /></button>

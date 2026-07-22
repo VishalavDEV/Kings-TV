@@ -104,19 +104,33 @@ const MediaCard = ({ item, onCopy, onDelete, onPreview, selected, onSelect }) =>
         ) : (
           <CategoryIcon category={item.category} size={48} />
         )}
-        {/* Eye preview button */}
-        {(isImage || isVideo) && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onPreview(item); }}
-            style={{
-              position: 'absolute', bottom: '6px', right: '6px',
-              background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '6px',
-              padding: '4px 8px', cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem',
-            }}
-          >
-            <Eye size={12} /> Preview
-          </button>
-        )}
+        {/* Action buttons */}
+        <div style={{ position: 'absolute', bottom: '6px', right: '6px', display: 'flex', gap: '4px' }}>
+          {(isImage || isVideo || item.name?.toLowerCase().endsWith('.pdf')) ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); onPreview(item); }}
+              style={{
+                background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '6px',
+                padding: '4px 8px', cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem',
+              }}
+            >
+              <Eye size={12} /> Preview
+            </button>
+          ) : (
+            <a
+              href={getPreviewUrl(item.url)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '6px',
+                padding: '4px 8px', cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', textDecoration: 'none'
+              }}
+            >
+              <Download size={12} /> Download
+            </a>
+          )}
+        </div>
       </div>
 
       {/* Meta */}
@@ -172,10 +186,14 @@ const MediaRow = ({ item, onCopy, onDelete, onPreview, selected, onSelect }) => 
       <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>{item.category.toUpperCase()} · {formatBytes(item.size)} · {item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString() : '—'}</div>
     </div>
     <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
-      {(item.category === 'image' || item.category === 'video') && (
+      {(item.category === 'image' || item.category === 'video' || item.name?.toLowerCase().endsWith('.pdf')) ? (
         <button onClick={(e) => { e.stopPropagation(); onPreview(item); }} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '3px' }}>
           <Eye size={13} /> Preview
         </button>
+      ) : (
+        <a href={getPreviewUrl(item.url)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '3px', textDecoration: 'none' }}>
+          <Download size={13} /> Download
+        </a>
       )}
       <button onClick={(e) => { e.stopPropagation(); onCopy(item.url); }} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '3px' }}>
         <Copy size={13} /> Copy URL
@@ -635,6 +653,8 @@ const MediaLibrary = () => {
                 <img src={getPreviewUrl(previewItem.url)} alt={previewItem.name} style={{ maxWidth: '100%', maxHeight: '65vh', borderRadius: '8px', objectFit: 'contain' }} />
               ) : previewItem.category === 'video' ? (
                 <video controls src={getPreviewUrl(previewItem.url)} style={{ maxWidth: '100%', maxHeight: '65vh', borderRadius: '8px' }} />
+              ) : previewItem.name?.toLowerCase().endsWith('.pdf') ? (
+                <iframe src={getPreviewUrl(previewItem.url)} style={{ width: '100%', minWidth: '60vw', height: '65vh', border: 'none', borderRadius: '8px' }} />
               ) : null}
             </div>
             <div style={{ padding: '0.75rem 1.25rem', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>

@@ -239,7 +239,7 @@ const Header = () => {
                   <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email}</div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 'bold', marginTop: '2px' }}>{user?.role?.replace('_', ' ')}</div>
                 </div>
-                <Link to="/profile" onClick={() => setProfileOpen(false)} className="nav-link" style={{ fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}>
+                <Link to="/admin/profile" onClick={() => setProfileOpen(false)} className="nav-link" style={{ fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}>
                   <User size={14} /> My Profile
                 </Link>
                 {hasAnyRole(['SUPER_ADMIN']) && (

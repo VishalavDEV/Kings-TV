@@ -346,6 +346,9 @@ public class ArticleController {
         article.setCanonicalUrl(entity.getCanonicalUrl());
         article.setFeaturedImage(entity.getFeaturedImage());
         article.setAuthorName(entity.getAuthorName());
+        article.setReporterName(entity.getReporterName());
+        article.setReadabilityScore(entity.getReadabilityScore());
+        article.setSeoScore(entity.getSeoScore());
         article.setSeoStatus(entity.getSeoStatus());
         
         populateSeoFields(article, request);

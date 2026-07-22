@@ -5,17 +5,17 @@ import ImageUploadPreview from "../../components/common/ImageUploadPreview";
 import DatePickerInput from "../../components/common/DatePickerInput";
 
 const AD_POSITIONS = [
-  { value: "LEADERBOARD_TOP", label: "Leaderboard Top (728x90)" },
-  { value: "LEADERBOARD_FOOTER", label: "Leaderboard Footer (728x90)" },
-  { value: "SIDEBAR_RECTANGLE", label: "Sidebar Rectangle (300x250)" },
-  { value: "IN_CONTENT_P3", label: "In-Content After Para 3" },
-  { value: "IN_CONTENT_P7", label: "In-Content After Para 7" },
-  { value: "MOBILE_STICKY", label: "Mobile Sticky Bottom (320x50)" },
-  { value: "INTERSTITIAL", label: "Category Interstitial" },
-  { value: "SPONSORED_CARD", label: "Sponsored News Card" },
+  { value: "header", label: "Header" },
+  { value: "footer", label: "Footer" },
+  { value: "sidebar", label: "Sidebar" },
+  { value: "in-content-after-paragraph-3", label: "In-Content After Paragraph 3" },
+  { value: "in-content-after-paragraph-7", label: "In-Content After Paragraph 7" },
+  { value: "mobile-sticky", label: "Mobile Sticky" },
+  { value: "interstitial", label: "Interstitial" },
+  { value: "video-pre-roll", label: "Video Pre-roll" },
 ];
 
-const AD_TYPE_COLORS = { LEADERBOARD_TOP:"#3B82F6", LEADERBOARD_FOOTER:"#3B82F6", SIDEBAR_RECTANGLE:"#8B5CF6", IN_CONTENT_P3:"#F59E0B", IN_CONTENT_P7:"#F59E0B", MOBILE_STICKY:"#EF4444", INTERSTITIAL:"#EC4899", SPONSORED_CARD:"#10B981" };
+const AD_TYPE_COLORS = { header:"#3B82F6", footer:"#3B82F6", sidebar:"#8B5CF6", "in-content-after-paragraph-3":"#F59E0B", "in-content-after-paragraph-7":"#F59E0B", "mobile-sticky":"#EF4444", interstitial:"#EC4899", "video-pre-roll":"#10B981" };
 
 const inputStyle = { width: "100%", padding: "0.75rem 1rem", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: "0.875rem", boxSizing: "border-box" };
 const labelStyle = { fontSize: "0.8rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.4rem", display: "block" };
@@ -25,7 +25,7 @@ const AdManagement = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingAd, setEditingAd] = useState(null);
-  const [form, setForm] = useState({ name: "", position: "LEADERBOARD_TOP", type: "IMAGE", imageUrl: "", adCode: "", targetUrl: "", startDate: "", endDate: "", targetDevice: "all", targetGeo: "all", isActive: true });
+  const [form, setForm] = useState({ name: "", position: "header", type: "IMAGE", imageUrl: "", adCode: "", targetUrl: "", startDate: "", endDate: "", targetDevice: "all", targetGeo: "all", isActive: true });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
   const [filterPosition, setFilterPosition] = useState("ALL");
@@ -41,11 +41,11 @@ const AdManagement = () => {
 
   const openEdit = (ad) => {
     setEditingAd(ad);
-    setForm({ name: ad.title || ad.name || "", position: ad.placement || ad.position || "LEADERBOARD_TOP", type: ad.type || "IMAGE", imageUrl: ad.imageUrl || "", adCode: ad.adCode || ad.scriptCode || "", targetUrl: ad.targetUrl || ad.linkUrl || "", startDate: ad.startDate ? ad.startDate.slice(0,10) : "", endDate: ad.endDate ? ad.endDate.slice(0,10) : "", targetDevice: ad.targetDevice || ad.device || "all", targetGeo: ad.targetGeo || "all", isActive: ad.status === "active" || ad.isActive !== false });
+    setForm({ name: ad.title || ad.name || "", position: ad.placement || ad.position || "header", type: ad.type || "IMAGE", imageUrl: ad.imageUrl || "", adCode: ad.adCode || ad.scriptCode || "", targetUrl: ad.targetUrl || ad.linkUrl || "", startDate: ad.startDate ? ad.startDate.slice(0,10) : "", endDate: ad.endDate ? ad.endDate.slice(0,10) : "", targetDevice: ad.targetDevice || ad.device || "all", targetGeo: ad.targetGeo || "all", isActive: ad.status === "active" || ad.isActive !== false });
     setShowForm(true);
   };
 
-  const resetForm = () => { setForm({ name: "", position: "LEADERBOARD_TOP", type: "IMAGE", imageUrl: "", adCode: "", targetUrl: "", startDate: "", endDate: "", targetDevice: "all", targetGeo: "all", isActive: true }); setEditingAd(null); };
+  const resetForm = () => { setForm({ name: "", position: "header", type: "IMAGE", imageUrl: "", adCode: "", targetUrl: "", startDate: "", endDate: "", targetDevice: "all", targetGeo: "all", isActive: true }); setEditingAd(null); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -156,7 +156,7 @@ const AdManagement = () => {
       {/* Form */}
       {showForm && (
         <div className="glass-panel" style={{ padding: "1.75rem", borderRadius: "14px", border: "2px solid var(--primary)", marginBottom: "2rem" }}>
-          <h3 style={{ marginBottom: "1.25rem", color: "var(--primary)" }}>{editingAd ? "?? Edit Ad" : "? Create New Ad"}</h3>
+          <h3 style={{ marginBottom: "1.25rem", color: "var(--primary)" }}>{editingAd ? "✏️ Edit Ad" : "➕ Create New Ad"}</h3>
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
               <div><label style={labelStyle}>Ad Name *</label><input style={inputStyle} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Diwali Banner - Top" /></div>
@@ -169,9 +169,10 @@ const AdManagement = () => {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
               <div><label style={labelStyle}>Ad Type</label>
                 <select style={inputStyle} value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
-                  <option value="IMAGE">??? Image Ad</option>
-                  <option value="HTML_CODE">?? HTML/JS Code</option>
-                  <option value="ADSENSE">?? Google AdSense</option>
+                  <option value="IMAGE">🖼️ Image Ad</option>
+                  <option value="VIDEO">🎥 Video Ad</option>
+                  <option value="HTML_CODE">💻 HTML/JS Code</option>
+                  <option value="ADSENSE">💲 Google AdSense</option>
                 </select>
               </div>
               <div><label style={labelStyle}>Device Target</label>
@@ -183,18 +184,18 @@ const AdManagement = () => {
               </div>
               <div><label style={labelStyle}>Status</label>
                 <select style={inputStyle} value={form.isActive ? "true" : "false"} onChange={e => setForm(f => ({ ...f, isActive: e.target.value === "true" }))}>
-                  <option value="true">? Active</option>
-                  <option value="false">?? Inactive</option>
+                  <option value="true">✅ Active</option>
+                  <option value="false">❌ Inactive</option>
                 </select>
               </div>
             </div>
-            {form.type === "IMAGE" && (
+            {(form.type === "IMAGE" || form.type === "VIDEO") && (
               <ImageUploadPreview
-                label="Ad Creative Image"
+                label={form.type === "IMAGE" ? "Ad Creative Image" : "Video URL or Upload"}
                 value={form.imageUrl}
                 onChange={val => setForm(f => ({ ...f, imageUrl: val }))}
                 uploadEndpoint="/articles/upload"
-                placeholder="Image URL or upload ad banner..."
+                placeholder={form.type === "IMAGE" ? "Image URL or upload ad banner..." : "Video URL (mp4) or upload..."}
               />
             )}
             {form.type === "HTML_CODE" && <div><label style={labelStyle}>Ad HTML/JS Code</label><textarea value={form.adCode} onChange={e => setForm(f => ({ ...f, adCode: e.target.value }))} style={{ ...inputStyle, minHeight: "120px", resize: "vertical", fontFamily: "monospace" }} placeholder="<script>..." /></div>}

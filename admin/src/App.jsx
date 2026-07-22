@@ -29,11 +29,15 @@ import NewsEditor from './pages/admin/NewsEditor';
 import BreakingNewsDashboard from './pages/admin/BreakingNewsDashboard';
 import UgcQueue from './pages/admin/UgcQueue';
 import EditorialCalendar from './pages/admin/EditorialCalendar';
+import SystemLogs from './pages/admin/SystemLogs';
+import AuditLogs from './pages/admin/AuditLogs';
+import SystemConfig from './pages/admin/SystemConfig';
 import AdManagement from './pages/admin/AdManagement';
 import RssManager from './pages/admin/RssManager';
 import RewardSystem from './pages/admin/RewardSystem';
 import SubscribersManagement from './pages/admin/SubscribersManagement';
 import NotificationPreferences from './pages/admin/NotificationPreferences';
+import Profile from './pages/admin/Profile';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -203,6 +207,12 @@ function App() {
           <Route path="/admin/notifications" element={
             <ProtectedLayout allowedRoles={['SUPER_ADMIN']}>
               <NotificationPreferences />
+            </ProtectedLayout>
+          } />
+
+          <Route path="/admin/profile" element={
+            <ProtectedLayout allowedRoles={['SUPER_ADMIN', 'ADMIN', 'EDITOR', 'MODERATOR']}>
+              <Profile />
             </ProtectedLayout>
           } />
 

@@ -67,12 +67,9 @@ def main():
 
     local_root = os.getcwd()
     
-    # 1. Upload React Frontend to REMOTE kingstv
-    local_frontend_dist = os.path.join(local_root, "frontend", "dist")
-    upload_dir_contents(sftp, local_frontend_dist, FRONTEND_REMOTE_DIR)
-
-    # 2. Upload React Admin Dashboard to REMOTE king-tv
+    # 2. Upload React Admin Dashboard to REMOTE king-tv/admin
     local_admin_dist = os.path.join(local_root, "admin", "dist")
+    ADMIN_REMOTE_DIR = "/home/u841409365/domains/test-technoprint.online/public_html/king-tv/admin"
     upload_dir_contents(sftp, local_admin_dist, ADMIN_REMOTE_DIR)
 
     # Upload local .htaccess rules

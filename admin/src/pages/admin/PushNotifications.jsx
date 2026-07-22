@@ -8,9 +8,12 @@ const PushNotifications = () => {
     message: '',
     url: '',
     imageUrl: '',
-    targetSegment: 'GLOBAL'
+    targetSegment: 'GLOBAL',
+    districts: []
   });
   const [loading, setLoading] = useState(false);
+
+  const TN_DISTRICTS = ['Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli', 'Salem', 'Tirunelveli'];
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -25,7 +28,8 @@ const PushNotifications = () => {
         body: formData.message,
         imageUrl: formData.imageUrl,
         actionUrl: formData.url,
-        targetType: formData.targetSegment
+        targetType: formData.targetSegment,
+        targetValue: formData.targetSegment === 'LOCALIZED' ? formData.districts.join(',') : null
       };
       const response = await api.post('/admin/push-notifications', payload);
       const createdNotification = response.data;
@@ -34,7 +38,7 @@ const PushNotifications = () => {
       await api.post(`/admin/push-notifications/${createdNotification.id}/send`);
       
       alert("Notification broadcasted successfully!");
-      setFormData({ title: '', message: '', url: '', imageUrl: '', targetSegment: 'GLOBAL' });
+      setFormData({ title: '', message: '', url: '', imageUrl: '', targetSegment: 'GLOBAL', districts: [] });
     } catch (error) {
       console.error(error);
       alert("Failed to send notification.");
@@ -106,7 +110,33 @@ const PushNotifications = () => {
           </div>
         </div>
 
-        <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1.5rem', padding: '1rem' }} disabled={loading}>
+        {formData.targetSegment === 'LOCALIZED' && (
+          <div className="form-group" style={{ marginTop: '1rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
+            <label className="form-label">Select Target Districts</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.75rem', marginTop: '0.5rem' }}>
+              {TN_DISTRICTS.map(district => (
+                <label key={district} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={formData.districts.includes(district)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setFormData({ ...formData, districts: [...formData.districts, district] });
+                      } else {
+                        setFormData({ ...formData, districts: formData.districts.filter(d => d !== district) });
+                      }
+                    }}
+                    style={{ width: '1.1rem', height: '1.1rem', cursor: 'pointer' }}
+                  />
+                  <span>{district}</span>
+                </label>
+              ))}
+            </div>
+            {formData.districts.length === 0 && <div style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.5rem' }}>Please select at least one district.</div>}
+          </div>
+        )}
+
+        <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1.5rem', padding: '1rem' }} disabled={loading || (formData.targetSegment === 'LOCALIZED' && formData.districts.length === 0)}>
           <Send size={18} /> {loading ? 'Sending...' : 'Broadcast Notification'}
         </button>
       </form>

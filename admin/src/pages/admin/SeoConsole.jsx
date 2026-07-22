@@ -96,7 +96,7 @@ const SeoConsole = () => {
                 {seoTemplates.map(template => (
                   <div key={template.id} style={{ background: 'var(--bg-secondary)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <div style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '1rem', textTransform: 'capitalize', color: 'var(--primary)' }}>
-                      {template.pageType} Template
+                      {template.templateType || template.pageType || template.templateKey || 'Global'} Template
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -124,7 +124,7 @@ const SeoConsole = () => {
                       </div>
                       
                       <div className="form-group">
-                        <label>Meta Keywords Template</label>
+                        <label>Global Meta Keywords</label>
                         <input 
                           type="text" 
                           className="form-control" 
@@ -132,6 +132,26 @@ const SeoConsole = () => {
                           onChange={(e) => handleTemplateChange(template.id, 'keywordsTemplate', e.target.value)}
                           placeholder="e.g. news, {category}, {tags}, tamil news"
                         />
+                      </div>
+
+                      {/* Dynamic Google Search Preview */}
+                      <div className="form-group" style={{ marginTop: '0.5rem' }}>
+                        <label>Google Search Preview</label>
+                        <div style={{ padding: '1rem', background: document.documentElement.classList.contains('dark') ? '#202124' : '#fff', border: '1px solid var(--border-color)', borderRadius: '8px', boxShadow: '0 1px 6px rgba(32,33,36,.1)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                            <div style={{ width: '28px', height: '28px', background: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>K</div>
+                            <div>
+                              <div style={{ fontSize: '14px', color: document.documentElement.classList.contains('dark') ? '#dadce0' : '#202124', lineHeight: '1.2' }}>King 24x7</div>
+                              <div style={{ fontSize: '12px', color: document.documentElement.classList.contains('dark') ? '#bdc1c6' : '#5f6368', lineHeight: '1.2' }}>https://king24x7.com › {template.templateType || template.templateKey || 'page'}</div>
+                            </div>
+                          </div>
+                          <div style={{ fontSize: '20px', color: document.documentElement.classList.contains('dark') ? '#8ab4f8' : '#1a0dab', textDecoration: 'none', marginBottom: '0.25rem', fontWeight: 400 }}>
+                            {template.titleTemplate || 'SEO Title Preview'}
+                          </div>
+                          <div style={{ fontSize: '14px', color: document.documentElement.classList.contains('dark') ? '#bdc1c6' : '#4d5156', lineHeight: '1.58' }}>
+                            {template.descriptionTemplate || 'Meta description preview will appear here. This gives users a summary of what they will find when they click the link in search results.'}
+                          </div>
+                        </div>
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
