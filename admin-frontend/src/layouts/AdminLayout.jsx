@@ -47,9 +47,9 @@ const PUBLIC_SITE_URL = import.meta.env.VITE_PUBLIC_SITE_URL || 'https://kings-t
 const NAV_ITEMS = [
   { key: 'admin_panel',      label: 'Dashboard',         icon: LayoutDashboard, path: '/' },
   { key: 'add_post',         label: 'Add Post',           icon: PenSquare,       path: '/posts/add' },
-  { key: 'my_content',       label: 'My Content',         icon: FileText,        path: '/posts' },
+  { key: 'my_content',       label: 'My Content',         icon: FileText,        path: '/posts/my' },
   { key: 'manage_all_posts', label: 'All Posts',          icon: FileText,        path: '/posts' },
-  { key: 'content_review',   label: 'Content Review',     icon: ShieldCheck,     path: '/posts' },
+  { key: 'content_review',   label: 'Content Review',     icon: ShieldCheck,     path: '/posts/pending' },
   { key: 'navigation',       label: 'Navigation',         icon: Navigation,      path: '/navigation' },
   { key: 'pages',            label: 'Pages',              icon: BookOpen,        path: '/pages' },
   { key: 'rss_feeds',        label: 'RSS Feeds',          icon: Rss,             path: '/rss-feeds' },
@@ -155,7 +155,7 @@ function NavItem({ item, collapsed }) {
   return (
     <NavLink
       to={item.path}
-      end={item.path === '/'}
+      end={true}
       className={({ isActive }) =>
         `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
           isActive ? 'bg-[#B3732A] text-white' : 'text-gray-400 hover:bg-[#2b2b40] hover:text-white'

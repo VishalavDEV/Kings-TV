@@ -105,6 +105,7 @@ function AppRoutes() {
 
         {/* Post/Article management */}
         <Route path="posts" element={<PostsList />} />
+        <Route path="posts/my" element={<PostsList />} />
         <Route path="posts/add" element={<AddPost />} />
         <Route path="posts/edit/:id" element={<EditPost />} />
         <Route path="posts/pending" element={<PostsList />} />
