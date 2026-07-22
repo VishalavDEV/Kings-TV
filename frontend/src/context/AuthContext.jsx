@@ -93,6 +93,7 @@ export const AuthProvider = ({ children }) => {
     sessionStorage.removeItem('king24x7_token');
     sessionStorage.removeItem('king24x7_refresh_token');
     localStorage.removeItem('king24x7_session');
+    localStorage.removeItem('firebase_id_token');
   };
 
   const updateUserProfile = (updatedData) => {
