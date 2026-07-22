@@ -210,16 +210,16 @@ const Header = () => {
 
   const getDynamicNavItems = () => {
     if (menuItems && menuItems.length > 0) {
-      return menuItems.map(item => ({
+      return menuItems.filter(Boolean).map(item => ({
         id: item.id,
         path: item.linkUrl,
         label: lang === 'en' ? item.titleEn : item.titleTa,
-        subcategories: (item.subcategories || []).map(sub => ({
+        subcategories: (item.subcategories || []).filter(Boolean).map(sub => ({
           id: sub.id,
           path: sub.linkUrl,
           name: sub.titleEn,
           nameTa: sub.titleTa,
-          subcategories: (sub.subcategories || []).map(subsub => ({
+          subcategories: (sub.subcategories || []).filter(Boolean).map(subsub => ({
             id: subsub.id,
             path: subsub.linkUrl,
             name: subsub.titleEn,
