@@ -593,7 +593,6 @@ public class DataInitializer {
             seedMenu("நம்ம ஊர்", "Local Business Directory", "/directory", 1, regional.getId());
             seedMenu("வாழ்த்து", "Wishes", "/wishes", 2, regional.getId());
             seedMenu("இரங்கல்", "Obituaries", "/obituaries", 3, regional.getId());
-            seedMenu("வணிகம்", "Business Studies", "/business-studies", 4, regional.getId());
             seedMenu("வேலை", "Jobs", "/jobs", 5, regional.getId());
             seedMenu("தள்ளுபடி", "Classifieds", "/classifieds", 6, regional.getId());
 

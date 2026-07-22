@@ -55,7 +55,7 @@ public class SeoController {
         xml.append("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
 
         // Static Pages
-        String[] staticPages = { "", "/login", "/directory", "/classifieds", "/wishes", "/obituaries", "/jobs", "/business-studies", "/videos", "/web-stories" };
+        String[] staticPages = { "", "/login", "/directory", "/classifieds", "/wishes", "/obituaries", "/jobs", "/videos", "/web-stories" };
         for (String path : staticPages) {
             xml.append("  <url>\n");
             xml.append("    <loc>").append(baseUrl).append(path).append("</loc>\n");

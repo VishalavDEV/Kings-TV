@@ -85,7 +85,7 @@ const Header = () => {
 
 
 
-  const regionalPaths = ['/directory', '/wishes', '/obituaries', '/jobs', '/classifieds', '/business-studies', '/deals', '/rfq', '/my-rfqs'];
+  const regionalPaths = ['/directory', '/wishes', '/obituaries', '/jobs', '/classifieds', '/deals', '/rfq', '/my-rfqs'];
   const isRegionalPage = regionalPaths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
 
   const [timeStr, setTimeStr] = useState('');
@@ -312,7 +312,6 @@ const Header = () => {
         },
         { id: 'reg-wishes', slug: 'wishes', path: '/wishes', name: 'Wishes', nameTa: 'வாழ்த்து' },
         { id: 'reg-obituaries', slug: 'obituaries', path: '/obituaries', name: 'Obituaries', nameTa: 'இரங்கல்' },
-        { id: 'reg-business', slug: 'business-studies', path: '/business-studies', name: 'Business', nameTa: 'வணிகம்' },
         { id: 'reg-jobs', slug: 'jobs', path: '/jobs', name: 'Jobs', nameTa: 'வேலை' },
         { id: 'reg-classifieds', slug: 'classifieds', path: '/classifieds', name: 'Classifieds', nameTa: 'தள்ளுபடி' }
       ];
@@ -376,7 +375,6 @@ const Header = () => {
           },
           { id: 'reg-wishes', slug: 'wishes', path: '/wishes', name: 'Wishes', nameTa: 'வாழ்த்து' },
           { id: 'reg-obituaries', slug: 'obituaries', path: '/obituaries', name: 'Obituaries', nameTa: 'இரங்கல்' },
-          { id: 'reg-business', slug: 'business-studies', path: '/business-studies', name: 'Business', nameTa: 'வணிகம்' },
           { id: 'reg-jobs', slug: 'jobs', path: '/jobs', name: 'Jobs', nameTa: 'வேலை' },
           { id: 'reg-classifieds', slug: 'classifieds', path: '/classifieds', name: 'Classifieds', nameTa: 'தள்ளுபடி' }
         ]

@@ -910,9 +910,6 @@ const Home = () => {
       <div className="case-studies-widget" style={{ marginTop: '20px' }}>
         <div className="case-studies-header">
           <h4><i className="fas fa-briefcase" style={{ color: '#0057FF' }}></i> {lang === 'en' ? 'Business Case Studies' : 'வணிகக் கேஸ் ஸ்டடிஸ்'}</h4>
-          <Link to="/business-studies" className="view-all">
-            {lang === 'en' ? 'All' : 'அனைத்தும்'} <i className="fas fa-chevron-right" style={{ fontSize: '8px' }}></i>
-          </Link>
         </div>
         <div className="case-studies-grid">
           {caseStudies.map((study, idx) => (

@@ -24,7 +24,6 @@ import Classifieds from './pages/Classifieds';
 import Wishes from './pages/Wishes';
 import Obituaries from './pages/Obituaries';
 import Jobs from './pages/Jobs';
-import BusinessStudies from './pages/BusinessStudies';
 import ArticleDetail from './pages/ArticleDetail';
 import Category from './pages/Category';
 import TagArchive from './pages/TagArchive';
@@ -116,8 +115,6 @@ function AppContent() {
           <Route path="/obituaries.html" element={<Navigate to="/obituaries" replace />} />
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/jobs.html" element={<Navigate to="/jobs" replace />} />
-          <Route path="/business-studies" element={<BusinessStudies />} />
-          <Route path="/business-studies.html" element={<Navigate to="/business-studies" replace />} />
           <Route path="/category/:slug" element={<Category />} />
           <Route path="/category.html" element={<Category />} />
           <Route path="/videos" element={<Videos />} />
