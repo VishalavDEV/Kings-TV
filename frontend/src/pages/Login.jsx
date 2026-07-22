@@ -129,10 +129,22 @@ const Login = () => {
     }
 
     if (!firebaseAuth) {
-      // Fallback to simulated OTP
-      triggerToast(lang === 'en' ? 'Missing Firebase keys. Test OTP is: 123456' : 'Firebase விசைகள் இல்லை. சோதனை OTP: 123456', '#EF4444');
-      setPhoneOtpSent(true);
-      setPhoneOtpCountdown(60);
+      // Fallback to backend-driven SMS OTP!
+      const cleanPhone = phoneNumber.trim().replace(/[^0-9]/g, '');
+      authService.sendSmsOtp(cleanPhone)
+        .then((res) => {
+          setPhoneOtpSent(true);
+          setPhoneOtpCountdown(60);
+          if (res.sandbox) {
+            triggerToast(lang === 'en' ? `Gateway not configured. Test OTP: ${res.otpCode}` : `Gateway இல்லை. சோதனை OTP: ${res.otpCode}`, '#B3732A');
+          } else {
+            triggerToast(lang === 'en' ? 'Real-time SMS OTP sent successfully!' : 'நேரடி SMS OTP வெற்றிகரமாக அனுப்பப்பட்டது!');
+          }
+        })
+        .catch((err) => {
+          console.error("Backend SMS OTP request failed:", err);
+          triggerToast(err.message, '#EF4444');
+        });
       return;
     }
 
@@ -169,19 +181,12 @@ const Login = () => {
     e.preventDefault();
 
     if (!firebaseAuth || !window.confirmationResult) {
-      if (phoneOtp !== '123456') {
-        triggerToast(lang === 'en' ? 'Invalid OTP code! Use 123456 for testing.' : 'தவறான OTP குறியீடு! சோதனைக்கு 123456 ஐப் பயன்படுத்தவும்.', '#EF4444');
-        return;
-      }
-
       try {
         const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
-        const mockEmail = `phone_${cleanPhone}@king24x7.com`;
-        const mockName = `Phone User ${cleanPhone.slice(-4)}`;
+        const res = await authService.verifySmsOtp(cleanPhone, phoneOtp);
         
-        const res = await authService.googleLogin(mockEmail, mockName, '');
         login(res.user, res.accessToken, res.refreshToken, rememberMe);
-        triggerToast(lang === 'en' ? 'Successfully logged in with Phone (Sandbox)!' : 'தொலைபேசி மூலம் வெற்றிகரமாக உள்நுழைந்தீர்கள்!');
+        triggerToast(lang === 'en' ? 'Successfully logged in with verified Phone!' : 'தொலைபேசி மூலம் வெற்றிகரமாக உள்நுழைந்தீர்கள்!');
         
         const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
         if (res.user && adminRoles.includes(res.user.role)) {
@@ -197,6 +202,7 @@ const Login = () => {
           setTimeout(() => navigate(from, { state: redirectState }), 1200);
         }
       } catch (err) {
+        console.error("Backend SMS OTP verification failed:", err);
         triggerToast(err.message, '#EF4444');
       }
       return;
