@@ -3,28 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { LanguageContext } from '../context/LanguageContext';
 import { authService } from '../services/authService';
-import { initializeApp } from 'firebase/app';
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-
-// Firebase configuration from environment variables
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
-};
-
-let firebaseAuth = null;
-if (firebaseConfig.apiKey) {
-  try {
-    const app = initializeApp(firebaseConfig);
-    firebaseAuth = getAuth(app);
-  } catch (err) {
-    console.error("Firebase initialization error:", err);
-  }
-}
+import { auth as firebaseAuth, RecaptchaVerifier, signInWithPhoneNumber, GoogleAuthProvider, signInWithPopup } from '../utils/firebase';
 
 const Login = () => {
   const { login } = useContext(AuthContext);
@@ -45,7 +24,8 @@ const Login = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [phoneOtp, setPhoneOtp] = useState('');
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
-  const [phoneOtpCountdown, setPhoneOtpCountdown] = useState(60);
+  const [phoneOtpCountdown, setPhoneOtpCountdown] = useState(30);
+  const [sandboxOtp, setSandboxOtp] = useState('');
 
   useEffect(() => {
     if (location.state?.isRegister) {
@@ -129,10 +109,7 @@ const Login = () => {
     }
 
     if (!firebaseAuth) {
-      // Fallback to simulated OTP
-      triggerToast(lang === 'en' ? 'Missing Firebase keys. Test OTP is: 123456' : 'Firebase விசைகள் இல்லை. சோதனை OTP: 123456', '#EF4444');
-      setPhoneOtpSent(true);
-      setPhoneOtpCountdown(60);
+      triggerToast(lang === 'en' ? 'Firebase configuration is missing in .env. Please configure VITE_FIREBASE_* variables to send SMS.' : 'Firebase கட்டமைப்பு .env இல் இல்லை. SMS அனுப்ப VITE_FIREBASE_* மாறிகளை உள்ளமைக்கவும்.', '#EF4444');
       return;
     }
 
@@ -152,7 +129,7 @@ const Login = () => {
         .then((confirmationResult) => {
           window.confirmationResult = confirmationResult;
           setPhoneOtpSent(true);
-          setPhoneOtpCountdown(60);
+          setPhoneOtpCountdown(30);
           triggerToast(lang === 'en' ? 'Real-time SMS OTP sent successfully!' : 'நேரடி SMS OTP வெற்றிகரமாக அனுப்பப்பட்டது!');
         })
         .catch((error) => {
@@ -165,40 +142,32 @@ const Login = () => {
     }
   };
 
+  // Automatically trigger Send OTP once a valid 10-digit (or 12-digit with 91) phone number is entered
+  useEffect(() => {
+    if (loginMethod !== 'phone' || !phoneNumber || phoneOtpSent) return;
+
+    const cleanNum = phoneNumber.trim().replace(/[^0-9]/g, '');
+    const isIndiaLength = cleanNum.length === 10;
+    const isIndiaWithCountry = cleanNum.startsWith('91') && cleanNum.length === 12;
+
+    if (isIndiaLength || isIndiaWithCountry) {
+      const timer = setTimeout(() => {
+        handleSendPhoneOtp();
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [phoneNumber, phoneOtpSent, loginMethod]);
+
   const handlePhoneAuth = async (e) => {
     e.preventDefault();
 
-    if (!firebaseAuth || !window.confirmationResult) {
-      if (phoneOtp !== '123456') {
-        triggerToast(lang === 'en' ? 'Invalid OTP code! Use 123456 for testing.' : 'தவறான OTP குறியீடு! சோதனைக்கு 123456 ஐப் பயன்படுத்தவும்.', '#EF4444');
-        return;
-      }
+    if (!phoneOtpSent) {
+      handleSendPhoneOtp();
+      return;
+    }
 
-      try {
-        const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
-        const mockEmail = `phone_${cleanPhone}@king24x7.com`;
-        const mockName = `Phone User ${cleanPhone.slice(-4)}`;
-        
-        const res = await authService.googleLogin(mockEmail, mockName, '');
-        login(res.user, res.accessToken, res.refreshToken, rememberMe);
-        triggerToast(lang === 'en' ? 'Successfully logged in with Phone (Sandbox)!' : 'தொலைபேசி மூலம் வெற்றிகரமாக உள்நுழைந்தீர்கள்!');
-        
-        const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
-        if (res.user && adminRoles.includes(res.user.role)) {
-          const getAdminPortalUrl = () => {
-            return `${window.location.origin}/admin/layout`;
-          };
-          setTimeout(() => {
-            window.location.href = getAdminPortalUrl();
-          }, 1200);
-        } else {
-          const from = location.state?.from || '/';
-          const redirectState = location.state?.jobRole ? { openJobRole: location.state.jobRole } : null;
-          setTimeout(() => navigate(from, { state: redirectState }), 1200);
-        }
-      } catch (err) {
-        triggerToast(err.message, '#EF4444');
-      }
+    if (!firebaseAuth || !window.confirmationResult) {
+      triggerToast(lang === 'en' ? 'Firebase Auth is not initialized or OTP has not been sent yet.' : 'Firebase Auth துவக்கப்படவில்லை அல்லது இன்னும் OTP அனுப்பப்படவில்லை.', '#EF4444');
       return;
     }
 
@@ -210,6 +179,13 @@ const Login = () => {
           const cleanPhone = user.phoneNumber.replace(/[^0-9]/g, '');
           const mockEmail = `phone_${cleanPhone}@king24x7.com`;
           const mockName = `Phone User ${cleanPhone.slice(-4)}`;
+          
+          try {
+            const idToken = await user.getIdToken();
+            localStorage.setItem('firebase_id_token', idToken);
+          } catch (tokenErr) {
+            console.error("Failed to retrieve Firebase ID Token:", tokenErr);
+          }
           
           const res = await authService.googleLogin(mockEmail, mockName, '');
           login(res.user, res.accessToken, res.refreshToken, rememberMe);
@@ -231,7 +207,11 @@ const Login = () => {
         })
         .catch((error) => {
           console.error("Firebase OTP confirmation failed:", error);
-          triggerToast(lang === 'en' ? 'Invalid verification code!' : 'தவறான சரிபார்ப்புக் குறியீடு!', '#EF4444');
+          if (error.code === 'auth/code-expired') {
+            triggerToast(lang === 'en' ? 'OTP expired. Please request a new OTP.' : 'OTP காலாவதியானது. புதிய OTP ஐக் கோரவும்.', '#EF4444');
+          } else {
+            triggerToast(lang === 'en' ? 'Invalid verification code!' : 'தவறான சரிபார்ப்புக் குறியீடு!', '#EF4444');
+          }
         });
     } catch (err) {
       triggerToast(err.message, '#EF4444');
@@ -762,7 +742,7 @@ const Login = () => {
                         />
                       </div>
                       <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>Simulated OTP is: 123456</span>
+                        {sandboxOtp && <span>Simulated OTP is: {sandboxOtp}</span>}
                         {phoneOtpCountdown > 0 ? (
                           <span>Resend in {phoneOtpCountdown}s</span>
                         ) : (

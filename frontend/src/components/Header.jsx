@@ -1200,22 +1200,13 @@ const Header = () => {
           const isActive = (item.id === 'regional' && isRegionalPage) ||
                            location.pathname === item.path ||
                            (item.path !== '/' && location.pathname.startsWith(item.path));
-          const hasSubs = item.subcategories && item.subcategories.length > 0;
-          const isExpanded = mobileExpandedCat === item.id;
-
-          const toggleExpand = (e) => {
-            if (hasSubs) {
-              e.preventDefault();
-              setMobileExpandedCat(isExpanded ? null : item.id);
-            }
-          };
 
           return (
             <li key={idx} style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Link
                   to={item.path}
-                  onClick={hasSubs ? toggleExpand : onLinkClick}
+                  onClick={onLinkClick}
                   style={{
                     color: isActive ? 'var(--primary, #B3732A)' : 'inherit',
                     textDecoration: 'none',
@@ -1228,66 +1219,7 @@ const Header = () => {
                 >
                   {item.label}
                 </Link>
-                {hasSubs && (
-                  <button
-                    onClick={toggleExpand}
-                    style={{ background: 'transparent', border: 'none', color: 'inherit', padding: '6px 12px', cursor: 'pointer' }}
-                  >
-                    <i className={`fas ${isExpanded ? 'fa-chevron-up' : 'fa-chevron-down'}`} style={{ fontSize: '12px' }}></i>
-                  </button>
-                )}
               </div>
-
-              {/* Collapsible Subcategories list */}
-              {hasSubs && isExpanded && (
-                <ul style={{ paddingLeft: '16px', listStyle: 'none', margin: '4px 0', display: 'flex', flexDirection: 'column', gap: '10px', borderLeft: '1px solid var(--border-color)' }}>
-                  {item.subcategories.map(sub => (
-                    <li key={sub.id}>
-                      <Link
-                        to={sub.path || `/category/${sub.slug}`}
-                        onClick={onLinkClick}
-                        style={{
-                          color: 'inherit',
-                          textDecoration: 'none',
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          display: 'block',
-                          padding: '2px 0'
-                        }}
-                      >
-                        {lang === 'en' ? getSubcatEn(sub) : sub.nameTa}
-                      </Link>
-
-                      {/* Nested sub-subcategories (AI -> ChatGPT) */}
-                      {sub.subcategories && sub.subcategories.length > 0 && (
-                        <ul style={{ paddingLeft: '12px', listStyle: 'none', margin: '4px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {sub.subcategories.map(child => {
-                            const isChildActive = location.pathname === child.path;
-                            return (
-                              <li key={child.id}>
-                                <Link
-                                  to={child.path || `/category/${child.slug}`}
-                                  onClick={onLinkClick}
-                                  style={{
-                                    color: isChildActive ? 'var(--primary, #B3732A)' : 'var(--text-muted, #71717A)',
-                                    textDecoration: 'none',
-                                    fontSize: '12px',
-                                    fontWeight: '600',
-                                    display: 'block',
-                                    padding: '2px 0'
-                                  }}
-                                >
-                                  {lang === 'en' ? getSubcatEn(child) : child.nameTa}
-                                </Link>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
             </li>
           );
         })}

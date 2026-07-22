@@ -112,5 +112,31 @@ export const authService = {
       throw new Error(err.message || 'Password reset failed');
     }
     return res.json();
+  },
+
+  async sendSmsOtp(phoneNumber) {
+    const res = await fetch(`${API_BASE}/auth/send-sms-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phoneNumber })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Failed to request OTP');
+    }
+    return res.json();
+  },
+
+  async verifySmsOtp(phoneNumber, otpCode) {
+    const res = await fetch(`${API_BASE}/auth/verify-sms-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phoneNumber, otpCode })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'OTP verification failed');
+    }
+    return res.json();
   }
 };

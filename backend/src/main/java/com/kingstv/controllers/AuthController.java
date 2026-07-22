@@ -55,6 +55,12 @@ public class AuthController {
     @Autowired
     private LoginAttemptService loginAttemptService;
 
+    @Autowired
+    private com.kingstv.services.SystemConfigService systemConfigService;
+
+    @Autowired
+    private com.kingstv.services.SmsService smsService;
+
     private final Map<String, String> temp2faSessions = new ConcurrentHashMap<>();
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
@@ -316,6 +322,81 @@ public class AuthController {
     @PostMapping("/facebook")
     public ResponseEntity<?> facebookLogin(@RequestBody Map<String, String> request) {
         return processSocialLogin(request.get("email"), request.get("name"), request.get("profileImage"), "FACEBOOK");
+    }
+
+    @PostMapping("/send-sms-otp")
+    public ResponseEntity<?> sendSmsOtp(@RequestBody Map<String, String> request) {
+        String phoneNumber = request.get("phoneNumber");
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Phone number is required"));
+        }
+
+        String cleanPhone = phoneNumber.replaceAll("[^0-9]", "");
+        if (cleanPhone.length() < 10) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid phone number"));
+        }
+
+        // Generate a 6-digit OTP
+        String otp = String.format("%06d", new Random().nextInt(1000000));
+
+        // Use cleanPhone to save OTP in password_reset_otps table
+        String lookupKey = "phone_" + cleanPhone;
+        List<PasswordResetOtp> existingOtps = otpRepository.findByEmail(lookupKey);
+        if (!existingOtps.isEmpty()) {
+            otpRepository.deleteAll(existingOtps);
+        }
+
+        PasswordResetOtp resetOtp = new PasswordResetOtp();
+        resetOtp.setEmail(lookupKey);
+        resetOtp.setOtpCode(otp);
+        resetOtp.setExpiryTime(LocalDateTime.now().plusMinutes(5));
+        resetOtp.setIsVerified(false);
+        otpRepository.save(resetOtp);
+
+        boolean sent = smsService.sendOtpSms(cleanPhone, otp);
+
+        Map<String, Object> response = new HashMap<>();
+        if (sent) {
+            response.put("message", "SMS OTP sent successfully!");
+            response.put("sandbox", false);
+        } else {
+            response.put("message", "SMS Gateway not configured. OTP logged successfully.");
+            response.put("sandbox", true);
+            response.put("otpCode", otp); // return OTP code to frontend for sandbox testing
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/verify-sms-otp")
+    public ResponseEntity<?> verifySmsOtp(@RequestBody Map<String, String> request) {
+        String phoneNumber = request.get("phoneNumber");
+        String otp = request.get("otpCode");
+
+        if (phoneNumber == null || otp == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Phone number and OTP code are required"));
+        }
+
+        String cleanPhone = phoneNumber.replaceAll("[^0-9]", "");
+        String lookupKey = "phone_" + cleanPhone;
+
+        Optional<PasswordResetOtp> otpOpt = otpRepository.findByEmailAndOtpCode(lookupKey, otp);
+        if (otpOpt.isEmpty() || otpOpt.get().getExpiryTime().isBefore(LocalDateTime.now())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Invalid or expired OTP code"));
+        }
+
+        PasswordResetOtp resetOtp = otpOpt.get();
+        resetOtp.setIsVerified(true);
+        otpRepository.save(resetOtp);
+
+        // Delete verified OTP to prevent reuse
+        otpRepository.delete(resetOtp);
+
+        // Perform login/registration
+        String mockEmail = "phone_" + cleanPhone + "@king24x7.com";
+        String mockName = "Phone User " + (cleanPhone.length() > 4 ? cleanPhone.substring(cleanPhone.length() - 4) : cleanPhone);
+        
+        return processSocialLogin(mockEmail, mockName, null, "PHONE");
     }
 
     @PostMapping("/forgot-password")

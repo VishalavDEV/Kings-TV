@@ -12,6 +12,8 @@ import { AuthProvider } from './context/AuthContext';
 import DashboardLayout from './components/DashboardLayout';
 import OfflineBanner from './components/OfflineBanner';
 
+import ProtectedRoute from './components/ProtectedRoute';
+
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -101,7 +103,11 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/login.html" element={<Navigate to="/login" replace />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } />
           <Route path="/directory" element={<BizDirectoryMain />} />
           <Route path="/directory.html" element={<Navigate to="/directory" replace />} />
           <Route path="/nfc" element={<Navigate to="/directory/dashboard" replace />} />
@@ -129,9 +135,21 @@ function AppContent() {
           <Route path="/live-tv" element={<LiveTv />} />
           <Route path="/weather" element={<Weather />} />
           <Route path="/careers" element={<Careers />} />
-          <Route path="/directory/register" element={<BizDirectoryRegister />} />
-          <Route path="/directory/dashboard" element={<BizDirectoryDashboard />} />
-          <Route path="/my-rfqs" element={<MyRfqs />} />
+          <Route path="/directory/register" element={
+            <ProtectedRoute>
+              <BizDirectoryRegister />
+            </ProtectedRoute>
+          } />
+          <Route path="/directory/dashboard" element={
+            <ProtectedRoute>
+              <BizDirectoryDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-rfqs" element={
+            <ProtectedRoute>
+              <MyRfqs />
+            </ProtectedRoute>
+          } />
            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-use" element={<TermsOfUse />} />
           <Route path="/maintenance" element={<Maintenance />} />
