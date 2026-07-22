@@ -46,6 +46,7 @@ const Login = () => {
   const [phoneOtp, setPhoneOtp] = useState('');
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
   const [phoneOtpCountdown, setPhoneOtpCountdown] = useState(60);
+  const [sandboxOtp, setSandboxOtp] = useState('');
 
   useEffect(() => {
     if (location.state?.isRegister) {
@@ -136,8 +137,10 @@ const Login = () => {
           setPhoneOtpSent(true);
           setPhoneOtpCountdown(60);
           if (res.sandbox) {
+            setSandboxOtp(res.otpCode);
             triggerToast(lang === 'en' ? `Gateway not configured. Test OTP: ${res.otpCode}` : `Gateway இல்லை. சோதனை OTP: ${res.otpCode}`, '#B3732A');
           } else {
+            setSandboxOtp('');
             triggerToast(lang === 'en' ? 'Real-time SMS OTP sent successfully!' : 'நேரடி SMS OTP வெற்றிகரமாக அனுப்பப்பட்டது!');
           }
         })
@@ -768,7 +771,7 @@ const Login = () => {
                         />
                       </div>
                       <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>Simulated OTP is: 123456</span>
+                        <span>{sandboxOtp ? `Simulated OTP is: ${sandboxOtp}` : 'Simulated OTP is: 123456'}</span>
                         {phoneOtpCountdown > 0 ? (
                           <span>Resend in {phoneOtpCountdown}s</span>
                         ) : (
