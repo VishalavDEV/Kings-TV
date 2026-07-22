@@ -15,8 +15,8 @@ export let activeAiConfig = {
 };
 
 export const getGeminiUrl = () => {
-  const model = activeAiConfig.model || 'gemini-2.0-flash';
-  const apiKey = activeAiConfig.apiKey || '';
+  const model = activeAiConfig.model || localStorage.getItem('ai.llm_model') || 'gemini-2.0-flash';
+  const apiKey = activeAiConfig.apiKey || localStorage.getItem('ai.llm_api_key') || localStorage.getItem('ai_llm_api_key') || '';
   if (activeAiConfig.apiUrl) {
     return `${activeAiConfig.apiUrl}?key=${apiKey}`;
   }
@@ -24,8 +24,11 @@ export const getGeminiUrl = () => {
 };
 
 const callGemini = async (prompt) => {
+  const apiKey = activeAiConfig.apiKey || localStorage.getItem('ai.llm_api_key') || localStorage.getItem('ai_llm_api_key') || '';
+  if (!apiKey) {
+    throw new Error('API Key is missing. Please enter your Gemini API Key in System Settings > AI Configuration.');
+  }
   const url = getGeminiUrl();
-  const apiKey = activeAiConfig.apiKey || '';
   const headers = { 'Content-Type': 'application/json' };
   if (apiKey) {
     headers['X-goog-api-key'] = apiKey;
@@ -39,7 +42,7 @@ const callGemini = async (prompt) => {
     const errorData = await res.json().catch(() => ({}));
     let errorMsg = errorData?.error?.message || `HTTP ${res.status}`;
     if (res.status === 429) {
-      errorMsg = 'Rate limit / Free tier quota exceeded (HTTP 429). Please wait 60 seconds or generate a key on a project with active billing quota.';
+      errorMsg = 'Quota/Rate Limit Exceeded (HTTP 429). Please wait 60 seconds or generate a key on a project with free tier quota.';
     }
     console.error('Gemini API Error:', errorMsg);
     throw new Error(`Gemini ${res.status}: ${errorMsg}`);
@@ -1186,8 +1189,9 @@ Article: "${textToProcess}"`;
       const result = await callGemini(prompt);
       setAiResult(result);
     } catch (err) {
+      console.error("Gemini Error:", err);
       const fallback = clientSideAiFallback(aiAction, textToProcess, form.titleEn || form.titleTa);
-      setAiResult('ℹ️ [Local Analysis — Gemini failed]\n\n' + fallback);
+      setAiResult(`ℹ️ [Local Analysis — Gemini error: ${err.message || 'Call failed'}]\n\n` + fallback);
     } finally {
       setAiLoading(false);
     }
