@@ -1181,7 +1181,6 @@ const NewsEditor = () => {
                 <input style={inputStyle} value={form.canonicalUrl}
                   onChange={e => set('canonicalUrl', e.target.value)} placeholder="https://king24x7.com/news/slug" />
               </div>
-              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <label style={labelStyle}>Readability Score (0-100)</label>

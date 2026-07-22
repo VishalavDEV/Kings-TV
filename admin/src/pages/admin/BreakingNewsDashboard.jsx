@@ -16,8 +16,6 @@ const BreakingNewsCard = ({ item, onToggle, onDelete, onEdit }) => (
     opacity: item.status === 'published' ? 1 : 0.65,
     cursor: "pointer"
   }} onClick={() => onEdit && onEdit(item)}>
-    opacity: item.isActive ? 1 : 0.65,
-  }}>
     <div style={{ flex: 1 }}>
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
         {item.status === 'published' && <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#EF4444", display: "inline-block" }} />}
