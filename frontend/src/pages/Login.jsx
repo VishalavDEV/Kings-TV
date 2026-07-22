@@ -109,24 +109,7 @@ const Login = () => {
     }
 
     if (!firebaseAuth) {
-      // Fallback to backend-driven SMS OTP!
-      const cleanPhone = phoneNumber.trim().replace(/[^0-9]/g, '');
-      authService.sendSmsOtp(cleanPhone)
-        .then((res) => {
-          setPhoneOtpSent(true);
-          setPhoneOtpCountdown(30);
-          if (res.sandbox) {
-            setSandboxOtp(res.otpCode);
-            triggerToast(lang === 'en' ? `Gateway not configured. Test OTP: ${res.otpCode}` : `Gateway இல்லை. சோதனை OTP: ${res.otpCode}`, '#B3732A');
-          } else {
-            setSandboxOtp('');
-            triggerToast(lang === 'en' ? 'Real-time SMS OTP sent successfully!' : 'நேரடி SMS OTP வெற்றிகரமாக அனுப்பப்பட்டது!');
-          }
-        })
-        .catch((err) => {
-          console.error("Backend SMS OTP request failed:", err);
-          triggerToast(err.message, '#EF4444');
-        });
+      triggerToast(lang === 'en' ? 'Firebase configuration is missing in .env. Please configure VITE_FIREBASE_* variables to send SMS.' : 'Firebase கட்டமைப்பு .env இல் இல்லை. SMS அனுப்ப VITE_FIREBASE_* மாறிகளை உள்ளமைக்கவும்.', '#EF4444');
       return;
     }
 
@@ -163,30 +146,7 @@ const Login = () => {
     e.preventDefault();
 
     if (!firebaseAuth || !window.confirmationResult) {
-      try {
-        const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
-        const res = await authService.verifySmsOtp(cleanPhone, phoneOtp);
-        
-        login(res.user, res.accessToken, res.refreshToken, rememberMe);
-        triggerToast(lang === 'en' ? 'Successfully logged in with verified Phone!' : 'தொலைபேசி மூலம் வெற்றிகரமாக உள்நுழைந்தீர்கள்!');
-        
-        const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
-        if (res.user && adminRoles.includes(res.user.role)) {
-          const getAdminPortalUrl = () => {
-            return `${window.location.origin}/admin/layout`;
-          };
-          setTimeout(() => {
-            window.location.href = getAdminPortalUrl();
-          }, 1200);
-        } else {
-          const from = location.state?.from || '/';
-          const redirectState = location.state?.jobRole ? { openJobRole: location.state.jobRole } : null;
-          setTimeout(() => navigate(from, { state: redirectState }), 1200);
-        }
-      } catch (err) {
-        console.error("Backend SMS OTP verification failed:", err);
-        triggerToast(err.message, '#EF4444');
-      }
+      triggerToast(lang === 'en' ? 'Firebase Auth is not initialized or OTP has not been sent yet.' : 'Firebase Auth துவக்கப்படவில்லை அல்லது இன்னும் OTP அனுப்பப்படவில்லை.', '#EF4444');
       return;
     }
 
@@ -761,7 +721,7 @@ const Login = () => {
                         />
                       </div>
                       <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>{sandboxOtp ? `Simulated OTP is: ${sandboxOtp}` : 'Simulated OTP is: 123456'}</span>
+                        {sandboxOtp && <span>Simulated OTP is: {sandboxOtp}</span>}
                         {phoneOtpCountdown > 0 ? (
                           <span>Resend in {phoneOtpCountdown}s</span>
                         ) : (
