@@ -12,7 +12,7 @@ const ContactUs = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    fetchApi('/pages/contact')
+    fetchApi(`/public/pages/contact?lang=${lang}`)
       .then(res => {
         setData(res);
         setLoading(false);
@@ -21,7 +21,7 @@ const ContactUs = () => {
         console.warn("Could not fetch contact page from backend, falling back", err);
         setLoading(false);
       });
-  }, []);
+  }, [lang]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -30,6 +30,7 @@ const ContactUs = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setSubmitted(true);
+    // Mimic enquiry dispatch to existing Phase 6 endpoint if configured, or print success
     setTimeout(() => {
       setSubmitted(false);
       setFormData({ name: '', email: '', phone: '', message: '' });
@@ -44,12 +45,20 @@ const ContactUs = () => {
     );
   }
 
-  const pageTitle = data ? (lang === 'en' ? data.titleEn : data.titleTa) : (lang === 'en' ? 'Contact Us' : 'தொடர்புக்கு');
-  const pageContent = data ? (lang === 'en' ? data.contentEn : data.contentTa) : '';
-  const contactPhone = data?.contactPhone || '+91 98765 43210';
-  const contactEmail = data?.contactEmail || 'contact@kingstv.com';
-  const contactAddress = data?.contactAddress || '123, Anna Salai, Chennai, Tamil Nadu, India';
-  const mapUrl = data?.googleMapUrl || 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3886.8522384501725!2d80.25828457593673!3d13.044983013280456!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a52663b6a95fdf5%3A0x6b63d76e737c355c!2sAnna%20Salai%2C%20Chennai%2C%20Tamil%20Nadu!5e0!3m2!1sen!2sin!4v1720420000000!5m2!1sen!2sin';
+  const pageTitle = data?.title || (lang === 'en' ? 'Contact Us' : 'தொடர்புக்கு');
+  const pageContent = data?.content || '';
+
+  // Extract phone numbers and email addresses lists
+  let phones = [];
+  let emails = [];
+  try { phones = data?.phoneNumbers ? JSON.parse(data.phoneNumbers) : []; } catch(e) {}
+  try { emails = data?.emailAddresses ? JSON.parse(data.emailAddresses) : []; } catch(e) {}
+
+  if (phones.length === 0) phones = ['+91 98765 43210'];
+  if (emails.length === 0) emails = ['contact@kingstv.com'];
+
+  const officeHours = data?.officeHours || 'Mon - Sat: 9:00 AM - 6:00 PM';
+  const mapUrl = data?.embeddedMap || 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3886.8522384501725!2d80.25828457593673!3d13.044983013280456!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a52663b6a95fdf5%3A0x6b63d76e737c355c!2sAnna%20Salai%2C%20Chennai%2C%20Tamil%20Nadu!5e0!3m2!1sen!2sin!4v1720420000000!5m2!1sen!2sin';
 
   return (
     <div className="container" style={{ marginTop: '30px', marginBottom: '50px' }}>
@@ -61,54 +70,67 @@ const ContactUs = () => {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
         <section style={{ background: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
-          <h1 style={{ marginBottom: '15px', color: '#111', fontSize: '2rem', borderBottom: '3px solid var(--primary-color, #3B82F6)', display: 'inline-block', paddingBottom: '5px' }}>
+          <h1 style={{ marginBottom: '15px', color: '#111', fontSize: '2rem', borderBottom: '3px solid #B3732A', display: 'inline-block', paddingBottom: '5px' }}>
             {pageTitle}
           </h1>
-          <p style={{ lineHeight: '1.8', fontSize: '1.1rem', color: '#444', whiteSpace: 'pre-line' }}>
-            {pageContent}
-          </p>
+          <div 
+            style={{ lineHeight: '1.8', fontSize: '1.1rem', color: '#444' }}
+            dangerouslySetInnerHTML={{ __html: pageContent }}
+          />
         </section>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px' }}>
           {/* Contact Details Card */}
           <div style={{ background: '#fff', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '10px', margin: '0' }}>
-              <i className="fas fa-address-book" style={{ marginRight: '10px', color: '#3B82F6' }}></i>
+              <i className="fas fa-address-book" style={{ marginRight: '10px', color: '#B3732A' }}></i>
               {lang === 'en' ? 'Reach Us' : 'எங்களை அடைய'}
             </h3>
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3B82F6' }}>
+            {/* Phone List */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#FFFBEB', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B3732A', shrink: 0 }}>
                 <i className="fas fa-phone-alt"></i>
               </div>
               <div>
-                <strong style={{ display: 'block', fontSize: '0.9rem', color: '#666' }}>{lang === 'en' ? 'Phone Number' : 'தொலைபேசி எண்'}</strong>
-                <a href={`tel:${contactPhone}`} style={{ color: '#111', textDecoration: 'none', fontWeight: '500' }}>{contactPhone}</a>
+                <strong style={{ display: 'block', fontSize: '0.9rem', color: '#666' }}>{lang === 'en' ? 'Phone Numbers' : 'தொலைபேசி எண்கள்'}</strong>
+                {phones.map((phone, i) => (
+                  <div key={i}>
+                    <a href={`tel:${phone}`} style={{ color: '#111', textDecoration: 'none', fontWeight: '500', display: 'block', marginTop: '2px' }}>{phone}</a>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3B82F6' }}>
+            {/* Email List */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#FFFBEB', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B3732A', shrink: 0 }}>
                 <i className="fas fa-envelope"></i>
               </div>
               <div>
-                <strong style={{ display: 'block', fontSize: '0.9rem', color: '#666' }}>{lang === 'en' ? 'Email Address' : 'மின்னஞ்சல் முகவரி'}</strong>
-                <a href={`mailto:${contactEmail}`} style={{ color: '#111', textDecoration: 'none', fontWeight: '500' }}>{contactEmail}</a>
+                <strong style={{ display: 'block', fontSize: '0.9rem', color: '#666' }}>{lang === 'en' ? 'Email Addresses' : 'மின்னஞ்சல் முகவரிகள்'}</strong>
+                {emails.map((email, i) => (
+                  <div key={i}>
+                    <a href={`mailto:${email}`} style={{ color: '#111', textDecoration: 'none', fontWeight: '500', display: 'block', marginTop: '2px' }}>{email}</a>
+                  </div>
+                ))}
               </div>
             </div>
 
+            {/* Office Hours */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3B82F6' }}>
-                <i className="fas fa-map-marker-alt"></i>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#FFFBEB', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B3732A', shrink: 0 }}>
+                <i className="fas fa-clock"></i>
               </div>
               <div>
-                <strong style={{ display: 'block', fontSize: '0.9rem', color: '#666' }}>{lang === 'en' ? 'Headquarters' : 'தலைமையகம்'}</strong>
-                <span style={{ color: '#111', fontWeight: '500', lineHeight: '1.4' }}>{contactAddress}</span>
+                <strong style={{ display: 'block', fontSize: '0.9rem', color: '#666' }}>{lang === 'en' ? 'Office Hours' : 'அலுவலக நேரம்'}</strong>
+                <span style={{ color: '#111', fontWeight: '500' }}>{officeHours}</span>
               </div>
             </div>
 
+            {/* Map Frame */}
             {mapUrl && (
-              <div style={{ width: '100%', height: '200px', borderRadius: '8px', overflow: 'hidden', marginTop: '10px' }}>
+              <div style={{ width: '100%', height: '220px', borderRadius: '8px', overflow: 'hidden', marginTop: '10px' }}>
                 <iframe
                   title="Google Maps Location"
                   src={mapUrl}
@@ -125,7 +147,7 @@ const ContactUs = () => {
           {/* Contact Form Card */}
           <div style={{ background: '#fff', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
             <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '20px', marginTop: '0' }}>
-              <i className="fas fa-paper-plane" style={{ marginRight: '10px', color: '#3B82F6' }}></i>
+              <i className="fas fa-paper-plane" style={{ marginRight: '10px', color: '#B3732A' }}></i>
               {lang === 'en' ? 'Send a Message' : 'செய்தி அனுப்பவும்'}
             </h3>
 
@@ -196,7 +218,7 @@ const ContactUs = () => {
                   style={{
                     padding: '12px',
                     borderRadius: '6px',
-                    background: '#3B82F6',
+                    background: '#B3732A',
                     color: 'white',
                     border: 'none',
                     fontWeight: '700',

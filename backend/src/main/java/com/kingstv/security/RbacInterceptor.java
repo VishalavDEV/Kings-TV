@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -28,6 +29,46 @@ import java.util.stream.Collectors;
 @Aspect
 @Component
 public class RbacInterceptor {
+
+    @Autowired
+    private com.kingstv.repository.SecurityEventRepository securityEventRepository;
+
+    private String getClientIp() {
+        try {
+            org.springframework.web.context.request.ServletRequestAttributes attrs = 
+                (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                HttpServletRequest request = attrs.getRequest();
+                String xff = request.getHeader("X-Forwarded-For");
+                return xff != null ? xff.split(",")[0].trim() : request.getRemoteAddr();
+            }
+        } catch (Exception ignored) {}
+        return "unknown";
+    }
+
+    private void logPermissionDenied(Authentication auth, String requiredDetail) {
+        try {
+            Long userId = null;
+            String email = "unknown";
+            if (auth != null) {
+                email = auth.getName();
+                Object details = auth.getDetails();
+                if (details instanceof Long) {
+                    userId = (Long) details;
+                }
+            }
+            com.kingstv.models.SecurityEvent event = new com.kingstv.models.SecurityEvent(
+                "permission_denied",
+                "high",
+                "Access denied for user " + email + ". " + requiredDetail,
+                userId,
+                getClientIp()
+            );
+            securityEventRepository.save(event);
+        } catch (Exception e) {
+            System.err.println("Failed to log permission denied event: " + e.getMessage());
+        }
+    }
 
     @Around("@annotation(requiresPermission)")
     public Object checkPermission(ProceedingJoinPoint joinPoint, RequiresPermission requiresPermission) throws Throwable {
@@ -54,6 +95,7 @@ public class RbacInterceptor {
         if (!requiredPermission.isEmpty()) {
             String permAuthority = "PERM_" + requiredPermission;
             if (!userAuthorities.contains(permAuthority)) {
+                logPermissionDenied(auth, "Required permission: " + requiredPermission);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("message", "Access denied. Required permission: " + requiredPermission,
                                      "error", "FORBIDDEN"));
@@ -72,6 +114,7 @@ public class RbacInterceptor {
                 }
             }
             if (!hasRole) {
+                logPermissionDenied(auth, "Required roles: " + Arrays.toString(anyOfRoles));
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("message", "Access denied. Required roles: " + Arrays.toString(anyOfRoles),
                                      "error", "FORBIDDEN"));

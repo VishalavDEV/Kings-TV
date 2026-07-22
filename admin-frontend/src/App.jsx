@@ -18,6 +18,19 @@ import Payouts from './pages/rewards/Payouts';
 import AddPayout from './pages/rewards/AddPayout';
 import Pageviews from './pages/rewards/Pageviews';
 import AdSpaces from './pages/ads/AdSpaces';
+import Advertisers from './pages/ads/Advertisers';
+import Campaigns from './pages/ads/Campaigns';
+import AdSlots from './pages/ads/AdSlots';
+import AdsList from './pages/ads/AdsList';
+import AdAnalytics from './pages/ads/AdAnalytics';
+
+// Audit & Security
+import AuditLogs from './pages/audit/AuditLogs';
+import LoginLogs from './pages/audit/LoginLogs';
+import UserActivity from './pages/audit/UserActivity';
+import SecurityEvents from './pages/audit/SecurityEvents';
+import ApiLogs from './pages/audit/ApiLogs';
+import FailedRequests from './pages/audit/FailedRequests';
 
 // Comments, Contact, Newsletter
 import Comments from './pages/Comments';
@@ -66,6 +79,7 @@ import AdminRfq from './pages/AdminRfq';
 import AdminObituariesWishes from './pages/AdminObituariesWishes';
 import AdminGallery from './pages/AdminGallery';
 import AdminPages from './pages/AdminPages';
+import SpecialPageEdit from './pages/pages/SpecialPageEdit';
 import AdminPolls from './pages/AdminPolls';
 import AdminWidgets from './pages/AdminWidgets';
 import AdminNavigation from './pages/AdminNavigation';
@@ -132,6 +146,7 @@ function AppRoutes() {
         {/* Missing Core Pages */}
         <Route path="gallery" element={<AdminGallery />} />
         <Route path="pages" element={<AdminPages />} />
+        <Route path="pages/special/:pageType" element={<SpecialPageEdit />} />
         <Route path="polls" element={<AdminPolls />} />
         <Route path="widgets" element={<AdminWidgets />} />
         <Route path="navigation-builder" element={<AdminNavigation />} />
@@ -177,8 +192,23 @@ function AppRoutes() {
         <Route path="pageviews" element={<Pageviews />} />
 
         {/* Ad Spaces */}
-        <Route path="ads" element={<AdSpaces />} />
-        <Route path="ad-spaces" element={<Navigate to="/ads" replace />} />
+        <Route path="ads" element={<Navigate to="/ads/advertisers" replace />} />
+        <Route path="ads/advertisers" element={<Advertisers />} />
+        <Route path="ads/campaigns" element={<Campaigns />} />
+        <Route path="ads/slots" element={<AdSlots />} />
+        <Route path="ads/banner" element={<AdsList type="banner" />} />
+        <Route path="ads/sidebar" element={<AdsList type="sidebar" />} />
+        <Route path="ads/popup" element={<AdsList type="popup" />} />
+        <Route path="ads/analytics" element={<AdAnalytics />} />
+        <Route path="ad-spaces" element={<Navigate to="/ads/advertisers" replace />} />
+
+        {/* Audit & Security */}
+        <Route path="audit/logs" element={<AuditLogs />} />
+        <Route path="audit/logins" element={<LoginLogs />} />
+        <Route path="audit/activity" element={<UserActivity />} />
+        <Route path="audit/security-events" element={<SecurityEvents />} />
+        <Route path="audit/api-logs" element={<ApiLogs />} />
+        <Route path="audit/failed" element={<FailedRequests />} />
 
         {/* SEO Tools */}
         <Route path="seo" element={<SeoTools />} />

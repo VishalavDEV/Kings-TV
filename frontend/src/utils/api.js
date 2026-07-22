@@ -1,5 +1,5 @@
 const PUBLIC_BASE = import.meta.env.NEXT_PUBLIC_API_URL || import.meta.env.VITE_SERVER_BASE || `http://${window.location.hostname}:8080`;
-const SERVER_BASE = PUBLIC_BASE.endsWith('/api') ? PUBLIC_BASE.slice(0, -4) : (PUBLIC_BASE.endsWith('/api/v1') ? PUBLIC_BASE.slice(0, -7) : PUBLIC_BASE);
+export const SERVER_BASE = PUBLIC_BASE.endsWith('/api') ? PUBLIC_BASE.slice(0, -4) : (PUBLIC_BASE.endsWith('/api/v1') ? PUBLIC_BASE.slice(0, -7) : PUBLIC_BASE);
 const API_BASE = `${SERVER_BASE}/api/v1`;
 
 export const getImageUrl = (path) => {

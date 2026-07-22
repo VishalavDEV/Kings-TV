@@ -52,7 +52,6 @@ const Home = () => {
 
   const [trendingNews, setTrendingNews] = useState([]);
   const [aggregatedNews, setAggregatedNews] = useState([]);
-  const [caseStudies, setCaseStudies] = useState([]);
 
   // Crowd Reporter States
   const [showReportModal, setShowReportModal] = useState(false);
@@ -333,18 +332,10 @@ const Home = () => {
       })
       .catch(err => console.warn("Weather fetch failed, using default info", err));
 
-    const pCaseStudies = fetchApi('/pdfs')
-      .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          setCaseStudies(data);
-        }
-      })
-      .catch(err => console.warn("Could not load PDFs", err));
-
     // Resolve loading after critical calls complete
     Promise.allSettled([
       pCategories, pArticles, pBreakingNews, pWebStories, pVideos, pLiveVideo,
-      pLayout, pTrending, pRss, pInstitution, pCrowd, pPersonalized, pWeather, pCaseStudies,
+      pLayout, pTrending, pRss, pInstitution, pCrowd, pPersonalized, pWeather,
       pMarketPrices, pClassifieds
     ]).then((results) => {
       // Check if critical resources failed (e.g., articles could not load)
@@ -929,33 +920,6 @@ const Home = () => {
     );
   };
 
-  const renderBusinessCase = () => {
-    return (
-      <div className="case-studies-widget" style={{ marginTop: '20px' }}>
-        <div className="case-studies-header">
-          <h4><i className="fas fa-briefcase" style={{ color: '#0057FF' }}></i> {lang === 'en' ? 'Business Case Studies' : 'வணிகக் கேஸ் ஸ்டடிஸ்'}</h4>
-          <Link to="/business-studies" className="view-all">
-            {lang === 'en' ? 'All' : 'அனைத்தும்'} <i className="fas fa-chevron-right" style={{ fontSize: '8px' }}></i>
-          </Link>
-        </div>
-        <div className="case-studies-grid">
-          {caseStudies.map((study, idx) => (
-            <div className="case-study-col" key={study.id || idx}>
-              <div className="company-logo">
-                <i className={study.iconClass || "fas fa-file-pdf"} style={{ color: study.iconColor || "#0057FF" }}></i>{' '}
-                {study.company || (study.titleEn || study.title || '').split(':')[0]}
-              </div>
-              <span className="tag">{study.tag || (lang === 'en' ? 'Document' : 'ஆவணம்')}</span>
-              <h5>{lang === 'en' ? (study.titleEn || study.title) : (study.titleTa || study.title)}</h5>
-              <a href={study.pdfUrl || '#'} className="pdf-btn" target="_blank" rel="noreferrer">
-                <i className="fas fa-file-pdf"></i> PDF
-              </a>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
 
   const renderCrowdReporterWidget = () => {
     return (
@@ -1228,7 +1192,6 @@ const Home = () => {
       case 'rss_aggregator': return renderRssAggregatedNews();
       case 'weather': return renderWeather();
       case 'live_tv': return renderLiveTv();
-      case 'business_case': return renderBusinessCase();
       case 'crowd_reporter': return renderCrowdReporterWidget();
       case 'news_digest': return renderNewsDigest();
       case 'classifieds': return renderClassifieds();

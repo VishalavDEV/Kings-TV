@@ -13,6 +13,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Autowired
     private RateLimitInterceptor rateLimitInterceptor;
 
+    @Autowired
+    private com.kingstv.security.AdminActivityInterceptor adminActivityInterceptor;
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/uploads/**")
@@ -22,5 +25,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(rateLimitInterceptor);
+        registry.addInterceptor(adminActivityInterceptor);
     }
 }

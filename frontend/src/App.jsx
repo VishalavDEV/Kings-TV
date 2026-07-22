@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import Header from './components/Header';
 import Footer from './components/Footer';
 import SplashScreen from './components/SplashScreen';
+import PopupAd from './components/PopupAd';
 import OfflineBanner from './components/OfflineBanner';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicVaniLayout from './components/PublicVaniLayout';
@@ -20,7 +21,6 @@ import Obituaries from './pages/PublicObituaries';
 import Wishes from './pages/PublicWishes';
 import Jobs from './pages/Jobs';
 import Classifieds from './pages/Classifieds';
-import BusinessStudies from './pages/BusinessStudies';
 import Advertise from './pages/Advertise';
 import NotFound from './pages/NotFound';
 import CustomPageView from './pages/CustomPageView';
@@ -127,6 +127,7 @@ function AppContent() {
       <OfflineBanner />
       {showSplash && !isAdminRoute && <SplashScreen onComplete={() => setShowSplash(false)} />}
       {!isAdminRoute && <Header />}
+      {!isAdminRoute && <PopupAd />}
       
       <main className={isAdminRoute ? 'admin-main-content' : 'main-content'}>
         <Routes>
@@ -203,7 +204,6 @@ function AppContent() {
           <Route path="/jobs" element={<PublicJobs />} />
           <Route path="/jobs/:id" element={<PublicJobDetail />} />
           <Route path="/classifieds" element={<Classifieds />} />
-          <Route path="/business-studies" element={<BusinessStudies />} />
           <Route path="/advertise" element={<Advertise />} />
           <Route path="/institution-news" element={<InstitutionNews />} />
           <Route path="*" element={<NotFound />} />

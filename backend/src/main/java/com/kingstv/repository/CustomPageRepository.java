@@ -9,6 +9,8 @@ import java.util.Optional;
 
 @Repository
 public interface CustomPageRepository extends JpaRepository<CustomPage, Long> {
+    Optional<CustomPage> findByPageType(String pageType);
+    Optional<CustomPage> findByPageTypeAndLanguage(String pageType, String language);
     Optional<CustomPage> findBySlug(String slug);
     boolean existsBySlugIgnoreCase(String slug);
     boolean existsBySlugIgnoreCaseAndIdNot(String slug, Long id);

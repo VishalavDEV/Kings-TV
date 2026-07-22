@@ -27,58 +27,6 @@ public class AdminNfcController {
         return ResponseEntity.ok(nfcCardRepository.findAll());
     }
 
-    @PostMapping
-    public ResponseEntity<?> createCard(@RequestBody NfcCard card) {
-        if (card.getCardUid() == null || card.getCardUid().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Card UID is required"));
-        }
-        if (card.getOwnerName() == null || card.getOwnerName().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Owner Name is required"));
-        }
-        
-        // Auto-generate shortCode if not provided to satisfy legacy column validation
-        if (card.getShortCode() == null || card.getShortCode().trim().isEmpty()) {
-            card.setShortCode(card.getCardUid());
-        }
-
-        card.setCreatedAt(LocalDateTime.now());
-        card.setUpdatedAt(LocalDateTime.now());
-        card.setTapCount(0);
-        card.setStatus("active");
-        card.setCardStatus("activated"); // legacy field
-        
-        NfcCard saved = nfcCardRepository.save(card);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateCard(@PathVariable Long id, @RequestBody NfcCard entity) {
-        Optional<NfcCard> cardOpt = nfcCardRepository.findById(id);
-        if (cardOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "NFC Card not found"));
-        }
-        
-        NfcCard card = cardOpt.get();
-        card.setCardUid(entity.getCardUid());
-        card.setShortCode(entity.getCardUid()); // keep synced
-        card.setOwnerName(entity.getOwnerName());
-        card.setTitle(entity.getTitle());
-        card.setCompany(entity.getCompany());
-        card.setPhone(entity.getPhone());
-        card.setEmail(entity.getEmail());
-        card.setWebsite(entity.getWebsite());
-        card.setSocialLinks(entity.getSocialLinks());
-        card.setProfilePhoto(entity.getProfilePhoto());
-        card.setCardTemplate(entity.getCardTemplate());
-        card.setVcardEnabled(entity.getVcardEnabled());
-        card.setStatus(entity.getStatus());
-        card.setCardStatus(entity.getStatus().equalsIgnoreCase("active") ? "activated" : "blocked"); // legacy field
-        card.setUpdatedAt(LocalDateTime.now());
-
-        NfcCard updated = nfcCardRepository.save(card);
-        return ResponseEntity.ok(updated);
-    }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteCard(@PathVariable Long id) {
         Optional<NfcCard> cardOpt = nfcCardRepository.findById(id);
@@ -87,6 +35,56 @@ public class AdminNfcController {
         }
         nfcCardRepository.delete(cardOpt.get());
         return ResponseEntity.ok(Map.of("message", "NFC Card deleted successfully"));
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        Optional<NfcCard> cardOpt = nfcCardRepository.findById(id);
+        if (cardOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "NFC Card not found"));
+        }
+        NfcCard card = cardOpt.get();
+        String nextStatus = request.get("status"); // printing, shipped, activated, revoked
+        String currentStatus = card.getStatus() != null ? card.getStatus() : "requested";
+        
+        // Enforce sequential check
+        // requested -> printing -> shipped -> activated (revoked can be transitioned from any state)
+        boolean allowed = false;
+        if (nextStatus.equalsIgnoreCase("revoked")) {
+            allowed = true;
+        } else if (currentStatus.equalsIgnoreCase("requested") && nextStatus.equalsIgnoreCase("printing")) {
+            allowed = true;
+        } else if (currentStatus.equalsIgnoreCase("printing") && nextStatus.equalsIgnoreCase("shipped")) {
+            allowed = true;
+        } else if (currentStatus.equalsIgnoreCase("shipped") && nextStatus.equalsIgnoreCase("activated")) {
+            allowed = true;
+        }
+        
+        if (!allowed) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid status transition from " + currentStatus + " to " + nextStatus));
+        }
+        
+        card.setStatus(nextStatus);
+        card.setCardStatus(nextStatus.equalsIgnoreCase("activated") ? "activated" : "blocked"); // legacy field
+        
+        // When setting to printing, auto-generate cardUid and shortCode if empty
+        if (nextStatus.equalsIgnoreCase("printing")) {
+            if (card.getCardUid() == null || card.getCardUid().trim().isEmpty()) {
+                String generatedUid = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 10);
+                card.setCardUid(generatedUid);
+                card.setShortCode(generatedUid);
+            }
+        }
+        
+        card.setUpdatedAt(LocalDateTime.now());
+        nfcCardRepository.save(card);
+        
+        String targetUrl = "/t/" + card.getShortCode();
+        return ResponseEntity.ok(Map.of(
+            "message", "NFC Card status updated successfully",
+            "card", card,
+            "encodeUrl", targetUrl
+        ));
     }
 
     @PutMapping("/{id}/revoke")

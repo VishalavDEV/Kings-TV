@@ -31,6 +31,9 @@ public class RfqQuote {
     @Column(nullable = false)
     private String status = "pending"; // pending, shortlisted, accepted, rejected, awarded
 
+    @Column(name = "is_flagged")
+    private Boolean isFlagged = false;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -77,4 +80,7 @@ public class RfqQuote {
 
     public String getMessage() { return notes; }
     public void setMessage(String message) { this.notes = message; }
+
+    public Boolean getIsFlagged() { return isFlagged; }
+    public void setIsFlagged(Boolean isFlagged) { this.isFlagged = isFlagged; }
 }

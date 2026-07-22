@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import com.kingstv.models.BusinessReview;
+import com.kingstv.repository.BusinessReviewRepository;
+
 @RestController
 @RequestMapping({"/api/admin/business-listings", "/api/v1/admin/business-listings"})
 public class AdminBusinessListingController {
@@ -21,6 +24,9 @@ public class AdminBusinessListingController {
 
     @Autowired
     private DirectoryCategoryRepository categoryRepository;
+
+    @Autowired
+    private BusinessReviewRepository reviewRepository;
 
     private String makeSlug(String input) {
         if (input == null || input.trim().isEmpty()) {
@@ -38,63 +44,6 @@ public class AdminBusinessListingController {
     @GetMapping
     public ResponseEntity<List<DirectoryListing>> getAllListings() {
         return ResponseEntity.ok(directoryRepository.findAll());
-    }
-
-    @PostMapping
-    public ResponseEntity<?> createListing(@RequestBody DirectoryListing listing) {
-        if (listing.getBusinessName() == null || listing.getBusinessName().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Business name is required"));
-        }
-        if (listing.getCategory() == null || listing.getCategory().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Category name is required"));
-        }
-        if (listing.getSlug() == null || listing.getSlug().trim().isEmpty()) {
-            listing.setSlug(makeSlug(listing.getBusinessName()) + "-" + (int)(Math.random() * 10000));
-        }
-        listing.setCreatedAt(LocalDateTime.now());
-        listing.setUpdatedAt(LocalDateTime.now());
-        DirectoryListing saved = directoryRepository.save(listing);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateListing(@PathVariable Long id, @RequestBody DirectoryListing entity) {
-        Optional<DirectoryListing> listingOpt = directoryRepository.findById(id);
-        if (listingOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Listing not found"));
-        }
-        DirectoryListing listing = listingOpt.get();
-        listing.setBusinessName(entity.getBusinessName());
-        listing.setName(entity.getName());
-        listing.setCategory(entity.getCategory());
-        listing.setCategoryId(entity.getCategoryId());
-        listing.setSubcategory(entity.getSubcategory());
-        listing.setAddress(entity.getAddress());
-        listing.setAddressLocality(entity.getAddressLocality());
-        listing.setAddressStreet(entity.getAddressStreet());
-        listing.setWorkingHours(entity.getWorkingHours());
-        listing.setHoursJson(entity.getHoursJson());
-        listing.setPhoneNumber(entity.getPhoneNumber());
-        listing.setPhone(entity.getPhone());
-        listing.setEmail(entity.getEmail());
-        listing.setWebsite(entity.getWebsite());
-        listing.setLogoUrl(entity.getLogoUrl());
-        listing.setLogo(entity.getLogo());
-        listing.setCoverUrl(entity.getCoverUrl());
-        listing.setCoverImage(entity.getCoverImage());
-        listing.setDescription(entity.getDescription());
-        listing.setLatitude(entity.getLatitude());
-        listing.setLongitude(entity.getLongitude());
-        listing.setIsVerified(entity.getIsVerified());
-        listing.setStatus(entity.getStatus());
-        listing.setUpdatedAt(LocalDateTime.now());
-
-        if (entity.getSlug() != null && !entity.getSlug().trim().isEmpty()) {
-            listing.setSlug(entity.getSlug());
-        }
-
-        DirectoryListing updated = directoryRepository.save(listing);
-        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
@@ -122,16 +71,60 @@ public class AdminBusinessListingController {
     }
 
     @PutMapping("/{id}/reject")
-    public ResponseEntity<?> rejectListing(@PathVariable Long id) {
+    public ResponseEntity<?> rejectListing(@PathVariable Long id, @RequestBody Map<String, String> request) {
         Optional<DirectoryListing> listingOpt = directoryRepository.findById(id);
         if (listingOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Listing not found"));
         }
         DirectoryListing listing = listingOpt.get();
+        String reason = request.get("reason");
         listing.setStatus("rejected");
+        listing.setRejectionReason(reason);
         listing.setUpdatedAt(LocalDateTime.now());
         directoryRepository.save(listing);
         return ResponseEntity.ok(Map.of("message", "Listing rejected successfully"));
+    }
+
+    @PutMapping("/{id}/more-info")
+    public ResponseEntity<?> requestMoreInfo(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        Optional<DirectoryListing> listingOpt = directoryRepository.findById(id);
+        if (listingOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Listing not found"));
+        }
+        DirectoryListing listing = listingOpt.get();
+        String note = request.get("note");
+        listing.setStatus("pending");
+        listing.setMoreInfoNote(note);
+        listing.setUpdatedAt(LocalDateTime.now());
+        directoryRepository.save(listing);
+        return ResponseEntity.ok(Map.of("message", "Request for more information sent successfully"));
+    }
+
+    @DeleteMapping("/reviews/{reviewId}")
+    public ResponseEntity<?> deleteReview(@PathVariable Long reviewId) {
+        Optional<BusinessReview> revOpt = reviewRepository.findById(reviewId);
+        if (revOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Review not found"));
+        }
+        BusinessReview review = revOpt.get();
+        reviewRepository.delete(review);
+        
+        // Recalculate listing rating avg and count
+        Long listingId = review.getListingId();
+        Optional<DirectoryListing> listingOpt = directoryRepository.findById(listingId);
+        if (listingOpt.isPresent()) {
+            DirectoryListing listing = listingOpt.get();
+            List<BusinessReview> reviews = reviewRepository.findByListingIdAndStatus(listingId, "approved");
+            double sum = 0.0;
+            for (BusinessReview r : reviews) {
+                sum += r.getRating();
+            }
+            double avg = reviews.isEmpty() ? 0.0 : sum / reviews.size();
+            listing.setRatingAvg(avg);
+            listing.setRatingCount(reviews.size());
+            directoryRepository.save(listing);
+        }
+        return ResponseEntity.ok(Map.of("message", "Review deleted and rating recalculated"));
     }
 
     // --- Categories CRUD ---

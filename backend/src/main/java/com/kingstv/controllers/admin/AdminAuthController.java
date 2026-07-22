@@ -40,6 +40,8 @@ public class AdminAuthController {
     @Autowired private RefreshTokenRepository refreshTokenRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private JwtUtil jwtUtil;
+    @Autowired private com.kingstv.repository.LoginLogRepository loginLogRepository;
+    @Autowired private com.kingstv.repository.SecurityEventRepository securityEventRepository;
 
     private String getClientIp(HttpServletRequest request) {
         String xf = request.getHeader("X-Forwarded-For");
@@ -58,15 +60,39 @@ public class AdminAuthController {
     public ResponseEntity<?> login(@RequestBody Map<String, String> body, HttpServletRequest request) {
         String rawEmail = body.get("email");
         String password = body.get("password");
+        String ip = getClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
 
         if (rawEmail == null || password == null || password.isBlank()) {
+            com.kingstv.models.LoginLog loginLog = new com.kingstv.models.LoginLog();
+            loginLog.setEmailAttempted(rawEmail != null ? rawEmail : "unknown");
+            loginLog.setSuccess(false);
+            loginLog.setFailureReason("Email and password are required");
+            loginLog.setIpAddress(ip);
+            loginLog.setUserAgent(userAgent);
+            loginLogRepository.save(loginLog);
+            
             return ResponseEntity.badRequest().body(Map.of("message", "Email and password are required"));
         }
 
         String email = rawEmail.trim().toLowerCase().replace("×", "x").replace("%c3%97", "x");
-        String ip = getClientIp(request);
 
         if (loginAttemptService.isBlocked(email) || loginAttemptService.isBlocked(ip)) {
+            com.kingstv.models.LoginLog loginLog = new com.kingstv.models.LoginLog();
+            loginLog.setEmailAttempted(email);
+            loginLog.setSuccess(false);
+            loginLog.setFailureReason("Too many failed attempts. Blocked.");
+            loginLog.setIpAddress(ip);
+            loginLog.setUserAgent(userAgent);
+            userRepository.findByEmail(email).ifPresent(u -> loginLog.setAdminUserId(u.getId()));
+            loginLogRepository.save(loginLog);
+
+            com.kingstv.models.SecurityEvent secEvent = new com.kingstv.models.SecurityEvent(
+                "suspicious_login", "high", "Brute-force limit reached. Blocked login attempt for: " + email,
+                loginLog.getAdminUserId(), ip
+            );
+            securityEventRepository.save(secEvent);
+
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                     .body(Map.of("message", "Too many failed login attempts. Please try again after 15 minutes."));
         }
@@ -106,6 +132,22 @@ public class AdminAuthController {
             userRepository.save(user);
         } else if (!passwordMatches(password, user)) {
             loginAttemptService.loginFailed(email, ip);
+
+            com.kingstv.models.LoginLog loginLog = new com.kingstv.models.LoginLog();
+            loginLog.setEmailAttempted(email);
+            loginLog.setSuccess(false);
+            loginLog.setFailureReason("Invalid email or password");
+            loginLog.setIpAddress(ip);
+            loginLog.setUserAgent(userAgent);
+            userRepository.findByEmail(email).ifPresent(u -> loginLog.setAdminUserId(u.getId()));
+            loginLogRepository.save(loginLog);
+
+            com.kingstv.models.SecurityEvent secEvent = new com.kingstv.models.SecurityEvent(
+                "suspicious_login", "medium", "Failed admin login attempt (invalid password) for email: " + email,
+                loginLog.getAdminUserId(), ip
+            );
+            securityEventRepository.save(secEvent);
+
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Invalid email or password"));
         }
@@ -124,6 +166,15 @@ public class AdminAuthController {
 
         loginAttemptService.loginSucceeded(email);
         loginAttemptService.loginSucceeded(ip);
+
+        // Log successful login
+        com.kingstv.models.LoginLog loginLog = new com.kingstv.models.LoginLog();
+        loginLog.setAdminUserId(user.getId());
+        loginLog.setEmailAttempted(email);
+        loginLog.setSuccess(true);
+        loginLog.setIpAddress(ip);
+        loginLog.setUserAgent(userAgent);
+        loginLogRepository.save(loginLog);
 
         List<String> moduleKeys = getModulePermissions(user.getRole());
         String jwt = jwtUtil.generateAdminToken(
@@ -196,10 +247,17 @@ public class AdminAuthController {
      * Server-side logout token invalidation
      */
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestBody(required = false) Map<String, String> body) {
+    public ResponseEntity<?> logout(@RequestBody(required = false) Map<String, String> body, HttpServletRequest request) {
         if (body != null && body.containsKey("refreshToken")) {
             refreshTokenRepository.findByToken(body.get("refreshToken"))
-                .ifPresent(token -> refreshTokenRepository.delete(token));
+                .ifPresent(token -> {
+                    com.kingstv.models.SecurityEvent event = new com.kingstv.models.SecurityEvent(
+                        "token_revoked", "low", "Admin logged out, token revoked for user: " + token.getUser().getEmail(),
+                        token.getUser().getId(), getClientIp(request)
+                    );
+                    securityEventRepository.save(event);
+                    refreshTokenRepository.delete(token);
+                });
         }
         SecurityContextHolder.clearContext();
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));

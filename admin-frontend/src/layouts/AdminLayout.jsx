@@ -51,7 +51,16 @@ const NAV_ITEMS = [
   { key: 'manage_all_posts', label: 'All Posts',          icon: FileText,        path: '/posts' },
   { key: 'content_review',   label: 'Content Review',     icon: ShieldCheck,     path: '/posts' },
   { key: 'navigation',       label: 'Navigation',         icon: Navigation,      path: '/navigation' },
-  { key: 'pages',            label: 'Pages',              icon: BookOpen,        path: '/pages' },
+  { key: 'pages',            label: 'Pages',              icon: BookOpen,        path: '/pages',
+    children: [
+      { label: 'Standard Pages',    path: '/pages' },
+      { label: 'About Us',          path: '/pages/special/about_us' },
+      { label: 'Contact Details',   path: '/pages/special/contact' },
+      { label: 'Careers Page',      path: '/pages/special/career' },
+      { label: 'Privacy Policy',    path: '/pages/special/privacy_policy' },
+      { label: 'Terms of Use',      path: '/pages/special/terms_of_use' },
+    ]
+  },
   { key: 'rss_feeds',        label: 'RSS Feeds',          icon: Rss,             path: '/rss-feeds' },
   { key: 'categories',       label: 'Categories',         icon: Tag,             path: '/categories' },
   { key: 'widgets',          label: 'Widgets',            icon: LayoutGrid,      path: '/widgets' },
@@ -68,7 +77,17 @@ const NAV_ITEMS = [
       { label: 'Pageviews',     path: '/pageviews' },
     ]
   },
-  { key: 'ad_spaces',        label: 'Ad Spaces',          icon: MonitorPlay,     path: '/ads' },
+  { key: 'ad_spaces',        label: 'Ad Management',      icon: MonitorPlay,     path: '/ads/advertisers',
+    children: [
+      { label: 'Advertisers',   path: '/ads/advertisers' },
+      { label: 'Campaigns',     path: '/ads/campaigns' },
+      { label: 'Ad Slots',      path: '/ads/slots' },
+      { label: 'Banner Ads',    path: '/ads/banner' },
+      { label: 'Sidebar Ads',   path: '/ads/sidebar' },
+      { label: 'Popup Ads',     path: '/ads/popup' },
+      { label: 'Analytics',     path: '/ads/analytics' },
+    ]
+  },
   { key: 'users',            label: 'Users',              icon: Users,           path: '/users/administrators',
     children: [
       { label: 'Add User',         path: '/users/add' },
@@ -90,6 +109,16 @@ const NAV_ITEMS = [
   { key: 'seo_tools',        label: 'SEO Tools',          icon: Search,          path: '/seo' },
   { key: 'social_login',     label: 'Social Login',       icon: Share2,          path: '/social-login' },
   { key: 'languages',        label: 'Languages',          icon: Globe,           path: '/languages' },
+  { key: 'audit_security',   label: 'Audit & Security',   icon: ShieldCheck,     path: '/audit/logs',
+    children: [
+      { label: 'Audit Logs',        path: '/audit/logs' },
+      { label: 'Login Logs',        path: '/audit/logins' },
+      { label: 'User Activity',     path: '/audit/activity' },
+      { label: 'Security Events',   path: '/audit/security-events' },
+      { label: 'API Logs',          path: '/audit/api-logs' },
+      { label: 'Failed Requests',   path: '/audit/failed' },
+    ]
+  },
   { key: 'settings',         label: 'Settings',           icon: Settings,        path: '/settings/general',
     children: [
       { label: 'Preferences',       path: '/preferences' },
@@ -210,6 +239,9 @@ export default function AdminLayout() {
 
   // Filter nav items to only show permitted sections
   const visibleNavItems = NAV_ITEMS.filter(item => {
+    if (item.key === 'audit_security') {
+      return user?.role === 'SUPER_ADMIN';
+    }
     const colleagueKeys = ['admin_directory', 'classifieds_manager', 'admin_deals', 'admin_jobs', 'admin_nfc', 'admin_rfq', 'admin_obituaries_wishes'];
     if (colleagueKeys.includes(item.key)) {
       return hasPermission('admin_panel');

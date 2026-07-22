@@ -34,6 +34,20 @@ public class AdminUserController {
     @Autowired private UserCategoryRepository userCategoryRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private AuditLogRepository auditLogRepository;
+    @Autowired private SecurityEventRepository securityEventRepository;
+
+    private String getClientIp() {
+        try {
+            org.springframework.web.context.request.ServletRequestAttributes attrs = 
+                (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                jakarta.servlet.http.HttpServletRequest req = attrs.getRequest();
+                String xff = req.getHeader("X-Forwarded-For");
+                return xff != null ? xff.split(",")[0].trim() : req.getRemoteAddr();
+            }
+        } catch (Exception ignored) {}
+        return "unknown";
+    }
 
     /**
      * List administrators
@@ -81,6 +95,12 @@ public class AdminUserController {
         return userRepository.findById(id).map(user -> {
             user.setPassword(passwordEncoder.encode(newPassword));
             userRepository.save(user);
+
+            securityEventRepository.save(new SecurityEvent(
+                "password_changed", "medium", "Password reset for admin user: " + user.getEmail(),
+                getCallerId(), getClientIp()
+            ));
+
             return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -238,6 +258,12 @@ public class AdminUserController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("message", "Only Super Admin can assign Super Admin or Chief Editor roles"));
             }
+            if (!newRole.equals(user.getRole())) {
+                securityEventRepository.save(new SecurityEvent(
+                    "role_changed", "high", "Role updated for user: " + user.getEmail() + " from " + user.getRole() + " to " + newRole,
+                    getCallerId(), getClientIp()
+                ));
+            }
             user.setRole(newRole);
         }
         if (request.containsKey("isActive")) user.setIsActive((Boolean) request.get("isActive"));
@@ -252,6 +278,10 @@ public class AdminUserController {
 
         if (request.containsKey("password")) {
             user.setPassword(passwordEncoder.encode((String) request.get("password")));
+            securityEventRepository.save(new SecurityEvent(
+                "password_changed", "medium", "Password updated for user: " + user.getEmail(),
+                getCallerId(), getClientIp()
+            ));
         }
 
         User saved = userRepository.save(user);

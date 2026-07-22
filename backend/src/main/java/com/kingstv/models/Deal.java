@@ -73,6 +73,12 @@ public class Deal {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
+
+    @Column(name = "more_info_note")
+    private String moreInfoNote;
+
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
@@ -152,4 +158,10 @@ public class Deal {
 
     public String getTermsConditions() { return terms; }
     public void setTermsConditions(String termsConditions) { this.terms = termsConditions; }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+
+    public String getMoreInfoNote() { return moreInfoNote; }
+    public void setMoreInfoNote(String moreInfoNote) { this.moreInfoNote = moreInfoNote; }
 }

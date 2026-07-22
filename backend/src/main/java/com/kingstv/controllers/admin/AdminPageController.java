@@ -3,6 +3,7 @@ package com.kingstv.controllers.admin;
 import com.kingstv.models.CustomPage;
 import com.kingstv.repository.CustomPageRepository;
 import com.kingstv.services.HtmlSanitizer;
+import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,12 @@ public class AdminPageController {
 
     @Autowired
     private HtmlSanitizer htmlSanitizer;
+
+    @Autowired
+    private com.kingstv.repository.PageVersionHistoryRepository pageVersionHistoryRepository;
+
+    @Autowired
+    private com.kingstv.repository.GeneralApplicationRepository generalApplicationRepository;
 
     @GetMapping
     public ResponseEntity<List<CustomPage>> getAllPages() {
@@ -164,6 +171,16 @@ public class AdminPageController {
         if (updatedPage.getVisibility() != null) existing.setVisibility(updatedPage.getVisibility());
         if (updatedPage.getPageType() != null) existing.setPageType(updatedPage.getPageType());
 
+        // Specialized columns copy
+        if (updatedPage.getTeamMembers() != null) existing.setTeamMembers(updatedPage.getTeamMembers());
+        if (updatedPage.getMilestones() != null) existing.setMilestones(updatedPage.getMilestones());
+        if (updatedPage.getPhoneNumbers() != null) existing.setPhoneNumbers(updatedPage.getPhoneNumbers());
+        if (updatedPage.getEmailAddresses() != null) existing.setEmailAddresses(updatedPage.getEmailAddresses());
+        if (updatedPage.getOfficeHours() != null) existing.setOfficeHours(updatedPage.getOfficeHours());
+        if (updatedPage.getEmbeddedMap() != null) existing.setEmbeddedMap(updatedPage.getEmbeddedMap());
+        if (updatedPage.getVersion() != null) existing.setVersion(updatedPage.getVersion());
+        if (updatedPage.getEffectiveDate() != null) existing.setEffectiveDate(updatedPage.getEffectiveDate());
+
         CustomPage saved = pageRepository.save(existing);
         return ResponseEntity.ok(saved);
     }
@@ -179,6 +196,61 @@ public class AdminPageController {
         Map<String, String> res = new HashMap<>();
         res.put("message", "Page deleted successfully");
         return ResponseEntity.ok(res);
+    }
+
+    @PutMapping("/{id}/publish-version")
+    public ResponseEntity<?> publishNewVersion(
+            @PathVariable Long id, 
+            @RequestBody Map<String, Object> body) {
+        Optional<CustomPage> existingOpt = pageRepository.findById(id);
+        if (existingOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Page not found"));
+        }
+
+        CustomPage page = existingOpt.get();
+
+        // 1. Archive current version to page_version_history
+        com.kingstv.models.PageVersionHistory history = new com.kingstv.models.PageVersionHistory(
+            page.getId(),
+            page.getTitle(),
+            page.getContent(),
+            page.getVersion(),
+            page.getEffectiveDate() != null ? page.getEffectiveDate() : LocalDateTime.now()
+        );
+        pageVersionHistoryRepository.save(history);
+
+        // 2. Set new values
+        if (body.containsKey("content")) {
+            String newContent = (String) body.get("content");
+            page.setContent(htmlSanitizer.sanitize(newContent));
+        }
+        
+        page.setVersion(page.getVersion() + 1);
+        page.setEffectiveDate(LocalDateTime.now());
+
+        CustomPage saved = pageRepository.save(page);
+        return ResponseEntity.ok(saved);
+    }
+
+    @GetMapping("/{id}/versions")
+    public ResponseEntity<?> getPageVersions(@PathVariable Long id) {
+        return ResponseEntity.ok(pageVersionHistoryRepository.findByPageIdOrderByVersionDesc(id));
+    }
+
+    @GetMapping("/applications")
+    public ResponseEntity<?> getGeneralApplications() {
+        return ResponseEntity.ok(generalApplicationRepository.findAll(
+            org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt")
+        ));
+    }
+
+    @DeleteMapping("/applications/{id}")
+    public ResponseEntity<?> deleteApplication(@PathVariable Long id) {
+        if (!generalApplicationRepository.existsById(id)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Application not found"));
+        }
+        generalApplicationRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("message", "Application deleted successfully"));
     }
 
     private String cleanSlug(String text) {

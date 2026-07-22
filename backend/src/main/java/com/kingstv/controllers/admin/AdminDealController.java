@@ -17,62 +17,12 @@ public class AdminDealController {
     @Autowired
     private DealRepository dealRepository;
 
+    @Autowired
+    private com.kingstv.repository.DealRedemptionRepository redemptionRepository;
+
     @GetMapping
     public ResponseEntity<List<Deal>> getAllDeals() {
         return ResponseEntity.ok(dealRepository.findAll());
-    }
-
-    @PostMapping
-    public ResponseEntity<?> createDeal(@RequestBody Deal deal) {
-        if (deal.getTitle() == null || deal.getTitle().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Deal title is required"));
-        }
-        if (deal.getDiscountType() == null || deal.getDiscountType().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Discount type is required"));
-        }
-        if (deal.getDiscountValue() == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Discount value is required"));
-        }
-
-        deal.setCreatedAt(LocalDateTime.now());
-        deal.setUpdatedAt(LocalDateTime.now());
-        if (deal.getValidFrom() == null) {
-            deal.setValidFrom(LocalDateTime.now());
-        }
-        if (deal.getValidUntil() == null) {
-            deal.setValidUntil(LocalDateTime.now().plusDays(30)); // default 30 days
-        }
-        if (deal.getCategory() == null) {
-            deal.setCategory("General");
-        }
-        Deal saved = dealRepository.save(deal);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateDeal(@PathVariable Long id, @RequestBody Deal entity) {
-        Optional<Deal> dealOpt = dealRepository.findById(id);
-        if (dealOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Deal not found"));
-        }
-        Deal deal = dealOpt.get();
-        deal.setTitle(entity.getTitle());
-        deal.setListingId(entity.getListingId());
-        deal.setBusinessId(entity.getBusinessId());
-        deal.setDiscountType(entity.getDiscountType());
-        deal.setDiscountValue(entity.getDiscountValue());
-        deal.setCategory(entity.getCategory() != null ? entity.getCategory() : "General");
-        deal.setTerms(entity.getTerms());
-        deal.setTermsConditions(entity.getTermsConditions());
-        deal.setBannerUrl(entity.getBannerUrl() != null ? entity.getBannerUrl() : entity.getImage());
-        deal.setImage(entity.getImage());
-        deal.setValidFrom(entity.getValidFrom());
-        deal.setValidUntil(entity.getValidUntil());
-        deal.setStatus(entity.getStatus());
-        deal.setUpdatedAt(LocalDateTime.now());
-
-        Deal updated = dealRepository.save(deal);
-        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
@@ -99,15 +49,37 @@ public class AdminDealController {
     }
 
     @PutMapping("/{id}/reject")
-    public ResponseEntity<?> rejectDeal(@PathVariable Long id) {
+    public ResponseEntity<?> rejectDeal(@PathVariable Long id, @RequestBody Map<String, String> request) {
         Optional<Deal> dealOpt = dealRepository.findById(id);
         if (dealOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Deal not found"));
         }
         Deal deal = dealOpt.get();
+        String reason = request.get("reason");
         deal.setStatus("rejected");
+        deal.setRejectionReason(reason);
         deal.setUpdatedAt(LocalDateTime.now());
         dealRepository.save(deal);
         return ResponseEntity.ok(Map.of("message", "Deal rejected successfully"));
+    }
+
+    @PutMapping("/{id}/more-info")
+    public ResponseEntity<?> requestMoreInfo(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        Optional<Deal> dealOpt = dealRepository.findById(id);
+        if (dealOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Deal not found"));
+        }
+        Deal deal = dealOpt.get();
+        String note = request.get("note");
+        deal.setStatus("pending");
+        deal.setMoreInfoNote(note);
+        deal.setUpdatedAt(LocalDateTime.now());
+        dealRepository.save(deal);
+        return ResponseEntity.ok(Map.of("message", "Request for more information sent successfully"));
+    }
+
+    @GetMapping("/redemptions")
+    public ResponseEntity<?> getRedemptions() {
+        return ResponseEntity.ok(redemptionRepository.findAll());
     }
 }

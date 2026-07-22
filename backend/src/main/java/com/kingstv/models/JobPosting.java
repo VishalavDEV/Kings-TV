@@ -120,6 +120,12 @@ public class JobPosting {
     @Column(name = "category_name")
     private String categoryName;
 
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
+
+    @Column(name = "more_info_note")
+    private String moreInfoNote;
+
     @PrePersist
     @PreUpdate
     public void onUpdate() {
@@ -262,4 +268,10 @@ public class JobPosting {
 
     public String getJobType() { return employmentType; }
     public void setJobType(String jobType) { this.employmentType = jobType; }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+
+    public String getMoreInfoNote() { return moreInfoNote; }
+    public void setMoreInfoNote(String moreInfoNote) { this.moreInfoNote = moreInfoNote; }
 }

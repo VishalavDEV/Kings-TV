@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchApi } from '../utils/api';
+import { fetchApi, SERVER_BASE } from '../utils/api';
 
 const AdWidget = ({ placement = 'sidebar' }) => {
   const [ad, setAd] = useState(null);
@@ -7,16 +7,12 @@ const AdWidget = ({ placement = 'sidebar' }) => {
   useEffect(() => {
     const fetchAd = async () => {
       try {
-        const ads = await fetchApi(`/advertisements/active?placement=${placement}`);
+        const slotKey = placement === 'mid-article' ? 'in-article' : placement;
+        const ads = await fetchApi(`/public/ads?slot=${slotKey}`);
         if (Array.isArray(ads) && ads.length > 0) {
-          // Select first ad (backend returns them shuffled for rotation)
-          const selectedAd = ads[0];
-          setAd(selectedAd);
-          
-          // Record impression automatically in background
-          fetch(`${window.location.origin}/api/v1/advertisements/${selectedAd.id}/impression`, {
-            method: 'POST'
-          }).catch(() => {});
+          setAd(ads[0]);
+        } else {
+          setAd(null);
         }
       } catch (error) {
         console.warn(`Failed to fetch ad for placement: ${placement}`, error);
@@ -27,21 +23,17 @@ const AdWidget = ({ placement = 'sidebar' }) => {
 
   const handleAdClick = () => {
     if (ad) {
-      // Record click count in background
-      fetch(`${window.location.origin}/api/v1/advertisements/${ad.id}/click`, {
-        method: 'POST'
-      }).catch(() => {});
-
-      // Open campaign link in new tab
-      if (ad.linkUrl) {
-        window.open(ad.linkUrl, '_blank', 'noopener,noreferrer');
+      const form = document.getElementById(`ad-click-form-${ad.id}`);
+      if (form) {
+        form.submit();
+      } else if (ad.clickUrl) {
+        window.open(ad.clickUrl, '_blank', 'noopener,noreferrer');
       }
     }
   };
 
   if (!ad) return null;
 
-  // Render ad styling depending on the placement position
   const isHeader = placement === 'header';
   const isSidebar = placement === 'sidebar';
 
@@ -71,6 +63,16 @@ const AdWidget = ({ placement = 'sidebar' }) => {
         e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.02)';
       }}
     >
+      {/* Invisible POST form to log clicks */}
+      <form 
+        id={`ad-click-form-${ad.id}`} 
+        action={`${SERVER_BASE}/api/public/ads/${ad.id}/click`} 
+        method="POST" 
+        target="_blank" 
+        style={{ display: 'none' }}
+        onClick={(e) => e.stopPropagation()}
+      />
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', padding: '0 4px' }}>
         <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Sponsored
@@ -80,20 +82,29 @@ const AdWidget = ({ placement = 'sidebar' }) => {
         </span>
       </div>
       
-      <img 
-        src={ad.imageUrl} 
-        alt={ad.title} 
-        style={{
-          width: '100%',
-          maxHeight: isHeader ? '90px' : '250px',
-          objectFit: 'cover',
-          borderRadius: '8px'
-        }}
-      />
-      {isSidebar && (
+      {ad.imageUrl ? (
+        <img 
+          src={ad.imageUrl} 
+          alt="Advertisement" 
+          style={{
+            width: '100%',
+            maxHeight: isHeader ? '90px' : '250px',
+            objectFit: 'cover',
+            borderRadius: '8px'
+          }}
+        />
+      ) : ad.htmlCode ? (
+        <div 
+          dangerouslySetInnerHTML={{ __html: ad.htmlCode }} 
+          style={{ width: '100%', overflow: 'hidden' }}
+          onClick={(e) => e.stopPropagation()}
+        />
+      ) : null}
+
+      {isSidebar && ad.imageUrl && (
         <div style={{ padding: '8px 4px 4px 4px', textAlign: 'left' }}>
           <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-dark)', margin: '0 0 2px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {ad.title}
+            {ad.campaign?.name || 'Advertisement'}
           </h4>
           <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 600 }}>
             Learn more &rarr;

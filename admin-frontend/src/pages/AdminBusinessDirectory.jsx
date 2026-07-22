@@ -7,33 +7,20 @@ const AdminBusinessDirectory = () => {
   const [listings, setListings] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Listings Form States
-  const [businessName, setBusinessName] = useState('');
-  const [categoryName, setCategoryName] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [subcategory, setSubcategory] = useState('');
-  const [description, setDescription] = useState('');
-  const [address, setAddress] = useState('');
-  const [addressLocality, setAddressLocality] = useState('');
-  const [addressStreet, setAddressStreet] = useState('');
-  const [workingHours, setWorkingHours] = useState('');
-  const [hoursJson, setHoursJson] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [email, setEmail] = useState('');
-  const [website, setWebsite] = useState('');
-  const [logoUrl, setLogoUrl] = useState('');
-  const [coverUrl, setCoverUrl] = useState('');
-  const [latitude, setLatitude] = useState('');
-  const [longitude, setLongitude] = useState('');
-  const [isVerified, setIsVerified] = useState(false);
-  const [status, setStatus] = useState('pending');
-  const [ownerId, setOwnerId] = useState('');
-  const [slug, setSlug] = useState('');
+  // Status filtering state for listings
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  // Detail Modal States
+  const [selectedListing, setSelectedListing] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+
+  // Reject / More-Info Prompt States
+  const [promptMode, setPromptMode] = useState(null); // 'reject' or 'more-info'
+  const [promptText, setPromptText] = useState('');
 
   // Category Form States
   const [catName, setCatName] = useState('');
@@ -53,6 +40,7 @@ const AdminBusinessDirectory = () => {
     } catch (e) {
       console.error("Could not load directory listings", e);
     } finally {
+      setLoading(true); // wait for a short bit
       setLoading(false);
     }
   };
@@ -67,21 +55,50 @@ const AdminBusinessDirectory = () => {
     try {
       await fetchApi(`/admin/business-listings/${id}/approve`, { method: 'PUT' });
       setSuccessMsg('Business listing approved successfully.');
+      if (selectedListing && selectedListing.id === id) {
+        setSelectedListing(prev => ({ ...prev, status: 'approved' }));
+      }
       loadData();
     } catch (e) {
       setErrorMsg('Failed to approve listing.');
     }
   };
 
-  const handleReject = async (id) => {
+  const handleRejectSubmit = async () => {
+    if (!promptText.trim()) return;
     setSuccessMsg('');
     setErrorMsg('');
     try {
-      await fetchApi(`/admin/business-listings/${id}/reject`, { method: 'PUT' });
-      setSuccessMsg('Business listing rejected successfully.');
+      await fetchApi(`/admin/business-listings/${selectedListing.id}/reject`, {
+        method: 'PUT',
+        body: JSON.stringify({ reason: promptText })
+      });
+      setSuccessMsg('Business listing rejected.');
+      setSelectedListing(prev => ({ ...prev, status: 'rejected', rejectionReason: promptText }));
+      setPromptMode(null);
+      setPromptText('');
       loadData();
     } catch (e) {
       setErrorMsg('Failed to reject listing.');
+    }
+  };
+
+  const handleMoreInfoSubmit = async () => {
+    if (!promptText.trim()) return;
+    setSuccessMsg('');
+    setErrorMsg('');
+    try {
+      await fetchApi(`/admin/business-listings/${selectedListing.id}/more-info`, {
+        method: 'PUT',
+        body: JSON.stringify({ note: promptText })
+      });
+      setSuccessMsg('Request for more information sent.');
+      setSelectedListing(prev => ({ ...prev, status: 'pending', moreInfoNote: promptText }));
+      setPromptMode(null);
+      setPromptText('');
+      loadData();
+    } catch (e) {
+      setErrorMsg('Failed to send request for more information.');
     }
   };
 
@@ -92,114 +109,37 @@ const AdminBusinessDirectory = () => {
     try {
       await fetchApi(`/admin/business-listings/${id}`, { method: 'DELETE' });
       setSuccessMsg('Listing deleted successfully.');
+      setSelectedListing(null);
       loadData();
     } catch (e) {
       setErrorMsg('Failed to delete listing.');
     }
   };
 
-  const handleEditListing = (item) => {
-    setEditingId(item.id);
-    setBusinessName(item.businessName || '');
-    setCategoryName(item.category || '');
-    setCategoryId(item.categoryId || '');
-    setSubcategory(item.subcategory || '');
-    setDescription(item.description || '');
-    setAddress(item.address || '');
-    setAddressLocality(item.addressLocality || '');
-    setAddressStreet(item.addressStreet || '');
-    setWorkingHours(item.workingHours || '');
-    setHoursJson(item.hoursJson || '');
-    setPhoneNumber(item.phoneNumber || item.phone || '');
-    setEmail(item.email || '');
-    setWebsite(item.website || '');
-    setLogoUrl(item.logoUrl || item.logo || '');
-    setCoverUrl(item.coverUrl || item.coverImage || '');
-    setLatitude(item.latitude || '');
-    setLongitude(item.longitude || '');
-    setIsVerified(item.isVerified || false);
-    setStatus(item.status || 'pending');
-    setOwnerId(item.ownerId || '');
-    setSlug(item.slug || '');
-    setShowForm(true);
-  };
-
-  const resetListingForm = () => {
-    setEditingId(null);
-    setBusinessName('');
-    setCategoryName('');
-    setCategoryId('');
-    setSubcategory('');
-    setDescription('');
-    setAddress('');
-    setAddressLocality('');
-    setAddressStreet('');
-    setWorkingHours('');
-    setHoursJson('');
-    setPhoneNumber('');
-    setEmail('');
-    setWebsite('');
-    setLogoUrl('');
-    setCoverUrl('');
-    setLatitude('');
-    setLongitude('');
-    setIsVerified(false);
-    setStatus('pending');
-    setOwnerId('');
-    setSlug('');
-    setShowForm(false);
-  };
-
-  const handleSaveListingSubmit = async (e) => {
-    e.preventDefault();
-    setSuccessMsg('');
-    setErrorMsg('');
-    const payload = {
-      businessName,
-      name: businessName,
-      category: categoryName,
-      categoryId: parseInt(categoryId) || null,
-      subcategory,
-      description,
-      address,
-      addressLocality,
-      addressStreet,
-      workingHours,
-      hoursJson,
-      phoneNumber,
-      phone: phoneNumber,
-      email,
-      website,
-      logoUrl,
-      logo: logoUrl,
-      coverUrl,
-      coverImage: coverUrl,
-      latitude: parseFloat(latitude) || null,
-      longitude: parseFloat(longitude) || null,
-      isVerified,
-      status,
-      ownerId: parseInt(ownerId) || null,
-      slug
-    };
-
+  const viewListingDetails = async (item) => {
+    setSelectedListing(item);
+    setReviews([]);
+    setReviewsLoading(true);
     try {
-      if (editingId) {
-        await fetchApi(`/admin/business-listings/${editingId}`, {
-          method: 'PUT',
-          body: JSON.stringify(payload)
-        });
-        setSuccessMsg('Business listing updated successfully.');
-      } else {
-        await fetchApi('/admin/business-listings', {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
-        setSuccessMsg('Business listing created successfully.');
-      }
-      resetListingForm();
-      loadData();
+      const reviewList = await fetchApi(`/directory/${item.id}/reviews`);
+      if (Array.isArray(reviewList)) setReviews(reviewList);
     } catch (e) {
-      setErrorMsg('Failed to save business listing.');
+      console.warn("Could not load reviews for listing", e);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm("Are you sure you want to delete this review?")) return;
+    try {
+      await fetchApi(`/admin/business-listings/reviews/${reviewId}`, { method: 'DELETE' });
+      setSuccessMsg('Review deleted successfully.');
+      if (selectedListing) {
+        viewListingDetails(selectedListing);
+      }
+    } catch (e) {
+      setErrorMsg('Failed to delete review.');
     }
   };
 
@@ -256,242 +196,268 @@ const AdminBusinessDirectory = () => {
     }
   };
 
+  const filteredListings = listings.filter(item => {
+    if (statusFilter === 'all') return true;
+    return item.status === statusFilter;
+  });
+
   return (
     <div className="admin-business-directory-container">
       <div className="posts-header">
         <h1>Local Business Directory</h1>
-        <p className="subtitle">Moderate business listings, verify company info, and customize directory categories</p>
+        <p className="subtitle">Review and moderate business listings, inspect KYC docs, and manage categories</p>
       </div>
 
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '1.5rem', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.5rem' }}>
+      <div className="tab-menu">
         <button
           className={`tab-btn ${activeTab === 'listings' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('listings'); resetListingForm(); }}
-          style={{ background: 'transparent', border: 'none', fontWeight: activeTab === 'listings' ? '800' : '500', color: activeTab === 'listings' ? '#B3732A' : '#64748b', cursor: 'pointer', padding: '0.5rem 1rem' }}
+          onClick={() => { setActiveTab('listings'); setSelectedListing(null); }}
         >
-          Business Listings
+          <i className="fa-solid fa-list"></i> Directory Moderation Queue
         </button>
         <button
           className={`tab-btn ${activeTab === 'categories' ? 'active' : ''}`}
           onClick={() => { setActiveTab('categories'); setShowCatForm(false); }}
-          style={{ background: 'transparent', border: 'none', fontWeight: activeTab === 'categories' ? '800' : '500', color: activeTab === 'categories' ? '#B3732A' : '#64748b', cursor: 'pointer', padding: '0.5rem 1rem' }}
         >
-          Directory Categories
+          <i className="fa-solid fa-tags"></i> Directory Categories
         </button>
       </div>
 
-      {successMsg && <div className="alert-banner success">{successMsg}</div>}
-      {errorMsg && <div className="alert-banner error">{errorMsg}</div>}
+      {successMsg && <div className="alert-banner success"><i className="fa-solid fa-circle-check"></i> {successMsg}</div>}
+      {errorMsg && <div className="alert-banner error"><i className="fa-solid fa-circle-exclamation"></i> {errorMsg}</div>}
 
       {activeTab === 'listings' && (
-        <>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-            <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-              {showForm ? 'Cancel Form' : '+ Add Business Listing'}
-            </button>
+        <div className="listings-grid-layout">
+          {/* Main List Column */}
+          <div className="listings-main-col">
+            <div className="filters-container">
+              <span className="filter-label">Filter Status:</span>
+              <div className="status-pills">
+                {['all', 'pending', 'approved', 'rejected'].map(st => (
+                  <button
+                    key={st}
+                    className={`status-pill-btn ${statusFilter === st ? 'active' : ''}`}
+                    onClick={() => setStatusFilter(st)}
+                  >
+                    {st.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="loading-state">Loading business listings...</div>
+            ) : (
+              <div className="table-wrapper">
+                <table className="categories-table">
+                  <thead>
+                    <tr>
+                      <th>Business Details</th>
+                      <th>Category</th>
+                      <th>Location</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredListings.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="empty-table">No business listings found in this queue.</td>
+                      </tr>
+                    ) : (
+                      filteredListings.map(item => (
+                        <tr
+                          key={item.id}
+                          className={`listing-row ${selectedListing?.id === item.id ? 'selected' : ''}`}
+                          onClick={() => viewListingDetails(item)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <td>
+                            <div className="business-name-title">
+                              <strong>{item.businessName || item.name}</strong>
+                              {item.isVerified && <span className="verified-badge"><i className="fa-solid fa-circle-check"></i></span>}
+                            </div>
+                            <div className="details-sub">{item.email} | {item.phone || item.phoneNumber}</div>
+                          </td>
+                          <td><span className="category-tag">{item.category}</span></td>
+                          <td>{item.addressLocality || 'Tamil Nadu'}</td>
+                          <td>
+                            <span className={`status-badge ${item.status}`}>
+                              {item.status || 'pending'}
+                            </span>
+                          </td>
+                          <td>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                viewListingDetails(item);
+                              }}
+                            >
+                              Inspect <i className="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
-          {showForm && (
-            <form onSubmit={handleSaveListingSubmit} className="classified-ad-form" style={{ background: 'white', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '1.5rem' }}>
-              <h3>{editingId ? 'Edit Business Listing' : 'Create New Business Listing'}</h3>
-              <div className="form-group">
-                <label>Business Name *</label>
-                <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} required />
-              </div>
+          {/* Details & Inspection Column */}
+          {selectedListing && (
+            <div className="listings-detail-col">
+              <div className="card detail-card">
+                <div className="detail-header">
+                  <h3>Inspect Business Details</h3>
+                  <button className="close-btn" onClick={() => setSelectedListing(null)}>×</button>
+                </div>
 
-              <div className="form-row">
-                <div className="form-group half">
-                  <label>Category (Text representation) *</label>
-                  <input type="text" value={categoryName} onChange={(e) => setCategoryName(e.target.value)} placeholder="e.g. Restaurants" required />
-                </div>
-                <div className="form-group half">
-                  <label>Select Parent Category ID</label>
-                  <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-                    <option value="">-- None / Select category --</option>
-                    {categories.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+                <div className="detail-body">
+                  <div className="logo-banner-preview">
+                    {selectedListing.logoUrl && (
+                      <img src={selectedListing.logoUrl} alt="Logo" className="logo-preview" />
+                    )}
+                    <h4>{selectedListing.businessName || selectedListing.name}</h4>
+                  </div>
 
-              <div className="form-row">
-                <div className="form-group half">
-                  <label>Subcategory</label>
-                  <input type="text" value={subcategory} onChange={(e) => setSubcategory(e.target.value)} placeholder="e.g. Vegetarian" />
-                </div>
-                <div className="form-group half">
-                  <label>Slug (optional)</label>
-                  <input type="text" value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="e.g. hotel-saravana-bhavan" />
-                </div>
-              </div>
+                  <div className="detail-section">
+                    <h5>Overview</h5>
+                    <p>{selectedListing.description || 'No description provided.'}</p>
+                  </div>
 
-              <div className="form-row">
-                <div className="form-group half">
-                  <label>Phone Number</label>
-                  <input type="text" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
-                </div>
-                <div className="form-group half">
-                  <label>Email Address</label>
-                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-                </div>
-              </div>
+                  <div className="detail-grid">
+                    <div className="detail-item">
+                      <span className="label">Contact Email</span>
+                      <span className="value">{selectedListing.email || 'N/A'}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="label">Phone Number</span>
+                      <span className="value">{selectedListing.phoneNumber || selectedListing.phone || 'N/A'}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="label">Address</span>
+                      <span className="value">
+                        {selectedListing.addressStreet ? `${selectedListing.addressStreet}, ` : ''}
+                        {selectedListing.addressLocality || 'Tamil Nadu'}
+                      </span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="label">Website</span>
+                      <span className="value">
+                        {selectedListing.website ? (
+                          <a href={selectedListing.website} target="_blank" rel="noreferrer">{selectedListing.website}</a>
+                        ) : 'N/A'}
+                      </span>
+                    </div>
+                  </div>
 
-              <div className="form-group">
-                <label>Website URL</label>
-                <input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://example.com" />
-              </div>
+                  {/* KYC Documents Panel */}
+                  <div className="detail-section kyc-section">
+                    <h5><i className="fa-solid fa-id-card"></i> KYC Document Verification</h5>
+                    {selectedListing.kycDocumentUrl ? (
+                      <div className="kyc-file-preview">
+                        <span className="kyc-icon"><i className="fa-solid fa-file-pdf"></i></span>
+                        <a href={selectedListing.kycDocumentUrl} target="_blank" rel="noreferrer" className="kyc-link">
+                          View Verification Document (PDF/Image)
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="kyc-empty">
+                        <i className="fa-solid fa-triangle-exclamation text-amber-500"></i> No verification documentation uploaded by user.
+                      </div>
+                    )}
+                  </div>
 
-              <div className="form-group">
-                <label>Full Address Description</label>
-                <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Full street, area details" />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group half">
-                  <label>Address Locality</label>
-                  <input type="text" value={addressLocality} onChange={(e) => setAddressLocality(e.target.value)} placeholder="e.g. Chennai" />
-                </div>
-                <div className="form-group half">
-                  <label>Address Street</label>
-                  <input type="text" value={addressStreet} onChange={(e) => setAddressStreet(e.target.value)} placeholder="e.g. T-Nagar" />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group half">
-                  <label>Logo Image URL</label>
-                  <input type="text" value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} />
-                </div>
-                <div className="form-group half">
-                  <label>Cover Banner Image URL</label>
-                  <input type="text" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group half">
-                  <label>Geo Latitude</label>
-                  <input type="text" value={latitude} onChange={(e) => setLatitude(e.target.value)} placeholder="e.g. 13.0827" />
-                </div>
-                <div className="form-group half">
-                  <label>Geo Longitude</label>
-                  <input type="text" value={longitude} onChange={(e) => setLongitude(e.target.value)} placeholder="e.g. 80.2707" />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group half">
-                  <label>Hours description</label>
-                  <input type="text" value={workingHours} onChange={(e) => setWorkingHours(e.target.value)} placeholder="e.g. 9:00 AM - 9:00 PM" />
-                </div>
-                <div className="form-group half">
-                  <label>Hours JSON</label>
-                  <input type="text" value={hoursJson} onChange={(e) => setHoursJson(e.target.value)} placeholder='{"mon":"09:00-21:00"}' />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group half">
-                  <label>Owner User ID (optional)</label>
-                  <input type="number" value={ownerId} onChange={(e) => setOwnerId(e.target.value)} />
-                </div>
-                <div className="form-group half">
-                  <label>Moderation Status</label>
-                  <select value={status} onChange={(e) => setStatus(e.target.value)}>
-                    <option value="pending">Pending Review</option>
-                    <option value="approved">Approved / Active</option>
-                    <option value="rejected">Rejected</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-group checkbox" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '0.5rem' }}>
-                <input type="checkbox" id="verifiedCheck" checked={isVerified} onChange={(e) => setIsVerified(e.target.checked)} />
-                <label htmlFor="verifiedCheck">Is Verified Business (Verification Badge)</label>
-              </div>
-
-              <div className="form-group">
-                <label>Business Description</label>
-                <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows="3"></textarea>
-              </div>
-
-              <button type="submit" className="btn btn-primary">{editingId ? 'Update Listing' : 'Create Listing'}</button>
-            </form>
-          )}
-
-          {loading ? (
-            <div className="loading-state">Loading directories...</div>
-          ) : (
-            <div className="table-wrapper">
-              <table className="categories-table">
-                <thead>
-                  <tr>
-                    <th>Business Name</th>
-                    <th>Category</th>
-                    <th>Location</th>
-                    <th>Verified</th>
-                    <th>Status</th>
-                    <th>Date Added</th>
-                    <th>Options</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {listings.length === 0 ? (
-                    <tr>
-                      <td colSpan="7" className="empty-table">No business listings cataloged.</td>
-                    </tr>
-                  ) : (
-                    listings.map(item => (
-                      <tr key={item.id}>
-                        <td>
-                          <strong>{item.businessName || item.name}</strong>
-                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{item.slug}</div>
-                        </td>
-                        <td>{item.category}</td>
-                        <td>{item.addressLocality || 'Tamil Nadu'}</td>
-                        <td>
-                          {item.isVerified ? (
-                            <span style={{ color: '#3b82f6', fontWeight: 800, fontSize: '0.75rem', background: '#dbeafe', padding: '2px 8px', borderRadius: '999px' }}>
-                              <i className="fa-solid fa-circle-check"></i> Verified
-                            </span>
-                          ) : (
-                            <span style={{ color: '#64748b', fontSize: '0.75rem' }}>No</span>
-                          )}
-                        </td>
-                        <td>
-                          <span style={{
-                            padding: '2px 8px',
-                            borderRadius: '999px',
-                            fontSize: '0.75rem',
-                            fontWeight: '700',
-                            background: item.status === 'approved' ? '#dcfce7' : item.status === 'rejected' ? '#fee2e2' : '#fef3c7',
-                            color: item.status === 'approved' ? '#166534' : item.status === 'rejected' ? '#991b1b' : '#854d0e'
-                          }}>
-                            {item.status}
-                          </span>
-                        </td>
-                        <td>{new Date(item.createdAt).toLocaleDateString()}</td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '6px' }}>
-                            {item.status === 'pending' && (
-                              <>
-                                <button className="btn btn-primary" style={{ padding: '2px 8px', fontSize: '0.7rem', background: '#16a34a' }} onClick={() => handleApprove(item.id)}>Approve</button>
-                                <button className="btn btn-primary" style={{ padding: '2px 8px', fontSize: '0.7rem', background: '#dc2626' }} onClick={() => handleReject(item.id)}>Reject</button>
-                              </>
-                            )}
-                            <button className="action-btn edit-btn" style={{ fontSize: '0.75rem' }} onClick={() => handleEditListing(item)}>Edit</button>
-                            <button className="action-btn delete-btn" style={{ fontSize: '0.75rem' }} onClick={() => handleDeleteListing(item.id)}>Delete</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                  {selectedListing.status === 'rejected' && selectedListing.rejectionReason && (
+                    <div className="detail-section reason-alert reject">
+                      <h5>Rejection Reason</h5>
+                      <p>{selectedListing.rejectionReason}</p>
+                    </div>
                   )}
-                </tbody>
-              </table>
+
+                  {selectedListing.moreInfoNote && (
+                    <div className="detail-section reason-alert info">
+                      <h5>Request Note (More Info)</h5>
+                      <p>{selectedListing.moreInfoNote}</p>
+                    </div>
+                  )}
+
+                  <div className="detail-actions">
+                    {selectedListing.status !== 'approved' && (
+                      <button className="btn btn-approve" onClick={() => handleApprove(selectedListing.id)}>
+                        <i className="fa-solid fa-circle-check"></i> Approve & Publish
+                      </button>
+                    )}
+                    <button className="btn btn-reject" onClick={() => setPromptMode('reject')}>
+                      <i className="fa-solid fa-circle-xmark"></i> Reject Listing
+                    </button>
+                    <button className="btn btn-info" onClick={() => setPromptMode('more-info')}>
+                      <i className="fa-solid fa-question-circle"></i> Request More Info
+                    </button>
+                    <button className="btn btn-delete" onClick={() => handleDeleteListing(selectedListing.id)}>
+                      <i className="fa-solid fa-trash"></i> Delete Listing
+                    </button>
+                  </div>
+
+                  {/* Prompt Dialog Box */}
+                  {promptMode && (
+                    <div className="prompt-overlay">
+                      <div className="prompt-box">
+                        <h4>{promptMode === 'reject' ? 'Rejection Reason' : 'Request More Info Note'}</h4>
+                        <textarea
+                          placeholder={promptMode === 'reject' ? 'Enter the reason for rejection...' : 'Specify what additional details are needed...'}
+                          value={promptText}
+                          onChange={(e) => setPromptText(e.target.value)}
+                          rows="4"
+                        />
+                        <div className="prompt-buttons">
+                          <button className="btn btn-secondary" onClick={() => { setPromptMode(null); setPromptText(''); }}>Cancel</button>
+                          <button className="btn btn-primary" onClick={promptMode === 'reject' ? handleRejectSubmit : handleMoreInfoSubmit}>
+                            Submit
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Reviews Moderation Section */}
+                  <div className="detail-section reviews-moderation-section">
+                    <h5><i className="fa-solid fa-comments"></i> Reviews Moderation</h5>
+                    {reviewsLoading ? (
+                      <div className="reviews-loading">Loading reviews...</div>
+                    ) : reviews.length === 0 ? (
+                      <p className="no-reviews">No reviews posted for this business yet.</p>
+                    ) : (
+                      <div className="reviews-list">
+                        {reviews.map(rev => (
+                          <div key={rev.id} className="review-card">
+                            <div className="rev-head">
+                              <strong>{rev.reviewerName}</strong>
+                              <span className="rating-stars">
+                                {'★'.repeat(rev.rating)}{'☆'.repeat(5 - rev.rating)}
+                              </span>
+                            </div>
+                            <p className="rev-text">"{rev.comment}"</p>
+                            <div className="rev-foot">
+                              <span>Rating: {rev.rating} / 5</span>
+                              <button className="delete-rev-btn" onClick={() => handleDeleteReview(rev.id)}>
+                                <i className="fa-solid fa-trash-can"></i> Delete
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
-        </>
+        </div>
       )}
 
       {activeTab === 'categories' && (

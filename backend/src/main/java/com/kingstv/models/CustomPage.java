@@ -41,8 +41,34 @@ public class CustomPage {
     private String visibility = "Public"; // Public, Draft
 
     @Column(name = "page_type")
-    private String pageType = "custom";
+    private String pageType = "standard"; // standard, about_us, contact, career, privacy_policy, terms_of_use
 
+    // --- Structured Custom Fields ---
+    @Column(name = "team_members", columnDefinition = "TEXT")
+    private String teamMembers; // JSON string array of name/photo/title/bio
+
+    @Column(name = "milestones", columnDefinition = "TEXT")
+    private String milestones; // JSON string array of timeline milestones
+
+    @Column(name = "phone_numbers", columnDefinition = "TEXT")
+    private String phoneNumbers; // JSON string array of phone numbers
+
+    @Column(name = "email_addresses", columnDefinition = "TEXT")
+    private String emailAddresses; // JSON string array of email addresses
+
+    @Column(name = "office_hours", columnDefinition = "TEXT")
+    private String officeHours;
+
+    @Column(name = "embedded_map", columnDefinition = "TEXT")
+    private String embeddedMap;
+
+    @Column(name = "version")
+    private Integer version = 1;
+
+    @Column(name = "effective_date")
+    private LocalDateTime effectiveDate;
+
+    // --- Timestamps ---
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -53,6 +79,9 @@ public class CustomPage {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        if (this.effectiveDate == null) {
+            this.effectiveDate = LocalDateTime.now();
+        }
     }
 
     @PreUpdate
@@ -93,9 +122,35 @@ public class CustomPage {
     public String getVisibility() { return visibility != null ? visibility : "Public"; }
     public void setVisibility(String visibility) { this.visibility = visibility; }
 
-    public String getPageType() { return pageType != null ? pageType : "custom"; }
+    public String getPageType() { return pageType != null ? pageType : "standard"; }
     public void setPageType(String pageType) { this.pageType = pageType; }
 
+    // --- Structured Custom Fields Getters/Setters ---
+    public String getTeamMembers() { return teamMembers; }
+    public void setTeamMembers(String teamMembers) { this.teamMembers = teamMembers; }
+
+    public String getMilestones() { return milestones; }
+    public void setMilestones(String milestones) { this.milestones = milestones; }
+
+    public String getPhoneNumbers() { return phoneNumbers; }
+    public void setPhoneNumbers(String phoneNumbers) { this.phoneNumbers = phoneNumbers; }
+
+    public String getEmailAddresses() { return emailAddresses; }
+    public void setEmailAddresses(String emailAddresses) { this.emailAddresses = emailAddresses; }
+
+    public String getOfficeHours() { return officeHours; }
+    public void setOfficeHours(String officeHours) { this.officeHours = officeHours; }
+
+    public String getEmbeddedMap() { return embeddedMap; }
+    public void setEmbeddedMap(String embeddedMap) { this.embeddedMap = embeddedMap; }
+
+    public Integer getVersion() { return version != null ? version : 1; }
+    public void setVersion(Integer version) { this.version = version; }
+
+    public LocalDateTime getEffectiveDate() { return effectiveDate; }
+    public void setEffectiveDate(LocalDateTime effectiveDate) { this.effectiveDate = effectiveDate; }
+
+    // --- Timestamps Getters/Setters ---
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 

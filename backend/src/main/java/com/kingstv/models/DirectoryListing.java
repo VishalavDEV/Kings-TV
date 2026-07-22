@@ -104,6 +104,15 @@ public class DirectoryListing {
     @Column(unique = true)
     private String slug;
 
+    @Column(name = "kyc_document_url")
+    private String kycDocumentUrl;
+
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
+
+    @Column(name = "more_info_note")
+    private String moreInfoNote;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getBusinessName() { return businessName; }
@@ -189,4 +198,11 @@ public class DirectoryListing {
     public void setLogo(String logo) { this.logoUrl = logo; }
     public String getCoverImage() { return coverUrl; }
     public void setCoverImage(String coverImage) { this.coverUrl = coverImage; }
+
+    public String getKycDocumentUrl() { return kycDocumentUrl; }
+    public void setKycDocumentUrl(String kycDocumentUrl) { this.kycDocumentUrl = kycDocumentUrl; }
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+    public String getMoreInfoNote() { return moreInfoNote; }
+    public void setMoreInfoNote(String moreInfoNote) { this.moreInfoNote = moreInfoNote; }
 }

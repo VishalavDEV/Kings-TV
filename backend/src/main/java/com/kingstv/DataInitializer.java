@@ -658,11 +658,10 @@ public class DataInitializer {
         seedLayoutSection("trending_sidebar", "🔥 Trending Sidebar", 7, "WEB");
         seedLayoutSection("weather", "🌦️ Weather Widget", 8, "WEB");
         seedLayoutSection("live_tv", "📺 Live TV Widget", 9, "WEB");
-        seedLayoutSection("business_case", "💼 Business Case Studies", 10, "WEB");
-        seedLayoutSection("crowd_reporter", "📢 Crowd Reporter", 11, "WEB");
-        seedLayoutSection("news_digest", "📑 News Digest", 12, "WEB");
-        seedLayoutSection("crowd_reporter_highlight", "📢 Crowd Reporter Highlights", 13, "WEB");
-        seedLayoutSection("institution_news", "🏫 Institution News", 14, "WEB");
+        seedLayoutSection("crowd_reporter", "📢 Crowd Reporter", 10, "WEB");
+        seedLayoutSection("news_digest", "📑 News Digest", 11, "WEB");
+        seedLayoutSection("crowd_reporter_highlight", "📢 Crowd Reporter Highlights", 12, "WEB");
+        seedLayoutSection("institution_news", "🏫 Institution News", 13, "WEB");
         
         seedLayoutSection("mobile_hero", "Trending Stories Feed", 1, "MOBILE");
         seedLayoutSection("mobile_live_tv", "Live Broadcast", 2, "MOBILE");
@@ -680,9 +679,8 @@ public class DataInitializer {
             seedMenu("நம்ம ஊர்", "Local Business Directory", "/directory", 1, regional.getId());
             seedMenu("வாழ்த்து", "Wishes", "/wishes", 2, regional.getId());
             seedMenu("இரங்கல்", "Obituaries", "/obituaries", 3, regional.getId());
-            seedMenu("வணிகம்", "Business Studies", "/business-studies", 4, regional.getId());
-            seedMenu("வேலை", "Jobs", "/jobs", 5, regional.getId());
-            seedMenu("தள்ளுபடி", "Classifieds", "/classifieds", 6, regional.getId());
+            seedMenu("வேலை", "Jobs", "/jobs", 4, regional.getId());
+            seedMenu("தள்ளுபடி", "Classifieds", "/classifieds", 5, regional.getId());
 
             seedMenu("சர்வதேசம்", "International", "/category/international", 8, null);
 
