@@ -145,6 +145,11 @@ const Login = () => {
   const handlePhoneAuth = async (e) => {
     e.preventDefault();
 
+    if (!phoneOtpSent) {
+      handleSendPhoneOtp();
+      return;
+    }
+
     if (!firebaseAuth || !window.confirmationResult) {
       triggerToast(lang === 'en' ? 'Firebase Auth is not initialized or OTP has not been sent yet.' : 'Firebase Auth துவக்கப்படவில்லை அல்லது இன்னும் OTP அனுப்பப்படவில்லை.', '#EF4444');
       return;
