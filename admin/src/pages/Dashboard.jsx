@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { NavLink } from "react-router-dom";
 import api from "../api";
+import UptimeStatus from "../components/common/UptimeStatus";
 import { Users, FileText, Activity, TrendingUp, BarChart2, Plus, Radio, Clock, Eye, AlertCircle, Send, Inbox, ShieldAlert } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid, Legend } from "recharts";
 
@@ -227,6 +228,7 @@ const Dashboard = () => {
 
             {/* Right Column Widget / Tags */}
             <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+              <UptimeStatus />
               <QuickPublishWidget onPublished={fetchAll} />
 
               <div className="glass-panel" style={{ padding: "1.25rem" }}>

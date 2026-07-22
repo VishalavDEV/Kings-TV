@@ -7,6 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -162,6 +169,63 @@ public class TaxonomyAndConfigController {
             c.setIsExcluded(req.getOrDefault("isExcluded", false));
             return ResponseEntity.ok((Object) sitemapConfigRepository.save(c));
         }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/sitemap-config/ping")
+    @RequiresPermission(Permission.SITEMAP_MANAGE)
+    public ResponseEntity<?> pingSearchEngines(HttpServletRequest request) {
+        String baseUrl = getFrontendBaseUrl(request);
+        String sitemapUrl = baseUrl + "/sitemap.xml";
+        String newsSitemapUrl = baseUrl + "/sitemap-news.xml";
+
+        List<String> logs = new ArrayList<>();
+        HttpClient client = HttpClient.newHttpClient();
+
+        // Submit main sitemap to Google
+        try {
+            String googlePingUrl = "https://www.google.com/ping?sitemap=" + URLEncoder.encode(sitemapUrl, StandardCharsets.UTF_8);
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(googlePingUrl)).GET().build();
+            HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
+            logs.add("Google sitemap ping: " + res.statusCode());
+        } catch (Exception e) {
+            logs.add("Google sitemap ping error: " + e.getMessage());
+        }
+
+        // Submit news sitemap to Google (for Google News Publisher Center indexing)
+        try {
+            String googleNewsPingUrl = "https://www.google.com/ping?sitemap=" + URLEncoder.encode(newsSitemapUrl, StandardCharsets.UTF_8);
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(googleNewsPingUrl)).GET().build();
+            HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
+            logs.add("Google News ping: " + res.statusCode());
+        } catch (Exception e) {
+            logs.add("Google News ping error: " + e.getMessage());
+        }
+
+        // Submit main sitemap to Bing
+        try {
+            String bingPingUrl = "https://www.bing.com/ping?sitemap=" + URLEncoder.encode(sitemapUrl, StandardCharsets.UTF_8);
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(bingPingUrl)).GET().build();
+            HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
+            logs.add("Bing sitemap ping: " + res.statusCode());
+        } catch (Exception e) {
+            logs.add("Bing sitemap ping error: " + e.getMessage());
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Ping request submitted successfully to Google and Bing.", "logs", logs));
+    }
+
+    private String getFrontendBaseUrl(HttpServletRequest request) {
+        String scheme = request.getScheme();
+        String serverName = request.getServerName();
+        int port = request.getServerPort();
+        
+        String portStr = "";
+        if (port == 5000) {
+            portStr = ":5173"; // Map to frontend Vite dev server locally
+        } else if (port != 80 && port != 443) {
+            portStr = ":" + port;
+        }
+        return scheme + "://" + serverName + portStr;
     }
 
     // --- Font Manager (#16) ---

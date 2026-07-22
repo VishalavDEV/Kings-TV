@@ -59,11 +59,14 @@ const SeoConsole = () => {
 
   const pingSearchEngines = async () => {
     setPingStatus('Pinging Google and Bing...');
-    // Simulated ping for now, as real pinging requires backend logic calling external APIs
-    setTimeout(() => {
-      setPingStatus('Sitemaps successfully submitted to search engines!');
-      setTimeout(() => setPingStatus(null), 5000);
-    }, 2000);
+    try {
+      const res = await api.post('/admin/sitemap-config/ping');
+      setPingStatus('Sitemaps submitted successfully! Logs: ' + (res.data.logs || []).join(' | '));
+    } catch (err) {
+      console.error(err);
+      setPingStatus('Failed to ping search engines. Backend service offline.');
+    }
+    setTimeout(() => setPingStatus(null), 8000);
   };
 
   return (
@@ -109,7 +112,7 @@ const SeoConsole = () => {
                           onChange={(e) => handleTemplateChange(template.id, 'titleTemplate', e.target.value)}
                           placeholder="e.g. {title} - King 24x7 News"
                         />
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Available tags: {literal`{title}, {category}, {siteName}`}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Available tags: {'{title}, {category}, {siteName}'}</div>
                       </div>
                       
                       <div className="form-group">
