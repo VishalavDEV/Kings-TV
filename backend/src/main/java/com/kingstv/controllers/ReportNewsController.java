@@ -33,6 +33,9 @@ public class ReportNewsController {
     @Autowired
     private com.kingstv.services.ProfanityService profanityService;
 
+    @Autowired
+    private com.kingstv.services.AiCenterService aiCenterService;
+
     @GetMapping("/getAll")
     @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN})
     public Page<ReportNews> getAll(
@@ -75,6 +78,9 @@ public class ReportNewsController {
         if (!matched.isEmpty()) {
             profanityService.logViolation("CROWD_REPORT", saved.getId(), saved.getTitle(), matched, null, saved.getReporterContact());
         }
+        
+        // Hook AI Sensor Scan for duplicate/plagiarism/quality/off-topic check
+        aiCenterService.scanContent("CROWD_REPORT", saved.getId(), saved.getTitle(), saved.getDetails());
         try {
             String emailText = String.format(
                 "A new crowd news report has been submitted.\n\n" +

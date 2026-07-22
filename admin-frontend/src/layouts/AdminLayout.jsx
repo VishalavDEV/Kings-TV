@@ -40,6 +40,7 @@ import {
   FileSignature,
   Heart,
   Store,
+  Cpu,
 } from 'lucide-react';
 
 const PUBLIC_SITE_URL = import.meta.env.VITE_PUBLIC_SITE_URL || 'https://kings-tv.vercel.app';
@@ -95,9 +96,20 @@ const NAV_ITEMS = [
       { label: 'Preferences',       path: '/preferences' },
       { label: 'Visual Settings',   path: '/settings/visual' },
       { label: 'General Settings',  path: '/settings/general' },
+      { label: 'System Configuration',  path: '/settings/advanced' },
       { label: 'Storage',           path: '/storage' },
       { label: 'Cache System',      path: '/cache-system' },
       { label: 'Backup',            path: '/backup' },
+    ]
+  },
+  { key: 'ai_center',        label: 'AI Center',          icon: Cpu,             path: '/ai-center',
+    children: [
+      { label: 'AI Content Rewriter', path: '/ai-center/rewriter' },
+      { label: 'AI SEO Generator',   path: '/ai-center/seo-generator' },
+      { label: 'AI Sensor Queue',    path: '/ai-center/sensor' },
+      { label: 'AI Moderation Log',  path: '/ai-center/moderation' },
+      { label: 'AI Inline Settings',  path: '/ai-center/suggestions' },
+      { label: 'AI Prompt Settings',  path: '/ai-center/prompts' },
     ]
   },
 ];

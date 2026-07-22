@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { fetchApi } from '../utils/fetchApi';
+import AiInlineAssistant from '../components/AiInlineAssistant';
 import './AddPost.css';
 
 const HtmlToolbar = ({ targetField, setFormData }) => {
@@ -990,6 +991,19 @@ const EditPost = () => {
           </div>
 
           <div className="editor-sidebar">
+            <div className="mb-4">
+              <AiInlineAssistant
+                draftContent={formData.content}
+                onApplyHeadline={(hl) => setFormData(prev => ({ ...prev, title: hl }))}
+                onApplyTags={(tagsStr) => {
+                  // If setTags doesn't exist, edit how tags are set or just set it
+                  // Let's find tags state in EditPost.jsx
+                  if (typeof setTags === 'function') {
+                    setTags(tagsStr.split(',').map(t => t.trim()));
+                  }
+                }}
+              />
+            </div>
             <div className="sidebar-card">
               <h3>Publishing Options</h3>
               
