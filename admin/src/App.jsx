@@ -30,7 +30,7 @@ import BreakingNewsDashboard from './pages/admin/BreakingNewsDashboard';
 import UgcQueue from './pages/admin/UgcQueue';
 import EditorialCalendar from './pages/admin/EditorialCalendar';
 import SystemLogs from './pages/admin/SystemLogs';
-import AuditLogs from './pages/admin/AuditLogs';
+
 import SystemConfig from './pages/admin/SystemConfig';
 import AdManagement from './pages/admin/AdManagement';
 import RssManager from './pages/admin/RssManager';
