@@ -47,6 +47,9 @@ public class AdminArticleController {
     @Autowired
     private com.kingstv.services.ProfanityService profanityService;
 
+    @Autowired
+    private com.kingstv.services.AiCenterService aiCenterService;
+
     @GetMapping
     public ResponseEntity<Page<Article>> getArticles(
             @RequestParam(required = false) String view,
@@ -192,6 +195,10 @@ public class AdminArticleController {
         if (!matched.isEmpty()) {
             profanityService.logViolation("ARTICLE", saved.getId(), saved.getTitle(), matched, saved.getAuthorId(), saved.getAuthorName());
         }
+        
+        // Hook AI Sensor Scan for duplicate/plagiarism/quality/off-topic check
+        aiCenterService.scanContent("ARTICLE", saved.getId(), saved.getTitle(), saved.getContent());
+
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 

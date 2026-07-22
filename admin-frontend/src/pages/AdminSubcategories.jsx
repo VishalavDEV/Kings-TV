@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { fetchApi } from '../utils/fetchApi';
-import './AdminCategories.css';
 
 const AdminSubcategories = () => {
   const [categories, setCategories] = useState([]);
@@ -18,79 +17,65 @@ const AdminSubcategories = () => {
     language: 'ta',
     slug: '',
     description: '',
-    keywords: '',
     color: '#3B82F6',
     menuOrder: 0,
     showOnMenu: true
   });
 
+  useEffect(() => {
+    loadData();
+  }, []);
+
   const loadData = async () => {
     setLoading(true);
     try {
-      const [catData, subData] = await Promise.allSettled([
+      const [cats, subs] = await Promise.all([
         fetchApi('/admin/categories'),
         fetchApi('/admin/subcategories')
       ]);
-
-      if (catData.status === 'fulfilled' && Array.isArray(catData.value)) {
-        setCategories(catData.value);
-        if (catData.value.length > 0 && !formData.parentCategoryId) {
-          setFormData((prev) => ({ ...prev, parentCategoryId: catData.value[0].id }));
-        }
-      }
-      if (subData.status === 'fulfilled' && Array.isArray(subData.value)) {
-        setSubcategories(subData.value);
-      }
+      setCategories(cats || []);
+      setSubcategories(subs || []);
     } catch (err) {
-      console.error('Failed to load subcategories data:', err);
+      setErrorMsg('Failed to load subcategories and categories');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
   };
 
   const resetForm = () => {
-    setEditingId(null);
     setFormData({
-      parentCategoryId: categories.length > 0 ? categories[0].id : '',
+      parentCategoryId: '',
       name: '',
       language: 'ta',
       slug: '',
       description: '',
-      keywords: '',
       color: '#3B82F6',
       menuOrder: 0,
       showOnMenu: true
     });
-    setErrorMsg('');
+    setEditingId(null);
   };
 
-  const handleEdit = (subCat) => {
-    setEditingId(subCat.subcategoryId || subCat.id);
+  const handleEdit = (sub) => {
+    setEditingId(sub.subcategoryId || sub.id);
     setFormData({
-      parentCategoryId: subCat.parentCategoryId || subCat.categoryId || (categories.length > 0 ? categories[0].id : ''),
-      name: subCat.name || '',
-      language: subCat.language || 'ta',
-      slug: subCat.slug || '',
-      description: subCat.description || '',
-      keywords: subCat.keywords || '',
-      color: subCat.color || '#3B82F6',
-      menuOrder: subCat.menuOrder !== undefined ? subCat.menuOrder : (subCat.displayOrder || 0),
-      showOnMenu: subCat.showOnMenu !== false
+      parentCategoryId: String(sub.parentCategoryId || sub.categoryId || ''),
+      name: sub.name || '',
+      language: sub.language || 'ta',
+      slug: sub.slug || '',
+      description: sub.description || '',
+      color: sub.color || '#3B82F6',
+      menuOrder: sub.menuOrder !== undefined ? sub.menuOrder : (sub.displayOrder || 0),
+      showOnMenu: sub.showOnMenu !== false
     });
-    setErrorMsg('');
-    setSuccessMsg('');
   };
 
   const handleSubmit = async (e) => {
@@ -98,43 +83,40 @@ const AdminSubcategories = () => {
     setErrorMsg('');
     setSuccessMsg('');
 
-    if (!formData.name.trim()) {
-      setErrorMsg('Subcategory name is required');
-      return;
-    }
-
     if (!formData.parentCategoryId) {
-      setErrorMsg('Please select a Parent Category');
+      setErrorMsg('Parent Category is required');
       return;
     }
 
     try {
-      const subId = editingId;
-      const endpoint = subId ? `/admin/subcategories/${subId}` : '/admin/subcategories';
-      const method = subId ? 'PUT' : 'POST';
-
       const payload = {
-        ...formData,
         parentCategoryId: parseInt(formData.parentCategoryId, 10),
-        categoryId: parseInt(formData.parentCategoryId, 10),
-        menuOrder: parseInt(formData.menuOrder, 10) || 0
+        name: formData.name,
+        language: formData.language,
+        slug: formData.slug || null,
+        description: formData.description,
+        color: formData.color,
+        menuOrder: parseInt(formData.menuOrder, 10) || 0,
+        showOnMenu: formData.showOnMenu
       };
 
-      const res = await fetchApi(endpoint, {
-        method,
-        body: JSON.stringify(payload)
-      });
-
-      if (res && res.error) {
-        setErrorMsg(res.error);
+      if (editingId) {
+        await fetchApi(`/admin/subcategories/${editingId}`, {
+          method: 'PUT',
+          body: JSON.stringify(payload)
+        });
+        setSuccessMsg('Subcategory updated successfully');
       } else {
-        setSuccessMsg(subId ? 'Subcategory updated successfully!' : 'Subcategory created successfully!');
-        resetForm();
-        loadData();
+        await fetchApi('/admin/subcategories', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        setSuccessMsg('Subcategory added successfully');
       }
+      resetForm();
+      loadData();
     } catch (err) {
-      const message = err?.response?.data?.error || err.message || 'Error saving subcategory';
-      setErrorMsg(message);
+      setErrorMsg(err.message || 'Failed to save subcategory');
     }
   };
 
@@ -165,28 +147,40 @@ const AdminSubcategories = () => {
   });
 
   return (
-    <div className="admin-categories-container">
-      <div className="categories-header">
-        <h1>Subcategories Management</h1>
-        <p className="subtitle">Manage subcategories associated under main article categories</p>
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-200/60 pb-5">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Subcategories Management</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage subcategories associated under main article categories</p>
+        </div>
       </div>
 
-      {errorMsg && <div className="alert-banner error">{errorMsg}</div>}
-      {successMsg && <div className="alert-banner success">{successMsg}</div>}
+      {successMsg && (
+        <div className="flex items-center gap-3 p-4 bg-green-50 text-green-700 border border-green-200 rounded-xl text-sm font-medium animate-fade-in">
+          <span className="w-2 h-2 rounded-full bg-green-500 animate-ping"></span>
+          {successMsg}
+        </div>
+      )}
+      {errorMsg && (
+        <div className="flex items-center gap-3 p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl text-sm font-medium animate-fade-in">
+          <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+          {errorMsg}
+        </div>
+      )}
 
-      <div className="split-view-layout">
-        {/* Left View: Add / Edit Form */}
-        <div className="form-panel">
-          <h2>{editingId ? 'Edit Subcategory' : 'Add New Subcategory'}</h2>
-          <form onSubmit={handleSubmit} className="category-form">
-            <div className="form-group">
-              <label htmlFor="parentCategoryId">Parent Category *</label>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1 bg-white border border-gray-100 rounded-2xl shadow-sm p-6 space-y-5 h-fit">
+          <h2 className="text-lg font-bold text-gray-900">{editingId ? 'Edit Subcategory' : 'Add New Subcategory'}</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1">
+              <label htmlFor="parentCategoryId" className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Parent Category *</label>
               <select
                 id="parentCategoryId"
                 name="parentCategoryId"
                 value={formData.parentCategoryId}
                 onChange={handleInputChange}
                 required
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               >
                 <option value="">Select Parent Category...</option>
                 {categories.map((cat) => (
@@ -197,8 +191,8 @@ const AdminSubcategories = () => {
               </select>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="name">Subcategory Name *</label>
+            <div className="space-y-1">
+              <label htmlFor="name" className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Subcategory Name *</label>
               <input
                 type="text"
                 id="name"
@@ -207,25 +201,27 @@ const AdminSubcategories = () => {
                 onChange={handleInputChange}
                 placeholder="e.g. Artificial Intelligence"
                 required
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
             </div>
 
-            <div className="form-row">
-              <div className="form-group half">
-                <label htmlFor="language">Language *</label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label htmlFor="language" className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Language *</label>
                 <select
                   id="language"
                   name="language"
                   value={formData.language}
                   onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 >
                   <option value="ta">Tamil (தமிழ்)</option>
                   <option value="en">English</option>
                 </select>
               </div>
 
-              <div className="form-group half">
-                <label htmlFor="menuOrder">Menu Order</label>
+              <div className="space-y-1">
+                <label htmlFor="menuOrder" className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Menu Order</label>
                 <input
                   type="number"
                   id="menuOrder"
@@ -233,12 +229,13 @@ const AdminSubcategories = () => {
                   value={formData.menuOrder}
                   onChange={handleInputChange}
                   min="0"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
               </div>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="slug">Custom Slug (Optional)</label>
+            <div className="space-y-1">
+              <label htmlFor="slug" className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Custom Slug (Optional)</label>
               <input
                 type="text"
                 id="slug"
@@ -246,39 +243,42 @@ const AdminSubcategories = () => {
                 value={formData.slug}
                 onChange={handleInputChange}
                 placeholder="auto-generated if empty"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
             </div>
 
-            <div className="form-row">
-              <div className="form-group half">
-                <label htmlFor="color">Subcategory Color</label>
-                <div className="color-input-wrapper">
+            <div className="grid grid-cols-2 gap-4 items-center pt-2">
+              <div className="space-y-1">
+                <label htmlFor="color" className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Color</label>
+                <div className="flex items-center gap-2">
                   <input
                     type="color"
                     id="color"
                     name="color"
                     value={formData.color}
                     onChange={handleInputChange}
+                    className="w-8 h-8 p-0 rounded-md border border-gray-200 cursor-pointer overflow-hidden"
                   />
-                  <span className="color-hex">{formData.color}</span>
+                  <span className="text-xs font-mono font-bold text-gray-500 uppercase">{formData.color}</span>
                 </div>
               </div>
 
-              <div className="form-group half checkbox-group">
-                <label className="checkbox-label">
+              <div className="flex items-center pt-5">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-600">
                   <input
                     type="checkbox"
                     name="showOnMenu"
                     checked={formData.showOnMenu}
                     onChange={handleInputChange}
+                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
                   />
                   Show on Menu
                 </label>
               </div>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="description">Meta Description</label>
+            <div className="space-y-1">
+              <label htmlFor="description" className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Meta Description</label>
               <textarea
                 id="description"
                 name="description"
@@ -286,15 +286,23 @@ const AdminSubcategories = () => {
                 value={formData.description}
                 onChange={handleInputChange}
                 placeholder="Subcategory description..."
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
               />
             </div>
 
-            <div className="form-actions">
-              <button type="submit" className="btn btn-primary">
-                {editingId ? 'Update Subcategory' : 'Add Subcategory'}
+            <div className="flex items-center gap-3 pt-3">
+              <button
+                type="submit"
+                className="flex-1 bg-primary hover:bg-primary-hover text-white text-sm font-semibold py-2 px-4 rounded-xl transition-all shadow-sm active:scale-[0.98]"
+              >
+                {editingId ? 'Update' : 'Add Subcategory'}
               </button>
               {editingId && (
-                <button type="button" className="btn btn-secondary" onClick={resetForm}>
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold py-2 px-4 rounded-xl transition-all"
+                >
                   Cancel
                 </button>
               )}
@@ -302,15 +310,14 @@ const AdminSubcategories = () => {
           </form>
         </div>
 
-        {/* Right View: Subcategories Table */}
-        <div className="table-panel">
-          <div className="table-header-controls">
-            <h2>Subcategories List ({filteredSubcategories.length})</h2>
-            <div className="flex gap-2">
+        <div className="lg:col-span-2 bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+          <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h2 className="text-lg font-bold text-gray-900">Subcategories List ({filteredSubcategories.length})</h2>
+            <div className="flex flex-wrap items-center gap-3">
               <select
-                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
                 value={parentFilter}
                 onChange={(e) => setParentFilter(e.target.value)}
+                className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-gray-600"
               >
                 <option value="">All Parent Categories</option>
                 {categories.map((c) => (
@@ -320,82 +327,88 @@ const AdminSubcategories = () => {
                 ))}
               </select>
 
-              <div className="search-box">
-                <i className="fa-solid fa-magnifying-glass"></i>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-gray-400 text-xs">
+                  🔍
+                </span>
                 <input
                   type="text"
                   placeholder="Search subcategories..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-7 pr-3 py-1.5 border border-gray-200 rounded-lg text-xs w-48 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-gray-600"
                 />
               </div>
             </div>
           </div>
 
           {loading ? (
-            <div className="loading-state">Loading subcategories...</div>
+            <div className="p-12 text-center text-sm font-medium text-gray-400">Loading subcategories...</div>
           ) : (
-            <div className="table-wrapper">
-              <table className="categories-table">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Parent Category</th>
-                    <th>Color</th>
-                    <th>Name</th>
-                    <th>Language</th>
-                    <th>Slug</th>
-                    <th>Order</th>
-                    <th>Options</th>
+                  <tr className="bg-gray-50/75 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-4">ID</th>
+                    <th className="px-6 py-4">Parent Category</th>
+                    <th className="px-6 py-4">Color</th>
+                    <th className="px-6 py-4">Name</th>
+                    <th className="px-6 py-4">Language</th>
+                    <th className="px-6 py-4">Slug</th>
+                    <th className="px-6 py-4 text-center">Order</th>
+                    <th className="px-6 py-4 text-right">Options</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-100">
                   {filteredSubcategories.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="empty-table">
+                      <td colSpan="8" className="px-6 py-12 text-center text-sm font-medium text-gray-400">
                         No subcategories found.
                       </td>
                     </tr>
                   ) : (
                     filteredSubcategories.map((sub) => (
-                      <tr key={sub.subcategoryId || sub.id}>
-                        <td>#{sub.subcategoryId || sub.id}</td>
-                        <td>
-                          <span className="font-medium text-blue-600">
+                      <tr key={sub.subcategoryId || sub.id} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4 text-xs font-mono text-gray-400">#{sub.subcategoryId || sub.id}</td>
+                        <td className="px-6 py-4">
+                          <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
                             {getParentCategoryName(sub.parentCategoryId || sub.categoryId)}
                           </span>
                         </td>
-                        <td>
-                          <span
-                            className="color-swatch"
-                            style={{ backgroundColor: sub.color || '#3B82F6' }}
-                          />
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className="w-3.5 h-3.5 rounded-full border border-black/5 shadow-inner"
+                              style={{ backgroundColor: sub.color || '#3B82F6' }}
+                            />
+                            <span className="text-xs font-mono text-gray-400">{sub.color || '#3B82F6'}</span>
+                          </div>
                         </td>
-                        <td className="font-semibold">{sub.name}</td>
-                        <td>
-                          <span className={`lang-badge ${sub.language || 'ta'}`}>
+                        <td className="px-6 py-4 text-sm font-semibold text-gray-800">{sub.name}</td>
+                        <td className="px-6 py-4">
+                          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${
+                            sub.language === 'en' ? 'bg-pink-50 text-pink-600' : 'bg-sky-50 text-sky-600'
+                          }`}>
                             {sub.language === 'en' ? 'English' : 'Tamil'}
                           </span>
                         </td>
-                        <td className="slug-cell">{sub.slug}</td>
-                        <td>{sub.menuOrder !== undefined ? sub.menuOrder : (sub.displayOrder || 0)}</td>
-                        <td>
-                          <div className="action-buttons">
+                        <td className="px-6 py-4 text-xs font-mono text-gray-500 max-w-[120px] truncate" title={sub.slug}>{sub.slug}</td>
+                        <td className="px-6 py-4 text-sm font-semibold text-gray-500 text-center">{sub.menuOrder !== undefined ? sub.menuOrder : (sub.displayOrder || 0)}</td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-2">
                             <button
                               type="button"
-                              className="action-btn edit-btn"
                               onClick={() => handleEdit(sub)}
-                              title="Edit Subcategory"
+                              className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100/70 px-2.5 py-1.5 rounded-lg transition-colors"
                             >
-                              <i className="fa-solid fa-pen-to-square"></i> Edit
+                              Edit
                             </button>
                             <button
                               type="button"
-                              className="action-btn delete-btn"
                               onClick={() => handleDelete(sub.subcategoryId || sub.id)}
-                              title="Delete Subcategory"
+                              className="inline-flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100/70 px-2.5 py-1.5 rounded-lg transition-colors"
                             >
-                              <i className="fa-solid fa-trash"></i> Delete
+                              Delete
                             </button>
                           </div>
                         </td>

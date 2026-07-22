@@ -48,6 +48,7 @@ import Preferences from './pages/settings/Preferences';
 import VisualSettings from './pages/settings/VisualSettings';
 import GeneralSettings from './pages/settings/GeneralSettings';
 import SocialLoginConfig from './pages/settings/SocialLoginConfig';
+import AdminSettings from './pages/AdminSettings';
 
 // RSS
 import RssFeeds from './pages/rss/RssFeeds';
@@ -85,6 +86,14 @@ import AdminWidgets from './pages/AdminWidgets';
 import AdminNavigation from './pages/AdminNavigation';
 import AdminThemes from './pages/AdminThemes';
 
+// AI Center Pages
+import AiContentRewriter from './pages/ai/AiContentRewriter';
+import AiSeoGenerator from './pages/ai/AiSeoGenerator';
+import AiSensorQueue from './pages/ai/AiSensorQueue';
+import AiModeration from './pages/ai/AiModeration';
+import AiSuggestionsSettings from './pages/ai/AiSuggestionsSettings';
+import AiPromptSettings from './pages/ai/AiPromptSettings';
+
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
 
@@ -119,6 +128,7 @@ function AppRoutes() {
 
         {/* Post/Article management */}
         <Route path="posts" element={<PostsList />} />
+        <Route path="posts/my" element={<PostsList />} />
         <Route path="posts/add" element={<AddPost />} />
         <Route path="posts/edit/:id" element={<EditPost />} />
         <Route path="posts/pending" element={<PostsList />} />
@@ -171,6 +181,7 @@ function AppRoutes() {
         <Route path="preferences" element={<Preferences />} />
         <Route path="settings/visual" element={<VisualSettings />} />
         <Route path="settings/general" element={<GeneralSettings />} />
+        <Route path="settings/advanced" element={<AdminSettings />} />
         <Route path="settings" element={<Navigate to="settings/general" replace />} />
 
         {/* RSS Feeds */}
@@ -226,6 +237,15 @@ function AppRoutes() {
         <Route path="storage" element={<Storage />} />
         <Route path="cache-system" element={<CacheSystem />} />
         <Route path="backup" element={<Backup />} />
+
+        {/* AI Center */}
+        <Route path="ai-center/rewriter" element={<AiContentRewriter />} />
+        <Route path="ai-center/seo-generator" element={<AiSeoGenerator />} />
+        <Route path="ai-center/sensor" element={<AiSensorQueue />} />
+        <Route path="ai-center/moderation" element={<AiModeration />} />
+        <Route path="ai-center/suggestions" element={<AiSuggestionsSettings />} />
+        <Route path="ai-center/prompts" element={<AiPromptSettings />} />
+        <Route path="ai-center" element={<Navigate to="ai-center/rewriter" replace />} />
 
         {/* Catch-all for pages not yet built */}
         <Route path="*" element={<ComingSoon />} />

@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1/public/pages")
+@RequestMapping({"/api/v1/public/pages", "/api/public/pages"})
 @CrossOrigin(origins = "*")
 public class PublicPageController {
 

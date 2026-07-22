@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../utils/axios';
-import { Eye, EyeOff, LogIn, AlertCircle, Key } from 'lucide-react';
+import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
 
 export default function Login() {
-  const [email, setEmail] = useState('admin@king24x7.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,12 +35,6 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleQuickFill = (emailVal, passVal) => {
-    setEmail(emailVal);
-    setPassword(passVal);
-    setError('');
   };
 
   return (
@@ -116,29 +110,6 @@ export default function Login() {
               )}
             </button>
           </form>
-
-          {/* Quick Fill Credentials Bar */}
-          <div className="pt-4 border-t border-gray-100 text-center">
-            <p className="text-xs text-gray-400 mb-2 font-medium flex items-center justify-center gap-1">
-              <Key size={13} className="text-[#B3732A]" /> Demo Credentials (Click to fill):
-            </p>
-            <div className="flex justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickFill('admin@king24x7.com', 'admin123')}
-                className="px-3 py-1 bg-amber-50 text-[#B3732A] border border-amber-200/60 rounded-lg text-xs font-semibold hover:bg-amber-100 transition-colors"
-              >
-                admin@king24x7.com
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('admin@kingstv.com', 'admin123')}
-                className="px-3 py-1 bg-amber-50 text-[#B3732A] border border-amber-200/60 rounded-lg text-xs font-semibold hover:bg-amber-100 transition-colors"
-              >
-                admin@kingstv.com
-              </button>
-            </div>
-          </div>
         </div>
 
         <p className="text-center text-xs text-gray-500 mt-6">

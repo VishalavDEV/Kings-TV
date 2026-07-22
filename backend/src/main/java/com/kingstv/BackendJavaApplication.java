@@ -16,6 +16,7 @@ import com.kingstv.models.ObituaryFrameTemplate;
 import com.kingstv.models.Permission;
 import com.kingstv.models.Role;
 import com.kingstv.models.User;
+import com.kingstv.models.AiPromptTemplate;
 import com.kingstv.repository.PermissionRepository;
 import com.kingstv.repository.RoleRepository;
 import com.kingstv.repository.UserRepository;
@@ -67,6 +68,9 @@ public class BackendJavaApplication implements CommandLineRunner {
     @Autowired
     private PermissionRepository permissionRepository;
 
+    @Autowired
+    private com.kingstv.repository.AiPromptTemplateRepository promptRepo;
+
     public static void main(String[] args) {
         System.setOut(new com.kingstv.services.MaskingPrintStream(System.out, System.out));
         System.setErr(new com.kingstv.services.MaskingPrintStream(System.err, System.err));
@@ -84,6 +88,7 @@ public class BackendJavaApplication implements CommandLineRunner {
         seedObituaryFrameTemplates();
         seedJobCategoriesAndCompanies();
         seedClassifiedCategoriesAndSubcategories();
+        seedAiPromptTemplates();
     }
 
     private void seedCategories() {
@@ -347,6 +352,8 @@ public class BackendJavaApplication implements CommandLineRunner {
             {"settings",             "Access system settings",          "Modules"},
             {"content_review",       "Access content review queue",     "Modules"},
             {"my_content",           "Access own content management",   "Modules"},
+            {"ai_center",            "Access AI Center dashboard",      "Modules"},
+            {"ai:manage",            "Manage AI templates and configurations", "AI Tools"},
         };
 
         Map<String, Permission> permMap = new HashMap<>();
@@ -405,7 +412,7 @@ public class BackendJavaApplication implements CommandLineRunner {
                 "admin_panel", "add_post", "manage_all_posts", "navigation", "pages",
                 "rss_feeds", "categories", "widgets", "polls", "gallery", "comments",
                 "contact_messages", "newsletter", "reward_system", "ad_spaces",
-                "users", "content_review", "my_content", "languages"
+                "users", "content_review", "my_content", "languages", "ai_center"
             }));
 
         // ── DISTRICT_ADMIN ──
@@ -425,7 +432,7 @@ public class BackendJavaApplication implements CommandLineRunner {
                 "ai_rewriter:use",
                 // Module keys
                 "admin_panel", "add_post", "manage_all_posts",
-                "content_review", "my_content", "users", "comments", "gallery"
+                "content_review", "my_content", "users", "comments", "gallery", "ai_center"
             }));
 
         // ── MOBILE_JOURNALIST ──
@@ -468,6 +475,41 @@ public class BackendJavaApplication implements CommandLineRunner {
                 roleRepository.save(role);
                 System.out.println("  Updated role: " + name + " to " + permissions.size() + " permissions");
             }
+        }
+    }
+
+    private void seedAiPromptTemplates() {
+        if (promptRepo.count() == 0) {
+            promptRepo.save(new AiPromptTemplate(
+                "rewriter",
+                "Rewrite the following news text in a {rewrite_style} style:\n\n{article_content}",
+                "gemini-2.0-flash", 0.7, 2000
+            ));
+
+            promptRepo.save(new AiPromptTemplate(
+                "seo",
+                "Based on the following article content, generate:\n1. SEO Title in Tamil (60-70 characters)\n2. Meta Description in Tamil (150-160 characters)\n3. URL Slug in transliterated English characters (lowercase, hyphens)\n4. Focus Keywords (comma separated)\n5. Tags (comma separated)\n\nFormat exactly as:\nSEO_TITLE: [title]\nMETA_DESC: [description]\nSLUG: [slug]\nKEYWORDS: [keywords]\nTAGS: [tags]\n\nContent:\n{article_content}",
+                "gemini-2.0-flash", 0.7, 2000
+            ));
+
+            promptRepo.save(new AiPromptTemplate(
+                "sensor",
+                "Analyze the following article for duplicate content, plagiarism, low quality, or off-topic writing. Return in this format:\nFLAGGED: [true/false]\nREASON: [duplicate/plagiarism/low-quality/off-topic]\nCONFIDENCE: [score from 0.0 to 1.0]\nDESCRIPTION: [brief explanation]\n\nTitle: {article_title}\nContent: {article_content}",
+                "gemini-2.0-flash", 0.7, 2000
+            ));
+
+            promptRepo.save(new AiPromptTemplate(
+                "moderation",
+                "Perform standard AI moderation and content flagging audit for profanity or inappropriate words.\n\nContent:\n{article_content}",
+                "gemini-2.0-flash", 0.7, 2000
+            ));
+
+            promptRepo.save(new AiPromptTemplate(
+                "suggestions",
+                "Suggest 3 alternate headlines and 5 related tags for this content.\nFormat headlines as: ALT_HEADLINE 1: ...\nFormat tags as: SUGGESTED_TAGS: [comma separated]\n\nContent:\n{article_content}",
+                "gemini-2.0-flash", 0.7, 2000
+            ));
+            System.out.println("Default AI Prompt templates seeded.");
         }
     }
 }

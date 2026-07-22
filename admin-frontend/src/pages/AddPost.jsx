@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchApi } from '../utils/fetchApi';
+import AiInlineAssistant from '../components/AiInlineAssistant';
 import './AddPost.css';
 
 const HtmlToolbar = ({ targetField, setFormData }) => {
@@ -1119,6 +1120,13 @@ const AddPost = () => {
 
               {/* Right Sidebar Column */}
               <div className="editor-sidebar">
+                <div className="mb-4">
+                  <AiInlineAssistant
+                    draftContent={formData.content}
+                    onApplyHeadline={(hl) => setFormData(prev => ({ ...prev, title: hl }))}
+                    onApplyTags={(tagsStr) => setTags(tagsStr.split(',').map(t => t.trim()))}
+                  />
+                </div>
                 <div className="sidebar-card">
                   <h3>Publishing Details</h3>
                   

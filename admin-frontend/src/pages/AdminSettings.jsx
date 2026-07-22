@@ -326,7 +326,7 @@ const AdminSettings = () => {
   return (
     <div className="admin-settings-container">
       <div className="pages-header">
-        <h1>Super Admin Settings</h1>
+        <h1>System Configuration</h1>
         <p className="subtitle">Project credentials, PWA properties, custom sitemaps, and design typography</p>
       </div>
 

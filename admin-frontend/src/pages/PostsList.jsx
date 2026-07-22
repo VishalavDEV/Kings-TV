@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { fetchApi } from '../utils/fetchApi';
+import { useAuth } from '../context/AuthContext';
 import './PostsList.css';
 
 const PostsList = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const path = location.pathname;
 
   // Determine current pre-filter view based on URL route path
   let view = 'all';
   let viewTitle = 'All Articles';
-  if (path.includes('/posts/slider')) {
+  if (path.includes('/posts/my')) {
+    view = 'my';
+    viewTitle = 'My Articles';
+  } else if (path.includes('/posts/slider')) {
     view = 'slider';
     viewTitle = 'Slider Showcase Showcase';
   } else if (path.includes('/posts/featured')) {
@@ -77,6 +82,9 @@ const PostsList = () => {
     setErrorMsg('');
     try {
       let query = `/admin/articles?view=${view}&page=${page}&size=${pageSize}`;
+      if (view === 'my' && currentUser) {
+        query += `&user=${encodeURIComponent(currentUser.fullName || currentUser.username)}`;
+      }
       if (filterLang) query += `&language=${filterLang}`;
       if (filterAuthor) query += `&user=${encodeURIComponent(filterAuthor)}`;
       if (filterCategory) query += `&category=${filterCategory}`;
