@@ -1,8 +1,30 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { LanguageContext } from '../context/LanguageContext';
 import { authService } from '../services/authService';
+import { initializeApp } from 'firebase/app';
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+
+// Firebase configuration from environment variables
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
+};
+
+let firebaseAuth = null;
+if (firebaseConfig.apiKey) {
+  try {
+    const app = initializeApp(firebaseConfig);
+    firebaseAuth = getAuth(app);
+  } catch (err) {
+    console.error("Firebase initialization error:", err);
+  }
+}
 
 const Login = () => {
   const { login } = useContext(AuthContext);
@@ -69,45 +91,148 @@ const Login = () => {
     }, 2500);
   };
 
+  const setupRecaptcha = () => {
+    if (!firebaseAuth) {
+      console.warn("Firebase Auth is not initialized. Please configure VITE_FIREBASE_ env variables.");
+      return null;
+    }
+    if (window.recaptchaVerifier) return window.recaptchaVerifier;
+    try {
+      window.recaptchaVerifier = new RecaptchaVerifier(firebaseAuth, 'recaptcha-container', {
+        'size': 'invisible',
+        'callback': (response) => {
+          // reCAPTCHA solved, allow signInWithPhoneNumber.
+        }
+      });
+      return window.recaptchaVerifier;
+    } catch (err) {
+      console.error("Recaptcha verifier error:", err);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (window.recaptchaVerifier) {
+        try {
+          window.recaptchaVerifier.clear();
+        } catch (e) {}
+        window.recaptchaVerifier = null;
+      }
+    };
+  }, []);
+
   const handleSendPhoneOtp = () => {
     if (!phoneNumber.trim()) {
       triggerToast(lang === 'en' ? 'Please enter a valid phone number' : 'தயவுசெய்து செல்லுபடியாகும் தொலைபேசி எண்ணை உள்ளிடவும்', '#EF4444');
       return;
     }
-    setPhoneOtpSent(true);
-    setPhoneOtpCountdown(60);
-    triggerToast(lang === 'en' ? 'Simulated OTP code 123456 sent successfully!' : 'மாதிரி OTP குறியீடு 123456 வெற்றிகரமாக அனுப்பப்பட்டது!');
-  };
 
-  const handlePhoneAuth = async (e) => {
-    e.preventDefault();
-    if (phoneOtp !== '123456') {
-      triggerToast(lang === 'en' ? 'Invalid OTP code! Use 123456 for testing.' : 'தவறான OTP குறியீடு! சோதனைக்கு 123456 ஐப் பயன்படுத்தவும்.', '#EF4444');
+    if (!firebaseAuth) {
+      // Fallback to simulated OTP
+      triggerToast(lang === 'en' ? 'Missing Firebase keys. Test OTP is: 123456' : 'Firebase விசைகள் இல்லை. சோதனை OTP: 123456', '#EF4444');
+      setPhoneOtpSent(true);
+      setPhoneOtpCountdown(60);
       return;
     }
 
     try {
-      const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
-      const mockEmail = `phone_${cleanPhone}@king24x7.com`;
-      const mockName = `Phone User ${cleanPhone.slice(-4)}`;
-      
-      const res = await authService.googleLogin(mockEmail, mockName, '');
-      login(res.user, res.accessToken, res.refreshToken, rememberMe);
-      triggerToast(lang === 'en' ? 'Successfully logged in with Phone!' : 'தொலைபேசி மூலம் வெற்றிகரமாக உள்நுழைந்தீர்கள்!');
-      
-      const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
-      if (res.user && adminRoles.includes(res.user.role)) {
-        const getAdminPortalUrl = () => {
-          return `${window.location.origin}/admin/layout`;
-        };
-        setTimeout(() => {
-          window.location.href = getAdminPortalUrl();
-        }, 1200);
-      } else {
-        const from = location.state?.from || '/';
-        const redirectState = location.state?.jobRole ? { openJobRole: location.state.jobRole } : null;
-        setTimeout(() => navigate(from, { state: redirectState }), 1200);
+      const appVerifier = setupRecaptcha();
+      if (!appVerifier) {
+        triggerToast("Failed to initialize recaptcha verifier", '#EF4444');
+        return;
       }
+      
+      let formattedPhone = phoneNumber.trim();
+      if (!formattedPhone.startsWith('+')) {
+        formattedPhone = '+91' + formattedPhone.replace(/[^0-9]/g, '');
+      }
+
+      signInWithPhoneNumber(firebaseAuth, formattedPhone, appVerifier)
+        .then((confirmationResult) => {
+          window.confirmationResult = confirmationResult;
+          setPhoneOtpSent(true);
+          setPhoneOtpCountdown(60);
+          triggerToast(lang === 'en' ? 'Real-time SMS OTP sent successfully!' : 'நேரடி SMS OTP வெற்றிகரமாக அனுப்பப்பட்டது!');
+        })
+        .catch((error) => {
+          console.error("Firebase SMS send failed:", error);
+          triggerToast(`SMS failed: ${error.message}`, '#EF4444');
+        });
+    } catch (err) {
+      console.error("SMS initialization error:", err);
+      triggerToast(`Error: ${err.message}`, '#EF4444');
+    }
+  };
+
+  const handlePhoneAuth = async (e) => {
+    e.preventDefault();
+
+    if (!firebaseAuth || !window.confirmationResult) {
+      if (phoneOtp !== '123456') {
+        triggerToast(lang === 'en' ? 'Invalid OTP code! Use 123456 for testing.' : 'தவறான OTP குறியீடு! சோதனைக்கு 123456 ஐப் பயன்படுத்தவும்.', '#EF4444');
+        return;
+      }
+
+      try {
+        const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
+        const mockEmail = `phone_${cleanPhone}@king24x7.com`;
+        const mockName = `Phone User ${cleanPhone.slice(-4)}`;
+        
+        const res = await authService.googleLogin(mockEmail, mockName, '');
+        login(res.user, res.accessToken, res.refreshToken, rememberMe);
+        triggerToast(lang === 'en' ? 'Successfully logged in with Phone (Sandbox)!' : 'தொலைபேசி மூலம் வெற்றிகரமாக உள்நுழைந்தீர்கள்!');
+        
+        const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
+        if (res.user && adminRoles.includes(res.user.role)) {
+          const getAdminPortalUrl = () => {
+            return `${window.location.origin}/admin/layout`;
+          };
+          setTimeout(() => {
+            window.location.href = getAdminPortalUrl();
+          }, 1200);
+        } else {
+          const from = location.state?.from || '/';
+          const redirectState = location.state?.jobRole ? { openJobRole: location.state.jobRole } : null;
+          setTimeout(() => navigate(from, { state: redirectState }), 1200);
+        }
+      } catch (err) {
+        triggerToast(err.message, '#EF4444');
+      }
+      return;
+    }
+
+    try {
+      const confirmationResult = window.confirmationResult;
+      confirmationResult.confirm(phoneOtp)
+        .then(async (result) => {
+          const user = result.user;
+          const cleanPhone = user.phoneNumber.replace(/[^0-9]/g, '');
+          const mockEmail = `phone_${cleanPhone}@king24x7.com`;
+          const mockName = `Phone User ${cleanPhone.slice(-4)}`;
+          
+          const res = await authService.googleLogin(mockEmail, mockName, '');
+          login(res.user, res.accessToken, res.refreshToken, rememberMe);
+          triggerToast(lang === 'en' ? 'Successfully logged in with verified Phone!' : 'சரியான தொலைபேசி எண் மூலம் வெற்றிகரமாக உள்நுழைந்தீர்கள்!');
+          
+          const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
+          if (res.user && adminRoles.includes(res.user.role)) {
+            const getAdminPortalUrl = () => {
+              return `${window.location.origin}/admin/layout`;
+            };
+            setTimeout(() => {
+              window.location.href = getAdminPortalUrl();
+            }, 1200);
+          } else {
+            const from = location.state?.from || '/';
+            const redirectState = location.state?.jobRole ? { openJobRole: location.state.jobRole } : null;
+            setTimeout(() => navigate(from, { state: redirectState }), 1200);
+          }
+        })
+        .catch((error) => {
+          console.error("Firebase OTP confirmation failed:", error);
+          triggerToast(lang === 'en' ? 'Invalid verification code!' : 'தவறான சரிபார்ப்புக் குறியீடு!', '#EF4444');
+        });
     } catch (err) {
       triggerToast(err.message, '#EF4444');
     }
@@ -138,16 +263,45 @@ const Login = () => {
     }
   };
 
-  const handleSocialClick = (provider) => {
+  const handleSocialClick = async (provider) => {
     setSocialProvider(provider);
     
     if (provider === 'google') {
-      setSocialName('Google Tester');
-      setSocialEmail('google.tester@gmail.com');
-      setSocialImage('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150');
+      if (firebaseAuth) {
+        try {
+          const authProvider = new GoogleAuthProvider();
+          const result = await signInWithPopup(firebaseAuth, authProvider);
+          const user = result.user;
+          
+          const res = await authService.googleLogin(user.email, user.displayName, user.photoURL);
+          login(res.user, res.accessToken, res.refreshToken, rememberMe);
+          triggerToast(lang === 'en' ? 'Successfully logged in with Google!' : 'கூகிள் மூலம் வெற்றிகரமாக உள்நுழைந்தீர்கள்!');
+          
+          const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
+          if (res.user && adminRoles.includes(res.user.role)) {
+            const getAdminPortalUrl = () => {
+              return `${window.location.origin}/admin/layout`;
+            };
+            setTimeout(() => {
+              window.location.href = getAdminPortalUrl();
+            }, 1200);
+          } else {
+            const from = location.state?.from || '/';
+            const redirectState = location.state?.jobRole ? { openJobRole: location.state.jobRole } : null;
+            setTimeout(() => navigate(from, { state: redirectState }), 1200);
+          }
+        } catch (error) {
+          console.error("Firebase Google Sign-In Error:", error);
+          triggerToast(`Google Login Failed: ${error.message}`, '#EF4444');
+        }
+        return;
+      } else {
+        setSocialName('Google Tester');
+        setSocialEmail('google.tester@gmail.com');
+        setSocialImage('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150');
+        setShowSocialModal(true);
+      }
     }
-    
-    setShowSocialModal(true);
   };
 
   const submitSocialAuth = async (e) => {
@@ -875,6 +1029,9 @@ const Login = () => {
         <i className={toastColor === '#EF4444' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle'} style={{ fontSize: '20px' }}></i>
         <span>{toastText}</span>
       </div>
+
+      {/* Invisible reCAPTCHA container for Firebase Phone Auth */}
+      <div id="recaptcha-container"></div>
     </div>
   );
 };
