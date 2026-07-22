@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LanguageContext } from '../context/LanguageContext';
 import { ThemeContext } from '../context/ThemeContext';
+import { statesData } from '../utils/locations';
 
 const Weather = () => {
   const { lang } = useContext(LanguageContext);
@@ -12,7 +13,10 @@ const Weather = () => {
   const textMuted = isDark ? 'rgba(255, 255, 255, 0.6)' : '#64748B';
   const cardBg = isDark ? 'rgba(255, 255, 255, 0.03)' : '#ffffff';
   const cardBorder = isDark ? 'rgba(255, 255, 255, 0.08)' : '#e2e8f0';
-  const [selectedCity, setSelectedCity] = useState('Chennai');
+
+  const [selectedState, setSelectedState] = useState(statesData[0]);
+  const [selectedDistrict, setSelectedDistrict] = useState(statesData[0].districts[0]);
+  const [selectedSubDistrict, setSelectedSubDistrict] = useState(null);
 
   const citiesWeather = {
     Chennai: { 
@@ -203,39 +207,74 @@ const Weather = () => {
     }
   };
 
+  const generateDefaultWeatherData = (nameEn, nameTa) => {
+    return {
+      temp: '30°C',
+      condition: 'Clear Sky',
+      conditionTa: 'தெளிவான வானம்',
+      humidity: '65%',
+      wind: '10 km/h',
+      uv: 'High (6)',
+      sunrise: '06:00 AM',
+      sunset: '06:30 PM',
+      pressure: '1012 hPa',
+      aqi: 'Good (35)',
+      aqiTa: 'நன்று (35)',
+      visibility: '10 km',
+      visibilityTa: '10 கி.மீ',
+      precipitation: '10%',
+      precipitationTa: '10%',
+      dewPoint: '20°C',
+      dewPointTa: '20°C',
+      forecastSummaryEn: `Expect pleasant clear weather in ${nameEn} with moderate temperature.`,
+      forecastSummaryTa: `${nameTa} பகுதியில் இதமான தெளிவான வானிலை காணப்படும், மிதமான வெப்பநிலை நிலவும்.`,
+      ta: nameTa,
+      forecast: [
+        { day: 'Mon', dayTa: 'திங்கள்', icon: '☀️', temp: '30°', desc: 'Sunny', descTa: 'வெயில்' },
+        { day: 'Tue', dayTa: 'செவ்வாய்', icon: '☀️', temp: '31°', desc: 'Sunny', descTa: 'வெயில்' },
+        { day: 'Wed', dayTa: 'புதன்', icon: '⛅', temp: '30°', desc: 'Partly Cloudy', descTa: 'பகுதி மேகமூட்டம்' },
+        { day: 'Thu', dayTa: 'வியாழன்', icon: '🌦️', temp: '29°', desc: 'Showers', descTa: 'மழைசாரல்' },
+        { day: 'Fri', dayTa: 'வெள்ளி', icon: '🌧️', temp: '28°', desc: 'Rain', descTa: 'மழை' },
+        { day: 'Sat', dayTa: 'சனி', icon: '⛅', temp: '30°', desc: 'Partly Cloudy', descTa: 'பகுதி மேகமூட்டம்' },
+        { day: 'Sun', dayTa: 'ஞாயிறு', icon: '☀️', temp: '31°', desc: 'Sunny', descTa: 'வெயில்' }
+      ]
+    };
+  };
+
   const [weatherData, setWeatherData] = useState(citiesWeather);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  useEffect(() => {
-    const cityCoords = {
-      Chennai: { lat: 13.0827, lon: 80.2707 },
-      Coimbatore: { lat: 11.0168, lon: 76.9558 },
-      Madurai: { lat: 9.9252, lon: 78.1198 },
-      Trichy: { lat: 10.7905, lon: 78.7047 },
-      Salem: { lat: 11.6643, lon: 78.1460 }
-    };
+  const activeLocation = selectedSubDistrict || selectedDistrict;
 
-    const coords = cityCoords[selectedCity];
-    if (!coords) return;
+  useEffect(() => {
+    const coords = { lat: activeLocation.lat, lon: activeLocation.lon };
+    if (!coords.lat || !coords.lon) return;
 
     const baseApi = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api/v1';
-    fetch(`${baseApi}/weather?city=${selectedCity}&lat=${coords.lat}&lon=${coords.lon}`)
+    const locationKey = activeLocation.nameEn;
+
+    fetch(`${baseApi}/weather?city=${locationKey}&lat=${coords.lat}&lon=${coords.lon}`)
       .then(res => res.json())
       .then(data => {
         if (data && data.temp) {
           setWeatherData(prev => ({
             ...prev,
-            [selectedCity]: data
+            [locationKey]: {
+              ...generateDefaultWeatherData(activeLocation.nameEn, activeLocation.nameTa),
+              ...data,
+              ta: activeLocation.nameTa
+            }
           }));
         }
       })
       .catch(err => console.warn("Failed to fetch live weather details", err));
-  }, [selectedCity]);
+  }, [activeLocation]);
 
-  const current = weatherData[selectedCity] || weatherData.Chennai;
+  const locationKey = activeLocation.nameEn;
+  const current = weatherData[locationKey] || citiesWeather[locationKey] || generateDefaultWeatherData(activeLocation.nameEn, activeLocation.nameTa);
 
   const weatherIcons = {
     'Sunny': 'fas fa-sun',
@@ -386,41 +425,128 @@ const Weather = () => {
           </h1>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2.8fr', gap: '30px', alignItems: 'start' }}>
-            {/* CITY SELECTOR */}
+            {/* HIERARCHICAL LOCATION SELECTOR */}
             <div style={{ background: cardBg, border: '1px solid ' + cardBorder, padding: '24px', borderRadius: '12px', backdropFilter: 'blur(20px)' }}>
               <h3 style={{ margin: '0 0 20px 0', borderBottom: '1px solid ' + cardBorder, paddingBottom: '12px', fontSize: '16px', fontWeight: 700, color: textDark, display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <i className="fas fa-map-marker-alt" style={{ color: 'var(--primary)' }}></i>
-                {lang === 'en' ? 'Select Location' : 'மாவட்டத்தைத் தேர்வு செய்க'}
+                {lang === 'en' ? 'Select Location' : 'இடத்தைத் தேர்வு செய்க'}
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {Object.keys(citiesWeather).map(city => (
-                  <button
-                    key={city}
-                    onClick={() => setSelectedCity(city)}
+              
+              {/* Level 1: State Dropdown */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: textMuted, marginBottom: '6px', textTransform: 'uppercase' }}>
+                  {lang === 'en' ? 'State' : 'மாநிலம்'}
+                </label>
+                <select
+                  value={selectedState.id}
+                  onChange={(e) => {
+                    const newState = statesData.find(s => s.id === e.target.value);
+                    setSelectedState(newState);
+                    setSelectedDistrict(newState.districts[0]);
+                    setSelectedSubDistrict(null);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid ' + cardBorder,
+                    background: isDark ? '#1E293B' : '#ffffff',
+                    color: textDark,
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {statesData.map(state => (
+                    <option key={state.id} value={state.id}>
+                      {lang === 'en' ? state.nameEn : state.nameTa}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Level 2: District Quick-select Buttons */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: textMuted, marginBottom: '6px', textTransform: 'uppercase' }}>
+                  {lang === 'en' ? 'District' : 'மாவட்டம்'}
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {selectedState.districts.map(dist => (
+                    <button
+                      key={dist.nameEn}
+                      onClick={() => {
+                        setSelectedDistrict(dist);
+                        setSelectedSubDistrict(null);
+                      }}
+                      style={{
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        border: '1px solid ' + (selectedDistrict.nameEn === dist.nameEn ? 'var(--primary)' : cardBorder),
+                        background: selectedDistrict.nameEn === dist.nameEn ? 'rgba(179, 115, 42, 0.15)' : (isDark ? 'rgba(255, 255, 255, 0.01)' : '#f1f5f9'),
+                        color: selectedDistrict.nameEn === dist.nameEn ? 'white' : textDark,
+                        fontWeight: '700',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        transition: 'all 0.3s'
+                      }}
+                    >
+                      {lang === 'en' ? dist.nameEn : dist.nameTa}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Level 3: Sub-district (Taluk/Mandal/Tehsil) Dropdown */}
+              {selectedDistrict && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: textMuted, marginBottom: '6px', textTransform: 'uppercase' }}>
+                    {lang === 'en' ? selectedState.level3LabelEn : selectedState.level3LabelTa}
+                  </label>
+                  <select
+                    value={selectedSubDistrict ? selectedSubDistrict.nameEn : ""}
+                    onChange={(e) => {
+                      if (e.target.value === "") {
+                        setSelectedSubDistrict(null);
+                      } else {
+                        const sub = selectedDistrict.subDistricts.find(s => s.nameEn === e.target.value);
+                        setSelectedSubDistrict(sub);
+                      }
+                    }}
                     style={{
-                      padding: '12px 16px',
+                      width: '100%',
+                      padding: '10px 12px',
                       borderRadius: '8px',
-                      border: '1px solid ' + (selectedCity === city ? 'var(--primary)' : cardBorder),
-                      background: selectedCity === city ? 'rgba(179, 115, 42, 0.15)' : (isDark ? 'rgba(255, 255, 255, 0.01)' : '#f1f5f9'),
-                      color: selectedCity === city ? 'white' : textDark,
-                      fontWeight: '700',
-                      textAlign: 'left',
-                      cursor: 'pointer',
+                      border: '1px solid ' + cardBorder,
+                      background: isDark ? '#1E293B' : '#ffffff',
+                      color: textDark,
                       fontSize: '14px',
-                      transition: 'all 0.3s'
+                      fontWeight: '600',
+                      outline: 'none',
+                      cursor: 'pointer'
                     }}
                   >
-                    {lang === 'en' ? city : citiesWeather[city].ta}
-                  </button>
-                ))}
-              </div>
+                    <option value="">
+                      {lang === 'en' 
+                        ? `All ${selectedDistrict.nameEn} (${selectedState.level3LabelEn})` 
+                        : `அனைத்து ${selectedDistrict.nameTa} (${selectedState.level3LabelTa})`}
+                    </option>
+                    {selectedDistrict.subDistricts && selectedDistrict.subDistricts.map(sub => (
+                      <option key={sub.nameEn} value={sub.nameEn}>
+                        {lang === 'en' ? sub.nameEn : sub.nameTa}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* DETAILS CONTAINER */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
               <div style={{ background: cardBg, border: '1px solid ' + cardBorder, padding: '40px 30px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backdropFilter: 'blur(20px)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)' }}>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: '36px', fontWeight: 800, color: textDark }}>{lang === 'en' ? selectedCity : current.ta}</h2>
+                  <h2 style={{ margin: 0, fontSize: '36px', fontWeight: 800, color: textDark }}>{lang === 'en' ? activeLocation.nameEn : activeLocation.nameTa}</h2>
                   <span style={{ fontSize: '18px', color: 'var(--primary)', fontWeight: '600', display: 'block', marginTop: '6px' }}>
                     {lang === 'en' ? current.condition : current.conditionTa}
                   </span>
@@ -518,29 +644,113 @@ const Weather = () => {
             {lang === 'en' ? 'Local Weather Forecast' : 'தமிழக மாவட்ட வானிலை நிலவரம்'}
           </h2>
 
-          {/* District Selector - Horizontal Swipe */}
-          <div style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <div className="city-selector-buttons-mobile">
-              {Object.keys(citiesWeather).map(city => (
-                <button
-                  key={city}
-                  onClick={() => setSelectedCity(city)}
+          {/* Mobile Location Selector Block */}
+          <div style={{ background: cardBg, padding: '16px', borderRadius: '12px', border: '1px solid ' + cardBorder, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* Level 1: State Select */}
+            <div>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: textMuted, marginBottom: '4px', textTransform: 'uppercase' }}>
+                {lang === 'en' ? 'State' : 'மாநிலம்'}
+              </label>
+              <select
+                value={selectedState.id}
+                onChange={(e) => {
+                  const newState = statesData.find(s => s.id === e.target.value);
+                  setSelectedState(newState);
+                  setSelectedDistrict(newState.districts[0]);
+                  setSelectedSubDistrict(null);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  borderRadius: '6px',
+                  border: '1px solid ' + cardBorder,
+                  background: isDark ? '#1E293B' : '#ffffff',
+                  color: textDark,
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  outline: 'none'
+                }}
+              >
+                {statesData.map(state => (
+                  <option key={state.id} value={state.id}>
+                    {lang === 'en' ? state.nameEn : state.nameTa}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Level 2: District Horizontal Swipe */}
+            <div>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: textMuted, marginBottom: '4px', textTransform: 'uppercase' }}>
+                {lang === 'en' ? 'District' : 'மாவட்டம்'}
+              </label>
+              <div className="city-selector-buttons-mobile">
+                {selectedState.districts.map(dist => (
+                  <button
+                    key={dist.nameEn}
+                    onClick={() => {
+                      setSelectedDistrict(dist);
+                      setSelectedSubDistrict(null);
+                    }}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid ' + (selectedDistrict.nameEn === dist.nameEn ? 'var(--primary)' : cardBorder),
+                      background: selectedDistrict.nameEn === dist.nameEn ? 'rgba(179, 115, 42, 0.2)' : 'rgba(255, 255, 255, 0.02)',
+                      color: selectedDistrict.nameEn === dist.nameEn ? 'white' : textDark,
+                      fontWeight: '700',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {lang === 'en' ? dist.nameEn : dist.nameTa}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Level 3: Sub-district Dropdown */}
+            {selectedDistrict && (
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: textMuted, marginBottom: '4px', textTransform: 'uppercase' }}>
+                  {lang === 'en' ? selectedState.level3LabelEn : selectedState.level3LabelTa}
+                </label>
+                <select
+                  value={selectedSubDistrict ? selectedSubDistrict.nameEn : ""}
+                  onChange={(e) => {
+                    if (e.target.value === "") {
+                      setSelectedSubDistrict(null);
+                    } else {
+                      const sub = selectedDistrict.subDistricts.find(s => s.nameEn === e.target.value);
+                      setSelectedSubDistrict(sub);
+                    }
+                  }}
                   style={{
-                    padding: '6px 12px',
+                    width: '100%',
+                    padding: '8px 10px',
                     borderRadius: '6px',
-                    border: '1px solid ' + (selectedCity === city ? 'var(--primary)' : cardBorder),
-                    background: selectedCity === city ? 'rgba(179, 115, 42, 0.2)' : 'rgba(255, 255, 255, 0.02)',
-                    color: selectedCity === city ? 'white' : textDark,
-                    fontWeight: '700',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
+                    border: '1px solid ' + cardBorder,
+                    background: isDark ? '#1E293B' : '#ffffff',
+                    color: textDark,
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    outline: 'none'
                   }}
                 >
-                  {lang === 'en' ? city : citiesWeather[city].ta}
-                </button>
-              ))}
-            </div>
+                  <option value="">
+                    {lang === 'en' 
+                      ? `All ${selectedDistrict.nameEn} (${selectedState.level3LabelEn})` 
+                      : `அனைத்து ${selectedDistrict.nameTa} (${selectedState.level3LabelTa})`}
+                  </option>
+                  {selectedDistrict.subDistricts && selectedDistrict.subDistricts.map(sub => (
+                    <option key={sub.nameEn} value={sub.nameEn}>
+                      {lang === 'en' ? sub.nameEn : sub.nameTa}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* MAIN WEATHER CARD - MINIMIZED SIZE */}
@@ -551,7 +761,7 @@ const Weather = () => {
             borderRadius: '12px',
             boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)'
           }}>
-            {/* Header: Chennai Weather */}
+            {/* Header: Selected Location Weather */}
             <h3 style={{
               margin: '0 0 10px 0',
               fontSize: '15px',
@@ -562,7 +772,7 @@ const Weather = () => {
               gap: '6px'
             }}>
               <i className="fas fa-cloud-sun" style={{ color: 'var(--primary)', fontSize: '15px' }}></i>
-              <span>{lang === 'en' ? `${selectedCity} Weather` : `${current.ta} வானிலை`}</span>
+              <span>{lang === 'en' ? `${activeLocation.nameEn} Weather` : `${activeLocation.nameTa} வானிலை`}</span>
             </h3>
 
             {/* Current Temperature & Details block side-by-side */}
