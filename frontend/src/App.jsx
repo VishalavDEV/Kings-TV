@@ -76,7 +76,7 @@ function AppContent() {
 
   useEffect(() => {
     if (window.gtag) {
-      window.gtag('config', 'G-XXXXXXX', {
+      window.gtag('config', 'G-LYPDQ9LFS3', {
         page_path: location.pathname + location.search
       });
     } else {
