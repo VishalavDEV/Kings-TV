@@ -61,6 +61,17 @@ const Obituaries = () => {
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [isCelebrity, setIsCelebrity] = useState(false);
 
+  // Submitter Verification & Reporting states
+  const [submitterContact, setSubmitterContact] = useState('');
+  const [proofDocument, setProofDocument] = useState('');
+  const [uploadingProof, setUploadingProof] = useState(false);
+  const [confirmationChecked, setConfirmationChecked] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('False information');
+  const [reportDetails, setReportDetails] = useState('');
+  const [reporterContact, setReporterContact] = useState('');
+  const [submittingReport, setSubmittingReport] = useState(false);
+
   // Background body scroll lock effect when modal is active
   useEffect(() => {
     if (showCreateModal || selectedObit) {
@@ -286,21 +297,26 @@ const Obituaries = () => {
   // Save new Obituary Notice
   const handleCreateObituarySubmit = (e) => {
     e.preventDefault();
-    if (!deceasedName || !age || !biography || !formDistrict) {
+    if (!deceasedName || !dateOfPassing || !nativePlace || !posterRelationship || !submitterContact) {
       alert(lang === 'en' ? "Please fill all required fields." : "தேவையான அனைத்து புலங்களையும் நிரப்பவும்.");
+      return;
+    }
+    if (!confirmationChecked) {
+      alert(lang === 'en' ? "You must confirm the accuracy declaration checkbox before submitting." : "சமர்ப்பிக்கும் முன் தகவலின் துல்லியம் பற்றிய அறிவிப்புப் பெட்டியை உறுதிப்படுத்த வேண்டும்.");
       return;
     }
 
     const payload = {
       deceasedName,
       photo,
-      age,
+      age: age || 0,
       gender,
       dateOfBirth: dateOfBirth || null,
-      dateOfPassing: dateOfPassing || null,
+      dateOfPassing: dateOfPassing,
+      location: nativePlace,
       religion,
       nativePlace,
-      districtId: formDistrict,
+      districtId: formDistrict || null,
       pincode: formPincode,
       funeralDatetime: funeralDatetime || null,
       funeralVenue,
@@ -308,7 +324,9 @@ const Obituaries = () => {
       familyContactName,
       familyPhone,
       posterRelationship,
-      biography,
+      submitterContact,
+      proofDocument,
+      biography: biography || "In loving memory.",
       frameTemplateId: formFrame || null,
       galleryUrls,
       isCelebrity
@@ -320,7 +338,9 @@ const Obituaries = () => {
       body: JSON.stringify(payload)
     })
       .then(() => {
-        alert(lang === 'en' ? "Obituary Notice published successfully!" : "இரங்கல் செய்தி வெற்றிகரமாக வெளியிடப்பட்டது!");
+        alert(lang === 'en' 
+          ? "Your submission is under review and will be published once verified." 
+          : "உங்கள் பதிவு பரிசீலனையில் உள்ளது, சரிபார்க்கப்பட்டவுடன் வெளியிடப்படும்.");
         setShowCreateModal(false);
         // Reset states
         setDeceasedName('');
@@ -339,6 +359,9 @@ const Obituaries = () => {
         setFamilyContactName('');
         setFamilyPhone('');
         setPosterRelationship('');
+        setSubmitterContact('');
+        setProofDocument('');
+        setConfirmationChecked(false);
         setBiography('');
         setFormFrame('');
         setGalleryUrls([]);
@@ -348,6 +371,37 @@ const Obituaries = () => {
       .catch(err => {
         console.error("Failed to create obituary", err);
         alert(lang === 'en' ? "Failed to save obituary. Please try again." : "இரங்கல் செய்தியைச் சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.");
+      });
+  };
+
+  // Submit Report
+  const handleReportSubmit = (e) => {
+    e.preventDefault();
+    setSubmittingReport(true);
+    const payload = {
+      reporterName: reporterContact || 'Anonymous',
+      reason: reportReason,
+      details: reportDetails,
+      contact: reporterContact
+    };
+    fetchApi(`/obituaries/${selectedObit?.id}/report`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(() => {
+        alert(lang === 'en' ? "Thank you — we will review this and take appropriate action." : "நன்றி — நாங்கள் இதை பரிசீலித்து உரிய நடவடிக்கை எடுப்போம்.");
+        setShowReportModal(false);
+        setReportDetails('');
+        setReporterContact('');
+        setReportReason('False information');
+      })
+      .catch(err => {
+        console.error("Failed to report obituary", err);
+        alert(lang === 'en' ? "Failed to submit report. Please try again." : "புகார் சமர்ப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.");
+      })
+      .finally(() => {
+        setSubmittingReport(false);
       });
   };
 
@@ -481,7 +535,8 @@ const Obituaries = () => {
   };
 
   return (
-    <main className="container obits-module-container" style={{ paddingTop: '20px' }}>
+    <>
+      <main className="container obits-module-container" style={{ paddingTop: '20px' }}>
       {/* Breadcrumbs */}
       <div className="breadcrumbs" style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
         <Link to="/" style={{ color: 'var(--primary)', textDecoration: 'none' }}>{lang === 'en' ? 'Home' : 'முகப்பு'}</Link>
@@ -561,6 +616,15 @@ const Obituaries = () => {
         
         {/* Left Column: Grid list */}
         <div className="obits-left-content">
+          <div className="obits-disclaimer-banner" style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', padding: '14px 20px', marginBottom: '20px', color: '#991b1b', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <i className="fas fa-exclamation-triangle" style={{ fontSize: '18px', color: '#ef4444' }}></i>
+            <div>
+              {lang === 'en' 
+                ? "User-submitted obituaries are reviewed before publication. If you believe an obituary is inaccurate or has been published in error, please report it immediately. We will investigate and take appropriate action."
+                : "பயனர்களால் சமர்ப்பிக்கப்பட்ட இரங்கல்கள் வெளியிடுவதற்கு முன்பு சரிபார்க்கப்படுகின்றன. ஏதேனும் இரங்கல் செய்தி தவறானது அல்லது பிழையாக வெளியிடப்பட்டுள்ளது என நீங்கள் கருதினால், உடனடியாக புகாரளிக்கவும். நாங்கள் விசாரித்து உரிய நடவடிக்கை எடுப்போம்."}
+            </div>
+          </div>
+
           <h2 style={{ fontSize: '18px', fontWeight: '850', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>{lang === 'en' ? 'Recent Memorials' : 'சமீபத்திய இரங்கல்கள்'}</span>
             <button onClick={() => {
@@ -749,6 +813,15 @@ const Obituaries = () => {
                     )}
                   </div>
                 )}
+
+                <div style={{ marginTop: '20px', borderTop: '1px solid #cbd5e1', paddingTop: '15px', width: '100%', textAlign: 'center' }}>
+                  <button 
+                    onClick={() => setShowReportModal(true)}
+                    style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <i className="fas fa-flag"></i> {lang === 'en' ? 'Report Obituary' : 'தவறான பதிவை புகாரளி'}
+                  </button>
+                </div>
               </div>
 
               {/* Column 2: Tributes & Condolences lists */}
@@ -840,6 +913,15 @@ const Obituaries = () => {
               <button className="modal-close" onClick={() => setShowCreateModal(false)}>&times;</button>
             </div>
 
+            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '12px', marginBottom: '16px', color: '#b45309', fontSize: '12.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <i className="fas fa-info-circle" style={{ fontSize: '16px', color: '#d97706' }}></i>
+              <div>
+                {lang === 'en' 
+                  ? "User-submitted obituaries are reviewed before publication. If you believe an obituary is inaccurate or has been published in error, please report it immediately. We will investigate and take appropriate action."
+                  : "பயனர்களால் சமர்ப்பிக்கப்பட்ட இரங்கல்கள் வெளியிடுவதற்கு முன்பு சரிபார்க்கப்படுகின்றன. ஏதேனும் இரங்கல் செய்தி தவறானது அல்லது பிழையாக வெளியிடப்பட்டுள்ளது என நீங்கள் கருதினால், உடனடியாக புகாரளிக்கவும். நாங்கள் விசாரித்து உரிய நடவடிக்கை எடுப்போம்."}
+              </div>
+            </div>
+
             <div className="modal-body" style={{ padding: '0' }}>
               <form onSubmit={handleCreateObituarySubmit} className="space-y-4 text-left" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 
@@ -882,12 +964,11 @@ const Obituaries = () => {
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
                   <div className="form-group">
-                    <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Age *' : 'வயது *'}</label>
+                    <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Age' : 'வயது'}</label>
                     <input
                       type="number"
                       value={age}
                       onChange={(e) => setAge(e.target.value)}
-                      required
                       placeholder="e.g. 80"
                       style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
                     />
@@ -926,11 +1007,12 @@ const Obituaries = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Date of Passing' : 'மறைந்த தேதி'}</label>
+                    <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Date of Passing *' : 'மறைந்த தேதி *'}</label>
                     <input
                       type="date"
                       value={dateOfPassing}
                       onChange={(e) => setDateOfPassing(e.target.value)}
+                      required
                       style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
                     />
                   </div>
@@ -938,11 +1020,21 @@ const Obituaries = () => {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div className="form-group">
-                    <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'District *' : 'மாவட்டம் *'}</label>
+                    <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'City / Location *' : 'சொந்த ஊர் / இடம் *'}</label>
+                    <input
+                      type="text"
+                      value={nativePlace}
+                      onChange={(e) => setNativePlace(e.target.value)}
+                      required
+                      placeholder="e.g. Chennai / Karaikudi"
+                      style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'District' : 'மாவட்டம்'}</label>
                     <select
                       value={formDistrict}
                       onChange={(e) => setFormDistrict(e.target.value)}
-                      required
                       style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
                     >
                       <option value="">-- Choose District --</option>
@@ -951,104 +1043,134 @@ const Obituaries = () => {
                       ))}
                     </select>
                   </div>
-                  <div className="form-group">
-                    <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Pincode' : 'அஞ்சல் குறியீடு'}</label>
-                    <input
-                      type="text"
-                      value={formPincode}
-                      onChange={(e) => setFormPincode(e.target.value)}
-                      placeholder="600001"
-                      style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                    />
-                  </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div className="form-group">
-                    <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Funeral Date & Time' : 'இறுதிச் சடங்கு நேரம்'}</label>
-                    <input
-                      type="datetime-local"
-                      value={funeralDatetime}
-                      onChange={(e) => setFuneralDatetime(e.target.value)}
-                      style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Funeral Venue' : 'இறுதிச் சடங்கு நடைபெறும் இடம்'}</label>
-                    <input
-                      type="text"
-                      value={funeralVenue}
-                      onChange={(e) => setFuneralVenue(e.target.value)}
-                      placeholder="e.g. Crematorium grounds"
-                      style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="form-group">
-                    <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Contact Phone Name' : 'குடும்ப தொடர்பு நபர்'}</label>
-                    <input
-                      type="text"
-                      value={familyContactName}
-                      onChange={(e) => setFamilyContactName(e.target.value)}
-                      placeholder="e.g. Anand (Son)"
-                      style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Contact Phone *' : 'தொடர்பு தொலைபேசி எண் *'}</label>
-                    <input
-                      type="text"
-                      value={familyPhone}
-                      onChange={(e) => setFamilyPhone(e.target.value)}
-                      required
-                      placeholder="e.g. +91 98765 43210"
-                      style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="form-group">
-                    <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Memorial Frame' : 'நினைவு அட்டை பிரேம்'}</label>
+                    <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Submitter Relationship *' : 'சமர்ப்பிப்பவர் உறவு முறை *'}</label>
                     <select
-                      value={formFrame}
-                      onChange={(e) => setFormFrame(e.target.value)}
+                      value={posterRelationship}
+                      onChange={(e) => setPosterRelationship(e.target.value)}
+                      required
                       style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
                     >
-                      <option value="">-- Choose Frame template --</option>
-                      {frames.map(f => (
-                        <option key={f.id} value={f.id}>{f.name}</option>
-                      ))}
+                      <option value="">-- Select Relationship --</option>
+                      <option value="Family Member">{lang === 'en' ? 'Family Member' : 'குடும்ப உறுப்பினர்'}</option>
+                      <option value="Friend">{lang === 'en' ? 'Friend' : 'நண்பர்'}</option>
+                      <option value="Organization">{lang === 'en' ? 'Organization' : 'நிறுவனம்/அமைப்பு'}</option>
+                      <option value="Other">{lang === 'en' ? 'Other' : 'இதர'}</option>
                     </select>
                   </div>
                   <div className="form-group">
-                    <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Native Place' : 'சொந்த ஊர்'}</label>
+                    <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Submitter Contact (Phone or Email) *' : 'சமர்ப்பிப்பவர் தொடர்பு விபரம் *'}</label>
                     <input
                       type="text"
-                      value={nativePlace}
-                      onChange={(e) => setNativePlace(e.target.value)}
-                      placeholder="e.g. Karaikudi"
+                      value={submitterContact}
+                      onChange={(e) => setSubmitterContact(e.target.value)}
+                      required
+                      placeholder="e.g. +919876543210 or email@domain.com"
                       style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
                     />
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Detailed Biography *' : 'வாழ்க்கைக் குறிப்பு / சுயசரிதை *'}</label>
+                  <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>
+                    {lang === 'en' ? 'Proof Document (Optional)' : 'ஆதார ஆவணம் (விருப்பத்தேர்வு)'}
+                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'normal', display: 'block' }}>
+                      {lang === 'en' 
+                        ? 'Upload death certificate, funeral notice, or hospital confirmation. Visible ONLY to admins.' 
+                        : 'இறப்புச் சான்றிதழ், இறுதிச் சடங்கு அறிவிப்பு அல்லது மருத்துவமனை உறுதிப்படுத்தலைப் பதிவேற்றவும். நிர்வாகிகளுக்கு மட்டுமே காட்டப்படும்.'}
+                    </span>
+                  </label>
+                  <input
+                    type="file"
+                    accept=".pdf,image/*"
+                    onChange={(e) => uploadImage(e, setUploadingProof, setProofDocument)}
+                    style={{ width: '100%', padding: '4px', fontSize: '12px' }}
+                  />
+                  {uploadingProof && <span style={{ fontSize: '11px', color: '#7c3aed' }}>Uploading proof...</span>}
+                  {proofDocument && <span style={{ fontSize: '11px', color: '#059669', display: 'block', marginTop: '4px' }}>✓ Proof document uploaded successfully.</span>}
+                </div>
+
+                <fieldset style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '12px', marginTop: '4px' }}>
+                  <legend style={{ fontSize: '12px', fontWeight: 'bold', padding: '0 6px', color: '#475569' }}>
+                    {lang === 'en' ? 'Funeral & Family Details (Optional)' : 'இறுதிச் சடங்கு & குடும்ப விவரங்கள் (விருப்பத்தேர்வு)'}
+                  </legend>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '8px' }}>
+                    <div className="form-group">
+                      <label style={{ fontSize: '12px', fontWeight: 'bold' }}>{lang === 'en' ? 'Funeral Date & Time' : 'இறுதிச் சடங்கு நேரம்'}</label>
+                      <input
+                        type="datetime-local"
+                        value={funeralDatetime}
+                        onChange={(e) => setFuneralDatetime(e.target.value)}
+                        style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black', fontSize: '12.5px' }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label style={{ fontSize: '12px', fontWeight: 'bold' }}>{lang === 'en' ? 'Funeral Venue' : 'இறுதிச் சடங்கு இடம்'}</label>
+                      <input
+                        type="text"
+                        value={funeralVenue}
+                        onChange={(e) => setFuneralVenue(e.target.value)}
+                        placeholder="e.g. Crematorium grounds"
+                        style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black', fontSize: '12.5px' }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="form-group">
+                      <label style={{ fontSize: '12px', fontWeight: 'bold' }}>{lang === 'en' ? 'Family Contact Name' : 'குடும்ப தொடர்பு நபர்'}</label>
+                      <input
+                        type="text"
+                        value={familyContactName}
+                        onChange={(e) => setFamilyContactName(e.target.value)}
+                        placeholder="e.g. Son"
+                        style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black', fontSize: '12.5px' }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label style={{ fontSize: '12px', fontWeight: 'bold' }}>{lang === 'en' ? 'Family Contact Phone' : 'தொடர்பு தொலைபேசி'}</label>
+                      <input
+                        type="text"
+                        value={familyPhone}
+                        onChange={(e) => setFamilyPhone(e.target.value)}
+                        placeholder="e.g. +91 98765 43210"
+                        style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black', fontSize: '12.5px' }}
+                      />
+                    </div>
+                  </div>
+                </fieldset>
+
+                <div className="form-group">
+                  <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Detailed Biography' : 'வாழ்க்கைக் குறிப்பு / சுயசரிதை'}</label>
                   <textarea
                     value={biography}
                     onChange={(e) => setBiography(e.target.value)}
-                    required
-                    rows="3"
+                    rows="2"
                     placeholder={lang === 'en' ? 'Brief details about achievements...' : 'அன்னாரது சாதனைகள், குடும்ப விவரங்கள் இங்கே எழுதவும்...'}
-                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
+                    style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
                   ></textarea>
                 </div>
 
+                <div className="form-group" style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '6px' }}>
+                  <input
+                    type="checkbox"
+                    id="declarationCheckbox"
+                    checked={confirmationChecked}
+                    onChange={(e) => setConfirmationChecked(e.target.checked)}
+                    required
+                    style={{ width: '18px', height: '18px', cursor: 'pointer', marginTop: '2px' }}
+                  />
+                  <label htmlFor="declarationCheckbox" style={{ fontSize: '11.5px', cursor: 'pointer', color: '#475569', lineHeight: '1.4' }}>
+                    {lang === 'en'
+                      ? "I confirm that the information provided is true and accurate to the best of my knowledge. I understand that submitting false, misleading, or defamatory information may result in rejection, account suspension, removal of content, and legal action where applicable."
+                      : "வழங்கப்பட்ட தகவல்கள் எனது அறிவுக்கு எட்டிய வரையில் உண்மையானவை மற்றும் துல்லியமானவை என்று நான் உறுதிப்படுத்துகிறேன். தவறான, தவறாக வழிநடத்தும் அல்லது அவதூறான தகவல்களைச் சமர்ப்பிப்பது நிராகரிப்பு, கணக்கு இடைநிறுத்தம், உள்ளடக்கத்தை அகற்றுதல் மற்றும் பொருந்தக்கூடிய இடங்களில் சட்ட நடவடிக்கைக்கு வழிவகுக்கும் என்பதை நான் புரிந்துகொள்கிறேன்."}
+                  </label>
+                </div>
+
                 <button type="submit" style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: '6px', padding: '12px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' }}>
-                  {lang === 'en' ? 'Publish Obituary' : 'இரங்கல் அட்டை வெளியிடு'}
+                  {lang === 'en' ? 'Submit Obituary for Review' : 'மதிப்பாய்விற்கு சமர்ப்பிக்கவும்'}
                 </button>
               </form>
             </div>
@@ -1056,6 +1178,60 @@ const Obituaries = () => {
         </div>
       )}
     </main>
+      
+      {/* REPORT OBITUARY MODAL */}
+      {showReportModal && (
+        <div className="modal open" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: '1100' }}>
+          <div className="modal-content" style={{ maxWidth: '450px', width: '90%', padding: '24px' }}>
+            <div className="modal-header" style={{ paddingBottom: '12px', borderBottom: '1px solid #e2e8f0', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0 }}>{lang === 'en' ? 'Report Obituary' : 'புகார் அளிக்கவும்'}</h3>
+              <button className="modal-close" onClick={() => setShowReportModal(false)}>&times;</button>
+            </div>
+            <form onSubmit={handleReportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left' }}>
+              <div className="form-group">
+                <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Reason for reporting *' : 'புகாருக்கான காரணம் *'}</label>
+                <select
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  required
+                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
+                >
+                  <option value="False information">False information</option>
+                  <option value="Person is alive">Person is alive</option>
+                  <option value="Wrong identity">Wrong identity</option>
+                  <option value="Offensive content">Offensive content</option>
+                  <option value="Duplicate post">Duplicate post</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Optional Details' : 'கூடுதல் விபரம் (விருப்பத்தேர்வு)'}</label>
+                <textarea
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  rows="3"
+                  placeholder={lang === 'en' ? 'Provide any additional details or evidence...' : 'கூடுதல் தகவல்களை இங்கே குறிப்பிடவும்...'}
+                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
+                ></textarea>
+              </div>
+              <div className="form-group">
+                <label style={{ fontSize: '12.5px', fontWeight: 'bold' }}>{lang === 'en' ? 'Your Contact (Optional)' : 'தொடர்பு விபரம் (விருப்பத்தேர்வு)'}</label>
+                <input
+                  type="text"
+                  value={reporterContact}
+                  onChange={(e) => setReporterContact(e.target.value)}
+                  placeholder={lang === 'en' ? 'Email or phone for follow-up' : 'மின்னஞ்சல் அல்லது தொலைபேசி எண்'}
+                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', color: 'black' }}
+                />
+              </div>
+              <button type="submit" disabled={submittingReport} style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', padding: '10px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>
+                {submittingReport ? 'Submitting...' : (lang === 'en' ? 'Submit Report' : 'புகார் சமர்ப்பி')}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

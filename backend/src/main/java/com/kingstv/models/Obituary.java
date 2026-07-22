@@ -1,6 +1,7 @@
 package com.kingstv.models;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -97,6 +98,14 @@ public class Obituary {
 
     @Column(name = "report_count")
     private Integer reportCount = 0;
+
+    @JsonIgnore
+    @Column(name = "submitter_contact")
+    private String submitterContact;
+
+    @JsonIgnore
+    @Column(name = "proof_document")
+    private String proofDocument;
 
     @Column(nullable = false)
     private String status = "published";
@@ -255,4 +264,10 @@ public class Obituary {
 
     public Boolean getIsCelebrity() { return isCelebrity; }
     public void setIsCelebrity(Boolean isCelebrity) { this.isCelebrity = isCelebrity; }
+
+    public String getSubmitterContact() { return submitterContact; }
+    public void setSubmitterContact(String submitterContact) { this.submitterContact = submitterContact; }
+
+    public String getProofDocument() { return proofDocument; }
+    public void setProofDocument(String proofDocument) { this.proofDocument = proofDocument; }
 }

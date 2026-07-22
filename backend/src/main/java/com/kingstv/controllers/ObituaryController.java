@@ -170,18 +170,35 @@ public class ObituaryController {
         details.put("gallery", obituaryService.getObituaryGallery(obit.getId()));
         details.put("guestbook", obituaryService.getObituaryGuestbook(obit.getId()));
 
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth != null && auth.getAuthorities().stream().anyMatch(a -> {
+            String r = a.getAuthority();
+            return r.equals("ROLE_ADMIN") || r.equals("ROLE_EDITOR") || r.equals("admin") || r.equals("editor");
+        });
+        if (isAdmin) {
+            details.put("proofDocument", obit.getProofDocument());
+            details.put("submitterContact", obit.getSubmitterContact());
+        }
+
         return ResponseEntity.ok(details);
     }
 
     @PostMapping
     public ResponseEntity<?> createObituary(@RequestBody Map<String, Object> request) {
         String deceasedName = (String) request.get("deceasedName");
-        Integer age = request.get("age") != null ? Integer.valueOf(request.get("age").toString()) : null;
-        String biography = (String) request.get("biography");
+        Integer age = request.get("age") != null ? Integer.valueOf(request.get("age").toString()) : 0;
+        String biography = request.get("biography") != null ? (String) request.get("biography") : "In loving memory.";
+        String location = (String) request.get("location");
+        String dateOfPassingStr = (String) request.get("dateOfPassing");
+        String posterRelationship = (String) request.get("posterRelationship");
+        String submitterContact = (String) request.get("submitterContact");
 
         if (deceasedName == null || deceasedName.trim().isEmpty() ||
-            age == null || biography == null || biography.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Name, age, and biography are required."));
+            dateOfPassingStr == null || dateOfPassingStr.trim().isEmpty() ||
+            location == null || location.trim().isEmpty() ||
+            posterRelationship == null || posterRelationship.trim().isEmpty() ||
+            submitterContact == null || submitterContact.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Name of deceased, date of passing, location, relationship, and submitter contact are required."));
         }
 
         Obituary obit = new Obituary();
@@ -192,14 +209,17 @@ public class ObituaryController {
         obit.setPhoto((String) request.get("photo"));
         obit.setGender((String) request.get("gender"));
         obit.setReligion((String) request.get("religion"));
-        obit.setNativePlace((String) request.get("nativePlace"));
+        obit.setNativePlace(location);
+        obit.setLocation(location);
         obit.setPincode((String) request.get("pincode"));
         obit.setFuneralVenue((String) request.get("funeralVenue"));
         obit.setMapLink((String) request.get("mapLink"));
         obit.setFamilyContactName((String) request.get("familyContactName"));
         obit.setFamilyPhone((String) request.get("familyPhone"));
-        obit.setPosterRelationship((String) request.get("posterRelationship"));
-        obit.setStatus("published");
+        obit.setPosterRelationship(posterRelationship);
+        obit.setSubmitterContact(submitterContact);
+        obit.setProofDocument((String) request.get("proofDocument"));
+        obit.setStatus("pending_review");
         if (request.containsKey("isCelebrity") && request.get("isCelebrity") != null) {
             obit.setIsCelebrity(Boolean.valueOf(request.get("isCelebrity").toString()));
         }
@@ -319,10 +339,36 @@ public class ObituaryController {
     @PostMapping("/{id}/report")
     public ResponseEntity<?> logReport(
             @PathVariable Long id,
-            @RequestParam String reporterName,
-            @RequestParam String reason) {
-        obituaryService.logReport(id, reporterName, reason);
-        return ResponseEntity.ok(Map.of("message", "Report logged successfully"));
+            @RequestBody(required = false) Map<String, String> body,
+            @RequestParam(required = false) String reporterName,
+            @RequestParam(required = false) String reason) {
+        
+        String name = reporterName;
+        String fullReason = reason;
+
+        if (body != null) {
+            name = body.getOrDefault("reporterName", body.getOrDefault("contact", name));
+            String dropReason = body.getOrDefault("reason", "");
+            String details = body.getOrDefault("details", "");
+            String contact = body.getOrDefault("contact", "");
+            
+            StringBuilder sb = new StringBuilder();
+            sb.append("Reason: ").append(dropReason);
+            if (details != null && !details.trim().isEmpty()) {
+                sb.append(" | Details: ").append(details);
+            }
+            if (contact != null && !contact.trim().isEmpty()) {
+                sb.append(" | Contact: ").append(contact);
+            }
+            fullReason = sb.toString();
+        }
+
+        if (name == null || name.trim().isEmpty()) {
+            name = "Anonymous";
+        }
+
+        obituaryService.logReport(id, name, fullReason);
+        return ResponseEntity.ok(Map.of("message", "Thank you — we will review this and take appropriate action."));
     }
 
     @PostMapping("/{id}/share-card")
