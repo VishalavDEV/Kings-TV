@@ -142,6 +142,22 @@ const Login = () => {
     }
   };
 
+  // Automatically trigger Send OTP once a valid 10-digit (or 12-digit with 91) phone number is entered
+  useEffect(() => {
+    if (loginMethod !== 'phone' || !phoneNumber || phoneOtpSent) return;
+
+    const cleanNum = phoneNumber.trim().replace(/[^0-9]/g, '');
+    const isIndiaLength = cleanNum.length === 10;
+    const isIndiaWithCountry = cleanNum.startsWith('91') && cleanNum.length === 12;
+
+    if (isIndiaLength || isIndiaWithCountry) {
+      const timer = setTimeout(() => {
+        handleSendPhoneOtp();
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [phoneNumber, phoneOtpSent, loginMethod]);
+
   const handlePhoneAuth = async (e) => {
     e.preventDefault();
 
