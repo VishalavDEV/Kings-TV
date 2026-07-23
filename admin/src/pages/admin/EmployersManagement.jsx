@@ -205,7 +205,7 @@ const EmployersManagement = () => {
       </div>
 
       {/* Employers Table */}
-      <div className="table-container" style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid var(--border-color)', overflowX: 'auto' }}>
+      <div className="table-container" style={{ overflowX: 'auto' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Loading employer accounts...</div>
         ) : filteredEmployers.length === 0 ? (
@@ -224,11 +224,11 @@ const EmployersManagement = () => {
             </thead>
             <tbody>
               {filteredEmployers.map((emp, index) => (
-                <tr key={emp.id} style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                <tr key={emp.id} style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: index % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.02)' }}>
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       {renderAvatar(emp.companyName, emp.logo)}
-                      <span style={{ fontWeight: 600, color: '#000000' }}>{emp.companyName}</span>
+                      <span style={{ fontWeight: 600 }}>{emp.companyName}</span>
                     </div>
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: '0.85rem' }}>{emp.contact}</td>

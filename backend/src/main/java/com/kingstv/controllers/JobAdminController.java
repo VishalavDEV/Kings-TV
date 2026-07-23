@@ -66,12 +66,16 @@ public class JobAdminController {
             map.put("id", company.getId());
             map.put("companyName", company.getCompanyName());
             map.put("logo", company.getLogo());
-            String email = company.getEmail() != null ? company.getEmail() : "—";
-            String phone = company.getPhone() != null ? company.getPhone() : "—";
+            String email = cleanField(company.getEmail());
+            String phone = cleanField(company.getPhone());
             map.put("contact", email + " / " + phone);
             map.put("activeJobPostings", jobRepository.countByCompanyAndDeletedFalseAndStatus(company, "active"));
             map.put("dateJoined", company.getCreatedAt());
-            map.put("status", company.getStatus());
+            String status = company.getStatus();
+            if (status == null || status.trim().isEmpty() || "null".equalsIgnoreCase(status.trim())) {
+                status = "active";
+            }
+            map.put("status", status);
             return map;
         }).collect(Collectors.toList());
 
@@ -133,7 +137,11 @@ public class JobAdminController {
             map.put("location", candidate.getLocation() != null ? candidate.getLocation() : "—");
             map.put("applicationsCount", jobApplicationRepository.countByCandidateId(candidate.getId()));
             map.put("dateJoined", candidate.getCreatedAt());
-            map.put("status", candidate.getStatus());
+            String status = candidate.getStatus();
+            if (status == null || status.trim().isEmpty() || "null".equalsIgnoreCase(status.trim())) {
+                status = "active";
+            }
+            map.put("status", status);
             return map;
         }).collect(Collectors.toList());
 
@@ -307,5 +315,12 @@ public class JobAdminController {
         auditLogRepository.save(log);
 
         return ResponseEntity.ok(Map.of("message", "Candidate unsuspended successfully."));
+    }
+
+    private String cleanField(String value) {
+        if (value == null || value.trim().isEmpty() || "null".equalsIgnoreCase(value.trim())) {
+            return "—";
+        }
+        return value.trim();
     }
 }

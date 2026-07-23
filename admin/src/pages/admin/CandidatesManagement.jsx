@@ -204,7 +204,7 @@ const CandidatesManagement = () => {
       </div>
 
       {/* Candidates Table & Empty State wrapper */}
-      <div className="table-container" style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid var(--border-color)', overflowX: 'auto' }}>
+      <div className="table-container" style={{ overflowX: 'auto' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Loading candidate profiles...</div>
         ) : filteredCandidates.length === 0 ? (
@@ -237,11 +237,11 @@ const CandidatesManagement = () => {
             </thead>
             <tbody>
               {filteredCandidates.map((cand, index) => (
-                <tr key={cand.id} style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                <tr key={cand.id} style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: index % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.02)' }}>
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       {renderAvatar(cand.name, null)}
-                      <span style={{ fontWeight: 600, color: '#000000' }}>{cand.name}</span>
+                      <span style={{ fontWeight: 600 }}>{cand.name}</span>
                     </div>
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: '0.85rem' }}>{cand.email}</td>
