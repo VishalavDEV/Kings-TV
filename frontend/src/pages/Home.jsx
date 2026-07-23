@@ -5,6 +5,7 @@ import { ThemeContext } from '../context/ThemeContext';
 import { fetchApi, getImageUrl } from '../utils/api';
 import AdWidget from '../components/AdWidget';
 import SkeletonLoader from '../components/SkeletonLoader';
+import GenericPageRenderer from '../components/GenericPageRenderer';
 import { resolveHandleToChannelId, fetchChannelVideos } from '../services/youtubeService';
 
 const Home = () => {
@@ -1177,44 +1178,11 @@ const Home = () => {
       {/* COMMODITY TICKER */}
       {renderCommodityTicker()}
 
-      {/* TOP FULL-WIDTH SECTIONS */}
-      {getSortedSections(['news_ticker', 'quick_access', 'hero']).map(sec => (
-        <React.Fragment key={sec.id || sec.sectionKey}>
-          {getRenderedSection(sec.sectionKey, sec.sectionLabel, sec.configJson)}
-        </React.Fragment>
-      ))}
-
-      {/* HEADER BANNER SPONSORED AD */}
-      <div className="container" style={{ margin: '20px auto 0 auto', padding: '0 15px' }}>
-        <AdWidget placement="header" />
-      </div>
-
-      {/* MAIN 2-COLUMN SPLIT LAYOUT */}
-      <div className="container main-layout-container" style={{ marginTop: '20px', marginBottom: '30px' }}>
-        <div className="left-content-column">
-          {getSortedSections(['latest_news', 'crowd_reporter_highlight', 'institution_news']).map(sec => (
-            <React.Fragment key={sec.id || sec.sectionKey}>
-              {getRenderedSection(sec.sectionKey, sec.sectionLabel, sec.configJson)}
-            </React.Fragment>
-          ))}
-        </div>
-
-        <aside className="trending-sidebar" style={{ maxWidth: `${widgetWidth}px` }}>
-          <AdWidget placement="sidebar" />
-          {getSortedSections(['trending_sidebar', 'rss_aggregator', 'weather', 'live_tv', 'business_case', 'crowd_reporter']).map(sec => (
-            <React.Fragment key={sec.id || sec.sectionKey}>
-              {getRenderedSection(sec.sectionKey, sec.sectionLabel, sec.configJson)}
-            </React.Fragment>
-          ))}
-        </aside>
-      </div>
-
-      {/* BOTTOM FULL-WIDTH SECTIONS */}
-      {getSortedSections(['video_news', 'web_stories', 'news_digest']).map(sec => (
-        <React.Fragment key={sec.id || sec.sectionKey}>
-          {getRenderedSection(sec.sectionKey, sec.sectionLabel, sec.configJson)}
-        </React.Fragment>
-      ))}
+      {/* PURE GENERIC HEADLESS RENDERING ENGINE */}
+      <GenericPageRenderer
+        layoutType="WEB"
+        renderSectionCallback={(key, label, configJson) => getRenderedSection(key, label, configJson)}
+      />
 
       {/* CROWD REPORTER MODAL */}
       {showReportModal && (
