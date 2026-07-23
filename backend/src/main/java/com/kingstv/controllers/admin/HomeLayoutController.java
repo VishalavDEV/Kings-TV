@@ -63,14 +63,43 @@ public class HomeLayoutController {
     @RequiresPermission(Permission.HOME_LAYOUT_MANAGE)
     public ResponseEntity<?> reorderSections(@RequestBody List<Map<String, Object>> sections) {
         for (Map<String, Object> s : sections) {
-            Long id = ((Number) s.get("id")).longValue();
-            int order = (Integer) s.get("displayOrder");
-            layoutRepository.findById(id).ifPresent(section -> {
-                section.setDisplayOrder(order);
-                layoutRepository.save(section);
-            });
+            if (s.containsKey("id") && s.get("id") != null) {
+                Long id = ((Number) s.get("id")).longValue();
+                int order = (Integer) s.get("displayOrder");
+                layoutRepository.findById(id).ifPresent(section -> {
+                    section.setDisplayOrder(order);
+                    layoutRepository.save(section);
+                });
+            }
         }
         return ResponseEntity.ok(Map.of("message", "Layout reordered successfully"));
+    }
+
+    @PutMapping("/bulk-save")
+    @RequiresPermission(Permission.HOME_LAYOUT_MANAGE)
+    public ResponseEntity<?> bulkSaveLayout(@RequestBody List<Map<String, Object>> sections) {
+        String layoutType = "WEB";
+        if (!sections.isEmpty() && sections.get(0).containsKey("layoutType") && sections.get(0).get("layoutType") != null) {
+            layoutType = (String) sections.get(0).get("layoutType");
+        }
+
+        List<HomeLayoutConfig> existing = layoutRepository.findByLayoutTypeOrderByDisplayOrderAsc(layoutType);
+        layoutRepository.deleteAll(existing);
+
+        List<HomeLayoutConfig> savedList = new ArrayList<>();
+        int order = 1;
+        for (Map<String, Object> s : sections) {
+            HomeLayoutConfig section = new HomeLayoutConfig();
+            section.setSectionKey((String) s.get("sectionKey"));
+            section.setSectionLabel((String) s.get("sectionLabel"));
+            section.setDisplayOrder(order++);
+            section.setIsVisible(s.containsKey("isVisible") ? (Boolean) s.get("isVisible") : true);
+            section.setConfigJson(s.containsKey("configJson") && s.get("configJson") != null ? (String) s.get("configJson") : "{}");
+            section.setLayoutType(layoutType);
+            savedList.add(layoutRepository.save(section));
+        }
+
+        return ResponseEntity.ok(savedList);
     }
 
     @DeleteMapping("/{id}")

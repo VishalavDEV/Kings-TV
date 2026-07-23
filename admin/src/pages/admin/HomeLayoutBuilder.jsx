@@ -113,24 +113,10 @@ const HomeLayoutBuilder = () => {
   const handleSaveAll = async () => {
     setSaving(true);
     try {
-      // Re-assign display orders based on active visual layout array index
-      const reorderPayload = layout.map((item, idx) => ({
-        id: item.id,
-        displayOrder: idx + 1
-      }));
-
-      // 1. Sync orders
-      await api.put('/admin/layout/reorder', reorderPayload);
-
-      // 2. Sync individual visibility / name / config changes
-      for (const item of layout) {
-        await api.put(`/admin/layout/${item.id}`, {
-          isVisible: item.isVisible,
-          sectionLabel: item.sectionLabel,
-          configJson: item.configJson
-        });
+      const res = await api.put('/admin/layout/bulk-save', layout);
+      if (Array.isArray(res.data)) {
+        setLayout(res.data);
       }
-
       setUnsavedChanges(false);
       setUndoStack([]);
       alert("Home layout changes published live successfully!");
