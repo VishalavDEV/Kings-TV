@@ -5,6 +5,7 @@ import { ThemeContext } from '../context/ThemeContext';
 import { fetchApi, getImageUrl } from '../utils/api';
 import AdWidget from '../components/AdWidget';
 import SkeletonLoader from '../components/SkeletonLoader';
+import GenericPageRenderer from '../components/GenericPageRenderer';
 import { resolveHandleToChannelId, fetchChannelVideos } from '../services/youtubeService';
 
 const Home = () => {
@@ -1177,27 +1178,11 @@ const Home = () => {
       {/* COMMODITY TICKER */}
       {renderCommodityTicker()}
 
-      {/* FULLY DYNAMIC HOMEPAGE SECTIONS IN EXACT DATABASE DISPLAY ORDER */}
-      {(() => {
-        const sorted = layoutSections && layoutSections.length > 0
-          ? [...layoutSections].filter(s => s.isVisible !== false).sort((a, b) => a.displayOrder - b.displayOrder)
-          : [
-              { sectionKey: 'news_ticker', sectionLabel: 'Breaking News Ticker' },
-              { sectionKey: 'quick_access', sectionLabel: 'Quick Access Icons' },
-              { sectionKey: 'hero', sectionLabel: 'Hero Section' },
-              { sectionKey: 'latest_news', sectionLabel: 'Latest News' },
-              { sectionKey: 'video_news', sectionLabel: 'Video News' },
-              { sectionKey: 'web_stories', sectionLabel: 'Web Stories' },
-              { sectionKey: 'trending_sidebar', sectionLabel: 'Trending News' },
-              { sectionKey: 'weather', sectionLabel: 'Weather Info' }
-            ];
-
-        return sorted.map((sec) => (
-          <React.Fragment key={sec.id || sec.sectionKey}>
-            {getRenderedSection(sec.sectionKey, sec.sectionLabel, sec.configJson)}
-          </React.Fragment>
-        ));
-      })()}
+      {/* PURE GENERIC HEADLESS RENDERING ENGINE */}
+      <GenericPageRenderer
+        layoutType="WEB"
+        renderSectionCallback={(key, label, configJson) => getRenderedSection(key, label, configJson)}
+      />
 
       {/* CROWD REPORTER MODAL */}
       {showReportModal && (
