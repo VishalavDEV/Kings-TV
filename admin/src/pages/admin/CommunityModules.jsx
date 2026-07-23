@@ -6,7 +6,7 @@ import {
   ChevronDown, ExternalLink, Eye, ToggleLeft, ToggleRight, X,
   Check, CheckCircle, AlertCircle, Filter, Shield, Activity,
   FileText, Calendar, MapPin, User, Phone, Mail, Globe, Lock,
-  Unlock, Settings, Flag, Clock
+  Unlock, Settings, Flag, Clock, DollarSign
 } from 'lucide-react';
 
 const MODULE_TABS = [
@@ -54,6 +54,7 @@ const CommunityModules = () => {
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('all');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('');
 
   // Modals & form states
@@ -65,6 +66,21 @@ const CommunityModules = () => {
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [cardUidInput, setCardUidInput] = useState('');
   const [showCardUidModal, setShowCardUidModal] = useState(false);
+
+  // NFC Extended states
+  const [showUndeliveredModal, setShowUndeliveredModal] = useState(false);
+  const [undeliveredReason, setUndeliveredReason] = useState('wrong address');
+  const [undeliveredNote, setUndeliveredNote] = useState('');
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [blockReason, setBlockReason] = useState('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({
+    paymentStatus: 'UNPAID',
+    paymentAmount: '',
+    paymentMethod: '',
+    paymentReference: '',
+    paidAt: ''
+  });
 
   // Template Form (used for Obituary & Wish Frame Templates)
   const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -247,17 +263,25 @@ const CommunityModules = () => {
   // -----------------------------------------------------
   // NFC Card Handlers
   // -----------------------------------------------------
-  const handleNfcStatusTransition = async (card, nextStatus) => {
+  const handleNfcStatusTransition = async (card, nextStatus, payload = {}) => {
     if (nextStatus === 'issued') {
       setSelectedItem(card);
       setCardUidInput('');
       setShowCardUidModal(true);
       return;
     }
+    const cardId = card.card?.id || card.id;
     try {
-      await api.patch(`/nfc/${card.id}/status`, { status: nextStatus });
+      const res = await api.patch(`/nfc/${cardId}/status`, { status: nextStatus, ...payload });
       showSuccess(`Card status updated to ${nextStatus}`);
+      setSelectedItem(prev => {
+        if (prev && (prev.card?.id === cardId || prev.id === cardId)) {
+          return { ...prev, card: res.data };
+        }
+        return prev;
+      });
       fetchItems();
+      fetchNfcLogs(cardId);
     } catch (err) {
       showError(err.response?.data?.message || 'Failed to update NFC status');
     }
@@ -266,12 +290,19 @@ const CommunityModules = () => {
   const handleNfcIssueSubmit = async (e) => {
     e.preventDefault();
     if (!cardUidInput.trim()) return;
+    const cardId = selectedItem.card?.id || selectedItem.id;
     try {
-      await api.patch(`/nfc/${selectedItem.id}/status`, { status: 'issued', cardUid: cardUidInput });
+      const res = await api.patch(`/nfc/${cardId}/status`, { status: 'issued', cardUid: cardUidInput });
       showSuccess('Card issued successfully');
       setShowCardUidModal(false);
-      setSelectedItem(null);
+      setSelectedItem(prev => {
+        if (prev && (prev.card?.id === cardId || prev.id === cardId)) {
+          return { ...prev, card: res.data };
+        }
+        return prev;
+      });
       fetchItems();
+      fetchNfcLogs(cardId);
     } catch (err) {
       showError(err.response?.data?.message || 'Failed to issue card');
     }
@@ -279,12 +310,81 @@ const CommunityModules = () => {
 
   const fetchNfcLogs = async (cardId) => {
     try {
-      const logRes = await api.get(`/admin/audit-logs?entityType=NfcCard&size=100`);
-      const allLogs = logRes.data?.logs || [];
-      const cardLogs = allLogs.filter(log => log.entityId === cardId);
-      setNfcLogs(cardLogs);
+      const logRes = await api.get(`/nfc/${cardId}/audit`);
+      setNfcLogs(logRes.data || []);
     } catch {
       setNfcLogs([]);
+    }
+  };
+
+  const handleMarkAsRefunded = async (card) => {
+    if (!window.confirm("Mark this payment as Refunded?")) return;
+    try {
+      const res = await api.post(`/nfc/${card.id}/payment/refund`);
+      showSuccess("Payment marked as refunded");
+      setSelectedItem(prev => {
+        if (prev && prev.card?.id === card.id) {
+          return { ...prev, card: res.data };
+        }
+        return prev;
+      });
+      fetchItems();
+      fetchNfcLogs(card.id);
+    } catch {
+      showError("Failed to refund payment");
+    }
+  };
+
+  const handleEditPaymentInfo = (card) => {
+    setPaymentForm({
+      paymentStatus: card.paymentStatus || 'UNPAID',
+      paymentAmount: card.paymentAmount || '',
+      paymentMethod: card.paymentMethod || '',
+      paymentReference: card.paymentReference || '',
+      paidAt: card.paidAt ? card.paidAt.substring(0, 16) : ''
+    });
+    setShowPaymentModal(true);
+  };
+
+  const submitPaymentInfo = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await api.patch(`/nfc/${selectedItem.card.id}/payment`, paymentForm);
+      showSuccess("Payment info updated");
+      setShowPaymentModal(false);
+      setSelectedItem(prev => {
+        if (prev && prev.card?.id === selectedItem.card.id) {
+          return { ...prev, card: res.data };
+        }
+        return prev;
+      });
+      fetchItems();
+      fetchNfcLogs(selectedItem.card.id);
+    } catch {
+      showError("Failed to update payment details");
+    }
+  };
+
+  const submitBlockCard = async (e) => {
+    e.preventDefault();
+    if (!blockReason.trim()) return;
+    try {
+      await handleNfcStatusTransition(selectedItem.card, 'blocked', { reason: blockReason });
+      setShowBlockModal(false);
+      setBlockReason('');
+    } catch {
+      showError("Failed to block card");
+    }
+  };
+
+  const submitUndelivered = async (e) => {
+    e.preventDefault();
+    try {
+      await handleNfcStatusTransition(selectedItem.card, 'undelivered', { reason: undeliveredReason, note: undeliveredNote });
+      setShowUndeliveredModal(false);
+      setUndeliveredNote('');
+    } catch {
+      showError("Failed to mark card undelivered");
     }
   };
 
@@ -489,7 +589,8 @@ const CommunityModules = () => {
     }
     if (activeTab === 'nfc') {
       const statusMatch = statusFilter === 'all' || item.card?.cardStatus?.toLowerCase() === statusFilter.toLowerCase();
-      return matchesSearch && statusMatch;
+      const paymentMatch = paymentStatusFilter === 'all' || item.card?.paymentStatus?.toLowerCase() === paymentStatusFilter.toLowerCase();
+      return matchesSearch && statusMatch && paymentMatch;
     }
     if (activeTab === 'obituaries') {
       const statusMatch = statusFilter === 'all' || item.status?.toLowerCase() === statusFilter.toLowerCase();
@@ -663,19 +764,34 @@ const CommunityModules = () => {
             </select>
           )}
           {(activeTab === 'nfc' && activeSubTab === 'default') && (
-            <select 
-              value={statusFilter} 
-              onChange={e => setStatusFilter(e.target.value)}
-              className="form-control"
-              style={{ width: '160px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'white', borderRadius: '6px' }}
-            >
-              <option value="all">Status: All</option>
-              <option value="requested">Requested</option>
-              <option value="processing">Processing</option>
-              <option value="issued">Issued</option>
-              <option value="delivered">Delivered</option>
-              <option value="blocked">Blocked</option>
-            </select>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <select 
+                value={statusFilter} 
+                onChange={e => setStatusFilter(e.target.value)}
+                className="form-control"
+                style={{ width: '160px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'white', borderRadius: '6px' }}
+              >
+                <option value="all">Status: All</option>
+                <option value="requested">Requested</option>
+                <option value="processing">Processing</option>
+                <option value="issued">Issued</option>
+                <option value="delivered">Delivered</option>
+                <option value="undelivered">Undelivered</option>
+                <option value="blocked">Blocked</option>
+              </select>
+              <select 
+                value={paymentStatusFilter} 
+                onChange={e => setPaymentStatusFilter(e.target.value)}
+                className="form-control"
+                style={{ width: '180px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'white', borderRadius: '6px' }}
+              >
+                <option value="all">Payment: All</option>
+                <option value="unpaid">Unpaid</option>
+                <option value="paid">Paid</option>
+                <option value="refunded">Refunded</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
           )}
           {(activeTab === 'obituaries' && activeSubTab === 'default') && (
             <select 
@@ -1138,6 +1254,7 @@ const CommunityModules = () => {
                             <th>Link Type</th>
                             <th>Request Date</th>
                             <th>Card Status</th>
+                            <th>Payment Status</th>
                             <th style={{ textAlign: 'right' }}>Actions</th>
                           </tr>
                         )}
@@ -1250,9 +1367,20 @@ const CommunityModules = () => {
                                     <span className={`badge ${
                                       item.card?.cardStatus === 'delivered' ? 'badge-success' : 
                                       item.card?.cardStatus === 'issued' ? 'badge-info' : 
-                                      item.card?.cardStatus === 'processing' ? 'badge-warning' : 'badge-muted'
+                                      item.card?.cardStatus === 'processing' ? 'badge-warning' : 
+                                      item.card?.cardStatus === 'undelivered' ? 'badge-danger' : 
+                                      item.card?.cardStatus === 'blocked' ? 'badge-danger' : 'badge-muted'
                                     }`} style={{ background: item.card?.cardStatus === 'issued' ? 'rgba(59,130,246,0.15)' : '', color: item.card?.cardStatus === 'issued' ? '#3b82f6' : '' }}>
                                       {item.card?.cardStatus || 'requested'}
+                                    </span>
+                                  </td>
+                                  <td>
+                                    <span className={`badge ${
+                                      item.card?.paymentStatus === 'PAID' ? 'badge-success' : 
+                                      item.card?.paymentStatus === 'REFUNDED' ? 'badge-info' : 
+                                      item.card?.paymentStatus === 'FAILED' ? 'badge-danger' : 'badge-warning'
+                                    }`}>
+                                      {item.card?.paymentStatus || 'UNPAID'}
                                     </span>
                                   </td>
                                   <td style={{ textAlign: 'right' }}>
@@ -1600,7 +1728,7 @@ const CommunityModules = () => {
       {/* B. NFC Requests Fulfillment Workflows Modal */}
       {activeTab === 'nfc' && selectedItem && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-          <div className="glass-panel" style={{ background: '#111827', width: '100%', maxWidth: '750px', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+          <div className="glass-panel" style={{ background: '#111827', width: '100%', maxWidth: '850px', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', padding: '1rem 1.5rem' }}>
               <h2 style={{ color: activeMod.color, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Wifi /> NFC Fulfillment Dashboard
@@ -1610,7 +1738,7 @@ const CommunityModules = () => {
             
             <div style={{ padding: '1.5rem' }}>
               {/* Business details */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                   <h4 style={{ color: activeMod.color, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Building2 size={16} /> Business Info</h4>
                   <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{selectedItem.businessName}</div>
@@ -1626,6 +1754,26 @@ const CommunityModules = () => {
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Email: {selectedItem.business?.email || '—'}</div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Website: {selectedItem.business?.website || '—'}</div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Selected Template: <strong>Default Premium Frame</strong></div>
+                </div>
+                <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                  <h4 style={{ color: activeMod.color, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}><DollarSign size={16} /> Payment</h4>
+                  <div style={{ fontSize: '1rem', fontWeight: 700 }}>
+                    Status: <span style={{ color: selectedItem.card?.paymentStatus === 'PAID' ? '#10B981' : '#EF4444' }}>{selectedItem.card?.paymentStatus || 'UNPAID'}</span>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Amount: {selectedItem.card?.paymentAmount ? `₹${selectedItem.card.paymentAmount}` : '—'}</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Method: {selectedItem.card?.paymentMethod || '—'}</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Ref: {selectedItem.card?.paymentReference || '—'}</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Paid At: {formatDate(selectedItem.card?.paidAt)}</div>
+                  <div style={{ marginTop: '0.5rem', display: 'flex', gap: '6px' }}>
+                    <button className="btn btn-secondary" style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => handleEditPaymentInfo(selectedItem.card)}>
+                      Edit Payment
+                    </button>
+                    {selectedItem.card?.paymentStatus === 'PAID' && (
+                      <button className="btn btn-danger" style={{ padding: '2px 6px', fontSize: '0.7rem', background: 'rgba(239,68,68,0.15)', border: '1px solid #ef4444', color: '#ef4444' }} onClick={() => handleMarkAsRefunded(selectedItem.card)}>
+                        Mark Refunded
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -1679,8 +1827,8 @@ const CommunityModules = () => {
                   ) : (
                     nfcLogs.map(log => (
                       <div key={log.id} style={{ borderBottom: '1px solid var(--border-color)', padding: '6px 0', display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Actor: <strong>{log.actorEmail}</strong> ({log.details})</span>
-                        <span style={{ color: 'var(--text-muted)' }}>{formatDate(log.timestamp)}</span>
+                        <span>Actor: <strong>{log.changedByEmail || 'system'}</strong> ({log.fromStatus} ➔ {log.toStatus} - {log.note})</span>
+                        <span style={{ color: 'var(--text-muted)' }}>{formatDate(log.changedAt)}</span>
                       </div>
                     ))
                   )}
@@ -1688,41 +1836,118 @@ const CommunityModules = () => {
               </div>
 
               {/* Action Fulfill workflow */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
-                <button 
-                  onClick={() => handleNfcStatusTransition(selectedItem, 'blocked')}
-                  className="btn btn-danger"
-                  style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid #ef4444', color: '#ef4444' }}
-                >
-                  Block Card
-                </button>
-                {selectedItem.card?.cardStatus === 'requested' && (
-                  <button 
-                    onClick={() => handleNfcStatusTransition(selectedItem, 'processing')}
-                    className="btn btn-primary"
-                    style={{ background: '#F59E0B', color: 'white', border: 'none' }}
-                  >
-                    Start Processing Order
-                  </button>
-                )}
-                {selectedItem.card?.cardStatus === 'processing' && (
-                  <button 
-                    onClick={() => handleNfcStatusTransition(selectedItem, 'issued')}
-                    className="btn btn-primary"
-                    style={{ background: '#3B82F6', color: 'white', border: 'none' }}
-                  >
-                    Generate & Issue UID
-                  </button>
-                )}
-                {selectedItem.card?.cardStatus === 'issued' && (
-                  <button 
-                    onClick={() => handleNfcStatusTransition(selectedItem, 'delivered')}
-                    className="btn btn-primary"
-                    style={{ background: '#10B981', color: 'white', border: 'none' }}
-                  >
-                    Confirm Delivery
-                  </button>
-                )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  {selectedItem.card?.cardStatus !== 'blocked' ? (
+                    <button 
+                      onClick={() => setShowBlockModal(true)}
+                      className="btn btn-danger"
+                      style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid #ef4444', color: '#ef4444' }}
+                    >
+                      Block Card
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => handleNfcStatusTransition(selectedItem.card, 'unblocked')}
+                      className="btn btn-success"
+                      style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid #10b981', color: '#10b981' }}
+                    >
+                      Unblock Card
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  {selectedItem.card?.paymentStatus !== 'PAID' && selectedItem.card?.cardStatus === 'requested' && (
+                    <span style={{ color: '#F59E0B', fontSize: '0.85rem', alignSelf: 'center', fontWeight: 600 }}>
+                      ⚠️ Warning: Payment unpaid
+                    </span>
+                  )}
+                  {selectedItem.card?.cardStatus === 'requested' && (
+                    <button 
+                      onClick={() => handleNfcStatusTransition(selectedItem.card, 'processing')}
+                      className="btn btn-primary"
+                      style={{ background: '#F59E0B', color: 'white', border: 'none' }}
+                    >
+                      Start Processing Order
+                    </button>
+                  )}
+                  {selectedItem.card?.cardStatus === 'processing' && (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button 
+                        onClick={() => handleNfcStatusTransition(selectedItem.card, 'issued')}
+                        className="btn btn-primary"
+                        style={{ background: '#3B82F6', color: 'white', border: 'none' }}
+                      >
+                        Generate & Issue UID
+                      </button>
+                      <button 
+                        onClick={() => setShowUndeliveredModal(true)}
+                        className="btn btn-danger"
+                        style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid #ef4444', color: '#ef4444' }}
+                      >
+                        Mark Undelivered
+                      </button>
+                    </div>
+                  )}
+                  {selectedItem.card?.cardStatus === 'issued' && (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button 
+                        onClick={() => handleNfcStatusTransition(selectedItem.card, 'delivered')}
+                        className="btn btn-primary"
+                        style={{ background: '#10B981', color: 'white', border: 'none' }}
+                      >
+                        Confirm Delivery
+                      </button>
+                      <button 
+                        onClick={() => setShowUndeliveredModal(true)}
+                        className="btn btn-danger"
+                        style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid #ef4444', color: '#ef4444' }}
+                      >
+                        Mark Undelivered
+                      </button>
+                    </div>
+                  )}
+                  {selectedItem.card?.cardStatus === 'delivered' && (
+                    <button 
+                      onClick={() => setShowUndeliveredModal(true)}
+                      className="btn btn-danger"
+                      style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid #ef4444', color: '#ef4444' }}
+                    >
+                      Mark Undelivered
+                    </button>
+                  )}
+                  {selectedItem.card?.cardStatus === 'undelivered' && (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button 
+                        onClick={() => handleNfcStatusTransition(selectedItem.card, 'processing', { note: 'Delivery retry initiated by administrator.' })}
+                        className="btn btn-primary"
+                        style={{ background: '#3B82F6', color: 'white', border: 'none' }}
+                      >
+                        Retry Delivery
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const confirmCancel = window.confirm(
+                            selectedItem.card?.paymentStatus === 'PAID' 
+                              ? "Refund payment before cancelling request?" 
+                              : "Are you sure you want to cancel this request?"
+                          );
+                          if (confirmCancel) {
+                            if (selectedItem.card?.paymentStatus === 'PAID') {
+                              handleMarkAsRefunded(selectedItem.card);
+                            }
+                            handleNfcStatusTransition(selectedItem.card, 'cancelled', { note: 'Request cancelled after delivery failure.' });
+                          }
+                        }}
+                        className="btn btn-danger"
+                        style={{ background: '#EF4444', color: 'white', border: 'none' }}
+                      >
+                        Cancel Request
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -2238,6 +2463,147 @@ const CommunityModules = () => {
               <button type="button" onClick={() => setShowCardUidModal(false)} className="btn btn-secondary">Cancel</button>
               <button type="submit" className="btn btn-primary" style={{ background: '#3B82F6', color: 'white', border: 'none' }}>
                 Confirm Issue State
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* NFC Extended workflow dialog modals */}
+      {showUndeliveredModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+          <form onSubmit={submitUndelivered} className="glass-panel" style={{ background: '#111827', width: '100%', maxWidth: '450px', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '1.5rem' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#EF4444', marginBottom: '0.5rem' }}>
+              <Flag /> Report Delivery Failure
+            </h3>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Reason for failure:</label>
+              <select 
+                value={undeliveredReason} 
+                onChange={e => setUndeliveredReason(e.target.value)}
+                className="form-control"
+                style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'white', borderRadius: '6px', height: '36px', padding: '0 8px' }}
+              >
+                <option value="wrong address">Wrong Address / Returned to Sender</option>
+                <option value="recipient unavailable">Recipient Unavailable / Delivery Unanswered</option>
+                <option value="returned">Refused Delivery / Returned by Agent</option>
+                <option value="other">Other reason (explain in note)</option>
+              </select>
+            </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Optional justification note:</label>
+              <textarea 
+                className="form-control"
+                style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'white', borderRadius: '6px', padding: '8px' }}
+                rows={3}
+                placeholder="Details of delivery attempt..."
+                value={undeliveredNote}
+                onChange={e => setUndeliveredNote(e.target.value)}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button type="button" onClick={() => setShowUndeliveredModal(false)} className="btn btn-secondary">Cancel</button>
+              <button type="submit" className="btn btn-danger" style={{ background: '#EF4444', color: 'white', border: 'none' }}>
+                Confirm Failure
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {showBlockModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+          <form onSubmit={submitBlockCard} className="glass-panel" style={{ background: '#111827', width: '100%', maxWidth: '450px', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '1.5rem' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#EF4444', marginBottom: '0.5rem' }}>
+              <Lock /> Block NFC Card
+            </h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+              Blocking this card disables the physical NFC card's redirect link. Please provide a reason:
+            </p>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Block Reason:</label>
+              <select 
+                value={blockReason} 
+                onChange={e => setBlockReason(e.target.value)}
+                className="form-control"
+                style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'white', borderRadius: '6px', height: '36px', padding: '0 8px' }}
+              >
+                <option value="">-- Select Reason --</option>
+                <option value="abuse">Abuse / Terms of service violation</option>
+                <option value="fraud">Fraudulent / Suspicious Activity</option>
+                <option value="business closed">Business Closed / Listing Deleted</option>
+                <option value="other">Other / Manual override</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button type="button" onClick={() => setShowBlockModal(false)} className="btn btn-secondary">Cancel</button>
+              <button type="submit" className="btn btn-danger" style={{ background: '#EF4444', color: 'white', border: 'none' }} disabled={!blockReason}>
+                Confirm Block
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {showPaymentModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+          <form onSubmit={submitPaymentInfo} className="glass-panel" style={{ background: '#111827', width: '100%', maxWidth: '450px', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '1.5rem' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#10B981', marginBottom: '1rem' }}>
+              <DollarSign /> Edit Card Payment Details
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Status:</label>
+                <select 
+                  value={paymentForm.paymentStatus} 
+                  onChange={e => setPaymentForm(prev => ({ ...prev, paymentStatus: e.target.value }))}
+                  className="form-control"
+                  style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'white', borderRadius: '6px', height: '36px', padding: '0 8px' }}
+                >
+                  <option value="UNPAID">Unpaid</option>
+                  <option value="PAID">Paid</option>
+                  <option value="FAILED">Failed</option>
+                  <option value="REFUNDED">Refunded</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Amount (₹):</label>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  className="form-control"
+                  style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'white', borderRadius: '6px', height: '36px', padding: '0 8px' }}
+                  value={paymentForm.paymentAmount}
+                  onChange={e => setPaymentForm(prev => ({ ...prev, paymentAmount: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Payment Method:</label>
+              <input 
+                type="text" 
+                placeholder="UPI, NetBanking, Card, COD..." 
+                className="form-control"
+                style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'white', borderRadius: '6px', height: '36px', padding: '0 8px' }}
+                value={paymentForm.paymentMethod}
+                onChange={e => setPaymentForm(prev => ({ ...prev, paymentMethod: e.target.value }))}
+              />
+            </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Payment Reference / Gateway ID:</label>
+              <input 
+                type="text" 
+                placeholder="txn_948190348" 
+                className="form-control"
+                style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'white', borderRadius: '6px', height: '36px', padding: '0 8px' }}
+                value={paymentForm.paymentReference}
+                onChange={e => setPaymentForm(prev => ({ ...prev, paymentReference: e.target.value }))}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.25rem' }}>
+              <button type="button" onClick={() => setShowPaymentModal(false)} className="btn btn-secondary">Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ background: '#10B981', color: 'white', border: 'none' }}>
+                Save Details
               </button>
             </div>
           </form>

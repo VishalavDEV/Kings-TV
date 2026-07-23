@@ -30,7 +30,8 @@ import {
   Search,
   Sparkles,
   Building2,
-  Languages
+  Languages,
+  Briefcase
 } from 'lucide-react';
 
 /**
@@ -179,6 +180,15 @@ const Sidebar = () => {
             <SidebarNavLink to="/admin/push" icon={BellRing} label={t('push')} />
             <SidebarNavLink to="/admin/layout" icon={Layout} label={t('layout')} />
             <SidebarNavLink to="/admin/community" icon={Building2} label="Community Modules" />
+          </SidebarSection>
+        )}
+
+        {/* ═══ JOBS BOARD ═══ */}
+        {isEditor && (
+          <SidebarSection id="jobs-board" title="Jobs Board" icon={Briefcase} defaultOpen={false}>
+            <SidebarNavLink to="/admin/jobs/employers" icon={Building2} label="Employers" />
+            <SidebarNavLink to="/admin/jobs/candidates" icon={Users} label="Candidates" />
+            <SidebarNavLink to="/admin/community?tab=jobs" icon={FileText} label="Applications" />
           </SidebarSection>
         )}
 
