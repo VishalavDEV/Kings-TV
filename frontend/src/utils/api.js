@@ -72,15 +72,15 @@ export const fetchApi = async (endpoint, options = {}) => {
     circuits[basePath] = circuit;
   }
 
-  // Bypass circuit breaker and stale cache for live breaking news
-  const isBreakingNews = endpoint.includes('breaking-news');
-  if (isBreakingNews) {
+  // Bypass circuit breaker and stale cache for live breaking news & public layout
+  const isBypassed = endpoint.includes('breaking-news') || endpoint.includes('layout');
+  if (isBypassed) {
     circuit.status = 'closed';
     circuit.failures = 0;
   }
 
   // Check if circuit is open
-  if (!isBreakingNews && circuit.status === 'open') {
+  if (!isBypassed && circuit.status === 'open') {
     const elapsed = Date.now() - circuit.lastFailureTime;
     if (elapsed > COOL_DOWN_MS) {
       // Transition to half-open
@@ -126,8 +126,8 @@ export const fetchApi = async (endpoint, options = {}) => {
     circuit.status = 'closed';
     circuit.failures = 0;
 
-    // Cache successful GET responses
-    if (method === 'GET' || method === 'get') {
+    // Cache successful GET responses (bypassed for live breaking news & layout)
+    if ((method === 'GET' || method === 'get') && !isBypassed) {
       try {
         localStorage.setItem(cacheKey, JSON.stringify(data));
       } catch (e) {
