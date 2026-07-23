@@ -188,7 +188,6 @@ const Sidebar = () => {
           <SidebarSection id="jobs-board" title="Jobs Board" icon={Briefcase} defaultOpen={false}>
             <SidebarNavLink to="/admin/jobs/employers" icon={Building2} label="Employers" />
             <SidebarNavLink to="/admin/jobs/candidates" icon={Users} label="Candidates" />
-            <SidebarNavLink to="/admin/community?tab=jobs" icon={FileText} label="Applications" />
           </SidebarSection>
         )}
 
