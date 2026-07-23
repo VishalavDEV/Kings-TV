@@ -40,14 +40,38 @@ const HomeLayoutBuilder = () => {
     try {
       const res = await api.get('/admin/layout/web');
       let data = res.data || [];
-      data.sort((a, b) => a.displayOrder - b.displayOrder);
-      setLayout(data);
+      if (Array.isArray(data) && data.length > 0) {
+        data.sort((a, b) => a.displayOrder - b.displayOrder);
+        setLayout(data);
+      } else {
+        const defaultInit = PREDEFINED_SECTIONS.slice(0, 7).map((p, idx) => ({
+          id: idx + 1,
+          sectionKey: p.key,
+          sectionLabel: p.label,
+          displayOrder: idx + 1,
+          isVisible: true,
+          layoutType: 'WEB',
+          configJson: '{}'
+        }));
+        setLayout(defaultInit);
+      }
       setUndoStack([]);
       setUnsavedChanges(false);
     } catch (error) {
       console.error("Failed to load layout", error);
+      const defaultInit = PREDEFINED_SECTIONS.slice(0, 7).map((p, idx) => ({
+        id: idx + 1,
+        sectionKey: p.key,
+        sectionLabel: p.label,
+        displayOrder: idx + 1,
+        isVisible: true,
+        layoutType: 'WEB',
+        configJson: '{}'
+      }));
+      setLayout(defaultInit);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const fetchCategories = async () => {
