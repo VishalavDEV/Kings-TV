@@ -2,10 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import api from '../../api';
 import { WIDGET_REGISTRY, getWidgetMeta } from '../../utils/WidgetRegistry';
+import { DATA_PROVIDERS } from '../../utils/DataProviderRegistry';
+import { TEMPLATE_VARIANTS } from '../../utils/TemplateEngine';
+import AiWidgetAssistantModal from '../../components/AiWidgetAssistantModal';
 import { 
   Save, Eye, EyeOff, Trash2, Sliders, CheckCircle, 
   RotateCcw, Undo2, X, PlusCircle, ArrowUp, ArrowDown, Settings, 
-  HelpCircle, Sparkles, Move, History, FileText
+  HelpCircle, Sparkles, Move, History, FileText, Wand2
 } from 'lucide-react';
 
 const PREDEFINED_SECTIONS = Object.values(WIDGET_REGISTRY).map(w => ({
@@ -24,6 +27,9 @@ const HomeLayoutBuilder = () => {
   const [undoStack, setUndoStack] = useState([]);
   const [draggedKey, setDraggedKey] = useState(null);
 
+  // AI Widget Assistant & Modal State
+  const [showAiModal, setShowAiModal] = useState(false);
+
   // Layout history and draft state
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyList, setHistoryList] = useState([]);
@@ -33,7 +39,7 @@ const HomeLayoutBuilder = () => {
   // Configuration sidebar state
   const [activeConfigSection, setActiveConfigSection] = useState(null);
   const [configTitle, setConfigTitle] = useState('');
-  const [configParams, setConfigParams] = useState({ limit: 6, categoryId: '', type: 'grid' });
+  const [configParams, setConfigParams] = useState({ limit: 6, categoryId: '', type: 'grid', provider: 'latest_news' });
 
   const fetchLayout = async () => {
     setLoading(true);
@@ -287,6 +293,20 @@ const HomeLayoutBuilder = () => {
     setDraggedKey(null);
   };
 
+  // Handle AI Assistant auto-generated widget
+  const handleAddAiWidget = (type, label, configJson) => {
+    const newSection = {
+      id: Date.now(),
+      sectionKey: type,
+      sectionLabel: label,
+      displayOrder: layout.length + 1,
+      isVisible: true,
+      layoutType: 'WEB',
+      configJson: configJson
+    };
+    pushUndo([...layout, newSection]);
+  };
+
   // Open plain-language sidebar configuration
   const handleOpenConfig = (section) => {
     setActiveConfigSection(section);
@@ -296,10 +316,12 @@ const HomeLayoutBuilder = () => {
       setConfigParams({
         limit: parsed.limit || 6,
         categoryId: parsed.categoryId || '',
-        type: parsed.type || 'grid'
+        type: parsed.type || 'grid',
+        provider: parsed.provider || (parsed.categoryId ? 'category_feed' : 'latest_news'),
+        tag: parsed.tag || ''
       });
     } catch (e) {
-      setConfigParams({ limit: 6, categoryId: '', type: 'grid' });
+      setConfigParams({ limit: 6, categoryId: '', type: 'grid', provider: 'latest_news', tag: '' });
     }
   };
 
@@ -468,6 +490,15 @@ const HomeLayoutBuilder = () => {
               ✓ Draft saved locally
             </div>
           )}
+
+          <button
+            onClick={() => setShowAiModal(true)}
+            className="btn"
+            style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '4px', background: '#F3E8FF', color: '#7E22CE', border: '1px solid #E9D5FF', fontWeight: 600 }}
+            title="Generate widget via Natural Language Assistant"
+          >
+            <Wand2 size={15} color="#7E22CE" /> AI Assistant
+          </button>
 
           <button
             onClick={() => { setShowHistoryModal(true); fetchHistory(); }}
@@ -675,11 +706,25 @@ const HomeLayoutBuilder = () => {
                 <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase' }}>Plain Language Feed Configuration</div>
 
                 <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '11px', fontWeight: 600 }}>Decoupled Data Provider</label>
+                  <select
+                    className="form-control"
+                    value={configParams.provider || 'latest_news'}
+                    onChange={e => setConfigParams(prev => ({ ...prev, provider: e.target.value }))}
+                    style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)', fontWeight: 600 }}
+                  >
+                    {Object.values(DATA_PROVIDERS).map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
                   <label className="form-label" style={{ fontSize: '11px', fontWeight: 600 }}>Feed Source Category</label>
                   <select
                     className="form-control"
                     value={configParams.categoryId}
-                    onChange={e => setConfigParams(prev => ({ ...prev, categoryId: e.target.value }))}
+                    onChange={e => setConfigParams(prev => ({ ...prev, categoryId: e.target.value, provider: e.target.value ? 'category_feed' : prev.provider }))}
                     style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)' }}
                   >
                     <option value="">All Categories (Latest News Feed)</option>
@@ -702,16 +747,16 @@ const HomeLayoutBuilder = () => {
                   </div>
                   
                   <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '11px', fontWeight: 600 }}>Display Layout Style</label>
+                    <label className="form-label" style={{ fontSize: '11px', fontWeight: 600 }}>Template Variant Style</label>
                     <select
                       className="form-control"
-                      value={configParams.type}
+                      value={configParams.type || 'grid'}
                       onChange={e => setConfigParams(prev => ({ ...prev, type: e.target.value }))}
                       style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)' }}
                     >
-                      <option value="grid">Grid Card Feed</option>
-                      <option value="list">Compact List Row</option>
-                      <option value="carousel">Swipe Slider Carousel</option>
+                      {Object.values(TEMPLATE_VARIANTS).map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -778,6 +823,14 @@ const HomeLayoutBuilder = () => {
         </div>,
         document.body
       )}
+
+      {/* AI Assistant Modal */}
+      <AiWidgetAssistantModal
+        isOpen={showAiModal}
+        onClose={() => setShowAiModal(false)}
+        onAddWidget={handleAddAiWidget}
+        categories={categories}
+      />
 
     </div>
   );
