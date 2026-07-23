@@ -72,8 +72,15 @@ export const fetchApi = async (endpoint, options = {}) => {
     circuits[basePath] = circuit;
   }
 
+  // Bypass circuit breaker and stale cache for live breaking news
+  const isBreakingNews = endpoint.includes('breaking-news');
+  if (isBreakingNews) {
+    circuit.status = 'closed';
+    circuit.failures = 0;
+  }
+
   // Check if circuit is open
-  if (circuit.status === 'open') {
+  if (!isBreakingNews && circuit.status === 'open') {
     const elapsed = Date.now() - circuit.lastFailureTime;
     if (elapsed > COOL_DOWN_MS) {
       // Transition to half-open

@@ -27,15 +27,10 @@ const Home = () => {
     { nameEn: 'Paddy (Quintal)', nameTa: 'நெல் (குவிண்டால்)', price: '₹2,300', change: '+₹75' },
     { nameEn: 'Cotton (Candy)', nameTa: 'பருத்தி (கேண்டி)', price: '₹57,500', change: '₹0' }
   ]);
-  const initialTickers = [
-    lang === 'en' ? "Paddy procurement price increased - farmers express delight!" : "🌾 நெல் கொள்முதல் விலை உயர்வு - விவசாயிகள் மகிழ்ச்சி",
-    lang === 'en' ? "Vijay 69th movie announcement sends fans into celebration mode!" : "🎬 விஜய் 69-வது படம் அறிவிப்பு - ரசிகர்கள் கொண்டாட்டம்",
-    lang === 'en' ? "Class 12 board results to be declared soon - education department updates." : "📚 +2 தேர்வு முடிவுகள் விரைவில் - கல்வித்துறை தகவல்",
-    lang === 'en' ? "Electricity tariff hike in Chennai creates public concern." : "⚡ சென்னையில் மின் கட்டணம் உயர்வு - நுகர்வோர் அதிருப்தி",
-    lang === 'en' ? "New Vande Bharat rail service introduced by Southern Railway." : "🚆 புதிய வந்தே பாரத் ரயில் சேவை அறிமுகம் - தெற்கு ரயில்வே",
-    lang === 'en' ? "Heavy rain alert issued for tomorrow in Tamil Nadu." : "🔴 தமிழகத்தில் நாளை முதல் கனமழை எச்சரிக்கை - வானிலை மையம்"
+  const defaultTickers = [
+    lang === 'en' ? "Welcome to KINGS 24x7 Breaking News Stream" : "🔴 கிங்ஸ் 24x7 நேரலை அவசர செய்திகள்"
   ];
-  const [tickers, setTickers] = useState(initialTickers);
+  const [tickers, setTickers] = useState([]);
   const [stories, setStories] = useState([]);
   const [weatherData, setWeatherData] = useState({
     temp: '32°C',
@@ -106,7 +101,7 @@ const Home = () => {
         setArticles([]);
       });
 
-    const pBreakingNews = fetchApi('/breaking-news/getAllWeb?size=20')
+    const pBreakingNews = fetchApi('/breaking-news/getAllWeb?size=50')
       .then(data => {
         let list = [];
         if (data && Array.isArray(data.content)) {
@@ -123,11 +118,14 @@ const Home = () => {
           }).filter(Boolean);
           if (formatted.length > 0) {
             setTickers(formatted);
+            return;
           }
         }
+        setTickers(defaultTickers);
       })
       .catch(err => {
         console.warn("Could not load breaking news from API", err);
+        setTickers(defaultTickers);
       });
 
     const pWebStories = fetchApi('/web-stories/getAllWeb?size=6')
