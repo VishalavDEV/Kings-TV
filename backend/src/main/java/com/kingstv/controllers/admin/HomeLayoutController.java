@@ -18,6 +18,7 @@ import java.util.*;
 public class HomeLayoutController {
 
     @Autowired private HomeLayoutConfigRepository layoutRepository;
+    @Autowired private HomeLayoutHistoryRepository historyRepository;
 
     @GetMapping("/web")
     @RequiresPermission(Permission.HOME_LAYOUT_MANAGE)
@@ -29,6 +30,47 @@ public class HomeLayoutController {
     @RequiresPermission(Permission.MOBILE_APP_LAYOUT_MANAGE)
     public ResponseEntity<?> getMobileLayout() {
         return ResponseEntity.ok(layoutRepository.findByLayoutTypeOrderByDisplayOrderAsc("MOBILE"));
+    }
+
+    @GetMapping("/history")
+    @RequiresPermission(Permission.HOME_LAYOUT_MANAGE)
+    public ResponseEntity<?> getLayoutHistory(@RequestParam(defaultValue = "WEB") String layoutType) {
+        return ResponseEntity.ok(historyRepository.findTop10ByLayoutTypeOrderByCreatedAtDesc(layoutType));
+    }
+
+    @PostMapping("/rollback/{historyId}")
+    @RequiresPermission(Permission.HOME_LAYOUT_MANAGE)
+    public ResponseEntity<?> rollbackLayout(@PathVariable Long historyId) {
+        return historyRepository.findById(historyId)
+            .map(history -> {
+                String layoutType = history.getLayoutType();
+                String dataJson = history.getLayoutDataJson();
+
+                try {
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    List<Map<String, Object>> sections = mapper.readValue(dataJson, new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, Object>>>() {});
+
+                    List<HomeLayoutConfig> existing = layoutRepository.findByLayoutTypeOrderByDisplayOrderAsc(layoutType);
+                    layoutRepository.deleteAll(existing);
+
+                    List<HomeLayoutConfig> restoredList = new ArrayList<>();
+                    int order = 1;
+                    for (Map<String, Object> s : sections) {
+                        HomeLayoutConfig section = new HomeLayoutConfig();
+                        section.setSectionKey((String) s.get("sectionKey"));
+                        section.setSectionLabel((String) s.get("sectionLabel"));
+                        section.setDisplayOrder(order++);
+                        section.setIsVisible(s.containsKey("isVisible") ? (Boolean) s.get("isVisible") : true);
+                        section.setConfigJson(s.containsKey("configJson") && s.get("configJson") != null ? (String) s.get("configJson") : "{}");
+                        section.setLayoutType(layoutType);
+                        restoredList.add(layoutRepository.save(section));
+                    }
+                    return ResponseEntity.ok(restoredList);
+                } catch (Exception e) {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to parse history snapshot data"));
+                }
+            })
+            .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
@@ -97,6 +139,16 @@ public class HomeLayoutController {
             section.setConfigJson(s.containsKey("configJson") && s.get("configJson") != null ? (String) s.get("configJson") : "{}");
             section.setLayoutType(layoutType);
             savedList.add(layoutRepository.save(section));
+        }
+
+        // Save a version history snapshot
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            String snapshotJson = mapper.writeValueAsString(savedList);
+            String versionLabel = "Layout published on " + java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a"));
+            historyRepository.save(new HomeLayoutHistory(layoutType, versionLabel, snapshotJson, "Super Admin"));
+        } catch (Exception e) {
+            // Log snapshot save error non-blockingly
         }
 
         return ResponseEntity.ok(savedList);

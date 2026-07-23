@@ -1,25 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import api from '../../api';
+import { WIDGET_REGISTRY, getWidgetMeta } from '../../utils/WidgetRegistry';
 import { 
   Save, Eye, EyeOff, Trash2, Sliders, CheckCircle, 
   RotateCcw, Undo2, X, PlusCircle, ArrowUp, ArrowDown, Settings, 
-  HelpCircle, Sparkles, Move
+  HelpCircle, Sparkles, Move, History, FileText
 } from 'lucide-react';
 
-const PREDEFINED_SECTIONS = [
-  { key: 'news_ticker',      label: 'Breaking News Ticker',       color: '#d6820f', desc: 'Top marquee ticker showing latest active breaking news alerts.' },
-  { key: 'hero',             label: 'Top News Slider (Hero Grid)',color: '#7F77DD', desc: 'Main banner card stacked next to three secondary content cards.' },
-  { key: 'quick_access',     label: 'Quick Access Bar',           color: '#1D9E75', desc: 'Horizontal list of category icons for quick mobile/web navigation.' },
-  { key: 'latest_news',      label: 'Latest News Grid',           color: '#378ADD', desc: 'Responsive grid rendering the newest published general articles.' },
-  { key: 'video_news',       label: 'Video News Player',          color: '#D85A30', desc: 'Multi-category video news carousel with integrated popup video player.' },
-  { key: 'web_stories',      label: 'Web Stories Block',          color: '#EC4899', desc: 'Horizontal visual card deck with interactive mobile web stories.' },
-  { key: 'trending_sidebar', label: 'Trending News Sidebar',      color: '#475569', desc: 'Right sidebar list of highest viewed articles on the site.' },
-  { key: 'weather',          label: 'Weather Info Widget',        color: '#0EA5E9', desc: 'Displays current local temperature and condition for the visitor.' },
-  { key: 'business_case',    label: 'Business Case Studies',      color: '#8B5CF6', desc: 'Special case studies banner promoting registered businesses.' },
-  { key: 'crowd_reporter',   label: 'Citizen Crowd Reporter box', color: '#F59E0B', desc: 'Prominent box inviting users to submit ground news reports.' },
-  { key: 'news_digest',      label: 'News Digest Summary',        color: '#10B981', desc: 'Curated editorial summaries or newsletter signup widget.' }
-];
+const PREDEFINED_SECTIONS = Object.values(WIDGET_REGISTRY).map(w => ({
+  key: w.type,
+  label: w.name,
+  color: w.color,
+  desc: w.description
+}));
 
 const HomeLayoutBuilder = () => {
   const [layout, setLayout] = useState([]);
@@ -29,6 +23,12 @@ const HomeLayoutBuilder = () => {
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [undoStack, setUndoStack] = useState([]);
   const [draggedKey, setDraggedKey] = useState(null);
+
+  // Layout history and draft state
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyList, setHistoryList] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [draftSavedAlert, setDraftSavedAlert] = useState(false);
 
   // Configuration sidebar state
   const [activeConfigSection, setActiveConfigSection] = useState(null);
@@ -80,6 +80,45 @@ const HomeLayoutBuilder = () => {
       setCategories(res.data || []);
     } catch (err) {
       console.error("Failed to load categories", err);
+    }
+  };
+
+  const fetchHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const res = await api.get('/admin/layout/history?layoutType=WEB');
+      setHistoryList(res.data || []);
+    } catch (err) {
+      console.error("Failed to load layout history", err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleRollback = async (historyId) => {
+    if (!window.confirm("Restore this historical homepage layout snapshot? Current unpublished changes will be replaced.")) return;
+    try {
+      const res = await api.post(`/admin/layout/rollback/${historyId}`);
+      if (Array.isArray(res.data) && res.data.length > 0) {
+        setLayout(res.data);
+      }
+      setShowHistoryModal(false);
+      setUnsavedChanges(false);
+      setUndoStack([]);
+      alert("Layout snapshot restored successfully!");
+    } catch (err) {
+      console.error("Rollback error", err);
+      alert("Failed to restore layout snapshot. Please try again.");
+    }
+  };
+
+  const handleSaveDraft = () => {
+    try {
+      localStorage.setItem('kings_layout_draft_web', JSON.stringify(layout));
+      setDraftSavedAlert(true);
+      setTimeout(() => setDraftSavedAlert(false), 3000);
+    } catch (e) {
+      console.error("Failed to save draft", e);
     }
   };
 
@@ -424,6 +463,30 @@ const HomeLayoutBuilder = () => {
             </div>
           )}
 
+          {draftSavedAlert && (
+            <div style={{ fontSize: '12px', color: '#059669', background: '#D1FAE5', padding: '6px 12px', borderRadius: '6px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+              ✓ Draft saved locally
+            </div>
+          )}
+
+          <button
+            onClick={() => { setShowHistoryModal(true); fetchHistory(); }}
+            className="btn btn-secondary"
+            style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '4px' }}
+            title="View published layout snapshots & rollback"
+          >
+            <History size={15} /> History
+          </button>
+
+          <button
+            onClick={handleSaveDraft}
+            className="btn btn-secondary"
+            style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '4px' }}
+            title="Save staged draft"
+          >
+            <FileText size={15} /> Save Draft
+          </button>
+
           <button
             onClick={handleUndo}
             disabled={undoStack.length === 0}
@@ -660,6 +723,57 @@ const HomeLayoutBuilder = () => {
               </div>
             </div>
 
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Version History & Rollback Modal Portal */}
+      {showHistoryModal && createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(3px)' }}>
+          <div style={{ background: 'var(--bg-surface)', width: '600px', maxWidth: '90vw', borderRadius: '12px', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+                <History size={20} color="var(--primary)" /> Layout Version History & Rollback
+              </h3>
+              <button onClick={() => setShowHistoryModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>
+              Below are past published layout snapshots. Click <strong>Restore Layout</strong> to revert live homepage layout to any historical version.
+            </p>
+
+            <div style={{ maxHeight: '350px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {historyLoading ? (
+                <div style={{ textAlign: 'center', padding: '30px', color: '#64748B' }}>Loading layout snapshots...</div>
+              ) : historyList.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '30px', color: '#64748B' }}>No published history snapshots recorded yet. Snapshots are created automatically whenever you Publish Changes.</div>
+              ) : (
+                historyList.map(h => (
+                  <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px', borderRadius: '8px', background: 'var(--bg-secondary, #F8FAFC)', border: '1px solid var(--border-color)' }}>
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{h.versionLabel || `Snapshot #${h.id}`}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                        Published by <strong>{h.createdBy || 'Super Admin'}</strong> on {new Date(h.createdAt).toLocaleString()}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleRollback(h.id)}
+                      className="btn btn-secondary"
+                      style={{ padding: '6px 12px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <RotateCcw size={14} /> Restore Layout
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+              <button onClick={() => setShowHistoryModal(false)} className="btn btn-secondary">Close</button>
+            </div>
           </div>
         </div>,
         document.body
