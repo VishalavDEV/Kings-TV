@@ -1155,14 +1155,11 @@ const Home = () => {
       {renderCommodityTicker()}
 
       {/* FULL-WIDTH TOP SECTIONS */}
-      {getSortedSections(['news_ticker', 'hero']).map(sec => (
+      {getSortedSections(['news_ticker', 'hero', 'quick_access']).map(sec => (
         <React.Fragment key={sec.sectionKey}>
           {getRenderedSection(sec.sectionKey)}
         </React.Fragment>
       ))}
-
-      {/* QUICK ACCESS CATEGORIES BAR (Always under Hero and above Latest) */}
-      {renderQuickAccess()}
 
       {/* HEADER BANNER SPONSORED AD */}
       <div className="container" style={{ margin: '20px auto 0 auto', padding: '0 15px' }}>
