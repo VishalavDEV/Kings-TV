@@ -210,6 +210,53 @@ const NewsEditor = () => {
   const [galleryItems, setGalleryItems] = useState([]);
   const [galleryUploading, setGalleryUploading] = useState(false);
 
+  // Media Library Integration inside Gallery Modal
+  const [mediaLibraryItems, setMediaLibraryItems] = useState([]);
+  const [loadingMediaLibrary, setLoadingMediaLibrary] = useState(false);
+  const [galleryModalTab, setGalleryModalTab] = useState('library'); // 'library' | 'upload'
+  const [mediaLibrarySearch, setMediaLibrarySearch] = useState('');
+  const [mediaLibraryCategory, setMediaLibraryCategory] = useState('all');
+
+  const fetchMediaLibraryItems = async () => {
+    setLoadingMediaLibrary(true);
+    try {
+      const res = await api.get('/media/list');
+      const list = Array.isArray(res.data) ? res.data : (res.data?.content || []);
+      const formatted = list.map(m => {
+        const fileType = m.mimeType || m.type || '';
+        const fileName = m.filename || m.name || m.url?.split('/').pop() || 'file';
+        let cat = 'document';
+        if (fileType.startsWith('image/')) cat = 'image';
+        else if (fileType.startsWith('video/')) cat = 'video';
+        else if (fileType.startsWith('audio/')) cat = 'audio';
+
+        const ext = fileName.split('.').pop()?.toUpperCase() || 'FILE';
+        const sizeMb = m.fileSize ? (m.fileSize / (1024 * 1024)).toFixed(2) : (m.size ? (m.size / (1024 * 1024)).toFixed(2) : '0.50');
+
+        return {
+          id: m.id || m.url,
+          url: m.url || m.path,
+          name: fileName,
+          type: fileType,
+          ext,
+          sizeMb,
+          category: cat
+        };
+      });
+      setMediaLibraryItems(formatted);
+    } catch (err) {
+      console.warn('Failed to load media library items', err);
+    } finally {
+      setLoadingMediaLibrary(false);
+    }
+  };
+
+  useEffect(() => {
+    if (galleryModalOpen) {
+      fetchMediaLibraryItems();
+    }
+  }, [galleryModalOpen]);
+
   // API Key Modal State
   const [keyModalOpen, setKeyModalOpen] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState(activeAiConfig.apiKey || localStorage.getItem('ai.llm_api_key') || '');
@@ -1550,40 +1597,186 @@ Draft Content to Proofread & Process:
             </div>
 
             {/* Modal Body */}
-            <div style={{ padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#1e293b', marginBottom: '6px' }}>Gallery Title / Header</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary, #1e293b)', marginBottom: '6px' }}>Gallery Title / Header</label>
                 <input
                   type="text"
                   value={galleryTitle}
                   onChange={e => setGalleryTitle(e.target.value)}
                   placeholder="e.g. Event Photo Album & Downloadable Press Release"
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px', background: '#ffffff' }}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--border-color, #cbd5e1)', fontSize: '14px', background: 'var(--bg-secondary, #ffffff)', color: 'var(--text-primary)' }}
                 />
               </div>
 
-              {/* Upload Dropzone Button inside Modal */}
-              <div
-                onClick={() => galleryInputRef.current?.click()}
-                style={{
-                  border: '2px dashed #3b82f6', borderRadius: '12px', padding: '24px',
-                  textAlign: 'center', background: '#eff6ff', cursor: 'pointer', transition: 'all 0.2s'
-                }}
-              >
-                <UploadCloud size={36} color="#2563eb" style={{ marginBottom: '8px' }} />
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', color: '#1e40af', fontWeight: 600 }}>Click or Drag Files to Add to Gallery</h4>
-                <p style={{ margin: 0, fontSize: '12px', color: '#3b82f6' }}>Supports Photos, Videos (MP4), Audio (MP3), Documents (PDF, DOCX, TXT)</p>
-                {galleryUploading && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '12px', color: '#2563eb', fontSize: '13px', fontWeight: 600 }}>
-                    <Loader2 size={16} className="spin" /> Uploading media files...
-                  </div>
-                )}
+              {/* Source Tab Selector */}
+              <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-color, #e2e8f0)', pb: '8px' }}>
+                <button
+                  onClick={() => setGalleryModalTab('library')}
+                  style={{
+                    padding: '8px 16px', borderRadius: '6px 6px 0 0', border: 'none',
+                    background: galleryModalTab === 'library' ? '#2563EB' : 'var(--bg-secondary, #f1f5f9)',
+                    color: galleryModalTab === 'library' ? '#ffffff' : 'var(--text-secondary, #475569)',
+                    fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
+                  }}
+                >
+                  <FolderIcon size={16} /> Choose from Media Library ({mediaLibraryItems.length})
+                </button>
+                <button
+                  onClick={() => setGalleryModalTab('upload')}
+                  style={{
+                    padding: '8px 16px', borderRadius: '6px 6px 0 0', border: 'none',
+                    background: galleryModalTab === 'upload' ? '#2563EB' : 'var(--bg-secondary, #f1f5f9)',
+                    color: galleryModalTab === 'upload' ? '#ffffff' : 'var(--text-secondary, #475569)',
+                    fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
+                  }}
+                >
+                  <UploadCloud size={16} /> Upload New Files
+                </button>
               </div>
 
-              {/* Items Preview Grid */}
+              {/* Tab 1: Media Library Picker */}
+              {galleryModalTab === 'library' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--bg-secondary, #f8fafc)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-color, #e2e8f0)' }}>
+                  {/* Search and Category Filter Bar */}
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <input
+                      type="text"
+                      placeholder="Search media library..."
+                      value={mediaLibrarySearch}
+                      onChange={e => setMediaLibrarySearch(e.target.value)}
+                      style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px', width: '200px', background: '#ffffff' }}
+                    />
+
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      {['all', 'image', 'video', 'audio', 'document'].map(cat => (
+                        <button
+                          key={cat}
+                          onClick={() => setMediaLibraryCategory(cat)}
+                          style={{
+                            padding: '4px 10px', borderRadius: '12px', border: 'none', fontSize: '11px', fontWeight: 600, textTransform: 'capitalize', cursor: 'pointer',
+                            background: mediaLibraryCategory === cat ? '#2563EB' : '#e2e8f0',
+                            color: mediaLibraryCategory === cat ? '#ffffff' : '#475569'
+                          }}
+                        >
+                          {cat === 'all' ? 'All' : cat === 'image' ? 'Photos 🖼️' : cat === 'video' ? 'Videos 🎥' : cat === 'audio' ? 'Audio 🎙️' : 'Docs 📄'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Media Library Items Grid */}
+                  {loadingMediaLibrary ? (
+                    <div style={{ padding: '30px', textAlign: 'center', color: '#2563eb', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                      <Loader2 size={18} className="spin" /> Loading Media Library...
+                    </div>
+                  ) : (
+                    (() => {
+                      const itemsToShow = mediaLibraryItems.filter(item => {
+                        const matchesCat = mediaLibraryCategory === 'all' || item.category === mediaLibraryCategory;
+                        const matchesSearch = !mediaLibrarySearch || item.name.toLowerCase().includes(mediaLibrarySearch.toLowerCase());
+                        return matchesCat && matchesSearch;
+                      });
+
+                      if (itemsToShow.length === 0) {
+                        return (
+                          <div style={{ padding: '24px', textAlign: 'center', color: '#94a3b8', fontSize: '12px', background: '#ffffff', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                            No files found in Media Library under this filter. Switch to "Upload New Files" to add files.
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px', maxHeight: '210px', overflowY: 'auto', paddingRight: '4px' }}>
+                          {itemsToShow.map(item => {
+                            const isAdded = galleryItems.some(i => i.id === item.id || i.url === item.url);
+                            return (
+                              <div
+                                key={item.id}
+                                onClick={() => {
+                                  if (isAdded) {
+                                    setGalleryItems(prev => prev.filter(i => i.id !== item.id && i.url !== item.url));
+                                  } else {
+                                    setGalleryItems(prev => [...prev, item]);
+                                  }
+                                }}
+                                style={{
+                                  border: `2px solid ${isAdded ? '#10B981' : '#cbd5e1'}`,
+                                  borderRadius: '8px', padding: '8px', background: isAdded ? '#ecfdf5' : '#ffffff',
+                                  cursor: 'pointer', transition: 'all 0.15s', display: 'flex', flexDirection: 'column', gap: '6px',
+                                  position: 'relative'
+                                }}
+                              >
+                                {item.category === 'image' && (
+                                  <div style={{ height: '70px', borderRadius: '4px', overflow: 'hidden', background: '#f1f5f9' }}>
+                                    <img src={item.url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  </div>
+                                )}
+                                {item.category === 'video' && (
+                                  <div style={{ height: '70px', borderRadius: '4px', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
+                                    <Video size={24} />
+                                  </div>
+                                )}
+                                {item.category === 'audio' && (
+                                  <div style={{ height: '70px', borderRadius: '4px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d97706' }}>
+                                    <Mic size={24} />
+                                  </div>
+                                )}
+                                {item.category === 'document' && (
+                                  <div style={{ height: '70px', borderRadius: '4px', background: '#f0f9ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb', fontSize: '24px' }}>
+                                    📄
+                                  </div>
+                                )}
+
+                                <div style={{ overflow: 'hidden' }}>
+                                  <span style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</span>
+                                  <span style={{ fontSize: '9px', color: '#64748b', textTransform: 'uppercase' }}>{item.category}</span>
+                                </div>
+
+                                <button
+                                  style={{
+                                    width: '100%', padding: '4px', borderRadius: '4px', border: 'none',
+                                    background: isAdded ? '#10B981' : '#2563EB', color: '#ffffff',
+                                    fontSize: '10px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px'
+                                  }}
+                                >
+                                  {isAdded ? <Check size={12} /> : <Plus size={12} />}
+                                  {isAdded ? 'Added' : 'Select'}
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()
+                  )}
+                </div>
+              )}
+
+              {/* Tab 2: Upload Dropzone */}
+              {galleryModalTab === 'upload' && (
+                <div
+                  onClick={() => galleryInputRef.current?.click()}
+                  style={{
+                    border: '2px dashed #3b82f6', borderRadius: '12px', padding: '24px',
+                    textAlign: 'center', background: '#eff6ff', cursor: 'pointer', transition: 'all 0.2s'
+                  }}
+                >
+                  <UploadCloud size={36} color="#2563eb" style={{ marginBottom: '8px' }} />
+                  <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', color: '#1e40af', fontWeight: 600 }}>Click or Drag Files to Add to Gallery</h4>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#3b82f6' }}>Supports Photos, Videos (MP4), Audio (MP3), Documents (PDF, DOCX, TXT)</p>
+                  {galleryUploading && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '12px', color: '#2563eb', fontSize: '13px', fontWeight: 600 }}>
+                      <Loader2 size={16} className="spin" /> Uploading media files...
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Items Selected Preview Grid */}
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                  <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#334155' }}>Gallery Vault Items ({galleryItems.length})</h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-primary, #334155)' }}>Selected Gallery Vault Items ({galleryItems.length})</h4>
                   {galleryItems.length > 0 && (
                     <button onClick={() => setGalleryItems([])} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer', fontWeight: 600 }}>
                       Clear All
@@ -1592,45 +1785,45 @@ Draft Content to Proofread & Process:
                 </div>
 
                 {galleryItems.length === 0 ? (
-                  <div style={{ padding: '24px', textAlign: 'center', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', color: '#94a3b8', fontSize: '13px' }}>
-                    No files added yet. Click above to upload images, videos, audio, or documents.
+                  <div style={{ padding: '16px', textAlign: 'center', background: 'var(--bg-secondary, #f8fafc)', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)', color: '#94a3b8', fontSize: '12px' }}>
+                    No files added to gallery yet. Select files from Media Library above or upload new files.
                   </div>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px', maxHeight: '240px', overflowY: 'auto', paddingRight: '4px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px', maxHeight: '180px', overflowY: 'auto', paddingRight: '4px' }}>
                     {galleryItems.map((item) => (
-                      <div key={item.id} style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px', background: '#ffffff', position: 'relative', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div key={item.id} style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '8px', background: '#ffffff', position: 'relative', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         {item.category === 'image' && (
-                          <div style={{ height: '90px', borderRadius: '6px', overflow: 'hidden', background: '#f1f5f9' }}>
+                          <div style={{ height: '70px', borderRadius: '4px', overflow: 'hidden', background: '#f1f5f9' }}>
                             <img src={item.url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           </div>
                         )}
                         {item.category === 'video' && (
-                          <div style={{ height: '90px', borderRadius: '6px', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
-                            <Video size={32} />
+                          <div style={{ height: '70px', borderRadius: '4px', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
+                            <Video size={24} />
                           </div>
                         )}
                         {item.category === 'audio' && (
-                          <div style={{ height: '90px', borderRadius: '6px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d97706' }}>
-                            <Mic size={32} />
+                          <div style={{ height: '70px', borderRadius: '4px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d97706' }}>
+                            <Mic size={24} />
                           </div>
                         )}
                         {item.category === 'document' && (
-                          <div style={{ height: '90px', borderRadius: '6px', background: '#f0f9ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb', fontSize: '32px' }}>
+                          <div style={{ height: '70px', borderRadius: '4px', background: '#f0f9ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb', fontSize: '24px' }}>
                             📄
                           </div>
                         )}
 
                         <div style={{ flex: 1, overflow: 'hidden' }}>
-                          <span style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</span>
-                          <span style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>{item.category} • {item.sizeMb} MB</span>
+                          <span style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</span>
+                          <span style={{ fontSize: '9px', color: '#64748b', textTransform: 'uppercase' }}>{item.category} • {item.sizeMb} MB</span>
                         </div>
 
                         <button
-                          onClick={() => setGalleryItems(prev => prev.filter(i => i.id !== item.id))}
-                          style={{ position: 'absolute', top: '6px', right: '6px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                          onClick={() => setGalleryItems(prev => prev.filter(i => i.id !== item.id && i.url !== item.url))}
+                          style={{ position: 'absolute', top: '4px', right: '4px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                           title="Remove item"
                         >
-                          <X size={12} />
+                          <X size={10} />
                         </button>
                       </div>
                     ))}
