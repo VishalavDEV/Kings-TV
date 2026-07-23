@@ -57,6 +57,9 @@ public class BackendJavaApplication implements CommandLineRunner {
     @Autowired
     private CompanyRepository companyRepository;
 
+    @Autowired
+    private com.kingstv.repository.CandidateRepository candidateRepository;
+
     public static void main(String[] args) {
         System.setOut(new com.kingstv.services.MaskingPrintStream(System.out, System.out));
         System.setErr(new com.kingstv.services.MaskingPrintStream(System.err, System.err));
@@ -185,11 +188,18 @@ public class BackendJavaApplication implements CommandLineRunner {
         }
 
         if (companyRepository.count() == 0) {
-            saveCompany("Tata Consultancy Services", "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=100", "Coimbatore, Tamil Nadu", "it");
-            saveCompany("Zoho Corporation", "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100", "Chennai, Tamil Nadu", "it");
-            saveCompany("HDFC Bank", "https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?w=100", "Salem, Tamil Nadu", "finance");
-            saveCompany("Apollo Hospitals", "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=100", "Trichy, Tamil Nadu", "healthcare");
+            saveCompany("Tata Consultancy Services", "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=100", "Coimbatore, Tamil Nadu", "it", "hr@tcs.com", "+91 9876543210");
+            saveCompany("Zoho Corporation", "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100", "Chennai, Tamil Nadu", "it", "careers@zoho.com", "+91 9876543211");
+            saveCompany("HDFC Bank", "https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?w=100", "Salem, Tamil Nadu", "finance", "jobs@hdfc.com", "+91 9876543212");
+            saveCompany("Apollo Hospitals", "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=100", "Trichy, Tamil Nadu", "healthcare", "hr@apollo.com", "+91 9876543213");
             System.out.println("Default companies seeded.");
+        }
+
+        if (candidateRepository.count() == 0) {
+            saveCandidate("Rahul Kumar", "rahul@example.com", "+91 9876543220", "React, Node.js, JavaScript", "Chennai, Tamil Nadu");
+            saveCandidate("Priya Sharma", "priya@example.com", "+91 9876543221", "Java, Spring Boot, MySQL", "Coimbatore, Tamil Nadu");
+            saveCandidate("Anil Patel", "anil@example.com", "+91 9876543222", "HTML, CSS, UI/UX Design", "Madurai, Tamil Nadu");
+            System.out.println("Default candidates seeded.");
         }
     }
 
@@ -203,14 +213,28 @@ public class BackendJavaApplication implements CommandLineRunner {
         jobCategoryRepository.save(c);
     }
 
-    private void saveCompany(String name, String logo, String address, String industry) {
+    private void saveCompany(String name, String logo, String address, String industry, String email, String phone) {
         Company c = new Company();
         c.setCompanyName(name);
         c.setLogo(logo);
         c.setAddress(address);
         c.setIndustry(industry);
+        c.setEmail(email);
+        c.setPhone(phone);
         c.setVerified(true);
+        c.setStatus("active");
         companyRepository.save(c);
+    }
+
+    private void saveCandidate(String name, String email, String phone, String skills, String location) {
+        com.kingstv.models.Candidate c = new com.kingstv.models.Candidate();
+        c.setName(name);
+        c.setEmail(email);
+        c.setPhone(phone);
+        c.setSkills(skills);
+        c.setLocation(location);
+        c.setStatus("active");
+        candidateRepository.save(c);
     }
 
 

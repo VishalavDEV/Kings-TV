@@ -107,7 +107,7 @@ public class Company {
     public Boolean getVerified() { return verified; }
     public void setVerified(Boolean verified) { this.verified = verified; }
 
-    public String getStatus() { return status; }
+    public String getStatus() { return status != null && !status.trim().isEmpty() ? status : "active"; }
     public void setStatus(String status) { this.status = status; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }

@@ -65,7 +65,10 @@ public class JobAdminController {
             Map<String, Object> map = new HashMap<>();
             map.put("id", company.getId());
             map.put("companyName", company.getCompanyName());
-            map.put("contact", company.getEmail() + " / " + (company.getPhone() != null ? company.getPhone() : "—"));
+            map.put("logo", company.getLogo());
+            String email = company.getEmail() != null ? company.getEmail() : "—";
+            String phone = company.getPhone() != null ? company.getPhone() : "—";
+            map.put("contact", email + " / " + phone);
             map.put("activeJobPostings", jobRepository.countByCompanyAndDeletedFalseAndStatus(company, "active"));
             map.put("dateJoined", company.getCreatedAt());
             map.put("status", company.getStatus());
