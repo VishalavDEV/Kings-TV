@@ -65,6 +65,15 @@ public class NfcCard {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    @Column(name = "payment_reference")
+    private String paymentReference;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
+    @Column(name = "status_before_block")
+    private String statusBeforeBlock;
+
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
@@ -126,4 +135,13 @@ public class NfcCard {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getPaymentReference() { return paymentReference; }
+    public void setPaymentReference(String paymentReference) { this.paymentReference = paymentReference; }
+
+    public LocalDateTime getPaidAt() { return paidAt; }
+    public void setPaidAt(LocalDateTime paidAt) { this.paidAt = paidAt; }
+
+    public String getStatusBeforeBlock() { return statusBeforeBlock; }
+    public void setStatusBeforeBlock(String statusBeforeBlock) { this.statusBeforeBlock = statusBeforeBlock; }
 }

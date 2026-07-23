@@ -18,6 +18,10 @@ public class JobApplication {
     @Column(name = "candidate_id")
     private Long candidateId;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "candidate_id", insertable = false, updatable = false)
+    private Candidate candidate;
+
     @Column(name = "resume_id")
     private Long resumeId;
 
@@ -56,6 +60,9 @@ public class JobApplication {
 
     public Long getCandidateId() { return candidateId; }
     public void setCandidateId(Long candidateId) { this.candidateId = candidateId; }
+
+    public Candidate getCandidate() { return candidate; }
+    public void setCandidate(Candidate candidate) { this.candidate = candidate; }
 
     public Long getResumeId() { return resumeId; }
     public void setResumeId(Long resumeId) { this.resumeId = resumeId; }
