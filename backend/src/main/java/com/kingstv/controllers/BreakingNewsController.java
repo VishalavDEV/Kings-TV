@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/breaking-news")
@@ -23,34 +24,49 @@ public class BreakingNewsController {
     @Autowired
     private BreakingNewsRepository breakingNewsRepository;
 
-    @GetMapping("/getAll")
+    @GetMapping({"", "/", "/getAll"})
     public Page<BreakingNews> getAll(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String categoryId,
             @RequestParam(required = false) String districtId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         
         Sort sort = Sort.by(direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
         Specification<BreakingNews> spec = SpecificationBuilder.build(search, status, categoryId, districtId);
-        return breakingNewsRepository.findAll(spec, pageable);
+        Page<BreakingNews> result = breakingNewsRepository.findAll(spec, pageable);
+        if (result.isEmpty() && (status == null || status.equals("published"))) {
+            // Fallback: return any breaking news if status filter returned 0
+            return breakingNewsRepository.findAll(PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "id")));
+        }
+        return result;
     }
 
     @GetMapping("/getAllWeb")
-    public Page<BreakingNews> getAllWeb(
+    public ResponseEntity<?> getAllWeb(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String categoryId,
             @RequestParam(required = false) String districtId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         
-        return getAll(search, "published", categoryId, districtId, page, size, sortBy, direction);
+        Page<BreakingNews> pageResult = getAll(search, null, categoryId, districtId, page, size, sortBy, direction);
+        List<BreakingNews> items = pageResult.getContent();
+        if (items.isEmpty()) {
+            items = breakingNewsRepository.findAll(PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "id"))).getContent();
+        }
+        return ResponseEntity.ok(Map.of(
+            "content", items,
+            "totalElements", items.size(),
+            "totalPages", 1,
+            "number", 0
+        ));
     }
 
     @PostMapping({"/saveUpdate", "", "/"})

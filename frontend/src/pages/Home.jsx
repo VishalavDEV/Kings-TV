@@ -106,19 +106,28 @@ const Home = () => {
         setArticles([]);
       });
 
-    const pBreakingNews = fetchApi('/breaking-news/getAllWeb?size=10')
+    const pBreakingNews = fetchApi('/breaking-news/getAllWeb?size=20')
       .then(data => {
-        const list = data && Array.isArray(data.content) ? data.content : [];
+        let list = [];
+        if (data && Array.isArray(data.content)) {
+          list = data.content;
+        } else if (Array.isArray(data)) {
+          list = data;
+        }
         if (list.length > 0) {
-          const formatted = list.map(item => (lang === 'en' ? item.title : item.titleTa) || item.title);
-          setTickers(formatted);
-        } else {
-          setTickers(initialTickers);
+          const formatted = list.map(item => {
+            if (typeof item === 'string') return item;
+            const tTa = item.titleTa || item.title_ta;
+            const tEn = item.titleEn || item.title_en || item.title;
+            return (lang === 'en' ? (tEn || tTa) : (tTa || tEn)) || item.title || item.titleTa;
+          }).filter(Boolean);
+          if (formatted.length > 0) {
+            setTickers(formatted);
+          }
         }
       })
       .catch(err => {
-        console.warn("Could not load breaking news from API, using fallback", err);
-        setTickers(initialTickers);
+        console.warn("Could not load breaking news from API", err);
       });
 
     const pWebStories = fetchApi('/web-stories/getAllWeb?size=6')
