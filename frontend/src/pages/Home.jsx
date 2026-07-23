@@ -404,13 +404,14 @@ const Home = () => {
   }, []);
 
   const getSortedSections = (keys) => {
-    if (layoutSections.length === 0) {
-      // Fallback order matching standard design
-      return keys.map((k, idx) => ({ sectionKey: k, isVisible: true, displayOrder: idx }));
+    if (!layoutSections || layoutSections.length === 0) {
+      return keys.map((key, idx) => ({ sectionKey: key, sectionLabel: '', displayOrder: idx + 1 }));
     }
-    return layoutSections
-      .filter(s => keys.includes(s.sectionKey) && s.isVisible)
-      .sort((a, b) => a.displayOrder - b.displayOrder);
+    const filtered = layoutSections.filter(s => keys.includes(s.sectionKey) && s.isVisible !== false);
+    if (filtered.length > 0) {
+      return filtered.sort((a, b) => a.displayOrder - b.displayOrder);
+    }
+    return keys.map((key, idx) => ({ sectionKey: key, sectionLabel: '', displayOrder: idx + 1 }));
   };
 
   const handleSubmitReport = (e) => {
@@ -1118,6 +1119,8 @@ const Home = () => {
     }
   };
 
+
+
   if (error) {
     return (
       <div className="container" style={{ padding: '40px 15px', textAlign: 'center' }}>
@@ -1174,27 +1177,44 @@ const Home = () => {
       {/* COMMODITY TICKER */}
       {renderCommodityTicker()}
 
-      {/* DYNAMIC HOMEPAGE SECTIONS IN EXACT DB DISPLAY ORDER */}
-      {(() => {
-        const sorted = layoutSections.length > 0
-          ? [...layoutSections].filter(s => s.isVisible !== false).sort((a, b) => a.displayOrder - b.displayOrder)
-          : [
-              { sectionKey: 'news_ticker', sectionLabel: 'Breaking News Ticker' },
-              { sectionKey: 'hero', sectionLabel: 'Hero Section' },
-              { sectionKey: 'quick_access', sectionLabel: 'Quick Access Icons' },
-              { sectionKey: 'latest_news', sectionLabel: 'Latest News' },
-              { sectionKey: 'video_news', sectionLabel: 'Video News' },
-              { sectionKey: 'web_stories', sectionLabel: 'Web Stories' },
-              { sectionKey: 'trending_sidebar', sectionLabel: 'Trending News' },
-              { sectionKey: 'weather', sectionLabel: 'Weather Info' }
-            ];
+      {/* TOP FULL-WIDTH SECTIONS */}
+      {getSortedSections(['news_ticker', 'quick_access', 'hero']).map(sec => (
+        <React.Fragment key={sec.id || sec.sectionKey}>
+          {getRenderedSection(sec.sectionKey, sec.sectionLabel, sec.configJson)}
+        </React.Fragment>
+      ))}
 
-        return sorted.map((sec) => (
-          <React.Fragment key={sec.id || sec.sectionKey}>
-            {getRenderedSection(sec.sectionKey, sec.sectionLabel, sec.configJson)}
-          </React.Fragment>
-        ));
-      })()}
+      {/* HEADER BANNER SPONSORED AD */}
+      <div className="container" style={{ margin: '20px auto 0 auto', padding: '0 15px' }}>
+        <AdWidget placement="header" />
+      </div>
+
+      {/* MAIN 2-COLUMN SPLIT LAYOUT */}
+      <div className="container main-layout-container" style={{ marginTop: '20px', marginBottom: '30px' }}>
+        <div className="left-content-column">
+          {getSortedSections(['latest_news', 'crowd_reporter_highlight', 'institution_news']).map(sec => (
+            <React.Fragment key={sec.id || sec.sectionKey}>
+              {getRenderedSection(sec.sectionKey, sec.sectionLabel, sec.configJson)}
+            </React.Fragment>
+          ))}
+        </div>
+
+        <aside className="trending-sidebar" style={{ maxWidth: `${widgetWidth}px` }}>
+          <AdWidget placement="sidebar" />
+          {getSortedSections(['trending_sidebar', 'rss_aggregator', 'weather', 'live_tv', 'business_case', 'crowd_reporter']).map(sec => (
+            <React.Fragment key={sec.id || sec.sectionKey}>
+              {getRenderedSection(sec.sectionKey, sec.sectionLabel, sec.configJson)}
+            </React.Fragment>
+          ))}
+        </aside>
+      </div>
+
+      {/* BOTTOM FULL-WIDTH SECTIONS */}
+      {getSortedSections(['video_news', 'web_stories', 'news_digest']).map(sec => (
+        <React.Fragment key={sec.id || sec.sectionKey}>
+          {getRenderedSection(sec.sectionKey, sec.sectionLabel, sec.configJson)}
+        </React.Fragment>
+      ))}
 
       {/* CROWD REPORTER MODAL */}
       {showReportModal && (

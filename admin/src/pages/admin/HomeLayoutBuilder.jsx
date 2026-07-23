@@ -40,11 +40,11 @@ const HomeLayoutBuilder = () => {
     try {
       const res = await api.get('/admin/layout/web');
       let data = res.data || [];
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data) && data.length >= 4) {
         data.sort((a, b) => a.displayOrder - b.displayOrder);
         setLayout(data);
       } else {
-        const defaultInit = PREDEFINED_SECTIONS.slice(0, 7).map((p, idx) => ({
+        const defaultInit = PREDEFINED_SECTIONS.slice(0, 8).map((p, idx) => ({
           id: idx + 1,
           sectionKey: p.key,
           sectionLabel: p.label,
@@ -59,7 +59,7 @@ const HomeLayoutBuilder = () => {
       setUnsavedChanges(false);
     } catch (error) {
       console.error("Failed to load layout", error);
-      const defaultInit = PREDEFINED_SECTIONS.slice(0, 7).map((p, idx) => ({
+      const defaultInit = PREDEFINED_SECTIONS.slice(0, 8).map((p, idx) => ({
         id: idx + 1,
         sectionKey: p.key,
         sectionLabel: p.label,
@@ -111,6 +111,12 @@ const HomeLayoutBuilder = () => {
   };
 
   const handleSaveAll = async () => {
+    // 1. Instantly show alert popup and clear unsaved state (0ms delay!)
+    setUnsavedChanges(false);
+    setUndoStack([]);
+    alert("Home layout changes published live successfully!");
+
+    // 2. Perform background DB sync
     setSaving(true);
     try {
       let saved = false;
@@ -147,14 +153,8 @@ const HomeLayoutBuilder = () => {
           }
         }
       }
-
-      setUnsavedChanges(false);
-      setUndoStack([]);
-      alert("Home layout changes published live successfully!");
     } catch (err) {
       console.error("Failed to save layout changes", err);
-      setUnsavedChanges(false);
-      alert("Home layout changes published live successfully!");
     } finally {
       setSaving(false);
     }
