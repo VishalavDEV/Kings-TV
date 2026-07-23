@@ -1,9 +1,11 @@
 import React, { useContext, useState } from 'react';
 import { ThemeContext } from '../context/ThemeContext';
 import { LanguageContext } from '../context/LanguageContext';
+import { AuthContext } from '../context/AuthContext';
 
 const Customizer = () => {
   const { lang, t } = useContext(LanguageContext);
+  const { user, isAuthenticated } = useContext(AuthContext);
   const {
     theme, setTheme,
     primaryColor, setPrimaryColor,
@@ -15,6 +17,10 @@ const Customizer = () => {
   } = useContext(ThemeContext);
 
   const [isOpen, setIsOpen] = useState(false);
+
+  if (!isAuthenticated || !user || user.role !== 'editor') {
+    return null;
+  }
 
   const handleToggle = () => {
     setIsOpen(!isOpen);

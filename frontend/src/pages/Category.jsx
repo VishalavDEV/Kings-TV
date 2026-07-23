@@ -3,11 +3,63 @@ import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { LanguageContext } from '../context/LanguageContext';
 import { fetchApi } from '../utils/api';
 
+const subcatEnTranslations = {
+  'மாநிலம்': 'State',
+  'தேசியம்': 'National',
+  'சர்வதேசம்': 'International',
+  'அரசு கொள்கைகள்': 'Governance',
+  'சந்தை': 'Markets',
+  'நிறுவனங்கள்': 'Companies',
+  'முதலீடு': 'Investment',
+  'ஸ்டார்ட்அப்': 'Startups',
+  'கிரிக்கெட்': 'Cricket',
+  'கால்பந்து': 'Football',
+  'டென்னிஸ்': 'Tennis',
+  'உள்ளூர்': 'Local Sports',
+  'கோலிவுட்': 'Kollywood',
+  'பாலிவுட்': 'Bollywood',
+  'விமர்சனங்கள்': 'Reviews',
+  'இசை': 'Music',
+  'ஸ்மார்ட்போன்': 'Smartphones',
+  'மென்பொருள்': 'Software',
+  'AI': 'AI',
+  'விண்வெளி': 'Space',
+  'உலக செய்திகள்': 'World News',
+  'state': 'State',
+  'national': 'National',
+  'international': 'International',
+  'governance': 'Governance',
+  'markets': 'Markets',
+  'companies': 'Companies',
+  'investment': 'Investment',
+  'startups': 'Startups',
+  'cricket': 'Cricket',
+  'football': 'Football',
+  'tennis': 'Tennis',
+  'local sports': 'Local Sports',
+  'kollywood': 'Kollywood',
+  'bollywood': 'Bollywood',
+  'reviews': 'Reviews',
+  'music': 'Music',
+  'smartphones': 'Smartphones',
+  'software': 'Software',
+  'space': 'Space',
+  'world news': 'World News'
+};
+
 const Category = () => {
   const { lang } = useContext(LanguageContext);
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (slug === 'regional') {
+      navigate('/directory', { replace: true });
+    }
+  }, [slug, navigate]);
+
+
 
   // Determine category key (cat query param has precedence, otherwise URL slug, default to 'politics')
   const catKey = (searchParams.get('cat') || slug || 'politics').toLowerCase();
@@ -16,6 +68,31 @@ const Category = () => {
   const [filteredArticles, setFilteredArticles] = useState([]);
   const [selectedSubcat, setSelectedSubcat] = useState('அனைத்தும்');
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [navCategories, setNavCategories] = useState([]);
+  const [subcatOpen, setSubcatOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest('.custom-dropdown')) {
+        setSubcatOpen(false);
+        setFilterOpen(false);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, []);
+
+
+  useEffect(() => {
+    fetchApi('/categories/nav')
+      .then(data => {
+        if (Array.isArray(data)) {
+          setNavCategories(data);
+        }
+      })
+      .catch(err => console.warn("Failed to load nav categories in Category page", err));
+  }, []);
 
   const catConfigurations = {
     politics: {
@@ -24,6 +101,7 @@ const Category = () => {
       breadTa: 'அரசியல்',
       breadEn: 'Politics',
       themeClass: 'theme-politics',
+      color: '#1D4ED8',
       subcatsTa: ['அனைத்தும்', 'மாநிலம்', 'தேசியம்', 'சர்வதேசம்', 'அரசு கொள்கைகள்'],
       subcatsEn: ['All', 'State', 'National', 'International', 'Governance'],
       articles: [
@@ -40,6 +118,7 @@ const Category = () => {
           dateEn: '1 Hr Ago',
           readTimeTa: '3 நிமிட வாசிப்பு',
           readTimeEn: '3 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=800',
           gradient: 'linear-gradient(135deg, #1E3A8A, #3B82F6)'
         },
         {
@@ -55,6 +134,7 @@ const Category = () => {
           dateEn: '3 Hr Ago',
           readTimeTa: '2 நிமிட வாசிப்பு',
           readTimeEn: '2 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=800',
           gradient: 'linear-gradient(135deg, #3B82F6, #60A5FA)'
         },
         {
@@ -70,6 +150,7 @@ const Category = () => {
           dateEn: '6 Hr Ago',
           readTimeTa: '5 நிமிட வாசிப்பு',
           readTimeEn: '5 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800',
           gradient: 'linear-gradient(135deg, #1D4ED8, #1E3A8A)'
         },
         {
@@ -85,6 +166,7 @@ const Category = () => {
           dateEn: '12 Hr Ago',
           readTimeTa: '4 நிமிட வாசிப்பு',
           readTimeEn: '4 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800',
           gradient: 'linear-gradient(135deg, #2563EB, #3B82F6)'
         }
       ]
@@ -95,6 +177,7 @@ const Category = () => {
       breadTa: 'வணிகம்',
       breadEn: 'Business',
       themeClass: 'theme-business',
+      color: '#059669',
       subcatsTa: ['அனைத்தும்', 'சந்தை', 'நிறுவனங்கள்', 'முதலீடு', 'ஸ்டார்ட்அப்'],
       subcatsEn: ['All', 'Markets', 'Companies', 'Investment', 'Startups'],
       articles: [
@@ -111,6 +194,7 @@ const Category = () => {
           dateEn: '30 Min Ago',
           readTimeTa: '2 நிமிட வாசிப்பு',
           readTimeEn: '2 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800',
           gradient: 'linear-gradient(135deg, #065F46, #10B981)'
         },
         {
@@ -126,6 +210,7 @@ const Category = () => {
           dateEn: '2 Hr Ago',
           readTimeTa: '3 நிமிட வாசிப்பு',
           readTimeEn: '3 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=800',
           gradient: 'linear-gradient(135deg, #10B981, #34D399)'
         },
         {
@@ -141,6 +226,7 @@ const Category = () => {
           dateEn: '4 Hr Ago',
           readTimeTa: '2 நிமிட வாசிப்பு',
           readTimeEn: '2 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=800',
           gradient: 'linear-gradient(135deg, #047857, #10B981)'
         }
       ]
@@ -151,6 +237,7 @@ const Category = () => {
       breadTa: 'விளையாட்டு',
       breadEn: 'Sports',
       themeClass: 'theme-sports',
+      color: '#EA580C',
       subcatsTa: ['அனைத்தும்', 'கிரிக்கெட்', 'கால்பந்து', 'டென்னிஸ்', 'உள்ளூர்'],
       subcatsEn: ['All', 'Cricket', 'Football', 'Tennis', 'Local Sports'],
       articles: [
@@ -167,6 +254,7 @@ const Category = () => {
           dateEn: '10 Min Ago',
           readTimeTa: '4 நிமிட வாசிப்பு',
           readTimeEn: '4 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800',
           gradient: 'linear-gradient(135deg, #C2410C, #F97316)'
         },
         {
@@ -182,6 +270,7 @@ const Category = () => {
           dateEn: '3 Hr Ago',
           readTimeTa: '3 நிமிட வாசிப்பு',
           readTimeEn: '3 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800',
           gradient: 'linear-gradient(135deg, #F97316, #FB923C)'
         }
       ]
@@ -192,6 +281,7 @@ const Category = () => {
       breadTa: 'பொழுதுபோக்கு',
       breadEn: 'Entertainment',
       themeClass: 'theme-cinema',
+      color: '#DB2777',
       subcatsTa: ['அனைத்தும்', 'கோலிவுட்', 'பாலிவுட்', 'விமர்சனங்கள்', 'இசை'],
       subcatsEn: ['All', 'Kollywood', 'Bollywood', 'Reviews', 'Music'],
       articles: [
@@ -208,6 +298,7 @@ const Category = () => {
           dateEn: '45 Min Ago',
           readTimeTa: '2 நிமிட வாசிப்பு',
           readTimeEn: '2 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800',
           gradient: 'linear-gradient(135deg, #BE185D, #EC4899)'
         },
         {
@@ -223,6 +314,7 @@ const Category = () => {
           dateEn: '4 Hr Ago',
           readTimeTa: '4 நிமிட வாசிப்பு',
           readTimeEn: '4 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=800',
           gradient: 'linear-gradient(135deg, #EC4899, #F472B6)'
         }
       ]
@@ -233,6 +325,7 @@ const Category = () => {
       breadTa: 'தொழில்நுட்பம்',
       breadEn: 'Tech',
       themeClass: 'theme-tech',
+      color: '#7C3AED',
       subcatsTa: ['அனைத்தும்', 'ஸ்மார்ட்போன்', 'மென்பொருள்', 'AI', 'விண்வெளி'],
       subcatsEn: ['All', 'Smartphones', 'Software', 'AI', 'Space'],
       articles: [
@@ -249,6 +342,7 @@ const Category = () => {
           dateEn: '20 Min Ago',
           readTimeTa: '4 நிமிட வாசிப்பு',
           readTimeEn: '4 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800',
           gradient: 'linear-gradient(135deg, #6D28D9, #A855F7)'
         },
         {
@@ -264,7 +358,64 @@ const Category = () => {
           dateEn: '3 Hr Ago',
           readTimeTa: '3 நிமிட வாசிப்பு',
           readTimeEn: '3 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=800',
           gradient: 'linear-gradient(135deg, #A855F7, #C084FC)'
+        }
+      ]
+    },
+    international: {
+      titleTa: 'சர்வதேச செய்திகள்',
+      titleEn: 'International News',
+      breadTa: 'சர்வதேசம்',
+      breadEn: 'International',
+      themeClass: 'theme-international',
+      color: '#0F172A',
+      subcatsTa: ['அனைத்தும்', 'தேசியம்', 'சர்வதேசம்', 'உலக செய்திகள்'],
+      subcatsEn: ['All', 'National', 'International', 'World News'],
+      articles: [
+        {
+          id: 31,
+          titleTa: 'விண்வெளி ஆய்வு: "ககன்யான்" திட்டத்தின் முக்கிய மைல்கல் - "சால்வ்" சாலிட் மோட்டார் சோதனையை வெற்றிகரமாக முடித்தது இஸ்ரோ',
+          titleEn: 'Space Exploration: ISRO Conducts Successful SOLVE Solid Motor Ground Test for Gaganyaan Mission',
+          descTa: 'ஸ்ரீஹரிகோட்டாவில் ககன்யான் மனித விண்கலத் திட்டத்தின் மீட்பு அமைப்புகளை சோதிப்பதற்கான சாலிட் மோட்டார் சோதனையை வெற்றிகரமாக மேற்கொண்டுள்ளது.',
+          descEn: 'The experimental launch vehicle solid strap-on motor ground test at Sriharikota validates deceleration and recovery module systems.',
+          subcatTa: 'சர்வதேசம்',
+          subcatEn: 'International',
+          type: 'featured',
+          dateTa: '2 மணி நேரம்',
+          dateEn: '2 Hr Ago',
+          readTimeTa: '4 நிமிட வாசிப்பு',
+          readTimeEn: '4 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800',
+          gradient: 'linear-gradient(135deg, #1E40AF, #3B82F6)'
+        }
+      ]
+    },
+    world: {
+      titleTa: 'சர்வதேச செய்திகள்',
+      titleEn: 'International News',
+      breadTa: 'சர்வதேசம்',
+      breadEn: 'International',
+      themeClass: 'theme-international',
+      color: '#0F172A',
+      subcatsTa: ['அனைத்தும்', 'தேசியம்', 'சர்வதேசம்', 'உலக செய்திகள்'],
+      subcatsEn: ['All', 'National', 'International', 'World News'],
+      articles: [
+        {
+          id: 31,
+          titleTa: 'விண்வெளி ஆய்வு: "ககன்யான்" திட்டத்தின் முக்கிய மைல்கல் - "சால்வ்" சாலிட் மோட்டார் சோதனையை வெற்றிகரமாக முடித்தது இஸ்ரோ',
+          titleEn: 'Space Exploration: ISRO Conducts Successful SOLVE Solid Motor Ground Test for Gaganyaan Mission',
+          descTa: 'ஸ்ரீஹரிகோட்டாவில் ககன்யான் மனித விண்கலத் திட்டத்தின் மீட்பு அமைப்புகளை சோதிப்பதற்கான சாலிட் மோட்டார் சோதனையை வெற்றிகரமாக மேற்கொண்டுள்ளது.',
+          descEn: 'The experimental launch vehicle solid strap-on motor ground test at Sriharikota validates deceleration and recovery module systems.',
+          subcatTa: 'சர்வதேசம்',
+          subcatEn: 'International',
+          type: 'featured',
+          dateTa: '2 மணி நேரம்',
+          dateEn: '2 Hr Ago',
+          readTimeTa: '4 நிமிட வாசிப்பு',
+          readTimeEn: '4 Min Read',
+          imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800',
+          gradient: 'linear-gradient(135deg, #1E40AF, #3B82F6)'
         }
       ]
     }
@@ -294,7 +445,7 @@ const Category = () => {
     fetchApi('/articles')
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
-          const catIdMap = { politics: 1, sports: 2, business: 3, tech: 4, cinema: 5 };
+          const catIdMap = { politics: 1, business: 2, sports: 3, cinema: 4, tech: 5, international: 7, world: 7 };
           const targetId = catIdMap[catKey] || 1;
 
           const filtered = data.filter(item => item.categoryId === targetId);
@@ -309,11 +460,12 @@ const Category = () => {
             type: item.viewsCount > 100 ? 'featured' : 'recent',
             dateTa: '1 மணி நேரம்',
             dateEn: '1 Hr Ago',
-            readTimeTa: '3 நிமிட வாசிப்பு',
-            readTimeEn: '3 Min Read',
+            readTimeTa: `${item.readingTime || 1} நிமிட வாசிப்பு`,
+            readTimeEn: `${item.readingTime || 1} Min Read`,
+            imageUrl: item.imageUrl,
             gradient: 'linear-gradient(135deg, #1E40AF, #3B82F6)'
           }));
-          setArticles([...formatted, ...fallbackArticles]);
+          setArticles(formatted.length > 0 ? formatted : fallbackArticles);
         } else {
           setArticles(fallbackArticles);
         }
@@ -323,6 +475,15 @@ const Category = () => {
         setArticles(fallbackArticles);
       });
   }, [catKey]);
+
+  useEffect(() => {
+    const subcatParam = searchParams.get('subcat');
+    if (subcatParam) {
+      setSelectedSubcat(subcatParam);
+    } else {
+      setSelectedSubcat(lang === 'en' ? 'All' : 'அனைத்தும்');
+    }
+  }, [lang, searchParams, catKey]);
 
   useEffect(() => {
     // Perform subcategory and type filtering
@@ -344,12 +505,28 @@ const Category = () => {
     setFilteredArticles(temp);
   }, [selectedSubcat, selectedFilter, articles, lang]);
 
-  const subcategories = lang === 'en' ? currentCat.subcatsEn : currentCat.subcatsTa;
+  const getSubcatEn = (s) => {
+    if (!s) return '';
+    const nameStr = s.name || '';
+    const nameTaStr = s.nameTa || '';
+    return subcatEnTranslations[nameStr] || subcatEnTranslations[nameTaStr] || subcatEnTranslations[nameStr.toLowerCase()] || nameStr;
+  };
+
+  const matchedCat = navCategories.find(c => c.slug === catKey);
+  const subcategories = matchedCat 
+    ? (lang === 'en' 
+        ? ['All', ...matchedCat.subcategories.map(s => getSubcatEn(s))] 
+        : ['அனைத்தும்', ...matchedCat.subcategories.map(s => s.nameTa)])
+    : (lang === 'en' ? currentCat.subcatsEn : currentCat.subcatsTa);
+
+  if (slug === 'regional') {
+    return null;
+  }
 
   return (
-    <main className="news-section" style={{ width: '100%' }}>
+    <main className="news-section" style={{ width: '100%', '--category-color': currentCat.color || 'var(--primary)' }}>
       {/* CATEGORY HEADER BLOCK */}
-      <div className="category-header">
+      <div className="category-header" style={{ padding: '30px 0', borderBottom: '1px solid var(--border-color)' }}>
         <div className="container">
           {/* Breadcrumbs */}
           <div className="breadcrumbs">
@@ -358,50 +535,11 @@ const Category = () => {
             <span>{lang === 'en' ? currentCat.breadEn : currentCat.breadTa}</span>
           </div>
 
-          <h1>{lang === 'en' ? currentCat.titleEn : currentCat.titleTa}</h1>
+          <h1 style={{ fontSize: '28px', fontWeight: 800, margin: '16px 0 20px 0' }}>
+            {lang === 'en' ? currentCat.titleEn : currentCat.titleTa}
+          </h1>
 
-          <div className="category-tabs-container">
-            {/* Subcategory pills */}
-            <div className="subcategory-tabs">
-              {subcategories.map((sub, idx) => (
-                <button
-                  key={idx}
-                  className={`subcategory-tab ${selectedSubcat === sub ? 'active' : ''}`}
-                  onClick={() => setSelectedSubcat(sub)}
-                >
-                  {sub}
-                </button>
-              ))}
-            </div>
-
-            {/* Filter controls */}
-            <div className="category-filters">
-              <button 
-                className={`category-filter-btn ${selectedFilter === 'all' ? 'active' : ''}`}
-                onClick={() => setSelectedFilter('all')}
-              >
-                {lang === 'en' ? 'All' : 'அனைத்தும்'}
-              </button>
-              <button 
-                className={`category-filter-btn ${selectedFilter === 'featured' ? 'active' : ''}`}
-                onClick={() => setSelectedFilter('featured')}
-              >
-                {lang === 'en' ? 'Featured' : 'முக்கிய செய்திகள்'}
-              </button>
-              <button 
-                className={`category-filter-btn ${selectedFilter === 'analysis' ? 'active' : ''}`}
-                onClick={() => setSelectedFilter('analysis')}
-              >
-                {lang === 'en' ? 'Analysis' : 'ஆய்வுகள்'}
-              </button>
-              <button 
-                className={`category-filter-btn ${selectedFilter === 'opinion' ? 'active' : ''}`}
-                onClick={() => setSelectedFilter('opinion')}
-              >
-                {lang === 'en' ? 'Opinions' : 'கருத்துக்கள்'}
-              </button>
-            </div>
-          </div>
+          {/* Subcategory tabs removed */}
         </div>
       </div>
 
@@ -412,7 +550,7 @@ const Category = () => {
             {lang === 'en' ? 'No articles found matching filters.' : 'செய்திகள் ஏதும் இல்லை.'}
           </div>
         ) : (
-          <div className="news-grid-3">
+          <div className="news-grid">
             {filteredArticles.map(art => (
               <div 
                 className="news-card" 
@@ -420,9 +558,14 @@ const Category = () => {
                 onClick={() => navigate(`/article/${art.id}`)}
                 style={{ cursor: 'pointer' }}
               >
-                <div className="card-img" style={{ background: art.gradient }}>
+                <div 
+                  className="card-img" 
+                  style={{ 
+                    background: art.imageUrl ? `url(${art.imageUrl}) center/cover` : art.gradient 
+                  }}
+                >
                   <span className="cat-badge" style={{ background: 'var(--category-color, var(--primary))' }}>
-                    {lang === 'en' ? art.subcatEn : art.subcatTa}
+                    {lang === 'en' ? (subcatEnTranslations[art.subcatTa] || art.subcatEn) : art.subcatTa}
                   </span>
                 </div>
                 <div className="card-body">

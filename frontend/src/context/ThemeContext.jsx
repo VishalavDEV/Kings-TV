@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { fetchApi } from '../utils/api';
 
 export const ThemeContext = createContext();
 
@@ -24,6 +25,46 @@ export const ThemeProvider = ({ children }) => {
       };
     }
   });
+
+  useEffect(() => {
+    // Fetch live layout config from backend API
+    fetchApi('/public/layout/web')
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const apiSections = {};
+          data.forEach(item => {
+            apiSections[item.sectionKey] = item.isVisible;
+            // Map keys dynamically to support frontend compatibility
+            if (item.sectionKey === 'news_ticker') {
+              apiSections.news_ticker = item.isVisible;
+              apiSections.ticker = item.isVisible;
+            }
+            if (item.sectionKey === 'video_news') {
+              apiSections.video_news = item.isVisible;
+              apiSections.video = item.isVisible;
+            }
+            if (item.sectionKey === 'web_stories') {
+              apiSections.web_stories = item.isVisible;
+              apiSections.stories = item.isVisible;
+            }
+            if (item.sectionKey === 'live_tv') {
+              apiSections.live_tv = item.isVisible;
+              apiSections.livetv = item.isVisible;
+            }
+            if (item.sectionKey === 'news_digest') {
+              apiSections.news_digest = item.isVisible;
+              apiSections.digest = item.isVisible;
+            }
+            if (item.sectionKey === 'business_case') {
+              apiSections.business_case = item.isVisible;
+              apiSections.business = item.isVisible;
+            }
+          });
+          setSections(prev => ({ ...prev, ...apiSections }));
+        }
+      })
+      .catch(err => console.warn("Failed to fetch layout config", err));
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);

@@ -26,8 +26,15 @@ public class PdfContent {
     @Column(name = "publish_date")
     private LocalDateTime publishDate = LocalDateTime.now();
 
+    @Column(nullable = false)
+    private String status = "published";
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Long getPdfId() { return id; }
+    public void setPdfId(Long pdfId) { this.id = pdfId; }
+
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     public String getTitleTa() { return titleTa; }
@@ -38,4 +45,6 @@ public class PdfContent {
     public void setFileSize(String fileSize) { this.fileSize = fileSize; }
     public LocalDateTime getPublishDate() { return publishDate; }
     public void setPublishDate(LocalDateTime publishDate) { this.publishDate = publishDate; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }

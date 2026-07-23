@@ -18,7 +18,7 @@ const translationMap = {
   "வணிகக் கதைகள்": "Business Studies",
   "தேடுதல்...": "Search...",
   "தேடு": "Search",
-  "நம்ம ஊர்": "Local Directory",
+  "நம்ம ஊர்": "Regional",
   "செய்திகள்": "News",
   "வாழ்த்து": "Wishes",
   "இரங்கல்": "Obituaries",
@@ -85,15 +85,23 @@ const translationMap = {
 };
 
 export const LanguageProvider = ({ children }) => {
-  const [lang, setLang] = useState(() => localStorage.getItem('king24x7_lang') || 'ta');
+  const [lang, setLang] = useState(() => localStorage.getItem('king24x7_lang') || 'en');
 
   useEffect(() => {
     localStorage.setItem('king24x7_lang', lang);
+    document.documentElement.setAttribute('lang', lang);
   }, [lang]);
 
   const t = (text) => {
     if (lang === 'en') {
       return translationMap[text] || text;
+    }
+    // Return original Tamil text when language is 'ta'
+    // Find the original Tamil key if an English string was passed
+    for (const key in translationMap) {
+      if (translationMap[key] === text) {
+        return key;
+      }
     }
     return text;
   };

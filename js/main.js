@@ -32,14 +32,132 @@ document.addEventListener('DOMContentLoaded', function() {
   const ALLOWED_SIZES = ['small','medium','large'];
   const ALLOWED_WIDGET_WIDTHS = ['520','640','780'];
   const ALLOWED_SLIDE_SPEEDS = ['4','6','8','12'];
-  const SECTION_IDS = ['hero','video','stories','agri','election','livetv','poll','digest','newsletter','district','business'];
+  const SECTION_IDS = [
+    'news_ticker', 'hero', 'quick_access', 'latest_news', 'video_news', 
+    'web_stories', 'trending_sidebar', 'weather', 'live_tv', 
+    'business_case', 'crowd_reporter', 'news_digest',
+    // Fallback legacy IDs to prevent crashes
+    'agri', 'election', 'livetv', 'poll', 'digest', 'newsletter', 'district', 'business'
+  ];
+
+  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8080'
+    : window.location.origin;
+
+  function getMediaUrl(url) {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return API_BASE + url;
+  }
+
+  // ===== INTEGRATE HOME LAYOUT MANAGER WITH BACKEND =====
+  async function syncHomepageLayout() {
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/public/layout/web`);
+      if (!response.ok) return;
+      const sections = await response.json();
+      
+      // Selectors mapping sectionKeys to HTML Elements in index.html
+      const selectorMap = {
+        'news_ticker': '.breaking-news',
+        'hero': '#section-hero',
+        'quick_access': '.quick-access',
+        'latest_news': '.news-section',
+        'video_news': '#section-video',
+        'web_stories': '#section-stories',
+        'trending_sidebar': '.trending-list',
+        'weather': '.weather-widget',
+        'live_tv': '.header-right .livetv-btn',
+        'business_case': '.case-studies-widget',
+        'crowd_reporter': '.crowd-reporter-widget',
+        'news_digest': '#section-digest'
+      };
+
+      sections.forEach(sec => {
+        const selector = selectorMap[sec.sectionKey];
+        if (selector) {
+          const el = document.querySelector(selector);
+          if (el) {
+            // Apply visibility toggled by Super Admin
+            el.style.display = sec.isVisible ? '' : 'none';
+          }
+        }
+      });
+
+      // Implement display reordering based on displayOrder list
+      const mainContainer = document.querySelector('.left-content-column');
+      const sidebarContainer = document.querySelector('.trending-sidebar');
+      
+      if (mainContainer && sidebarContainer) {
+        // Sort sections by displayOrder Ascending
+        sections.sort((a, b) => a.displayOrder - b.displayOrder);
+        
+        sections.forEach(sec => {
+          const selector = selectorMap[sec.sectionKey];
+          if (selector) {
+            const el = document.querySelector(selector);
+            if (el) {
+              // Append visible items in sorted order to their respective parent columns
+              if (['latest_news', 'video_news', 'web_stories'].includes(sec.sectionKey)) {
+                mainContainer.appendChild(el);
+              } else if (['trending_sidebar', 'weather', 'business_case', 'crowd_reporter'].includes(sec.sectionKey)) {
+                sidebarContainer.appendChild(el);
+              }
+            }
+          }
+        });
+      }
+    } catch (err) {
+      console.warn("Failed to synchronize layout builder settings:", err);
+    }
+  }
+
+  // ===== LOAD DYNAMIC NAV MENU FROM BACKEND CATEGORIES =====
+  async function loadDynamicNavMenu() {
+    var navMenu = document.getElementById('navMenu');
+    if (!navMenu) return;
+    try {
+      var response = await fetch(`${API_BASE}/api/v1/categories/nav`);
+      if (!response.ok) return;
+      var categories = await response.json();
+      if (!Array.isArray(categories) || categories.length === 0) return;
+
+      // Build new nav HTML, always keep home as first item
+      var html = '<li class="nav-item active" id="nav-home"><a href="index.html" class="nav-link">' +
+        (document.documentElement.lang === 'ta' ? 'முகப்பு' : 'Home') + '</a></li>';
+
+      categories.forEach(function(cat) {
+        var displayName = cat.nameTa || cat.name || cat.slug;
+        var slug = sanitize(cat.slug || '');
+        var hasDropdown = cat.subcategories && cat.subcategories.length > 0;
+        if (hasDropdown) {
+          html += '<li class="nav-item has-dropdown">' +
+            '<a href="category.html?cat=' + slug + '" class="nav-link">' + sanitize(displayName) + ' <i class="fas fa-chevron-down" style="font-size:0.7em"></i></a>' +
+            '<ul class="dropdown-menu">';
+          cat.subcategories.forEach(function(sub) {
+            var subName = sub.nameTa || sub.name;
+            var subSlug = sanitize(sub.slug || sub.id);
+            html += '<li><a href="category.html?cat=' + slug + '&sub=' + subSlug + '" class="nav-link">' + sanitize(subName) + '</a></li>';
+          });
+          html += '</ul></li>';
+        } else {
+          html += '<li class="nav-item" id="nav-' + slug + '">' +
+            '<a href="category.html?cat=' + slug + '" class="nav-link">' + sanitize(displayName) + '</a></li>';
+        }
+      });
+
+      navMenu.innerHTML = html;
+    } catch (err) {
+      console.warn("Failed to load dynamic nav menu:", err);
+    }
+  }
 
   // ===== UPDATE THEME TOGGLE TEXT FOR LOCALIZATION =====
   function updateThemeToggleText() {
     const dt = document.getElementById('darkToggle');
     if (!dt) return;
     const theme = document.documentElement.getAttribute('data-theme') || 'light';
-    const lang = Storage.get('lang', 'ta');
+    const lang = Storage.get('lang', 'en');
     if (lang === 'en') {
       dt.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i> Light' : '<i class="fas fa-moon"></i> Dark';
     } else {
@@ -576,7 +694,7 @@ document.addEventListener('DOMContentLoaded', function() {
     "சர்வதேசம்": "International",
     "வீдео": "Video",
     "வெப் ஸ்டோரிஸ்": "Web Stories",
-    "நம்ம ஊர்": "Local Directory",
+    "நம்ம ஊர்": "Regional",
     "செய்திகள்": "News",
     "வாழ்த்து": "Wishes",
     "இரங்கல்": "Obituaries",
@@ -1016,8 +1134,8 @@ document.addEventListener('DOMContentLoaded', function() {
     "ட்ரெண்டிங் News": "Trending News",
 
     // subpages: directory.html
-    "நம்ம ஊர் வணிகக் கோப்பகம் - KING 24x7 | Local Business Directory": "Local Business Directory - KING 24x7",
-    "நம்ம ஊர் வணிகக் கோப்பகம்": "Local Business Directory",
+    "நம்ம ஊர் வணிகக் கோப்பகம் - KING 24x7 | Local Business Directory": "Regional Business Directory - KING 24x7",
+    "நம்ம ஊர் வணிகக் கோப்பகம்": "Regional Business Directory",
     "உள்ளூர் வணிகங்கள், அவசர உதவிகள், மருத்துவமனைகள், பிளம்பர்கள் மற்றும் சேவை வழங்குநர்களின் தொடர்பு விபரங்கள் தமிழில்.": "Local businesses, emergency services, hospitals, plumbers and service providers contact details in Tamil.",
     "உள்ளூர் வணிகங்கள் மற்றும் சேவை வழங்குநர்களின் முழுமையான விபரங்கள்": "Complete details of local businesses and service providers",
     "வகைப்பாடுகள்": "Categories",
@@ -1293,7 +1411,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (userBlock) userBlock.remove();
 
     const session = Storage.get('session', null);
-    const lang = Storage.get('lang', 'ta');
+    const lang = Storage.get('lang', 'en');
 
     userBlock = document.createElement('div');
     userBlock.id = 'topBarUserBlock';
@@ -1305,22 +1423,39 @@ document.addEventListener('DOMContentLoaded', function() {
     userBlock.style.borderLeft = '1px solid var(--top-bar-border)';
 
     if (session && session.isLoggedIn) {
-      // User is logged in
+      // User is logged in — support both old and new role formats
       const roleColors = {
-        admin: '#EF4444',
-        vendor: '#10B981',
-        editor: '#8B5CF6',
-        reporter: '#F59E0B',
-        user: '#3B82F6'
+        SUPER_ADMIN: '#EF4444', admin: '#EF4444',
+        CHIEF_EDITOR: '#8B5CF6', editor: '#8B5CF6',
+        DISTRICT_ADMIN: '#F59E0B', reporter: '#F59E0B',
+        MOBILE_JOURNALIST: '#0EA5E9',
+        INSTITUTION_LOGIN: '#14B8A6',
+        READER: '#3B82F6', user: '#3B82F6',
+        vendor: '#10B981'
       };
       const badgeColor = roleColors[session.role] || '#64748B';
-      const roleText = lang === 'en' ? session.role.toUpperCase() : getTamilRole(session.role);
+
+      // Friendly display name for role
+      const roleFriendly = {
+        SUPER_ADMIN: 'Super Admin', CHIEF_EDITOR: 'Chief Editor',
+        DISTRICT_ADMIN: 'District Admin', MOBILE_JOURNALIST: 'Journalist',
+        INSTITUTION_LOGIN: 'Institution', READER: 'Reader',
+        admin: 'Admin', editor: 'Editor', reporter: 'Reporter',
+        vendor: 'Vendor', user: 'User'
+      };
+      const roleLabel = roleFriendly[session.role] || (session.role || 'User');
+      const roleText = lang === 'en' ? roleLabel : getTamilRole(session.role);
+
+      const displayName = sanitize(session.username || session.email || 'User');
+      const avatarHtml = session.profileImage
+        ? `<img src="${session.profileImage}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" />`
+        : `<i class="fas fa-user-circle" style="color:${badgeColor};font-size:18px;"></i>`;
 
       userBlock.innerHTML = `
         <span style="font-size:12px; font-weight:600; color:var(--top-bar-text); display:flex; align-items:center; gap:6px;">
-          <i class="fas fa-user-circle" style="color:${badgeColor}"></i> 
-          ${session.username} 
-          <span style="font-size:10px; background:${badgeColor}; color:white; padding:1px 5px; border-radius:4px; font-weight:700;">${roleText}</span>
+          ${avatarHtml}
+          ${displayName}
+          <span style="font-size:10px; background:${badgeColor}; color:white; padding:1px 6px; border-radius:4px; font-weight:700;">${roleText}</span>
         </span>
         <button id="logoutBtn" style="background:transparent; border:none; color:#EF4444; font-size:12px; font-weight:700; cursor:pointer; padding:4px 8px; display:flex; align-items:center; gap:4px; outline:none;">
           <i class="fas fa-sign-out-alt"></i> ${lang === 'en' ? 'Logout' : 'வெளியேறு'}
@@ -1351,22 +1486,277 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function getTamilRole(role) {
     const roles = {
-      admin: 'நிர்வாகி',
-      vendor: 'வணிகர்',
-      editor: 'ஆசிரியர்',
-      reporter: 'செய்தியாளர்',
-      user: 'வாசகர்'
+      SUPER_ADMIN: 'நிர்வாகி', admin: 'நிர்வாகி',
+      CHIEF_EDITOR: 'ஆசிரியர்', editor: 'ஆசிரியர்',
+      DISTRICT_ADMIN: 'மாவட்ட நிர்வாகி', reporter: 'செய்தியாளர்',
+      MOBILE_JOURNALIST: 'பத்திரிக்கையாளர்',
+      INSTITUTION_LOGIN: 'நிறுவனம்',
+      READER: 'வாசகர்', user: 'வாசகர்',
+      vendor: 'வணிகர்'
     };
     return roles[role] || 'வாசகர்';
+  }
+
+
+  // ===== DYNAMIC DATA LOADER FOR WEB PAGE SECTIONS =====
+  
+  // Format dates nicely
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      const lang = Storage.get('lang', 'en');
+      if (lang === 'ta') {
+        const months = ['ஜனவரி', 'பிப்ரவரி', 'மார்ச்', 'ஏப்ரல்', 'மே', 'ஜூன்', 'ஜூலை', 'ஆகஸ்ட்', 'செப்டம்பர்', 'அக்டோபர்', 'நவம்பர்', 'டிசம்பர்'];
+        return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+      }
+      return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  }
+
+  // 1. Breaking News Ticker
+  async function loadBreakingNews() {
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/breaking-news/getAllWeb?size=10`);
+      if (!response.ok) return;
+      const data = await response.json();
+      const items = data.content || [];
+      const track = document.getElementById('breakTrack');
+      if (!track || items.length === 0) return;
+
+      const lang = Storage.get('lang', 'en');
+      track.innerHTML = items.map(item => {
+        const title = lang === 'ta' ? (item.titleTa || item.title) : (item.title || item.titleTa);
+        return `<a href="article.html?id=${item.id}">${sanitize(title)}</a>`;
+      }).join('');
+    } catch (err) {
+      console.warn("Failed to load breaking news ticker:", err);
+    }
+  }
+
+  // 2. Hero Section
+  async function loadHeroSection() {
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/public/news?limit=4`);
+      if (!response.ok) return;
+      const articles = await response.json();
+      if (!articles || articles.length === 0) return;
+
+      const lang = Storage.get('lang', 'en');
+
+      // Main featured card (first article)
+      const mainArt = articles[0];
+      const featuredCard = document.querySelector('.featured-card');
+      if (featuredCard && mainArt) {
+        const title = lang === 'ta' ? (mainArt.titleTa || mainArt.titleEn) : (mainArt.titleEn || mainArt.titleTa);
+        const desc = lang === 'ta' ? (mainArt.shortDescTa || mainArt.contentTa) : (mainArt.shortDescEn || mainArt.contentEn);
+        const bgStyle = mainArt.imageUrl ? `background-image: url('${getMediaUrl(mainArt.imageUrl)}'); background-size: cover; background-position: center;` : `background: linear-gradient(135deg, #1E40AF, #3B82F6);`;
+        
+        featuredCard.innerHTML = `
+          <div class="card-img" style="${bgStyle}"></div>
+          <div class="card-overlay">
+            <span class="category-badge cat-politics">${lang === 'ta' ? 'செய்திகள்' : 'News'}</span>
+            <h2><a href="article.html?id=${mainArt.id}" style="color: inherit; text-decoration: none;">${sanitize(title)}</a></h2>
+            <p>${sanitize(desc ? desc.substring(0, 150) + '...' : '')}</p>
+            <div class="meta">
+              <span><i class="far fa-calendar-alt"></i> ${formatDate(mainArt.publishedAt)}</span>
+              <span><i class="far fa-eye"></i> ${mainArt.viewsCount || 0}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // Stack cards (next 3 articles)
+      const heroStack = document.querySelector('.hero-stack');
+      if (heroStack && articles.length > 1) {
+        const stackHTML = articles.slice(1, 4).map(art => {
+          const title = lang === 'ta' ? (art.titleTa || art.titleEn) : (art.titleEn || art.titleTa);
+          const thumbStyle = art.imageUrl ? `background-image: url('${getMediaUrl(art.imageUrl)}'); background-size: cover; background-position: center;` : `background: linear-gradient(135deg, #F59E0B, #D97706);`;
+          return `
+            <div class="hero-stack-card" onclick="window.location.href='article.html?id=${art.id}'" style="cursor: pointer;">
+              <div class="info">
+                <span class="category-badge cat-business">${lang === 'ta' ? 'முக்கியம்' : 'Featured'}</span>
+                <h4>${sanitize(title)}</h4>
+                <div class="meta"><span><i class="far fa-calendar-alt"></i> ${formatDate(art.publishedAt)}</span></div>
+              </div>
+              <div class="thumb" style="${thumbStyle}"></div>
+            </div>
+          `;
+        }).join('');
+        heroStack.innerHTML = stackHTML;
+      }
+    } catch (err) {
+      console.warn("Failed to load hero section:", err);
+    }
+  }
+
+  // 4. Latest News
+  async function loadLatestNews() {
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/articles/getAllWeb?size=6`);
+      if (!response.ok) return;
+      const data = await response.json();
+      const articles = data.content || [];
+      const grid = document.getElementById('newsGrid');
+      if (!grid || articles.length === 0) return;
+
+      const lang = Storage.get('lang', 'en');
+      grid.innerHTML = articles.map(art => {
+        const title = lang === 'ta' ? (art.titleTa || art.titleEn) : (art.titleEn || art.titleTa);
+        const desc = lang === 'ta' ? (art.shortDescTa || art.contentTa) : (art.shortDescEn || art.contentEn);
+        const imgStyle = art.imageUrl ? `background-image: url('${getMediaUrl(art.imageUrl)}'); background-size: cover; background-position: center;` : `background: linear-gradient(135deg, #1E40AF, #3B82F6);`;
+        return `
+          <div class="news-card" onclick="window.location.href='article.html?id=${art.id}'" style="cursor: pointer;">
+            <div class="card-img" style="${imgStyle}">
+              <span class="cat-badge cat-politics">${lang === 'ta' ? 'சமீபத்தியவை' : 'Latest'}</span>
+            </div>
+            <div class="card-body">
+              <h3>${sanitize(title)}</h3>
+              <p>${sanitize(desc ? desc.substring(0, 100) + '...' : '')}</p>
+              <div class="card-meta">
+                <span><i class="far fa-calendar-alt"></i> ${formatDate(art.publishedAt)}</span>
+                <span><i class="far fa-eye"></i> ${art.viewsCount || 0}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (err) {
+      console.warn("Failed to load latest news:", err);
+    }
+  }
+
+  // 5. Video News
+  async function loadVideoNews() {
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/videos/getAllWeb?size=4`);
+      if (!response.ok) return;
+      const data = await response.json();
+      const videos = data.content || [];
+      const container = document.querySelector('.video-grid-4');
+      if (!container || videos.length === 0) return;
+
+      container.innerHTML = videos.map(vid => {
+        const thumbUrl = (vid.thumbnailUrl ? getMediaUrl(vid.thumbnailUrl) : null) || `https://img.youtube.com/vi/${vid.youtubeUrl.split('v=')[1] || vid.youtubeUrl.split('/').pop()}/mqdefault.jpg`;
+        return `
+          <div class="video-card" onclick="window.open('${vid.youtubeUrl}', '_blank')" style="cursor: pointer;">
+            <div class="thumb-area">
+              <img src="${thumbUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="${sanitize(vid.title)}">
+              <div class="play-overlay"><i class="fas fa-play"></i></div>
+              <span class="duration">${vid.duration || 'Video'}</span>
+            </div>
+            <div class="body">
+              <h5>${sanitize(vid.title)}</h5>
+              <div class="meta"><span><i class="far fa-eye"></i> ${vid.viewsCount || 0} views</span></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (err) {
+      console.warn("Failed to load video news:", err);
+    }
+  }
+
+  // 6. Web Stories
+  async function loadWebStories() {
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/web-stories/getAllWeb?size=6`);
+      if (!response.ok) return;
+      const data = await response.json();
+      const stories = data.content || [];
+      const track = document.querySelector('.stories-track');
+      if (!track || stories.length === 0) return;
+
+      const lang = Storage.get('lang', 'en');
+      track.innerHTML = stories.map(story => {
+        const title = lang === 'ta' ? (story.titleTa || story.titleEn) : (story.titleEn || story.titleTa);
+        const bg = story.backgroundGradient || 'linear-gradient(135deg, #667eea, #764ba2)';
+        return `
+          <div class="story-card" style="background: ${bg}; cursor: pointer;" onclick="window.location.href='story.html?id=${story.id}'">
+            <span class="badge-tag" style="background:#3B82F6">${story.badge || 'STORY'}</span>
+            <div class="story-overlay">
+              <span class="story-cat cat-politics">${sanitize(story.cat || 'New')}</span>
+              <h5>${sanitize(title)}</h5>
+              <span class="views"><i class="far fa-eye"></i> ${story.viewsCount || 0}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (err) {
+      console.warn("Failed to load web stories:", err);
+    }
+  }
+
+  // 7. Trending Sidebar
+  async function loadTrendingNews() {
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/articles/getAllWeb?size=5&sortBy=viewsCount&direction=desc`);
+      if (!response.ok) return;
+      const data = await response.json();
+      const articles = data.content || [];
+      const container = document.querySelector('.trending-list');
+      if (!container || articles.length === 0) return;
+
+      const lang = Storage.get('lang', 'en');
+      const headerHTML = `<h4 style="font-size:16px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px"><i class="fas fa-fire" style="color:#EF4444"></i> ${lang === 'ta' ? 'ட்ரெண்டிங் செய்திகள்' : 'Trending News'}</h4>`;
+      
+      const itemsHTML = articles.map((art, index) => {
+        const title = lang === 'ta' ? (art.titleTa || art.titleEn) : (art.titleEn || art.titleTa);
+        const isTop3 = index < 3 ? 'top3' : '';
+        return `
+          <div class="trending-item" onclick="window.location.href='article.html?id=${art.id}'" style="cursor: pointer;">
+            <span class="rank ${isTop3}">${index + 1}</span>
+            <div class="info">
+              <h5>${sanitize(title)}</h5>
+              <div class="meta"><span><i class="far fa-eye"></i> ${art.viewsCount || 0}</span></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      container.innerHTML = headerHTML + itemsHTML;
+    } catch (err) {
+      console.warn("Failed to load trending news:", err);
+    }
+  }
+
+  // ===== ROLE BASED LOG IN REDIRECTS =====
+  // If user accesses the main page but has an admin role, redirect them to the admin portal
+  function checkAndRedirectAdminUsers() {
+    const token = localStorage.getItem('token') || Storage.get('token', null);
+    const user = JSON.parse(localStorage.getItem('user') || 'null') || Storage.get('user', null);
+    if (token && user) {
+      const adminRoles = ['SUPER_ADMIN', 'CHIEF_EDITOR', 'DISTRICT_ADMIN', 'MOBILE_JOURNALIST', 'INSTITUTION_LOGIN'];
+      if (adminRoles.includes(user.role)) {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          window.location.href = 'http://localhost:3000/admin/layout';
+        } else {
+          window.location.href = window.location.origin + '/admin/layout';
+        }
+      }
+    }
   }
 
   // ===== INIT =====
   initWidgetSlider();
   loadCustomization();
   renderUserSession();
+  syncHomepageLayout();
+  checkAndRedirectAdminUsers();
+  
+  // Load dynamic data on DOM ready
+  loadBreakingNews();
+  loadHeroSection();
+  loadLatestNews();
+  loadVideoNews();
+  loadWebStories();
+  loadTrendingNews();
+  loadDynamicNavMenu(); // Populate nav from backend categories (Issue #7)
   
   // Apply default language on load
-  var defaultLang = Storage.get('lang', 'ta');
+  var defaultLang = Storage.get('lang', 'en');
   setLanguage(defaultLang);
   
   // Sync favicon on load
@@ -1375,7 +1765,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Re-run setLanguage on a 0ms timeout to catch and translate dynamically generated DOM items
   setTimeout(function() {
-    setLanguage(Storage.get('lang', 'ta'));
+    setLanguage(Storage.get('lang', 'en'));
     renderUserSession();
   }, 0);
 });
+

@@ -3,41 +3,42 @@
   --primary-dark: #8F5A1D;
   --primary-light: #FAF4EB;
   --bg-light: #FAF9F6;
-  --text-dark: #1E293B;
-  --text-muted: #64748B;
+  --text-dark: #0F172A;
+  --text-muted: #475569;
   --white: #FFFFFF;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 20px rgba(179, 115, 42, 0.10);
-  --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 1.5px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 6px 24px rgba(179, 115, 42, 0.06);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.08);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-border: rgba(255, 255, 255, 0.4);
   --top-bar-bg: #FFFFFF;
   --top-bar-text: #1E293B;
-  --top-bar-border: rgba(30, 41, 59, 0.15);
+  --top-bar-border: rgba(30, 41, 59, 0.1);
   --top-bar-switcher-bg: rgba(30, 41, 59, 0.05);
   --header-bg: #FFFFFF;
   --header-text: #1E293B;
 }
 
 [data-theme="dark"] {
-  --bg-light: #000000;
-  --text-dark: #F1F5F9;
+  --bg-light: #0B0F19;
+  --text-dark: #F8FAFC;
   --text-muted: #94A3B8;
-  --white: #121212;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
-  --glass-bg: rgba(18, 18, 18, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.05);
-  --top-bar-bg: #000000;
-  --top-bar-text: #FFFFFF;
-  --top-bar-border: rgba(255, 255, 255, 0.2);
-  --top-bar-switcher-bg: rgba(255, 255, 255, 0.1);
-  --header-bg: #000000;
-  --header-text: #FFFFFF;
+  --white: #111827;
+  --shadow-sm: 0 1.5px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 6px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55);
+  --glass-bg: rgba(17, 24, 39, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --top-bar-bg: #0B0F19;
+  --top-bar-text: #F8FAFC;
+  --top-bar-border: rgba(255, 255, 255, 0.1);
+  --top-bar-switcher-bg: rgba(255, 255, 255, 0.08);
+  --header-bg: #0F172A;
+  --header-text: #F8FAFC;
 }
 
 ::-webkit-scrollbar {
@@ -1914,6 +1915,70 @@ ul {
     padding: 10px 20px;
   }
 
+  .nav-menu .nav-link,
+  .main-nav.regional-theme .nav-menu .nav-link {
+    color: var(--text-dark) !important;
+  }
+
+  .nav-menu .nav-item.active .nav-link,
+  .nav-menu .nav-link:hover,
+  .main-nav.regional-theme .nav-menu .nav-item.active .nav-link,
+  .main-nav.regional-theme .nav-menu .nav-link:hover {
+    color: var(--primary) !important;
+  }
+
+  .main-nav.regional-theme .mobile-menu-btn {
+    display: block !important;
+  }
+
+  .main-nav.regional-theme .nav-menu {
+    display: none !important;
+    flex-direction: column !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: var(--white) !important;
+    box-shadow: var(--shadow-lg) !important;
+    padding: 12px 0 !important;
+    z-index: 100 !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+    width: 100% !important;
+    overflow-x: visible !important;
+  }
+
+  .main-nav.regional-theme .nav-menu.open {
+    display: flex !important;
+  }
+
+  .main-nav.regional-theme .nav-item {
+    width: 100% !important;
+    text-align: center !important;
+    flex: 0 0 auto !important;
+  }
+
+  .main-nav.regional-theme .nav-link {
+    color: var(--text-dark) !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    border-bottom: none !important;
+    display: inline-block !important;
+    width: auto !important;
+  }
+
+  .main-nav.regional-theme .nav-link:hover {
+    color: var(--primary) !important;
+    background: transparent !important;
+  }
+
+  .main-nav.regional-theme .nav-item.active .nav-link {
+    background: #FAF4EB !important;
+    color: var(--primary) !important;
+    border-radius: 4px !important;
+  }
+
   .mega-menu {
     display: none !important;
   }
@@ -3388,6 +3453,14 @@ ul {
   margin-bottom: 18px;
 }
 
+.article-body-text img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 16px auto;
+  display: block;
+}
+
 .article-tags {
   margin-top: 32px;
   padding-top: 16px;
@@ -3761,4 +3834,404 @@ ul {
     font-size: 15px;
   }
 }
+
+/* ===== MOBILE ONLY CAROUSEL & HEADER OPTIMIZATIONS ===== */
+@media (max-width: 767px) {
+  /* 1. Convert News Grid lists into Horizontal Scroll Snap carousels */
+  .news-grid-3,
+  .news-grid,
+  .videos-grid-container,
+  .news-grid-4,
+  .video-grid-4 {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important; /* Momentum scrolling */
+    gap: 16px !important;
+    padding: 4px 4px 16px 4px !important; /* Padding protects card shadow cuts */
+    margin-left: -4px !important;
+    margin-right: -4px !important;
+    scrollbar-width: none !important; /* Firefox */
+  }
+
+  /* Hide scrollbars completely */
+  .news-grid-3::-webkit-scrollbar,
+  .news-grid::-webkit-scrollbar,
+  .videos-grid-container::-webkit-scrollbar,
+  .news-grid-4::-webkit-scrollbar,
+  .video-grid-4::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Show 1.2 to 1.3 cards at a time (card width 78% + gap) */
+  .news-grid-3 > *,
+  .news-grid > *,
+  .videos-grid-container > *,
+  .news-grid-4 > *,
+  .video-grid-4 > * {
+    flex: 0 0 78% !important;
+    width: 78% !important;
+    max-width: 78% !important;
+    scroll-snap-align: start !important;
+  }
+
+  /* 2. Compact Header Optimization - Keep all widgets and elements inline */
+  .header-main {
+    padding: 6px 0 !important;
+  }
+
+  .header-main .container {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+  }
+
+  .header-left {
+    width: auto !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .header-left .logo-link {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .header-left .main-logo-img {
+    height: 30px !important; /* Extremely compact inline size */
+    width: auto !important;
+  }
+
+  .logo-sub-text {
+    display: none !important; /* Remove slogan text on mobile to avoid overlap */
+  }
+
+  .header-right {
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .livetv-btn {
+    padding: 6px 10px !important;
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    border-radius: 4px !important;
+    height: auto !important;
+  }
+
+  /* Top Bar margins and paddings reduction */
+  .top-bar {
+    padding: 2px 0 !important;
+  }
+
+  .top-bar .container {
+    padding: 0 12px !important;
+    gap: 6px !important;
+  }
+
+  .top-bar-left,
+  .top-bar-right {
+    gap: 6px !important;
+  }
+
+  /* 3. Category Buttons Horizontal Scrolling */
+  .quick-grid {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 12px !important;
+    padding-bottom: 8px !important;
+    scrollbar-width: none !important;
+  }
+
+  .quick-grid::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .quick-grid > * {
+    flex: 0 0 auto !important;
+    scroll-snap-align: start !important;
+  }
+}
+
+/* Post Obituary Banner Card */
+.post-obit-banner {
+  background: #FAF6F0;
+  border: 1px solid #E5D5C5;
+  border-radius: var(--radius-lg, 12px);
+  padding: 32px 24px;
+  text-align: center;
+  margin-bottom: 40px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+.post-obit-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.post-obit-banner h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-dark, #2d3748);
+  margin-bottom: 10px;
+}
+
+.post-obit-banner p {
+  color: var(--text-muted, #718096);
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 600px;
+  margin: 0 auto 18px auto;
+}
+
+.post-obit-banner button {
+  padding: 12px 32px;
+  border-radius: 30px;
+  background: var(--primary, #B3732A);
+  color: white !important;
+  border: none;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(179, 115, 42, 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.post-obit-banner button:hover {
+  background: var(--primary-dark, #8A541B);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(179, 115, 42, 0.4);
+}
+
+.post-obit-banner button:active {
+  transform: translateY(1px);
+}
+
+/* Post Job Banner Card */
+.post-job-banner {
+  background: #F0FAF4;
+  border: 1px solid #C2ECD5;
+  border-radius: var(--radius-lg, 12px);
+  padding: 32px 24px;
+  text-align: center;
+  margin-bottom: 40px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+.post-job-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.post-job-banner h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-dark, #2d3748);
+  margin-bottom: 10px;
+}
+
+.post-job-banner p {
+  color: var(--text-muted, #718096);
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 600px;
+  margin: 0 auto 18px auto;
+}
+
+.post-job-banner button {
+  padding: 12px 32px;
+  border-radius: 30px;
+  background: #10B981;
+  color: white !important;
+  border: none;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.post-job-banner button:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(16, 185, 129, 0.4);
+}
+
+.post-job-banner button:active {
+  transform: translateY(1px);
+}
+
+/* Mobile responsive single-line fixes for section titles */
+@media (max-width: 768px) {
+  .section-title h2 {
+    font-size: 16px !important;
+    white-space: nowrap !important;
+  }
+
+  .section-title .view-all {
+    font-size: 12px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .section-title h2 {
+    font-size: 14px !important;
+    letter-spacing: -0.3px;
+  }
+
+  .section-title .view-all {
+    font-size: 11px !important;
+  }
+}
+
+/* Post Wish Banner Card */
+.post-wish-banner {
+  background: #FAF8FF;
+  border: 1px solid #E5DBFF;
+  border-radius: var(--radius-lg, 12px);
+  padding: 32px 24px;
+  text-align: center;
+  margin-bottom: 40px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+.post-wish-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.post-wish-banner h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-dark, #2d3748);
+  margin-bottom: 10px;
+}
+
+.post-wish-banner p {
+  color: var(--text-muted, #718096);
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 600px;
+  margin: 0 auto 18px auto;
+}
+
+.post-wish-banner button {
+  padding: 12px 32px;
+  border-radius: 30px;
+  background: #8B5CF6;
+  color: white !important;
+  border: none;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.post-wish-banner button:hover {
+  background: #7C3AED;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(139, 92, 246, 0.4);
+}
+
+.post-wish-banner button:active {
+  transform: translateY(1px);
+}
+
+/* Redesign Header Variations Animations & Helpers */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.horizontal-scroll-nav-container::-webkit-scrollbar {
+  display: none;
+}
+
+.horizontal-scroll-nav-container {
+  scrollbar-width: none;
+}
+
+/* Side Drawer transition helper states */
+.side-drawer-container.open {
+  pointer-events: auto;
+}
+.side-drawer-container {
+  pointer-events: none;
+}
+
+/* PREMIUM DESIGN SYSTEM OVERLAYS & MICRO-ANIMATIONS */
+.news-card, .trending-item, .hero-stack-card, .video-card, .story-card {
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.news-card:hover, .hero-stack-card:hover, .video-card:hover, .story-card:hover {
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: var(--shadow-lg) !important;
+}
+
+/* Glowing Live Ticker & Badge Styles */
+.live-tv-badge, .badge-tag, .breaking-news {
+  position: relative;
+  overflow: hidden;
+}
+
+.live-tv-badge::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shine-glow 2s infinite;
+}
+
+@keyframes shine-glow {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Enhancing category badge pops */
+.cat-badge, .category-badge {
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Add custom typography weighting to headers */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
 
