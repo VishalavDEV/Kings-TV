@@ -1177,44 +1177,27 @@ const Home = () => {
       {/* COMMODITY TICKER */}
       {renderCommodityTicker()}
 
-      {/* TOP FULL-WIDTH SECTIONS */}
-      {getSortedSections(['news_ticker', 'quick_access', 'hero']).map(sec => (
-        <React.Fragment key={sec.id || sec.sectionKey}>
-          {getRenderedSection(sec.sectionKey, sec.sectionLabel, sec.configJson)}
-        </React.Fragment>
-      ))}
+      {/* FULLY DYNAMIC HOMEPAGE SECTIONS IN EXACT DATABASE DISPLAY ORDER */}
+      {(() => {
+        const sorted = layoutSections && layoutSections.length > 0
+          ? [...layoutSections].filter(s => s.isVisible !== false).sort((a, b) => a.displayOrder - b.displayOrder)
+          : [
+              { sectionKey: 'news_ticker', sectionLabel: 'Breaking News Ticker' },
+              { sectionKey: 'quick_access', sectionLabel: 'Quick Access Icons' },
+              { sectionKey: 'hero', sectionLabel: 'Hero Section' },
+              { sectionKey: 'latest_news', sectionLabel: 'Latest News' },
+              { sectionKey: 'video_news', sectionLabel: 'Video News' },
+              { sectionKey: 'web_stories', sectionLabel: 'Web Stories' },
+              { sectionKey: 'trending_sidebar', sectionLabel: 'Trending News' },
+              { sectionKey: 'weather', sectionLabel: 'Weather Info' }
+            ];
 
-      {/* HEADER BANNER SPONSORED AD */}
-      <div className="container" style={{ margin: '20px auto 0 auto', padding: '0 15px' }}>
-        <AdWidget placement="header" />
-      </div>
-
-      {/* MAIN 2-COLUMN SPLIT LAYOUT */}
-      <div className="container main-layout-container" style={{ marginTop: '20px', marginBottom: '30px' }}>
-        <div className="left-content-column">
-          {getSortedSections(['latest_news', 'crowd_reporter_highlight', 'institution_news']).map(sec => (
-            <React.Fragment key={sec.id || sec.sectionKey}>
-              {getRenderedSection(sec.sectionKey, sec.sectionLabel, sec.configJson)}
-            </React.Fragment>
-          ))}
-        </div>
-
-        <aside className="trending-sidebar" style={{ maxWidth: `${widgetWidth}px` }}>
-          <AdWidget placement="sidebar" />
-          {getSortedSections(['trending_sidebar', 'rss_aggregator', 'weather', 'live_tv', 'business_case', 'crowd_reporter']).map(sec => (
-            <React.Fragment key={sec.id || sec.sectionKey}>
-              {getRenderedSection(sec.sectionKey, sec.sectionLabel, sec.configJson)}
-            </React.Fragment>
-          ))}
-        </aside>
-      </div>
-
-      {/* BOTTOM FULL-WIDTH SECTIONS */}
-      {getSortedSections(['video_news', 'web_stories', 'news_digest']).map(sec => (
-        <React.Fragment key={sec.id || sec.sectionKey}>
-          {getRenderedSection(sec.sectionKey, sec.sectionLabel, sec.configJson)}
-        </React.Fragment>
-      ))}
+        return sorted.map((sec) => (
+          <React.Fragment key={sec.id || sec.sectionKey}>
+            {getRenderedSection(sec.sectionKey, sec.sectionLabel, sec.configJson)}
+          </React.Fragment>
+        ));
+      })()}
 
       {/* CROWD REPORTER MODAL */}
       {showReportModal && (

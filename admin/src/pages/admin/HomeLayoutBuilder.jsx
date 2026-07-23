@@ -27,6 +27,9 @@ const HomeLayoutBuilder = () => {
   const [undoStack, setUndoStack] = useState([]);
   const [draggedKey, setDraggedKey] = useState(null);
 
+  // View Mode: 'desktop' | 'mobile'
+  const [viewMode, setViewMode] = useState('desktop');
+
   // AI Widget Assistant & Modal State
   const [showAiModal, setShowAiModal] = useState(false);
 
@@ -479,11 +482,31 @@ const HomeLayoutBuilder = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {unsavedChanges && (
-            <div style={{ fontSize: '12px', color: '#D97706', background: '#FEF3C7', padding: '6px 12px', borderRadius: '6px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-              Unsaved changes
-            </div>
-          )}
+          {/* Viewport Switcher */}
+          <div style={{ display: 'flex', background: 'var(--bg-secondary, #F1F5F9)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+            <button
+              onClick={() => setViewMode('desktop')}
+              style={{
+                padding: '6px 12px', fontSize: '12px', fontWeight: 600, border: 'none', borderRadius: '6px', cursor: 'pointer',
+                background: viewMode === 'desktop' ? 'var(--bg-surface, #fff)' : 'transparent',
+                color: viewMode === 'desktop' ? 'var(--primary, #2563EB)' : 'var(--text-secondary)',
+                boxShadow: viewMode === 'desktop' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none'
+              }}
+            >
+              🖥️ Desktop View
+            </button>
+            <button
+              onClick={() => setViewMode('mobile')}
+              style={{
+                padding: '6px 12px', fontSize: '12px', fontWeight: 600, border: 'none', borderRadius: '6px', cursor: 'pointer',
+                background: viewMode === 'mobile' ? 'var(--bg-surface, #fff)' : 'transparent',
+                color: viewMode === 'mobile' ? 'var(--primary, #2563EB)' : 'var(--text-secondary)',
+                boxShadow: viewMode === 'mobile' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none'
+              }}
+            >
+              📱 Mobile View
+            </button>
+          </div>
 
           {draftSavedAlert && (
             <div style={{ fontSize: '12px', color: '#059669', background: '#D1FAE5', padding: '6px 12px', borderRadius: '6px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -586,7 +609,12 @@ const HomeLayoutBuilder = () => {
         </div>
 
         {/* Center: Scaled Visual Canvas */}
-        <div style={{ background: 'var(--bg-surface)', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{
+          background: 'var(--bg-surface)', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '16px',
+          width: viewMode === 'mobile' ? '410px' : '100%',
+          margin: viewMode === 'mobile' ? '0 auto' : '0',
+          transition: 'all 0.3s ease'
+        }}>
           
           {/* Simulated Browser Frame Header */}
           <div style={{ background: '#1E293B', borderRadius: '8px 8px 0 0', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#fff', fontSize: '12px' }}>
