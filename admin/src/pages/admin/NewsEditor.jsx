@@ -1124,83 +1124,175 @@ Draft Content to Proofread & Process:
                       placeholder="Brief summary..."
                     />
                   </div>
+
+                  {/* ── SEO & Meta Engine Section (Rendered Down Below Content Editor) ── */}
+                  <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '20px', background: 'var(--bg-secondary)', padding: '20px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                      <div>
+                        <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>🔍 SEO & Meta Engine Settings</h3>
+                        <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Automated or custom meta titles, description, keywords, and URL slug optimization.</p>
+                      </div>
+                      {form.seoScore > 0 && (
+                        <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 700, background: form.seoScore > 70 ? '#10B981' : '#F59E0B', color: '#fff' }}>
+                          SEO Score: {form.seoScore}/100
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>SEO Meta Title</label>
+                        <input 
+                          type="text" 
+                          value={form.metaTitle || ''} 
+                          onChange={e => set('metaTitle', e.target.value)} 
+                          placeholder="Optimized headline for search engines..."
+                          style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px', color: 'var(--text-primary)' }} 
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>URL Slug</label>
+                        <input 
+                          type="text" 
+                          value={form.slug || ''} 
+                          onChange={e => set('slug', e.target.value)} 
+                          placeholder="article-url-slug"
+                          style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px', color: 'var(--text-primary)' }} 
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>SEO Meta Description</label>
+                      <textarea 
+                        rows="3" 
+                        value={form.metaDescription || ''} 
+                        onChange={e => set('metaDescription', e.target.value)} 
+                        placeholder="Brief search result summary (max 160 chars)..."
+                        style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px', resize: 'vertical', color: 'var(--text-primary)' }} 
+                      />
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Focus Keywords (Comma Separated)</label>
+                        <input 
+                          type="text" 
+                          value={form.focusKeywords || ''} 
+                          onChange={e => set('focusKeywords', e.target.value)} 
+                          placeholder="primary, focus, keywords"
+                          style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px', color: 'var(--text-primary)' }} 
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>News Tags (Meta Keywords)</label>
+                        <input 
+                          type="text" 
+                          value={form.metaKeywords || ''} 
+                          onChange={e => set('metaKeywords', e.target.value)} 
+                          placeholder="news, breaking, tamil, india"
+                          style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px', color: 'var(--text-primary)' }} 
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Canonical URL</label>
+                      <input 
+                        type="text" 
+                        value={form.canonicalUrl || ''} 
+                        onChange={e => set('canonicalUrl', e.target.value)} 
+                        placeholder="https://king-tv.com/..."
+                        style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px', color: 'var(--text-primary)' }} 
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {/* ── SEO Tab (Unified Height & Grid Layout) ── */}
+              {/* ── SEO Tab (Dedicated View) ── */}
               {activeTab === 2 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1 }}>
-                  <div style={{ background: 'var(--bg-secondary)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 600 }}>SEO & Meta Engine</h3>
-                    <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Automated or custom meta titles, description, keywords, and URL slug optimization.</p>
-                  </div>
+                  <div style={{ background: 'var(--bg-secondary)', padding: '20px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                      <div>
+                        <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>🔍 SEO & Meta Engine Settings</h3>
+                        <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>Automated or custom meta titles, description, keywords, and URL slug optimization.</p>
+                      </div>
+                      {form.seoScore > 0 && (
+                        <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 700, background: form.seoScore > 70 ? '#10B981' : '#F59E0B', color: '#fff' }}>
+                          SEO Score: {form.seoScore}/100
+                        </span>
+                      )}
+                    </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                    <div>
-                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600 }}>SEO Meta Title</label>
-                      <input 
-                        type="text" 
-                        value={form.metaTitle} 
-                        onChange={e => set('metaTitle', e.target.value)} 
-                        placeholder="Optimized headline for search engines..."
-                        style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px' }} 
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>SEO Meta Title</label>
+                        <input 
+                          type="text" 
+                          value={form.metaTitle || ''} 
+                          onChange={e => set('metaTitle', e.target.value)} 
+                          placeholder="Optimized headline for search engines..."
+                          style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px', color: 'var(--text-primary)' }} 
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>URL Slug</label>
+                        <input 
+                          type="text" 
+                          value={form.slug || ''} 
+                          onChange={e => set('slug', e.target.value)} 
+                          placeholder="article-url-slug"
+                          style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px', color: 'var(--text-primary)' }} 
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: '20px' }}>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>SEO Meta Description</label>
+                      <textarea 
+                        rows="3" 
+                        value={form.metaDescription || ''} 
+                        onChange={e => set('metaDescription', e.target.value)} 
+                        placeholder="Brief search result summary (max 160 chars)..."
+                        style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px', resize: 'vertical', color: 'var(--text-primary)' }} 
                       />
                     </div>
-                    <div>
-                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600 }}>URL Slug</label>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Focus Keywords (Comma Separated)</label>
+                        <input 
+                          type="text" 
+                          value={form.focusKeywords || ''} 
+                          onChange={e => set('focusKeywords', e.target.value)} 
+                          placeholder="primary, focus, keywords"
+                          style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px', color: 'var(--text-primary)' }} 
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>News Tags (Meta Keywords)</label>
+                        <input 
+                          type="text" 
+                          value={form.metaKeywords || ''} 
+                          onChange={e => set('metaKeywords', e.target.value)} 
+                          placeholder="news, breaking, tamil, india"
+                          style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px', color: 'var(--text-primary)' }} 
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: '20px' }}>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Canonical URL</label>
                       <input 
                         type="text" 
-                        value={form.slug} 
-                        onChange={e => set('slug', e.target.value)} 
-                        placeholder="article-url-slug"
-                        style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px' }} 
+                        value={form.canonicalUrl || ''} 
+                        onChange={e => set('canonicalUrl', e.target.value)} 
+                        placeholder="https://king-tv.com/..."
+                        style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px', color: 'var(--text-primary)' }} 
                       />
                     </div>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600 }}>SEO Meta Description</label>
-                    <textarea 
-                      rows="3" 
-                      value={form.metaDescription} 
-                      onChange={e => set('metaDescription', e.target.value)} 
-                      placeholder="Brief search result summary (max 160 chars)..."
-                      style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px', resize: 'vertical' }} 
-                    />
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                    <div>
-                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600 }}>Focus Keywords (Comma Separated)</label>
-                      <input 
-                        type="text" 
-                        value={form.focusKeywords} 
-                        onChange={e => set('focusKeywords', e.target.value)} 
-                        placeholder="primary, focus, keywords"
-                        style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px' }} 
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600 }}>News Tags (Meta Keywords)</label>
-                      <input 
-                        type="text" 
-                        value={form.metaKeywords} 
-                        onChange={e => set('metaKeywords', e.target.value)} 
-                        placeholder="news, breaking, tamil, india"
-                        style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px' }} 
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 600 }}>Canonical URL</label>
-                    <input 
-                      type="text" 
-                      value={form.canonicalUrl} 
-                      onChange={e => set('canonicalUrl', e.target.value)} 
-                      placeholder="https://king-tv.com/..."
-                      style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', fontSize: '14px' }} 
-                    />
                   </div>
                 </div>
               )}
