@@ -14,6 +14,7 @@ import com.kingstv.repository.ObituaryFrameTemplateRepository;
 import com.kingstv.models.ObituaryFrameTemplate;
 
 import com.kingstv.models.User;
+import com.kingstv.models.Role;
 import com.kingstv.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -62,13 +63,16 @@ public class BackendJavaApplication implements CommandLineRunner {
         SpringApplication.run(BackendJavaApplication.class, args);
     }
 
+    @Autowired
+    private com.kingstv.services.LoginAttemptService loginAttemptService;
+
     @Override
     public void run(String... args) throws Exception {
-        updatePasswordIfPresent("admin@king24x7.com", "admin123");
-        updatePasswordIfPresent("vendor@king24x7.com", "vendor123");
-        updatePasswordIfPresent("editor@king24x7.com", "editor123");
-        updatePasswordIfPresent("reporter@king24x7.com", "reporter123");
-        updatePasswordIfPresent("user@king24x7.com", "user123");
+        updatePasswordIfPresent("admin@king24x7.com", "admin123", Role.SUPER_ADMIN, "Super Admin");
+        updatePasswordIfPresent("vendor@king24x7.com", "vendor123", Role.INSTITUTION_LOGIN, "Government Vendor");
+        updatePasswordIfPresent("editor@king24x7.com", "editor123", Role.CHIEF_EDITOR, "Chief Editor");
+        updatePasswordIfPresent("reporter@king24x7.com", "reporter123", Role.MOBILE_JOURNALIST, "Mobile Journalist");
+        updatePasswordIfPresent("user@king24x7.com", "user123", Role.READER, "Public Reader");
 
         seedCategories();
         seedFrameTemplates();
@@ -122,14 +126,27 @@ public class BackendJavaApplication implements CommandLineRunner {
         wishFrameTemplateRepository.save(t);
     }
 
-    private void updatePasswordIfPresent(String email, String rawPassword) {
-        Optional<User> userOpt = userRepository.findByEmail(email);
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            user.setPassword(passwordEncoder.encode(rawPassword));
-            userRepository.save(user);
-            System.out.println("Updated password for " + email);
+    private void updatePasswordIfPresent(String email, String rawPassword, String defaultRole, String fullName) {
+        String cleanEmail = email.toLowerCase().trim();
+        Optional<User> userOpt = userRepository.findByEmail(cleanEmail);
+        User user = userOpt.orElseGet(() -> {
+            User u = new User();
+            u.setEmail(cleanEmail);
+            u.setFullName(fullName);
+            u.setRole(defaultRole);
+            return u;
+        });
+
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        user.setProvider("LOCAL");
+        user.setIsActive(true);
+        user.setIsVerified(true);
+        userRepository.save(user);
+
+        if (loginAttemptService != null) {
+            loginAttemptService.loginSucceeded(cleanEmail);
         }
+        System.out.println("Seeded/Updated credentials and reset lockouts for: " + cleanEmail);
     }
 
 

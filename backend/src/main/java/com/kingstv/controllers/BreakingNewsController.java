@@ -53,31 +53,39 @@ public class BreakingNewsController {
         return getAll(search, "published", categoryId, districtId, page, size, sortBy, direction);
     }
 
-    @PostMapping("/saveUpdate")
+    @PostMapping({"/saveUpdate", "", "/"})
     public ResponseEntity<?> save(@RequestBody BreakingNews entity) {
-        if (entity.getTitle() == null || entity.getTitleTa() == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Title and Title (Tamil) are required"));
+        if (entity.getTitle() == null && entity.getTitleTa() == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Title or Title (Tamil) is required"));
+        }
+        if (entity.getTitle() == null) entity.setTitle(entity.getTitleTa());
+        if (entity.getTitleTa() == null) entity.setTitleTa(entity.getTitle());
+        if (entity.getStatus() == null || entity.getStatus().isEmpty()) {
+            entity.setStatus("published");
         }
         if (entity.getCreatedAt() == null) {
             entity.setCreatedAt(LocalDateTime.now());
+        }
+        if (entity.getPublishedAt() == null) {
+            entity.setPublishedAt(LocalDateTime.now());
         }
         entity.setUpdatedAt(LocalDateTime.now());
         BreakingNews saved = breakingNewsRepository.save(entity);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    @PutMapping("/saveUpdate")
+    @PutMapping({"/saveUpdate", "", "/"})
     public ResponseEntity<?> update(@RequestBody BreakingNews entity) {
         if (entity.getId() == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Id is required for update"));
+            return save(entity);
         }
         Optional<BreakingNews> opt = breakingNewsRepository.findById(entity.getId());
         if (opt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "BreakingNews not found"));
+            return save(entity);
         }
         BreakingNews existing = opt.get();
-        existing.setTitle(entity.getTitle());
-        existing.setTitleTa(entity.getTitleTa());
+        existing.setTitle(entity.getTitle() != null ? entity.getTitle() : entity.getTitleTa());
+        existing.setTitleTa(entity.getTitleTa() != null ? entity.getTitleTa() : entity.getTitle());
         existing.setShortDescription(entity.getShortDescription());
         existing.setContent(entity.getContent());
         existing.setImageUrl(entity.getImageUrl());
@@ -87,9 +95,9 @@ public class BreakingNewsController {
         existing.setSubcategoryId(entity.getSubcategoryId());
         existing.setDistrictId(entity.getDistrictId());
         existing.setPriority(entity.getPriority());
-        existing.setStatus(entity.getStatus());
-        existing.setBreaking(entity.getBreaking());
-        existing.setPublishedAt(entity.getPublishedAt());
+        existing.setStatus(entity.getStatus() != null ? entity.getStatus() : "published");
+        existing.setBreaking(entity.getBreaking() != null ? entity.getBreaking() : true);
+        existing.setPublishedAt(entity.getPublishedAt() != null ? entity.getPublishedAt() : LocalDateTime.now());
         existing.setUpdatedBy(entity.getUpdatedBy());
         existing.setUpdatedAt(LocalDateTime.now());
         

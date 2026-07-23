@@ -170,45 +170,50 @@ const HomeLayoutBuilder = () => {
   const sidebarSections = layout.filter(s => ['trending_sidebar', 'weather', 'business_case', 'crowd_reporter'].includes(s.sectionKey));
 
   return (
-    <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '2rem' }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       
-      {/* Left Main Dashboard */}
+      {/* Header */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1>Home Page Layout Builder</h1>
+            <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <Layout size={24} color="var(--primary)" /> Home Page Layout Builder
+            </h1>
             <p className="text-secondary">Rearrange web page sections, toggle visibility, and customize content feeds dynamically.</p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#10B981', fontSize: '0.85rem', fontWeight: 600 }}>
-            <CheckCircle size={15} /> Real-time sync enabled
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600 }}>
+            <CheckCircle size={16} /> Real-time sync enabled
           </div>
         </div>
+      </div>
 
-        {/* Layout Visualizer Mockup */}
-        <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '2rem', alignItems: 'start' }}>
+        
+        {/* Left Main Dashboard: Layout Visualizer Mockup */}
+        <div className="glass-panel" style={{ padding: '2rem' }}>
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
             <Layout size={20} color="var(--primary)" /> Live Page Structure Mockup
           </h3>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: '#090d16', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
             
             {/* Top / Header Sections */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px dashed var(--border-color)', paddingBottom: '1rem' }}>
-              <div style={{ textTransform: 'uppercase', fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700 }}>Header &amp; Global Banner Sections</div>
+              <div style={{ textTransform: 'uppercase', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.5px' }}>Header &amp; Global Banner Sections</div>
               {globalSections.map(s => {
                 const layoutIdx = layout.findIndex(item => item.id === s.id);
                 return (
-                  <div key={s.id} style={{ display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', background: s.isVisible ? 'rgba(179,115,42,0.1)' : '#111827', padding: '0.75rem 1rem', borderRadius: '8px', border: `1px solid ${s.isVisible ? 'var(--primary)' : 'rgba(255,255,255,0.05)'}`, opacity: s.isVisible ? 1 : 0.6 }}>
+                  <div key={s.id} style={{ display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', background: 'var(--body-bg)', padding: '0.75rem 1rem', borderRadius: '8px', border: `1px solid ${s.isVisible ? 'var(--primary)' : 'var(--border-color)'}`, opacity: s.isVisible ? 1 : 0.5, transition: 'all 0.2s' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <span style={{ fontSize: '0.75rem', background: 'var(--bg-primary)', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>Global</span>
-                      <strong style={{ fontSize: '0.85rem' }}>{s.sectionLabel}</strong>
+                      <span style={{ fontSize: '0.7rem', background: 'var(--bg-secondary)', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>Global</span>
+                      <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>{s.sectionLabel}</strong>
                     </div>
                     <div style={{ display: 'flex', gap: '0.25rem' }}>
-                      <button className="btn-icon" disabled={layoutIdx === 0} onClick={() => moveItem(layoutIdx, 'up')} style={{ padding: '2px' }}><ArrowUp size={14} /></button>
-                      <button className="btn-icon" disabled={layoutIdx === layout.length - 1} onClick={() => moveItem(layoutIdx, 'down')} style={{ padding: '2px' }}><ArrowDown size={14} /></button>
-                      <button className="btn-icon" onClick={() => handleToggle(layoutIdx)} style={{ padding: '2px', color: s.isVisible ? '#10B981' : 'var(--text-muted)' }}>{s.isVisible ? <Eye size={14} /> : <EyeOff size={14} />}</button>
-                      <button className="btn-icon" onClick={() => openEditModal(s)} style={{ padding: '2px', color: 'var(--primary)' }}><Edit2 size={14} /></button>
-                      <button className="btn-icon" onClick={() => handleDeleteSection(s.id)} style={{ padding: '2px', color: '#EF4444' }}><Trash2 size={14} /></button>
+                      <button className="btn-icon" disabled={layoutIdx === 0} onClick={() => moveItem(layoutIdx, 'up')}><ArrowUp size={14} /></button>
+                      <button className="btn-icon" disabled={layoutIdx === layout.length - 1} onClick={() => moveItem(layoutIdx, 'down')}><ArrowDown size={14} /></button>
+                      <button className="btn-icon" onClick={() => handleToggle(layoutIdx)} style={{ color: s.isVisible ? '#10B981' : 'var(--text-muted)' }}>{s.isVisible ? <Eye size={14} /> : <EyeOff size={14} />}</button>
+                      <button className="btn-icon" onClick={() => openEditModal(s)}><Edit2 size={14} /></button>
+                      <button className="btn-icon" onClick={() => handleDeleteSection(s.id)} style={{ color: '#EF4444' }}><Trash2 size={14} /></button>
                     </div>
                   </div>
                 );
@@ -216,27 +221,27 @@ const HomeLayoutBuilder = () => {
             </div>
 
             {/* Split Column View */}
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1.25rem' }}>
               
               {/* Left Column */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <div style={{ textTransform: 'uppercase', fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700 }}>Left Main Content Column</div>
+                <div style={{ textTransform: 'uppercase', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.5px' }}>Main Content Column</div>
                 {mainColSections.length === 0 ? (
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', padding: '1rem', textAlign: 'center', background: '#111827', borderRadius: '8px' }}>Empty</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', padding: '1rem', textAlign: 'center', background: 'var(--body-bg)', borderRadius: '8px', border: '1px dashed var(--border-color)' }}>Empty</div>
                 ) : mainColSections.map(s => {
                   const layoutIdx = layout.findIndex(item => item.id === s.id);
                   return (
-                    <div key={s.id} style={{ display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', background: s.isVisible ? 'rgba(59,130,246,0.1)' : '#111827', padding: '0.75rem 1rem', borderRadius: '8px', border: `1px solid ${s.isVisible ? '#3B82F6' : 'rgba(255,255,255,0.05)'}`, opacity: s.isVisible ? 1 : 0.6 }}>
+                    <div key={s.id} style={{ display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', background: 'var(--body-bg)', padding: '0.75rem 1rem', borderRadius: '8px', border: `1px solid ${s.isVisible ? 'var(--primary)' : 'var(--border-color)'}`, opacity: s.isVisible ? 1 : 0.5, transition: 'all 0.2s' }}>
                       <div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>{s.sectionLabel}</div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>{s.sectionLabel}</div>
                         <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Key: <code>{s.sectionKey}</code></div>
                       </div>
                       <div style={{ display: 'flex', gap: '0.25rem' }}>
-                        <button className="btn-icon" disabled={layoutIdx === 0} onClick={() => moveItem(layoutIdx, 'up')} style={{ padding: '2px' }}><ArrowUp size={14} /></button>
-                        <button className="btn-icon" disabled={layoutIdx === layout.length - 1} onClick={() => moveItem(layoutIdx, 'down')} style={{ padding: '2px' }}><ArrowDown size={14} /></button>
-                        <button className="btn-icon" onClick={() => handleToggle(layoutIdx)} style={{ padding: '2px', color: s.isVisible ? '#10B981' : 'var(--text-muted)' }}>{s.isVisible ? <Eye size={14} /> : <EyeOff size={14} />}</button>
-                        <button className="btn-icon" onClick={() => openEditModal(s)} style={{ padding: '2px', color: 'var(--primary)' }}><Edit2 size={14} /></button>
-                        <button className="btn-icon" onClick={() => handleDeleteSection(s.id)} style={{ padding: '2px', color: '#EF4444' }}><Trash2 size={14} /></button>
+                        <button className="btn-icon" disabled={layoutIdx === 0} onClick={() => moveItem(layoutIdx, 'up')}><ArrowUp size={14} /></button>
+                        <button className="btn-icon" disabled={layoutIdx === layout.length - 1} onClick={() => moveItem(layoutIdx, 'down')}><ArrowDown size={14} /></button>
+                        <button className="btn-icon" onClick={() => handleToggle(layoutIdx)} style={{ color: s.isVisible ? '#10B981' : 'var(--text-muted)' }}>{s.isVisible ? <Eye size={14} /> : <EyeOff size={14} />}</button>
+                        <button className="btn-icon" onClick={() => openEditModal(s)}><Edit2 size={14} /></button>
+                        <button className="btn-icon" onClick={() => handleDeleteSection(s.id)} style={{ color: '#EF4444' }}><Trash2 size={14} /></button>
                       </div>
                     </div>
                   );
@@ -245,23 +250,23 @@ const HomeLayoutBuilder = () => {
 
               {/* Sidebar Column */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <div style={{ textTransform: 'uppercase', fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700 }}>Right Sidebar Widget Column</div>
+                <div style={{ textTransform: 'uppercase', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.5px' }}>Sidebar Widget Column</div>
                 {sidebarSections.length === 0 ? (
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', padding: '1rem', textAlign: 'center', background: '#111827', borderRadius: '8px' }}>Empty</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', padding: '1rem', textAlign: 'center', background: 'var(--body-bg)', borderRadius: '8px', border: '1px dashed var(--border-color)' }}>Empty</div>
                 ) : sidebarSections.map(s => {
                   const layoutIdx = layout.findIndex(item => item.id === s.id);
                   return (
-                    <div key={s.id} style={{ display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', background: s.isVisible ? 'rgba(16,185,129,0.1)' : '#111827', padding: '0.75rem', borderRadius: '8px', border: `1px solid ${s.isVisible ? '#10B981' : 'rgba(255,255,255,0.05)'}`, opacity: s.isVisible ? 1 : 0.6 }}>
-                      <div style={{ overflow: 'hidden' }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.sectionLabel}</div>
+                    <div key={s.id} style={{ display: 'flex', flexDirection: 'column', background: 'var(--body-bg)', padding: '0.75rem', borderRadius: '8px', border: `1px solid ${s.isVisible ? 'var(--primary)' : 'var(--border-color)'}`, opacity: s.isVisible ? 1 : 0.5, transition: 'all 0.2s' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.sectionLabel}</div>
                         <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}><code>{s.sectionKey}</code></div>
                       </div>
-                      <div style={{ display: 'flex', gap: '0.2rem', flexShrink: 0 }}>
-                        <button className="btn-icon" disabled={layoutIdx === 0} onClick={() => moveItem(layoutIdx, 'up')} style={{ padding: '2px' }}><ArrowUp size={12} /></button>
-                        <button className="btn-icon" disabled={layoutIdx === layout.length - 1} onClick={() => moveItem(layoutIdx, 'down')} style={{ padding: '2px' }}><ArrowDown size={12} /></button>
-                        <button className="btn-icon" onClick={() => handleToggle(layoutIdx)} style={{ padding: '2px', color: s.isVisible ? '#10B981' : 'var(--text-muted)' }}>{s.isVisible ? <Eye size={12} /> : <EyeOff size={12} />}</button>
-                        <button className="btn-icon" onClick={() => openEditModal(s)} style={{ padding: '2px', color: 'var(--primary)' }}><Edit2 size={12} /></button>
-                        <button className="btn-icon" onClick={() => handleDeleteSection(s.id)} style={{ padding: '2px', color: '#EF4444' }}><Trash2 size={12} /></button>
+                      <div style={{ display: 'flex', gap: '0.2rem', flexShrink: 0, justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '0.5rem' }}>
+                        <button className="btn-icon" disabled={layoutIdx === 0} onClick={() => moveItem(layoutIdx, 'up')}><ArrowUp size={12} /></button>
+                        <button className="btn-icon" disabled={layoutIdx === layout.length - 1} onClick={() => moveItem(layoutIdx, 'down')}><ArrowDown size={12} /></button>
+                        <button className="btn-icon" onClick={() => handleToggle(layoutIdx)} style={{ color: s.isVisible ? '#10B981' : 'var(--text-muted)' }}>{s.isVisible ? <Eye size={12} /> : <EyeOff size={12} />}</button>
+                        <button className="btn-icon" onClick={() => openEditModal(s)}><Edit2 size={12} /></button>
+                        <button className="btn-icon" onClick={() => handleDeleteSection(s.id)} style={{ color: '#EF4444' }}><Trash2 size={12} /></button>
                       </div>
                     </div>
                   );

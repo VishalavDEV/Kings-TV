@@ -610,10 +610,11 @@ public class DataInitializer {
     }
 
     private void seedUser(String name, String email, String password, String role) {
-        Optional<User> existing = userRepository.findByEmail(email);
+        String cleanEmail = email.toLowerCase().trim();
+        Optional<User> existing = userRepository.findByEmail(cleanEmail);
         User u = existing.orElse(new User());
         u.setFullName(name);
-        u.setEmail(email);
+        u.setEmail(cleanEmail);
         u.setPassword(passwordEncoder.encode(password));
         u.setRole(role);
         u.setProvider("LOCAL");

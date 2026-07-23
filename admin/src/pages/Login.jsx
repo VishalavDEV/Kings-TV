@@ -24,6 +24,8 @@ const Login = () => {
       const role = result.role;
       if (role === 'MOBILE_JOURNALIST' || role === 'INSTITUTION_LOGIN') {
         navigate('/journalist/posts');
+      } else if (role === 'READER') {
+        window.location.href = '/';
       } else {
         navigate('/admin/dashboard');
       }
