@@ -93,10 +93,7 @@ const Header = () => {
   const [weatherTemp, setWeatherTemp] = useState('32°C');
 
   useEffect(() => {
-    // Fetch live weather for default district (Chennai) on load from backend
-    const baseApi = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api/v1';
-    fetch(`${baseApi}/weather?city=Chennai`)
-      .then(res => res.json())
+    fetchApi('/weather?city=Chennai')
       .then(data => {
         if (data && data.temp) {
           setWeatherTemp(data.temp);

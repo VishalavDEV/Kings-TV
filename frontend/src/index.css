@@ -72,15 +72,15 @@
 }
 
 body {
-  font-family: 'Noto Sans Tamil', 'Segoe UI', sans-serif;
+  font-family: var(--font-primary, 'Noto Sans Tamil', 'Segoe UI', sans-serif);
 }
 
 html[lang="en"] body {
-  font-family: 'Outfit', 'Segoe UI', sans-serif;
+  font-family: var(--font-primary, 'Outfit', 'Segoe UI', sans-serif);
 }
 
 html[lang="ta"] body {
-  font-family: 'Noto Sans Tamil', 'Mukta Malar', 'Segoe UI', sans-serif;
+  font-family: var(--font-primary, 'Noto Sans Tamil', 'Mukta Malar', 'Segoe UI', sans-serif);
 }
 
 body {

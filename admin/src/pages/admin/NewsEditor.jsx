@@ -12,16 +12,14 @@ import { useAuth } from '../../context/AuthContext';
 const DEFAULT_GEMINI_KEY = '';
 
 export let activeAiConfig = { 
-  apiKey: localStorage.getItem('ai.llm_api_key') || localStorage.getItem('ai_llm_api_key') || localStorage.getItem('gemini_api_key') || DEFAULT_GEMINI_KEY, 
+  apiKey: '', 
   apiUrl: '', 
-  model: localStorage.getItem('ai.llm_model') || 'gemini-2.0-flash' 
+  model: 'gemini-2.0-flash' 
 };
 
 export const getGeminiUrl = (modelOverride) => {
-  const model = modelOverride || activeAiConfig.model || localStorage.getItem('ai.llm_model') || 'gemini-2.0-flash';
-  const apiKey = activeAiConfig.apiKey || localStorage.getItem('ai.llm_api_key') || localStorage.getItem('ai_llm_api_key') || localStorage.getItem('gemini_api_key') || DEFAULT_GEMINI_KEY;
-  if (activeAiConfig.apiUrl) return `${activeAiConfig.apiUrl}?key=${apiKey}`;
-  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const model = modelOverride || activeAiConfig.model || 'gemini-2.0-flash';
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 };
 
 const callGemini = async (prompt) => {
@@ -259,29 +257,33 @@ const NewsEditor = () => {
 
   // API Key Modal State
   const [keyModalOpen, setKeyModalOpen] = useState(false);
-  const [apiKeyInput, setApiKeyInput] = useState(activeAiConfig.apiKey || localStorage.getItem('ai.llm_api_key') || '');
-  const [apiModelInput, setApiModelInput] = useState(activeAiConfig.model || 'gemini-2.0-flash');
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [apiModelInput, setApiModelInput] = useState('gemini-2.0-flash');
 
   const handleSaveApiKey = async () => {
     const key = apiKeyInput.trim();
     if (!key) return showMsg('Please enter a valid Gemini API Key', true);
+    if (!key.startsWith('AIzaSy')) return showMsg('Invalid key format. Google AI Studio keys start with "AIzaSy".', true);
 
-    activeAiConfig.apiKey = key;
     activeAiConfig.model = apiModelInput;
-    localStorage.setItem('ai.llm_api_key', key);
-    localStorage.setItem('ai_llm_api_key', key);
-    localStorage.setItem('gemini_api_key', key);
-    localStorage.setItem('ai.llm_model', apiModelInput);
 
     try {
       await api.post('/admin/config', [
         { configKey: 'ai.llm_api_key', configValue: key },
         { configKey: 'ai.llm_model', configValue: apiModelInput }
-      ]).catch(() => {});
-    } catch(e) {}
-
-    setKeyModalOpen(false);
-    showMsg('🔑 Gemini API Key configured and saved successfully!');
+      ]);
+      await api.put('/admin/ai-config/gemini', {
+        provider: 'gemini',
+        apiKey: key,
+        model: apiModelInput,
+        isActive: true
+      }).catch(() => {});
+      setApiKeyInput('');
+      setKeyModalOpen(false);
+      showMsg('🔑 Gemini API Key saved securely on server!');
+    } catch(e) {
+      showMsg('Error saving API Key to server.', true);
+    }
   };
 
   const getActiveEditor = () => activeTab === 0 ? editorRefTa.current : editorRefEn.current;
@@ -548,7 +550,6 @@ const NewsEditor = () => {
     api.get('/admin/config').then(res => {
       if (Array.isArray(res.data)) {
         res.data.forEach(item => {
-          if (item.configKey === 'ai.llm_api_key' && item.configValue) activeAiConfig.apiKey = item.configValue;
           if (item.configKey === 'ai.llm_api_url' && item.configValue) activeAiConfig.apiUrl = item.configValue;
           if (item.configKey === 'ai.llm_model' && item.configValue) activeAiConfig.model = item.configValue;
         });
@@ -653,28 +654,12 @@ const NewsEditor = () => {
     const baseContent = sourceTexts || form.contentTa || form.contentEn;
     const catNames = categories.map(c => `${c.id}:${c.nameEn || c.name}`).join(', ');
     
-    const prompt = `You are a professional news editor. Given the following source notes/documents, generate a complete, ready-to-publish news article in both English and Tamil. Return ONLY a valid JSON object matching this exact schema, with no markdown formatting or explanation outside the JSON:
-
-{
-  "titleEn": "English Title (max 12 words)",
-  "titleTa": "Tamil Title (max 12 words)",
-  "contentEn": "Full professional English news article with HTML paragraphs <p>",
-  "contentTa": "Full professional Tamil news article with HTML paragraphs <p>",
-  "excerptEn": "1-2 sentence English summary",
-  "excerptTa": "1-2 sentence Tamil summary",
-  "seoTitle": "SEO optimized title max 60 chars",
-  "metaDescription": "SEO description max 160 chars",
-  "metaKeywords": "comma, separated, tags",
-  "focusKeywords": "primary, keywords",
-  "slug": "english-url-slug",
-  "categoryId": "Suggest the best category ID from this list: ${catNames}"
-}
-
-Source Notes:
-"${baseContent.substring(0, 3000)}"`;
-
     try {
-      const raw = await callGemini(prompt);
+      const res = await api.post('/admin/ai-config/generate-draft', {
+        baseContent,
+        categoryList: catNames
+      });
+      const raw = res.data?.resultText || '';
       const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
       
       setForm(f => ({
@@ -699,7 +684,8 @@ Source Notes:
       showMsg('Draft generation complete!');
     } catch (err) {
       console.error(err);
-      showMsg('Draft generation failed. Try again.', true);
+      const errDetail = err.response?.data?.message || err.message || 'Draft generation failed. Try again.';
+      showMsg(`Draft generation error: ${errDetail}`, true);
     } finally {
       setAiGeneratingDraft(false);
       setAiDraftProgress('');
@@ -723,39 +709,12 @@ Source Notes:
 
     const catNames = categories.map(c => `${c.id}:${c.nameEn || c.name}`).join(', ');
 
-    const prompt = `You are a world-class news editor and SEO expert.
-Given the following draft news content (which may contain spelling, grammar, punctuation, or formatting mistakes), perform the following:
-1. Proofread and correct all spelling, grammar, typography, and phrasing mistakes. Return production-ready HTML for both Tamil and English versions.
-2. Generate optimized headlines (Tamil Title & English Title).
-3. Generate concise 1-2 sentence excerpts (Tamil & English).
-4. Generate complete SEO metadata: Meta Title (max 60 chars), Meta Description (max 160 chars), Focus Keywords, News Tags, clean English URL Slug.
-5. Suggest the best category ID from this list: ${catNames}.
-6. Infer or suggest News Source/Agency (e.g. Kings TV Desk) and News Location/City (e.g. Chennai).
-
-Return ONLY a valid JSON object matching this schema with NO markdown formatting outside the JSON:
-
-{
-  "titleTa": "Tamil Title",
-  "titleEn": "English Title",
-  "contentTa": "Proofread corrected HTML for Tamil",
-  "contentEn": "Proofread corrected HTML for English",
-  "shortDescTa": "1-2 sentence Tamil summary",
-  "shortDescEn": "1-2 sentence English summary",
-  "metaTitle": "SEO Meta Title max 60 chars",
-  "metaDescription": "SEO Meta Description max 160 chars",
-  "focusKeywords": "primary, keywords",
-  "metaKeywords": "news, tags, comma, separated",
-  "slug": "english-url-slug",
-  "categoryId": "suggested category ID",
-  "suggestedSource": "Kings TV Desk",
-  "suggestedLocation": "Chennai"
-}
-
-Draft Content to Proofread & Process:
-"${baseRaw.substring(0, 4000)}"`;
-
     try {
-      const raw = await callGemini(prompt);
+      const res = await api.post('/admin/ai-config/proofread-autofill', {
+        baseContent: baseRaw,
+        categoryList: catNames
+      });
+      const raw = res.data?.resultText || '';
       let parsed = {};
       try {
         const cleanText = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
@@ -791,7 +750,8 @@ Draft Content to Proofread & Process:
       showMsg('⚡ AI Grammar Check & Auto-Fill completed! All fields verified and filled.');
     } catch (err) {
       console.error(err);
-      showMsg(`AI Auto-Fill error: ${err.message || 'Please check Gemini API Key in settings.'}`, true);
+      const errDetail = err.response?.data?.message || err.message || 'Please check Gemini API Key in settings.';
+      showMsg(`AI Auto-Fill error: ${errDetail}`, true);
     } finally {
       setAiProofreading(false);
     }
