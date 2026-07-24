@@ -73,7 +73,7 @@ public class DealsController {
             return ResponseEntity.badRequest().body(Map.of("message", "Deals can only be created for KYC approved business listings"));
         }
 
-        deal.setStatus("pending");
+        deal.setStatus("approved");
         deal.setRedemptionCount(0);
         deal.setViewCount(0);
         
@@ -168,7 +168,7 @@ public class DealsController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Deal not found"));
         }
         Deal deal = dealOpt.get();
-        deal.setStatus("pending");
+        deal.setStatus("approved");
         if (request.containsKey("validUntil")) {
             deal.setValidUntil(LocalDateTime.parse(request.get("validUntil")));
         } else {

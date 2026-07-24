@@ -6,22 +6,50 @@ import UptimeStatus from "../components/common/UptimeStatus";
 import { Users, FileText, Activity, TrendingUp, BarChart2, Plus, Radio, Clock, Eye, AlertCircle, Send, Inbox, ShieldAlert, ChevronRight } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid, Legend } from "recharts";
 
-const StatCard = ({ label, value, icon: Icon, color, subLabel, subColor }) => (
-  <div className="glass-panel stat-card" style={{ padding: "1.5rem", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-      <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 600 }}>{label}</div>
-      <div style={{ color, padding: "0.5rem", background: `${color}15`, borderRadius: "8px" }}>
-        <Icon size={20} />
+const StatCard = ({ label, value, icon: Icon, color, subLabel, subColor, linkTo }) => {
+  const navigate = useNavigate();
+  return (
+    <div 
+      className="glass-panel stat-card" 
+      onClick={() => linkTo && navigate(linkTo)}
+      style={{ 
+        padding: "1.5rem", 
+        borderRadius: "12px", 
+        display: "flex", 
+        flexDirection: "column", 
+        gap: "0.5rem",
+        cursor: linkTo ? "pointer" : "default",
+        transition: "all 0.2s ease"
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 600 }}>{label}</div>
+        <div 
+          onClick={(e) => { e.stopPropagation(); if (linkTo) navigate(linkTo); }}
+          style={{ 
+            color, 
+            padding: "0.5rem", 
+            background: `${color}18`, 
+            borderRadius: "8px", 
+            cursor: linkTo ? "pointer" : "default",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+          title={`Go to ${label}`}
+        >
+          <Icon size={20} />
+        </div>
       </div>
+      <div style={{ fontSize: "2rem", fontWeight: 800, color: "var(--text-primary)" }}>{value ?? "-"}</div>
+      {subLabel && (
+        <div style={{ fontSize: "0.75rem", color: subColor || "var(--text-muted)", fontWeight: 500 }}>
+          {subLabel}
+        </div>
+      )}
     </div>
-    <div style={{ fontSize: "2rem", fontWeight: 800, color: "var(--text-primary)" }}>{value ?? "-"}</div>
-    {subLabel && (
-      <div style={{ fontSize: "0.75rem", color: subColor || "var(--text-muted)", fontWeight: 500 }}>
-        {subLabel}
-      </div>
-    )}
-  </div>
-);
+  );
+};
 
 const QuickPublishWidget = ({ onPublished }) => {
   const [form, setForm] = useState({ titleTa: "", titleEn: "", categoryId: "", isBreaking: false });
@@ -148,10 +176,10 @@ const Dashboard = () => {
         <>
           {/* KPI Stat Cards Grid */}
           <div className="stats-grid">
-            <StatCard label="Total Views" value={newsPerf?.totalViews?.toLocaleString() || "0"} icon={Eye} color="#3B82F6" subLabel="Total video & article views" />
-            <StatCard label="Published News" value={newsPerf?.publishedCount?.toLocaleString() || "0"} icon={FileText} color="var(--primary)" subLabel="Articles live on portal" />
-            <StatCard label="Pending Review" value={counts.pendingArticles || "0"} icon={Inbox} color="#F59E0B" subLabel="Submitted for approval" />
-            <StatCard label="Active Authors" value={kpis?.activeUsers || "0"} icon={Users} color="#10B981" subLabel="Content creators online" />
+            <StatCard label="Total Views" value={newsPerf?.totalViews?.toLocaleString() || "0"} icon={Eye} color="#3B82F6" subLabel="Total video & article views" linkTo="/admin/analytics" />
+            <StatCard label="Published News" value={newsPerf?.publishedCount?.toLocaleString() || "0"} icon={FileText} color="var(--primary)" subLabel="Articles live on portal" linkTo="/admin/news" />
+            <StatCard label="Pending Review" value={counts.pendingArticles || "0"} icon={Inbox} color="#F59E0B" subLabel="Submitted for approval" linkTo="/admin/content" />
+            <StatCard label="Active Authors" value={kpis?.activeUsers || "0"} icon={Users} color="#10B981" subLabel="Content creators online" linkTo="/admin/users" />
           </div>
 
           {/* Charts & Graphs Row */}

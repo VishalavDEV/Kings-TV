@@ -5,6 +5,7 @@ import { ThemeContext } from '../context/ThemeContext';
 import { fetchApi, getImageUrl } from '../utils/api';
 import AdWidget from '../components/AdWidget';
 import SkeletonLoader from '../components/SkeletonLoader';
+import GenericPageRenderer from '../components/GenericPageRenderer';
 import { resolveHandleToChannelId, fetchChannelVideos } from '../services/youtubeService';
 
 const Home = () => {
@@ -27,15 +28,10 @@ const Home = () => {
     { nameEn: 'Paddy (Quintal)', nameTa: 'நெல் (குவிண்டால்)', price: '₹2,300', change: '+₹75' },
     { nameEn: 'Cotton (Candy)', nameTa: 'பருத்தி (கேண்டி)', price: '₹57,500', change: '₹0' }
   ]);
-  const initialTickers = [
-    lang === 'en' ? "Paddy procurement price increased - farmers express delight!" : "🌾 நெல் கொள்முதல் விலை உயர்வு - விவசாயிகள் மகிழ்ச்சி",
-    lang === 'en' ? "Vijay 69th movie announcement sends fans into celebration mode!" : "🎬 விஜய் 69-வது படம் அறிவிப்பு - ரசிகர்கள் கொண்டாட்டம்",
-    lang === 'en' ? "Class 12 board results to be declared soon - education department updates." : "📚 +2 தேர்வு முடிவுகள் விரைவில் - கல்வித்துறை தகவல்",
-    lang === 'en' ? "Electricity tariff hike in Chennai creates public concern." : "⚡ சென்னையில் மின் கட்டணம் உயர்வு - நுகர்வோர் அதிருப்தி",
-    lang === 'en' ? "New Vande Bharat rail service introduced by Southern Railway." : "🚆 புதிய வந்தே பாரத் ரயில் சேவை அறிமுகம் - தெற்கு ரயில்வே",
-    lang === 'en' ? "Heavy rain alert issued for tomorrow in Tamil Nadu." : "🔴 தமிழகத்தில் நாளை முதல் கனமழை எச்சரிக்கை - வானிலை மையம்"
+  const defaultTickers = [
+    lang === 'en' ? "Welcome to KINGS 24x7 Breaking News Stream" : "🔴 கிங்ஸ் 24x7 நேரலை அவசர செய்திகள்"
   ];
-  const [tickers, setTickers] = useState(initialTickers);
+  const [tickers, setTickers] = useState([]);
   const [stories, setStories] = useState([]);
   const [weatherData, setWeatherData] = useState({
     temp: '32°C',
@@ -106,19 +102,31 @@ const Home = () => {
         setArticles([]);
       });
 
-    const pBreakingNews = fetchApi('/breaking-news/getAllWeb?size=10')
+    const pBreakingNews = fetchApi('/breaking-news/getAllWeb?size=50')
       .then(data => {
-        const list = data && Array.isArray(data.content) ? data.content : [];
-        if (list.length > 0) {
-          const formatted = list.map(item => (lang === 'en' ? item.title : item.titleTa) || item.title);
-          setTickers(formatted);
-        } else {
-          setTickers(initialTickers);
+        let list = [];
+        if (data && Array.isArray(data.content)) {
+          list = data.content;
+        } else if (Array.isArray(data)) {
+          list = data;
         }
+        if (list.length > 0) {
+          const formatted = list.map(item => {
+            if (typeof item === 'string') return item;
+            const tTa = item.titleTa || item.title_ta;
+            const tEn = item.titleEn || item.title_en || item.title;
+            return (lang === 'en' ? (tEn || tTa) : (tTa || tEn)) || item.title || item.titleTa;
+          }).filter(Boolean);
+          if (formatted.length > 0) {
+            setTickers(formatted);
+            return;
+          }
+        }
+        setTickers(defaultTickers);
       })
       .catch(err => {
-        console.warn("Could not load breaking news from API, using fallback", err);
-        setTickers(initialTickers);
+        console.warn("Could not load breaking news from API", err);
+        setTickers(defaultTickers);
       });
 
     const pWebStories = fetchApi('/web-stories/getAllWeb?size=6')
@@ -397,13 +405,14 @@ const Home = () => {
   }, []);
 
   const getSortedSections = (keys) => {
-    if (layoutSections.length === 0) {
-      // Fallback order matching standard design
-      return keys.map((k, idx) => ({ sectionKey: k, isVisible: true, displayOrder: idx }));
+    if (!layoutSections || layoutSections.length === 0) {
+      return keys.map((key, idx) => ({ sectionKey: key, sectionLabel: '', displayOrder: idx + 1 }));
     }
-    return layoutSections
-      .filter(s => keys.includes(s.sectionKey) && s.isVisible)
-      .sort((a, b) => a.displayOrder - b.displayOrder);
+    const filtered = layoutSections.filter(s => keys.includes(s.sectionKey) && s.isVisible !== false);
+    if (filtered.length > 0) {
+      return filtered.sort((a, b) => a.displayOrder - b.displayOrder);
+    }
+    return keys.map((key, idx) => ({ sectionKey: key, sectionLabel: '', displayOrder: idx + 1 }));
   };
 
   const handleSubmitReport = (e) => {
@@ -620,50 +629,67 @@ const Home = () => {
     );
   };
 
-  const renderLatestNews = () => {
+  const renderLatestNews = (label, configJson) => {
+    let displayArticles = articles;
+    try {
+      const cfg = typeof configJson === 'string' ? JSON.parse(configJson) : (configJson || {});
+      if (cfg.categoryId) {
+        displayArticles = displayArticles.filter(a => String(a.categoryId) === String(cfg.categoryId));
+      }
+      if (cfg.limit) {
+        displayArticles = displayArticles.slice(0, cfg.limit);
+      } else {
+        displayArticles = displayArticles.slice(0, 6);
+      }
+    } catch (e) {
+      displayArticles = articles.slice(0, 6);
+    }
+
     return (
-      <section className="news-section">
-        <div className="section-title">
-          <h2><i className="fas fa-newspaper"></i> {lang === 'en' ? 'Latest News' : 'சமீபத்திய செய்திகள்'}</h2>
-        </div>
-        <div className="news-grid-3" id="newsGrid">
-          {latestGrid.length === 0 ? (
-            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#64748B' }}>
-              <i className="fas fa-inbox fa-3x" style={{ marginBottom: '15px', opacity: 0.5 }}></i>
-              <h3>{lang === 'en' ? 'No news published yet' : 'இன்னும் செய்திகள் வெளியிடப்படவில்லை'}</h3>
-            </div>
-          ) : latestGrid.map((art, idx) => {
-            const gridCat = getCategoryDetails(art.categoryId);
-            return (
-              <div className={`news-card theme-${gridCat.slug}`} key={art.id || art.article_id}>
-                <div 
-                  className="card-img" 
-                  style={{ 
-                    background: art.imageUrl ? `url(${getImageUrl(art.imageUrl)}) center/cover` : gradients[idx % gradients.length] 
-                  }}
-                >
-                  <span className="cat-badge" style={{ background: 'var(--category-color, var(--primary))' }}>
-                    {lang === 'en' ? gridCat.en : gridCat.ta}
-                  </span>
-                </div>
-                <div className="card-body">
-                  <h3>
-                    <Link to={`/article/${art.id || art.article_id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                      {lang === 'en' ? art.titleEn : art.titleTa}
-                    </Link>
-                  </h3>
-                  <p>
-                    {lang === 'en' ? art.shortDescEn : art.shortDescTa}
-                  </p>
-                  <div className="card-meta">
-                    <span><i className="far fa-clock"></i> 1 Hr Ago</span>
-                    <span><i className="far fa-eye"></i> {art.viewsCount || 340}</span>
-                    <span><i className="far fa-clock"></i> {lang === 'en' ? `${art.readingTime || 1} Min Read` : `${art.readingTime || 1} நிமிட வாசிப்பு`}</span>
+      <section className="news-section" style={{ margin: '20px 0' }}>
+        <div className="container">
+          <div className="section-title" style={{ marginBottom: '15px' }}>
+            <h2><i className="fas fa-newspaper"></i> {label || (lang === 'en' ? 'Latest News' : 'சமீபத்திய செய்திகள்')}</h2>
+          </div>
+          <div className="news-grid-3" id="newsGrid">
+            {displayArticles.length === 0 ? (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#64748B' }}>
+                <i className="fas fa-inbox fa-3x" style={{ marginBottom: '15px', opacity: 0.5 }}></i>
+                <h3>{lang === 'en' ? 'No news published yet' : 'இன்னும் செய்திகள் வெளியிடப்படவில்லை'}</h3>
+              </div>
+            ) : displayArticles.map((art, idx) => {
+              const gridCat = getCategoryDetails(art.categoryId);
+              return (
+                <div className={`news-card theme-${gridCat.slug}`} key={art.id || art.article_id || idx}>
+                  <div 
+                    className="card-img" 
+                    style={{ 
+                      background: art.imageUrl ? `url(${getImageUrl(art.imageUrl)}) center/cover` : gradients[idx % gradients.length] 
+                    }}
+                  >
+                    <span className="cat-badge" style={{ background: 'var(--category-color, var(--primary))' }}>
+                      {lang === 'en' ? gridCat.en : gridCat.ta}
+                    </span>
+                  </div>
+                  <div className="card-body">
+                    <h3>
+                      <Link to={`/article/${art.id || art.article_id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                        {lang === 'en' ? art.titleEn : art.titleTa}
+                      </Link>
+                    </h3>
+                    <p>
+                      {lang === 'en' ? art.shortDescEn : art.shortDescTa}
+                    </p>
+                    <div className="card-meta">
+                      <span><i className="far fa-clock"></i> 1 Hr Ago</span>
+                      <span><i className="far fa-eye"></i> {art.viewsCount || 340}</span>
+                      <span><i className="far fa-clock"></i> {lang === 'en' ? `${art.readingTime || 1} Min Read` : `${art.readingTime || 1} நிமிட வாசிப்பு`}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </section>
     );
@@ -773,29 +799,32 @@ const Home = () => {
     );
   };
 
-  const renderTrendingSidebar = () => {
+  const renderTrendingSidebar = (label) => {
     return (
-      <div className="trending-list" style={{ marginBottom: '20px' }}>
-        <h4>
-          <i className="fas fa-fire" style={{ color: '#EF4444' }}></i>{' '}
-          {lang === 'en' ? 'Trending News' : 'ட்ரெண்டிங் செய்திகள்'}
-        </h4>
-        {trendingNews.slice(0, 5).map((art, idx) => (
-          <div className="trending-item" key={art.id || art.article_id || idx} style={{ cursor: 'pointer' }}>
-            <span className="rank top3">{idx + 1}</span>
-            <div className="info">
-              <h5>
-                <Link to={`/article/${art.id || art.article_id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                  {lang === 'en' ? art.titleEn : art.titleTa}
-                </Link>
-              </h5>
-              <div className="meta">
-                <span><i className="far fa-eye"></i> {art.viewsCount || '0'} {lang === 'en' ? 'reads' : 'வாசிப்புகள்'}</span>
-              </div>
-            </div>
+      <section className="trending-section" style={{ margin: '20px 0' }}>
+        <div className="container">
+          <div className="section-title" style={{ marginBottom: '15px' }}>
+            <h2><i className="fas fa-fire" style={{ color: '#EF4444' }}></i> {label || (lang === 'en' ? 'Trending News' : 'ட்ரெண்டிங் செய்திகள்')}</h2>
           </div>
-        ))}
-      </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '15px' }}>
+            {trendingNews.slice(0, 5).map((art, idx) => (
+              <div className="trending-item" key={art.id || art.article_id || idx} style={{ background: 'var(--white)', padding: '14px', borderRadius: '10px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+                <span className="rank top3">{idx + 1}</span>
+                <div className="info">
+                  <h5 style={{ margin: '0 0 6px 0', fontSize: '14px', fontWeight: 700 }}>
+                    <Link to={`/article/${art.id || art.article_id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                      {lang === 'en' ? art.titleEn : art.titleTa}
+                    </Link>
+                  </h5>
+                  <div className="meta">
+                    <span><i className="far fa-eye"></i> {art.viewsCount || '0'} {lang === 'en' ? 'reads' : 'வாசிப்புகள்'}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     );
   };
 
@@ -1070,26 +1099,28 @@ const Home = () => {
     );
   };
 
-  const getRenderedSection = (key) => {
+  const getRenderedSection = (key, label, configJson) => {
     switch (key) {
       case 'news_ticker': return renderNewsTicker();
       case 'hero': return renderHero();
       case 'quick_access': return renderQuickAccess();
-      case 'latest_news': return renderLatestNews();
-      case 'video_news': return renderVideoNews();
-      case 'web_stories': return renderWebStories();
+      case 'latest_news': return renderLatestNews(label, configJson);
+      case 'video_news': return renderVideoNews(label, configJson);
+      case 'web_stories': return renderWebStories(label, configJson);
       case 'crowd_reporter_highlight': return renderCrowdReporterHighlight();
       case 'institution_news': return renderInstitutionNews();
-      case 'trending_sidebar': return renderTrendingSidebar();
+      case 'trending_sidebar': return renderTrendingSidebar(label);
       case 'rss_aggregator': return renderRssAggregatedNews();
-      case 'weather': return renderWeather();
+      case 'weather': return renderWeather(label);
       case 'live_tv': return renderLiveTv();
-      case 'business_case': return renderBusinessCase();
-      case 'crowd_reporter': return renderCrowdReporterWidget();
-      case 'news_digest': return renderNewsDigest();
+      case 'business_case': return renderBusinessCase(label);
+      case 'crowd_reporter': return renderCrowdReporterWidget(label);
+      case 'news_digest': return renderNewsDigest(label);
       default: return null;
     }
   };
+
+
 
   if (error) {
     return (
@@ -1147,47 +1178,11 @@ const Home = () => {
       {/* COMMODITY TICKER */}
       {renderCommodityTicker()}
 
-      {/* FULL-WIDTH TOP SECTIONS */}
-      {getSortedSections(['news_ticker', 'hero']).map(sec => (
-        <React.Fragment key={sec.sectionKey}>
-          {getRenderedSection(sec.sectionKey)}
-        </React.Fragment>
-      ))}
-
-      {/* QUICK ACCESS CATEGORIES BAR (Always under Hero and above Latest) */}
-      {renderQuickAccess()}
-
-      {/* HEADER BANNER SPONSORED AD */}
-      <div className="container" style={{ margin: '20px auto 0 auto', padding: '0 15px' }}>
-        <AdWidget placement="header" />
-      </div>
-
-      {/* MAIN LAYOUT SPLIT */}
-      <div className="container main-layout-container">
-        <div className="left-content-column">
-          {getSortedSections(['latest_news', 'video_news', 'web_stories', 'crowd_reporter_highlight', 'institution_news']).map(sec => (
-            <React.Fragment key={sec.sectionKey}>
-              {getRenderedSection(sec.sectionKey)}
-            </React.Fragment>
-          ))}
-        </div>
-
-        <aside className="trending-sidebar" style={{ maxWidth: `${widgetWidth}px` }}>
-          <AdWidget placement="sidebar" />
-          {getSortedSections(['trending_sidebar', 'rss_aggregator', 'weather', 'live_tv', 'business_case', 'crowd_reporter']).map(sec => (
-            <React.Fragment key={sec.sectionKey}>
-              {getRenderedSection(sec.sectionKey)}
-            </React.Fragment>
-          ))}
-        </aside>
-      </div>
-
-      {/* FULL-WIDTH BOTTOM SECTIONS */}
-      {getSortedSections(['news_digest']).map(sec => (
-        <React.Fragment key={sec.sectionKey}>
-          {getRenderedSection(sec.sectionKey)}
-        </React.Fragment>
-      ))}
+      {/* PURE GENERIC HEADLESS RENDERING ENGINE */}
+      <GenericPageRenderer
+        layoutType="WEB"
+        renderSectionCallback={(key, label, configJson) => getRenderedSection(key, label, configJson)}
+      />
 
       {/* CROWD REPORTER MODAL */}
       {showReportModal && (

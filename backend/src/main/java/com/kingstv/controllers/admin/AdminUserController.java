@@ -83,20 +83,41 @@ public class AdminUserController {
         return ResponseEntity.ok(response);
     }
 
+    private static final java.util.regex.Pattern EMAIL_PATTERN = 
+            java.util.regex.Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+
+    private static final java.util.regex.Pattern PHONE_PATTERN = 
+            java.util.regex.Pattern.compile("^\\+?[0-9]{10,15}$");
+
     /**
      * Create a new user account (#1, #23, #30)
      */
     @PostMapping
     @RequiresPermission(Permission.USER_CREATE)
     public ResponseEntity<?> createUser(@RequestBody Map<String, Object> request) {
-        String email = (String) request.get("email");
-        String fullName = (String) request.get("fullName");
+        String email = request.get("email") != null ? ((String) request.get("email")).trim().toLowerCase() : null;
+        String fullName = request.get("fullName") != null ? ((String) request.get("fullName")).trim() : null;
         String password = (String) request.get("password");
         String role = (String) request.get("role");
 
         if (email == null || fullName == null || password == null || role == null) {
             return ResponseEntity.badRequest()
                     .body(Map.of("message", "email, fullName, password, and role are required"));
+        }
+
+        if (fullName.length() < 2) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Full Name must be at least 2 characters long"));
+        }
+
+        if (!EMAIL_PATTERN.matcher(email).matches()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Invalid email address format (e.g. user@example.com)"));
+        }
+
+        if (password.length() < 6) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Password must be at least 6 characters long"));
         }
 
         // Validate role exists
@@ -109,7 +130,7 @@ public class AdminUserController {
                     .body(Map.of("message", "Invalid role: " + role));
         }
 
-        if (userRepository.findByEmail(email.toLowerCase()).isPresent()) {
+        if (userRepository.findByEmail(email).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("message", "Email is already registered"));
         }
@@ -125,15 +146,24 @@ public class AdminUserController {
 
         User user = new User();
         user.setFullName(fullName);
-        user.setEmail(email.toLowerCase());
+        user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         user.setRole(role.toUpperCase());
         user.setProvider("LOCAL");
         user.setIsVerified(true);
         user.setIsActive(true);
 
-        if (request.containsKey("phoneNumber"))
-            user.setPhoneNumber((String) request.get("phoneNumber"));
+        if (request.containsKey("phoneNumber") && request.get("phoneNumber") != null) {
+            String rawPhone = ((String) request.get("phoneNumber")).trim().replaceAll("[\\s\\-()]", "");
+            if (!rawPhone.isEmpty()) {
+                if (!PHONE_PATTERN.matcher(rawPhone).matches()) {
+                    return ResponseEntity.badRequest()
+                            .body(Map.of("message", "Invalid phone number format. Please enter 10 to 15 digits (e.g. 9876543210 or +919876543210)."));
+                }
+                user.setPhoneNumber(rawPhone);
+            }
+        }
+
         if (request.containsKey("websiteUrl"))
             user.setWebsiteUrl((String) request.get("websiteUrl"));
         if (request.containsKey("location"))
@@ -160,14 +190,43 @@ public class AdminUserController {
 
         User user = userOpt.get();
 
-        if (request.containsKey("fullName")) user.setFullName((String) request.get("fullName"));
-        if (request.containsKey("role")) user.setRole(((String) request.get("role")).toUpperCase());
-        if (request.containsKey("isActive")) user.setIsActive((Boolean) request.get("isActive"));
-        if (request.containsKey("phoneNumber")) user.setPhoneNumber((String) request.get("phoneNumber"));
+        if (request.containsKey("fullName") && request.get("fullName") != null) {
+            String cleanName = ((String) request.get("fullName")).trim();
+            if (cleanName.length() < 2) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Full Name must be at least 2 characters long"));
+            }
+            user.setFullName(cleanName);
+        }
+
+        if (request.containsKey("role") && request.get("role") != null) {
+            user.setRole(((String) request.get("role")).toUpperCase());
+        }
+
+        if (request.containsKey("isActive") && request.get("isActive") != null) {
+            user.setIsActive((Boolean) request.get("isActive"));
+        }
+
+        if (request.containsKey("phoneNumber") && request.get("phoneNumber") != null) {
+            String rawPhone = ((String) request.get("phoneNumber")).trim().replaceAll("[\\s\\-()]", "");
+            if (!rawPhone.isEmpty()) {
+                if (!PHONE_PATTERN.matcher(rawPhone).matches()) {
+                    return ResponseEntity.badRequest().body(Map.of("message", "Invalid phone number format. Please enter 10 to 15 digits (e.g. 9876543210 or +919876543210)."));
+                }
+                user.setPhoneNumber(rawPhone);
+            } else {
+                user.setPhoneNumber("");
+            }
+        }
+
         if (request.containsKey("websiteUrl")) user.setWebsiteUrl((String) request.get("websiteUrl"));
         if (request.containsKey("location")) user.setLocation((String) request.get("location"));
-        if (request.containsKey("password")) {
-            user.setPassword(passwordEncoder.encode((String) request.get("password")));
+        
+        if (request.containsKey("password") && request.get("password") != null) {
+            String pass = (String) request.get("password");
+            if (pass.length() < 6) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Password must be at least 6 characters long"));
+            }
+            user.setPassword(passwordEncoder.encode(pass));
         }
 
         User saved = userRepository.save(user);
