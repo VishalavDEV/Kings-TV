@@ -75,6 +75,10 @@ public class DataInitializer {
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Autowired
+    private SitemapConfigRepository sitemapConfigRepository;
+
+
+    @Autowired
     private NfcCardRepository nfcCardRepository;
 
     @Autowired
@@ -160,6 +164,10 @@ public class DataInitializer {
         }
 
         seedAdvertisements();
+
+        // Ensure default sitemaps and Chief Editor permissions are initialized/updated on every boot
+        seedSitemapConfigs();
+        updateChiefEditorPermissions();
 
         if (categoryRepository.count() > 0) {
             System.out.println("Database already has data. Skipping database seeding to preserve dynamic data.");
@@ -500,7 +508,7 @@ public class DataInitializer {
             savedPerms.get(Permission.ARTICLE_CREATE), savedPerms.get(Permission.ARTICLE_READ), savedPerms.get(Permission.ARTICLE_UPDATE),
             savedPerms.get(Permission.ARTICLE_REVIEW), savedPerms.get(Permission.ARTICLE_PUBLISH), savedPerms.get(Permission.CONTENT_REVIEW),
             savedPerms.get(Permission.UGC_REVIEW), savedPerms.get(Permission.PROFANITY_VIEW_REPORTS), savedPerms.get(Permission.HOME_LAYOUT_DELEGATED),
-            savedPerms.get(Permission.ANALYTICS_VIEW), savedPerms.get(Permission.AI_REWRITER_USE)
+            savedPerms.get(Permission.ANALYTICS_VIEW), savedPerms.get(Permission.AI_REWRITER_USE), savedPerms.get(Permission.PUSH_NOTIFICATION_SEND)
         ));
         roleRepository.save(chiefEditor);
 
@@ -553,6 +561,12 @@ public class DataInitializer {
         seedSystemConfig(SystemConfig.TELEGRAM_BOT_TOKEN, "", "telegram", "Telegram Bot API Auth Token");
         seedSystemConfig(SystemConfig.TELEGRAM_CHAT_ID, "", "telegram", "Telegram Channel/Chat Target ID");
         seedSystemConfig(SystemConfig.TELEGRAM_ENABLED, "false", "telegram", "Enable or disable automatic Telegram pushes (true/false)");
+        seedSystemConfig(SystemConfig.AI_PROMPT_GENERATE_DRAFT, 
+            "You are a professional news editor. Given the following source notes/documents, generate a complete, ready-to-publish news article in both English and Tamil. Return ONLY a valid JSON object matching this exact schema, with no markdown formatting or explanation outside the JSON:\n\n{\n  \"titleEn\": \"English Title (max 12 words)\",\n  \"titleTa\": \"Tamil Title (max 12 words)\",\n  \"contentEn\": \"Full professional English news article with HTML paragraphs <p>\",\n  \"contentTa\": \"Full professional Tamil news article with HTML paragraphs <p>\",\n  \"excerptEn\": \"1-2 sentence English summary\",\n  \"excerptTa\": \"1-2 sentence Tamil summary\",\n  \"seoTitle\": \"SEO optimized title max 60 chars\",\n  \"metaDescription\": \"SEO description max 160 chars\",\n  \"metaKeywords\": \"comma, separated, tags\",\n  \"focusKeywords\": \"primary, keywords\",\n  \"slug\": \"english-url-slug\",\n  \"categoryId\": \"Suggest the best category ID from this list: {catNames}\"\n}\n\nSource Notes:\n\"{baseContent}\"",
+            "ai", "Prompt template for generating full article draft");
+        seedSystemConfig(SystemConfig.AI_PROMPT_PROOFREAD_AUTOFILL,
+            "You are a world-class news editor and SEO expert.\nGiven the following draft news content (which may contain spelling, grammar, punctuation, or formatting mistakes), perform the following:\n1. Proofread and correct all spelling, grammar, typography, and phrasing mistakes. Return production-ready HTML for both Tamil and English versions.\n2. Generate optimized headlines (Tamil Title & English Title).\n3. Generate concise 1-2 sentence excerpts (Tamil & English).\n4. Generate complete SEO metadata: Meta Title (max 60 chars), Meta Description (max 160 chars), Focus Keywords, News Tags, clean English URL Slug.\n5. Suggest the best category ID from this list: {catNames}.\n6. Infer or suggest News Source/Agency (e.g. Kings TV Desk) and News Location/City (e.g. Chennai).\n\nReturn ONLY a valid JSON object matching this schema with NO markdown formatting outside the JSON:\n\n{\n  \"titleTa\": \"Tamil Title\",\n  \"titleEn\": \"English Title\",\n  \"contentTa\": \"Proofread corrected HTML for Tamil\",\n  \"contentEn\": \"Proofread corrected HTML for English\",\n  \"shortDescTa\": \"1-2 sentence Tamil summary\",\n  \"shortDescEn\": \"1-2 sentence English summary\",\n  \"metaTitle\": \"SEO Meta Title max 60 chars\",\n  \"metaDescription\": \"SEO Meta Description max 160 chars\",\n  \"focusKeywords\": \"primary, keywords\",\n  \"metaKeywords\": \"news, tags, comma, separated\",\n  \"slug\": \"english-url-slug\",\n  \"categoryId\": \"suggested category ID\",\n  \"suggestedSource\": \"Kings TV Desk\",\n  \"suggestedLocation\": \"Chennai\"\n}\n\nDraft Content to Proofread & Process:\n\"{baseContent}\"",
+            "ai", "Prompt template for AI proofread and auto-fill");
 
         // 15. Seed Profanity Words
         System.out.println("Seeding Profanity Words...");
@@ -610,10 +624,11 @@ public class DataInitializer {
     }
 
     private void seedUser(String name, String email, String password, String role) {
-        Optional<User> existing = userRepository.findByEmail(email);
+        String cleanEmail = email.toLowerCase().trim();
+        Optional<User> existing = userRepository.findByEmail(cleanEmail);
         User u = existing.orElse(new User());
         u.setFullName(name);
-        u.setEmail(email);
+        u.setEmail(cleanEmail);
         u.setPassword(passwordEncoder.encode(password));
         u.setRole(role);
         u.setProvider("LOCAL");
@@ -628,6 +643,7 @@ public class DataInitializer {
             
             // 1. Header Banner Ad
             Advertisement headerAd = new Advertisement();
+            headerAd.setPlacementId("header-ad-1");
             headerAd.setTitle("Learn Java Coding - Premium Bootcamp");
             headerAd.setImageUrl("https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1000");
             headerAd.setLinkUrl("https://github.com/google/gemini-api");
@@ -642,6 +658,7 @@ public class DataInitializer {
 
             // 2. Sidebar Ad
             Advertisement sidebarAd = new Advertisement();
+            sidebarAd.setPlacementId("sidebar-ad-1");
             sidebarAd.setTitle("Develop Android Apps - Zero to Hero");
             sidebarAd.setImageUrl("https://images.unsplash.com/photo-1607799279861-4dd421887fb3?q=80&w=1000");
             sidebarAd.setLinkUrl("https://developer.android.com");
@@ -656,6 +673,7 @@ public class DataInitializer {
 
             // 3. Mid-Article Ad
             Advertisement midAd = new Advertisement();
+            midAd.setPlacementId("mid-article-ad-1");
             midAd.setTitle("Cloud Computing Solutions with AWS & Google Cloud");
             midAd.setImageUrl("https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000");
             midAd.setLinkUrl("https://cloud.google.com");
@@ -861,5 +879,76 @@ public class DataInitializer {
         menu.setParentId(parentId);
         menu.setIsActive(true);
         return navigationMenuRepository.save(menu);
+    }
+
+    private void seedSitemapConfigs() {
+        if (sitemapConfigRepository.count() == 0) {
+            System.out.println("Seeding default sitemap configurations...");
+            String[][] sitemaps = {
+                {"/", "Home", "1.0", "daily"},
+                {"/category/politics", "Politics Category", "0.8", "daily"},
+                {"/category/business", "Business Category", "0.8", "daily"},
+                {"/category/sports", "Sports Category", "0.8", "daily"},
+                {"/category/cinema", "Cinema Category", "0.8", "daily"},
+                {"/category/tech", "Tech Category", "0.8", "daily"},
+                {"/category/international", "International Category", "0.8", "daily"},
+                {"/directory", "Local Business Directory", "0.6", "weekly"},
+                {"/wishes", "Wishes", "0.6", "weekly"},
+                {"/obituaries", "Obituaries", "0.6", "weekly"},
+                {"/jobs", "Jobs", "0.6", "weekly"},
+                {"/classifieds", "Classifieds", "0.6", "weekly"},
+                {"/videos", "Videos", "0.7", "daily"},
+                {"/web-stories", "Web Stories", "0.7", "daily"}
+            };
+            for (String[] sm : sitemaps) {
+                SitemapConfig c = new SitemapConfig();
+                c.setPagePath(sm[0]);
+                c.setPageLabel(sm[1]);
+                c.setPriority(sm[2]);
+                c.setChangeFreq(sm[3]);
+                c.setIsExcluded(false);
+                sitemapConfigRepository.save(c);
+            }
+        }
+    }
+
+    private void updateChiefEditorPermissions() {
+        Optional<Role> chiefEditorOpt = roleRepository.findByName(Role.CHIEF_EDITOR);
+        if (chiefEditorOpt.isPresent()) {
+            Role chiefEditor = chiefEditorOpt.get();
+            List<String> requiredPerms = Arrays.asList(
+                Permission.SITEMAP_MANAGE,
+                Permission.SEO_CONFIG_MANAGE,
+                Permission.TAXONOMY_MANAGE
+            );
+            
+            // Map of all permissions seeded in DB
+            Map<String, Permission> savedPerms = new HashMap<>();
+            for (String permName : requiredPerms) {
+                Optional<Permission> permOpt = permissionRepository.findByName(permName);
+                if (permOpt.isEmpty()) {
+                    String desc = "Manage " + permName.split(":")[0];
+                    String module = permName.split(":")[0].substring(0, 1).toUpperCase() + permName.split(":")[0].substring(1);
+                    Permission newPerm = permissionRepository.save(new Permission(permName, desc, module));
+                    savedPerms.put(permName, newPerm);
+                } else {
+                    savedPerms.put(permName, permOpt.get());
+                }
+            }
+
+            boolean updated = false;
+            for (String permName : requiredPerms) {
+                boolean hasPerm = chiefEditor.getPermissions().stream()
+                    .anyMatch(p -> p.getName().equals(permName));
+                if (!hasPerm) {
+                    chiefEditor.getPermissions().add(savedPerms.get(permName));
+                    updated = true;
+                }
+            }
+            if (updated) {
+                roleRepository.save(chiefEditor);
+                System.out.println("Updated Chief Editor permissions successfully.");
+            }
+        }
     }
 }

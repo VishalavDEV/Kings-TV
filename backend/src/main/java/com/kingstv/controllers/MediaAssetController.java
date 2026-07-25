@@ -31,7 +31,7 @@ public class MediaAssetController {
     private StorageService storageService;
 
     @GetMapping("/list")
-    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.SUB_EDITOR, Role.SECTION_EDITOR, Role.DISTRICT_ADMIN})
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.SUB_EDITOR, Role.SECTION_EDITOR, Role.DISTRICT_ADMIN, Role.MOBILE_JOURNALIST, Role.INSTITUTION_LOGIN})
     public ResponseEntity<Page<MediaAsset>> listMedia(
             @RequestParam(required = false, defaultValue = "all") String category,
             @RequestParam(required = false, defaultValue = "") String search,

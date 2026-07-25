@@ -24,6 +24,7 @@ public class AnalyticsController {
     @Autowired private PushNotificationRepository pushRepo;
     @Autowired private AuditLogRepository auditLogRepository;
     @Autowired private CategoryRepository categoryRepository;
+    @Autowired private UserDistrictRepository userDistrictRepository;
 
     /**
      * Dashboard KPIs (#56)
@@ -59,13 +60,25 @@ public class AnalyticsController {
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long districtId) {
 
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DISTRICT_ADMIN"))) {
+            if (auth.getDetails() instanceof Long) {
+                Long userId = (Long) auth.getDetails();
+                List<UserDistrict> uds = userDistrictRepository.findByUserId(userId);
+                if (!uds.isEmpty()) {
+                    districtId = uds.get(0).getDistrictId();
+                }
+            }
+        }
+
         List<Article> articles = articleRepository.findAll();
 
         if (categoryId != null) {
             articles = articles.stream().filter(a -> categoryId.equals(a.getCategoryId())).toList();
         }
-        if (districtId != null) {
-            articles = articles.stream().filter(a -> districtId.equals(a.getDistrictId())).toList();
+        final Long targetDistrictId = districtId;
+        if (targetDistrictId != null) {
+            articles = articles.stream().filter(a -> targetDistrictId.equals(a.getDistrictId())).toList();
         }
 
         long totalViews = articles.stream().mapToInt(a -> a.getViewsCount() != null ? a.getViewsCount() : 0).sum();

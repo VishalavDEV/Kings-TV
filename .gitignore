@@ -4,3 +4,12 @@ __pycache__/
 Thumbs.db
 scratch/
 .vercel/
+*.tar.gz
+node_modules/
+dist/
+target/
+backend/uploads/backups/
+backend/maven-extracted/
+backend/maven.zip
+backend/uploads/
+*.zip

@@ -68,9 +68,29 @@ function AppContent() {
       .then(res => {
         if (res) {
           const root = document.documentElement;
-          if (res['font.primary']) root.style.setProperty('--font-primary', res['font.primary']);
-          if (res['font.secondary']) root.style.setProperty('--font-secondary', res['font.secondary']);
-          if (res['font.tertiary']) root.style.setProperty('--font-tertiary', res['font.tertiary']);
+          const loadFont = (fontName) => {
+            if (!fontName) return;
+            const linkId = `dynamic-font-${fontName.replace(/\s+/g, '-')}`;
+            if (document.getElementById(linkId)) return;
+            const link = document.createElement('link');
+            link.id = linkId;
+            link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}:wght@400;500;600;700;800;900&display=swap`;
+            link.rel = 'stylesheet';
+            document.head.appendChild(link);
+          };
+
+          if (res['font.primary']) {
+             root.style.setProperty('--font-primary', `"${res['font.primary']}", sans-serif`);
+             loadFont(res['font.primary']);
+          }
+          if (res['font.secondary']) {
+             root.style.setProperty('--font-secondary', `"${res['font.secondary']}", sans-serif`);
+             loadFont(res['font.secondary']);
+          }
+          if (res['font.tertiary']) {
+             root.style.setProperty('--font-tertiary', `"${res['font.tertiary']}", sans-serif`);
+             loadFont(res['font.tertiary']);
+          }
         }
       })
       .catch(() => {});
