@@ -75,6 +75,6 @@ public class Candidate {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public String getStatus() { return status; }
+    public String getStatus() { return status != null && !status.trim().isEmpty() ? status : "active"; }
     public void setStatus(String status) { this.status = status; }
 }

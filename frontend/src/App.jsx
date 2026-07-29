@@ -49,6 +49,8 @@ import Weather from './pages/Weather';
 import BizDirectoryRegister from './pages/BizDirectoryRegister';
 import BizDirectoryDashboard from './pages/BizDirectoryDashboard';
 import MyRfqs from './pages/MyRfqs';
+import MyQuotes from './pages/MyQuotes';
+import DummyLayoutPage from './pages/DummyLayoutPage';
 
 function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
@@ -68,9 +70,29 @@ function AppContent() {
       .then(res => {
         if (res) {
           const root = document.documentElement;
-          if (res['font.primary']) root.style.setProperty('--font-primary', res['font.primary']);
-          if (res['font.secondary']) root.style.setProperty('--font-secondary', res['font.secondary']);
-          if (res['font.tertiary']) root.style.setProperty('--font-tertiary', res['font.tertiary']);
+          const loadFont = (fontName) => {
+            if (!fontName) return;
+            const linkId = `dynamic-font-${fontName.replace(/\s+/g, '-')}`;
+            if (document.getElementById(linkId)) return;
+            const link = document.createElement('link');
+            link.id = linkId;
+            link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}:wght@400;500;600;700;800;900&display=swap`;
+            link.rel = 'stylesheet';
+            document.head.appendChild(link);
+          };
+
+          if (res['font.primary']) {
+             root.style.setProperty('--font-primary', `"${res['font.primary']}", sans-serif`);
+             loadFont(res['font.primary']);
+          }
+          if (res['font.secondary']) {
+             root.style.setProperty('--font-secondary', `"${res['font.secondary']}", sans-serif`);
+             loadFont(res['font.secondary']);
+          }
+          if (res['font.tertiary']) {
+             root.style.setProperty('--font-tertiary', `"${res['font.tertiary']}", sans-serif`);
+             loadFont(res['font.tertiary']);
+          }
         }
       })
       .catch(() => {});
@@ -99,6 +121,13 @@ function AppContent() {
       <main className="main-content">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/dummy-layout" element={<DummyLayoutPage />} />
+          <Route path="/dummy" element={<DummyLayoutPage />} />
+          <Route path="/dummy-page" element={<DummyLayoutPage />} />
+          <Route path="/kingstv" element={<Home />} />
+          <Route path="/kingstv/" element={<Home />} />
+          <Route path="/king-tv" element={<Home />} />
+          <Route path="/king-tv/" element={<Home />} />
           <Route path="/index.html" element={<Navigate to="/" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/login.html" element={<Navigate to="/login" replace />} />
@@ -150,6 +179,11 @@ function AppContent() {
               <MyRfqs />
             </ProtectedRoute>
           } />
+          <Route path="/my-quotes" element={
+            <ProtectedRoute>
+              <MyQuotes />
+            </ProtectedRoute>
+          } />
            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-use" element={<TermsOfUse />} />
           <Route path="/maintenance" element={<Maintenance />} />
@@ -172,10 +206,19 @@ function AppContent() {
   );
 }
 
+function getBasename() {
+  const p = window.location.pathname;
+  if (p.startsWith('/kingstv/')) return '/kingstv';
+  if (p === '/kingstv') return '/kingstv';
+  if (p.startsWith('/king-tv/')) return '/king-tv';
+  if (p === '/king-tv') return '/king-tv';
+  return '/';
+}
+
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <Router basename={getBasename()}>
         <AppContent />
       </Router>
     </AuthProvider>

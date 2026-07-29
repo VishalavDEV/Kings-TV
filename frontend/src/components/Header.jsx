@@ -59,6 +59,14 @@ const Header = () => {
   const navigate = useNavigate();
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const unauthDropdownRef = useRef(null);
+  const [headerSliderIndex, setHeaderSliderIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setHeaderSliderIndex(prev => (prev + 1) % 8);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
 
   const getSubcatEn = (s) => {
     if (!s) return '';
@@ -104,13 +112,108 @@ const Header = () => {
       })
       .catch(err => console.warn("Failed to fetch default temp", err));
   }, []);
+  const [breakingNewsList, setBreakingNewsList] = useState([]);
+
+  useEffect(() => {
+    // 1. Try public web breaking news endpoint
+    fetchApi('/breaking-news/getAllWeb?size=15')
+      .then(res => {
+        const data = res?.content || res?.data || (Array.isArray(res) ? res : []);
+        if (data && data.length > 0) {
+          setBreakingNewsList(data);
+        } else {
+          // 2. Try generic breaking news list
+          fetchApi('/breaking-news?size=15')
+            .then(res2 => {
+              const data2 = res2?.content || res2?.data || (Array.isArray(res2) ? res2 : []);
+              if (data2 && data2.length > 0) {
+                setBreakingNewsList(data2);
+              } else {
+                // 3. Try breaking articles
+                fetchApi('/articles?isBreaking=true&size=10')
+                  .then(res3 => {
+                    const data3 = res3?.content || res3?.data || (Array.isArray(res3) ? res3 : []);
+                    if (data3 && data3.length > 0) setBreakingNewsList(data3);
+                  })
+                  .catch(() => {});
+              }
+            })
+            .catch(() => {});
+        }
+      })
+      .catch(err => console.warn("Failed to fetch breaking news for header", err));
+  }, []);
+
+  const fallbackBreakingNews = lang === 'en' ? [
+    'Tamil Nadu Budget Session 2026: Key Major Announcements Released',
+    'New Integrated Bus Terminus to be set up in Koyambedu, Chennai',
+    'Gold Price Drops by ₹400 per sovereign today across Tamil Nadu',
+    'Free Ration Essentials Distribution Announced for all Smart Card Holders'
+  ] : [
+    'தமிழக பட்ஜெட் கூட்டத்தொடர் 2026: முக்கிய அறிவிப்புகள் வெளியீடு',
+    'சென்னை கோயம்பேட்டில் புதிய பேருந்து நிலையம் அமைப்பு',
+    'தங்கம் விலை இன்று சவரனுக்கு ₹400 குறைந்தது',
+    'தமிழகத்தில் அனைத்து ரேஷன் கடைகளிலும் இலவச பொருட்கள் விநியோகம் அறிவிப்பு'
+  ];
+
   const [showDistrictDropdown, setShowDistrictDropdown] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [siteSettings, setSiteSettings] = useState({
+    'site.name': 'KING 24x7',
+    'site.logo_url': 'assets/images/logo-banner-light.png',
+    'site.logo_dark_url': 'assets/images/logo-banner-dark.png'
+  });
   const [navCategories, setNavCategories] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [showHeaderSubcatDropdown, setShowHeaderSubcatDropdown] = useState(false);
+
+  useEffect(() => {
+    const loadDynamicNav = async () => {
+      try {
+        const localDummy = localStorage.getItem('dummy_layout_config');
+        if (localDummy) {
+          const parsed = JSON.parse(localDummy);
+          const navSection = Array.isArray(parsed) ? parsed.find(s => s.sectionKey === 'website_navigation') : null;
+          if (navSection && navSection.configJson) {
+            const config = typeof navSection.configJson === 'string' ? JSON.parse(navSection.configJson) : navSection.configJson;
+            if (config && config.navItems && config.navItems.length > 0) {
+              setMenuItems(config.navItems.filter(i => i.isActive !== false));
+              return;
+            }
+          }
+        }
+
+        const res = await fetchApi('/public/home-layout');
+        const sections = res?.data || (Array.isArray(res) ? res : []);
+        const navSec = sections.find(s => s.sectionKey === 'website_navigation');
+        if (navSec && navSec.configJson) {
+          const cfg = typeof navSec.configJson === 'string' ? JSON.parse(navSec.configJson) : navSec.configJson;
+          if (cfg && cfg.navItems && cfg.navItems.length > 0) {
+            setMenuItems(cfg.navItems.filter(i => i.isActive !== false));
+            return;
+          }
+        }
+
+        const menusRes = await fetchApi('/public/menus');
+        if (Array.isArray(menusRes) && menusRes.length > 0) {
+          setMenuItems(menusRes);
+        }
+      } catch (err) {
+        console.warn("Could not load dynamic navigation bar menu:", err);
+      }
+    };
+    loadDynamicNav();
+
+    const handleNavUpdate = () => loadDynamicNav();
+    window.addEventListener('storage', handleNavUpdate);
+    window.addEventListener('layoutUpdated', handleNavUpdate);
+    return () => {
+      window.removeEventListener('storage', handleNavUpdate);
+      window.removeEventListener('layoutUpdated', handleNavUpdate);
+    };
+  }, []);
   const [districtsList, setDistrictsList] = useState([]);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [dropdownLeft, setDropdownLeft] = useState(0);
@@ -210,23 +313,38 @@ const Header = () => {
 
   const getDynamicNavItems = () => {
     if (menuItems && menuItems.length > 0) {
-      return menuItems.filter(Boolean).map(item => ({
-        id: item.id,
-        path: item.linkUrl,
-        label: lang === 'en' ? item.titleEn : item.titleTa,
-        subcategories: (item.subcategories || []).filter(Boolean).map(sub => ({
-          id: sub.id,
-          path: sub.linkUrl,
-          name: sub.titleEn,
-          nameTa: sub.titleTa,
-          subcategories: (sub.subcategories || []).filter(Boolean).map(subsub => ({
-            id: subsub.id,
-            path: subsub.linkUrl,
-            name: subsub.titleEn,
-            nameTa: subsub.titleTa
+      return menuItems.filter(Boolean).map(item => {
+        let path = item.linkUrl || item.path;
+        if (!path || path === '#' || path === 'undefined') {
+          if (item.slug === 'regional') path = '/directory';
+          else if (item.slug === 'videos' || item.slug === 'video') path = '/videos';
+          else if (item.slug === 'web-stories') path = '/web-stories';
+          else if (item.slug) path = `/category/${item.slug}`;
+          else path = '/';
+        }
+
+        const label = lang === 'en'
+          ? (item.titleEn || item.label || item.name || item.titleTa)
+          : (item.titleTa || item.nameTa || item.label || item.titleEn);
+
+        return {
+          id: item.id || item.slug,
+          path,
+          label,
+          subcategories: (item.subcategories || []).filter(Boolean).map(sub => ({
+            id: sub.id || sub.slug,
+            path: sub.linkUrl || sub.path || `/category/${sub.slug}`,
+            name: sub.titleEn || sub.name || sub.titleTa,
+            nameTa: sub.titleTa || sub.nameTa || sub.titleEn,
+            subcategories: (sub.subcategories || []).filter(Boolean).map(subsub => ({
+              id: subsub.id || subsub.slug,
+              path: subsub.linkUrl || subsub.path || `/category/${subsub.slug}`,
+              name: subsub.titleEn || subsub.name || subsub.titleTa,
+              nameTa: subsub.titleTa || subsub.nameTa || subsub.titleEn
+            }))
           }))
-        }))
-      }));
+        };
+      });
     }
 
     let dynamicItems = [];
@@ -456,17 +574,25 @@ const Header = () => {
   ];
 
   useEffect(() => {
+    fetchApi('/public/config/settings')
+      .then(res => {
+        if (res) {
+          setSiteSettings(res);
+        }
+      })
+      .catch(() => { });
+
     fetchApi('/articles')
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          setAllArticles([...data, ...fallbackArticles]);
+        if (Array.isArray(data)) {
+          setAllArticles(data);
         } else {
-          setAllArticles(fallbackArticles);
+          setAllArticles([]);
         }
       })
       .catch(err => {
         console.warn("Header normal search failed to load articles", err);
-        setAllArticles(fallbackArticles);
+        setAllArticles([]);
       });
 
     fetchApi('/categories/nav')
@@ -487,48 +613,28 @@ const Header = () => {
 
     fetchApi('/videos')
       .then(data => {
-        const translatedFallbackVideos = fallbackVideos.map(vid => {
-          let titleVal = vid.title;
-          if (lang === 'en') {
-            if (vid.title.includes('பட்ஜெட்')) titleVal = 'Tamil Nadu Budget 2026 - Key Highlights Explained';
-            else if (vid.title.includes('கிரிக்கெட்')) titleVal = 'Cricket Match Highlights - India vs Australia';
-            else if (vid.title.includes('விவசாயிகளுக்கான')) titleVal = 'New Schemes for Farmers - Ground Report';
-            else if (vid.title.includes('பங்கு')) titleVal = 'Stock Market Analysis - Expert Advice';
-          }
-          return { ...vid, title: titleVal };
-        });
-        if (Array.isArray(data) && data.length > 0) {
-          setAllVideos([...data, ...translatedFallbackVideos]);
+        if (Array.isArray(data)) {
+          setAllVideos(data);
         } else {
-          setAllVideos(translatedFallbackVideos);
+          setAllVideos([]);
         }
       })
       .catch(err => {
         console.warn("Header normal search failed to load videos", err);
-        const translatedFallbackVideos = fallbackVideos.map(vid => {
-          let titleVal = vid.title;
-          if (lang === 'en') {
-            if (vid.title.includes('பட்ஜெட்')) titleVal = 'Tamil Nadu Budget 2026 - Key Highlights Explained';
-            else if (vid.title.includes('கிரிக்கெட்')) titleVal = 'Cricket Match Highlights - India vs Australia';
-            else if (vid.title.includes('விவசாயிகளுக்கான')) titleVal = 'New Schemes for Farmers - Ground Report';
-            else if (vid.title.includes('பங்கு')) titleVal = 'Stock Market Analysis - Expert Advice';
-          }
-          return { ...vid, title: titleVal };
-        });
-        setAllVideos(translatedFallbackVideos);
+        setAllVideos([]);
       });
 
     fetchApi('/directory')
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setAllBusinesses(data);
         } else {
-          setAllBusinesses(fallbackBusinesses);
+          setAllBusinesses([]);
         }
       })
       .catch(err => {
         console.warn("Header normal search failed to load directory", err);
-        setAllBusinesses(fallbackBusinesses);
+        setAllBusinesses([]);
       });
   }, [lang]);
 
@@ -674,14 +780,38 @@ const Header = () => {
 
   const renderLogo = (size = 'normal', forceDark = false) => {
     const isDark = forceDark || theme === 'dark';
-    const logoUrl = isDark ? "assets/images/logo-banner-dark.png" : "assets/images/logo-banner-light.png";
+    let rawLogoUrl = isDark ? "/assets/images/logo-banner-dark.png" : "/assets/images/logo-banner-light.png";
+
+    const customDark = siteSettings['site.logo_dark_url'];
+    const customLight = siteSettings['site.logo_url'];
+    const customUrl = isDark ? (customDark || customLight) : customLight;
+
+    if (customUrl && !customUrl.includes('logo-icon')) {
+      rawLogoUrl = customUrl;
+    }
+
+    const logoUrl = (rawLogoUrl && !rawLogoUrl.startsWith('http') && !rawLogoUrl.startsWith('/') && !rawLogoUrl.startsWith('data:'))
+      ? '/' + rawLogoUrl
+      : rawLogoUrl;
+
     return (
-      <Link to="/" className="logo-link" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+      <Link to="/" className="logo-link" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
         <img
           src={logoUrl}
-          alt="KING 24x7"
+          alt={siteSettings['site.name'] || "KING 24x7"}
           className="header-logo-img"
-          style={{ height: size === 'small' ? '30px' : '55px', width: 'auto', objectFit: 'contain', display: 'block' }}
+          style={{
+            height: size === 'small' ? '42px' : '56px',
+            width: 'auto',
+            maxHeight: size === 'small' ? '46px' : '64px',
+            maxWidth: '100%',
+            objectFit: 'contain',
+            display: 'block'
+          }}
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = isDark ? "/assets/images/logo-banner-dark.png" : "/assets/images/logo-banner-light.png";
+          }}
         />
       </Link>
     );
@@ -914,6 +1044,106 @@ const Header = () => {
     </div>
   );
 
+  const renderHeaderTopSlider = () => {
+    const sliderCards = [
+      {
+        titleTa: '🪙 சென்னை தங்கம் விலை',
+        titleEn: '🪙 Chennai Gold Rate',
+        items: [
+          { labelTa: '22K:', labelEn: '22K:', val: '₹8,950/g', color: '#22C55E' },
+          { labelTa: '24K:', labelEn: '24K:', val: '₹9,760/g', color: '#22C55E' },
+          { labelTa: 'வெள்ளி:', labelEn: 'Silver:', val: '₹118/g', color: '#FFFFFF' },
+          { labelTa: 'பிளாட்டினம்:', labelEn: 'Platinum:', val: '₹3,420/g', color: '#EF4444' }
+        ]
+      },
+      {
+        titleTa: '📈 பங்குச் சந்தை நிலவரம்',
+        titleEn: '📈 Stock Market Today',
+        items: [
+          { labelTa: 'சென்செக்ஸ்:', labelEn: 'Sensex:', val: '82,450 ▲ (+340)', color: '#22C55E' },
+          { labelTa: 'நிஃப்டி 50:', labelEn: 'Nifty 50:', val: '25,120 ▲ (+110)', color: '#22C55E' },
+          { labelTa: 'பேங்க் நிஃப்டி:', labelEn: 'Bank Nifty:', val: '51,800 ▼ (-45)', color: '#EF4444' },
+          { labelTa: 'ஐடி இன்டெக்ஸ்:', labelEn: 'IT Index:', val: '38,900 ▲ (+220)', color: '#22C55E' }
+        ]
+      },
+      {
+        titleTa: '⛽ சென்னை எரிபொருள் விலை',
+        titleEn: '⛽ Fuel Prices Chennai',
+        items: [
+          { labelTa: 'பெட்ரோல்:', labelEn: 'Petrol:', val: '₹100.75/L', color: '#FFFFFF' },
+          { labelTa: 'டீசல்:', labelEn: 'Diesel:', val: '₹92.34/L', color: '#FFFFFF' },
+          { labelTa: 'எல்பிஜி உருளை:', labelEn: 'LPG Cylinder:', val: '₹818.50', color: '#EF4444' },
+          { labelTa: 'சிஎன்ஜி:', labelEn: 'CNG:', val: '₹85.00/kg', color: '#22C55E' }
+        ]
+      },
+      {
+        titleTa: '🌾 காய்கறி சந்தை விலை',
+        titleEn: '🌾 Vegetable Market Price',
+        items: [
+          { labelTa: 'தக்காளி:', labelEn: 'Tomato:', val: '₹35/kg', color: '#22C55E' },
+          { labelTa: 'வெங்காயம்:', labelEn: 'Onion:', val: '₹42/kg', color: '#EF4444' },
+          { labelTa: 'உருளைக்கிழங்கு:', labelEn: 'Potato:', val: '₹28/kg', color: '#22C55E' },
+          { labelTa: 'பூண்டு:', labelEn: 'Garlic:', val: '₹180/kg', color: '#FFFFFF' }
+        ]
+      }
+    ];
+
+    const activeSlide = sliderCards[headerSliderIndex % sliderCards.length];
+
+    return (
+      <div
+        className="header-top-slider-widget"
+        style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.22)',
+          borderRadius: '12px',
+          padding: '12px 18px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          gap: '8px',
+          marginRight: '14px',
+          minWidth: '420px',
+          maxWidth: '520px',
+          minHeight: '75px',
+          boxShadow: '0 6px 16px rgba(0, 0, 0, 0.25)'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13.5px', fontWeight: 800, color: '#38BDF8' }}>
+          <span>{lang === 'en' ? activeSlide.titleEn : activeSlide.titleTa}</span>
+
+          {/* Slider Dots Pagination Row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            {Array.from({ length: 8 }).map((_, idx) => (
+              <span
+                key={idx}
+                onClick={() => setHeaderSliderIndex(idx)}
+                style={{
+                  cursor: 'pointer',
+                  width: (headerSliderIndex % 8) === idx ? '18px' : '6px',
+                  height: '6px',
+                  borderRadius: (headerSliderIndex % 8) === idx ? '4px' : '50%',
+                  background: (headerSliderIndex % 8) === idx ? '#38BDF8' : 'rgba(255, 255, 255, 0.4)',
+                  display: 'inline-block',
+                  transition: 'all 0.3s ease'
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px', fontSize: '12.5px' }}>
+          {activeSlide.items.map((item, idx) => (
+            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', whiteSpace: 'nowrap' }}>
+              <span style={{ color: 'rgba(255, 255, 255, 0.75)', fontWeight: 600 }}>{lang === 'en' ? item.labelEn : item.labelTa}</span>
+              <span style={{ color: item.color, fontWeight: 800 }}>{item.val}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const renderSocials = () => (
     <div style={{ display: 'flex', gap: '8px' }}>
       <a href="https://www.facebook.com/profile.php?id=61551357861905" className="social-icon" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
@@ -982,8 +1212,8 @@ const Header = () => {
       }}>
         {navItems.map((item, idx) => {
           const isActive = (item.id === 'regional' && isRegionalPage) ||
-                           location.pathname === item.path ||
-                           (item.path !== '/' && location.pathname.startsWith(item.path));
+            location.pathname === item.path ||
+            (item.path !== '/' && location.pathname.startsWith(item.path));
 
           const handleLinkClick = (e) => {
             onLinkClick();
@@ -1198,8 +1428,8 @@ const Header = () => {
       <ul style={{ display: 'flex', flexDirection: 'column', gap: '15px', padding: 0, listStyle: 'none', margin: 0 }}>
         {navItems.map((item, idx) => {
           const isActive = (item.id === 'regional' && isRegionalPage) ||
-                           location.pathname === item.path ||
-                           (item.path !== '/' && location.pathname.startsWith(item.path));
+            location.pathname === item.path ||
+            (item.path !== '/' && location.pathname.startsWith(item.path));
 
           return (
             <li key={idx} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1294,6 +1524,7 @@ const Header = () => {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            {renderHeaderTopSlider()}
             <button
               onClick={() => setIsSearchOpen(true)}
               style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#ffffff', padding: '4px' }}
@@ -1473,6 +1704,68 @@ const Header = () => {
         </div>
       )}
 
+      {/* Breaking News Ticker Banner strictly below the black top header bar and above the main nav bar */}
+      <div 
+        className="header-breaking-news-banner"
+        style={{ 
+          background: '#DC2626', 
+          color: '#ffffff', 
+          padding: '6px 0', 
+          fontSize: '13px', 
+          fontWeight: '700', 
+          borderBottom: '1px solid rgba(0,0,0,0.1)',
+          width: '100%',
+          overflow: 'hidden'
+        }}
+      >
+        <div className="container" style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
+          <span style={{ 
+            background: '#000000', 
+            color: '#FACC15', 
+            padding: '3px 10px', 
+            borderRadius: '4px', 
+            fontSize: '11px', 
+            fontWeight: '900', 
+            letterSpacing: '0.5px', 
+            flexShrink: 0, 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '6px' 
+          }}>
+            <i className="fas fa-bolt" style={{ color: '#FACC15' }}></i> {lang === 'en' ? 'BREAKING NEWS' : 'முக்கிய செய்திகள்'}
+          </span>
+          <div style={{ flex: 1, overflow: 'hidden', whiteSpace: 'nowrap' }}>
+            <marquee behavior="scroll" direction="left" scrollamount="5" style={{ display: 'block', margin: 0, color: '#ffffff' }}>
+              {breakingNewsList && breakingNewsList.length > 0 ? (
+                breakingNewsList.map((item, idx) => {
+                  const title = lang === 'en' ? (item.titleEn || item.title || item.titleTa) : (item.titleTa || item.title || item.titleEn);
+                  const articleId = item.id || item.article_id;
+                  return (
+                    <span key={idx} style={{ marginRight: '32px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: '#FACC15', fontWeight: '900' }}>•</span>
+                      {articleId ? (
+                        <Link to={`/article/${articleId}`} style={{ color: '#ffffff', textDecoration: 'none' }}>
+                          {title}
+                        </Link>
+                      ) : (
+                        <span>{title}</span>
+                      )}
+                    </span>
+                  );
+                })
+              ) : (
+                fallbackBreakingNews.map((text, idx) => (
+                  <span key={idx} style={{ marginRight: '32px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: '#FACC15', fontWeight: '900' }}>•</span>
+                    <span>{text}</span>
+                  </span>
+                ))
+              )}
+            </marquee>
+          </div>
+        </div>
+      </div>
+
       {/* Horizontal scrollable category navigation bar in single line */}
       <style>{`
         @media (min-width: 769px) {
@@ -1486,17 +1779,20 @@ const Header = () => {
         }
         @media (max-width: 768px) {
           .logo-district-container {
-            flex-direction: column !important;
-            align-items: flex-start !important;
+            flex-direction: row !important;
+            align-items: center !important;
             justify-content: center !important;
-            gap: 2px !important;
+            gap: 8px !important;
           }
           .header-logo-img {
-            height: 30px !important;
+            height: 38px !important;
+            max-height: 40px !important;
+            width: auto !important;
+            object-fit: contain !important;
           }
           .header-district-btn {
             font-size: 11px !important;
-            padding: 2px 0px !important;
+            padding: 2px 4px !important;
           }
         }
         @media (min-width: 769px) {
@@ -1506,7 +1802,10 @@ const Header = () => {
             gap: 12px !important;
           }
           .header-logo-img {
-            height: 40px !important;
+            height: 44px !important;
+            max-height: 48px !important;
+            width: auto !important;
+            object-fit: contain !important;
           }
           .header-district-btn {
             font-size: 13px !important;

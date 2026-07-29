@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import paramiko
 
 HOSTNAME = "193.202.45.164"
@@ -7,82 +8,106 @@ PORT = 65002
 USERNAME = "u841409365"
 PASSWORD = "Eash@2005"
 
-# Directories
-ADMIN_REMOTE_DIR = "/home/u841409365/domains/test-technoprint.online/public_html/king-tv"
-FRONTEND_REMOTE_DIR = "/home/u841409365/domains/test-technoprint.online/public_html/king-tv/kingstv"
+def connect_ssh():
+    print("Connecting to remote Hostinger SSH/SFTP server...")
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(hostname=HOSTNAME, port=PORT, username=USERNAME, password=PASSWORD, timeout=30, banner_timeout=60)
+    if ssh.get_transport():
+        ssh.get_transport().set_keepalive(10)
+    sftp = ssh.open_sftp()
+    print("SSH & SFTP connection established!")
+    return ssh, sftp
 
 def create_remote_dir(sftp, remote_path):
-    dirs = []
-    current = remote_path
-    while current and current != "/":
-        dirs.insert(0, current)
-        current = os.path.dirname(current)
-    
-    for d in dirs:
+    parts = [p for p in remote_path.split("/") if p]
+    current = ""
+    for part in parts:
+        current += "/" + part
         try:
-            sftp.mkdir(d)
+            sftp.mkdir(current)
         except IOError:
             pass
 
-def upload_dir_contents(sftp, local_dir, remote_dir):
-    print(f"Uploading from local {local_dir} to remote {remote_dir}...")
+def upload_file_with_retry(get_sftp_fn, local_file_path, remote_file_path, retries=3):
+    for attempt in range(1, retries + 1):
+        try:
+            sftp = get_sftp_fn()
+            sftp.put(local_file_path, remote_file_path)
+            return True
+        except Exception as e:
+            print(f"  [Attempt {attempt} failed for {os.path.basename(local_file_path)}: {e}]", end=" ", flush=True)
+            time.sleep(2)
+            get_sftp_fn(force_reconnect=True)
+    return False
+
+def upload_dir_contents(get_sftp_fn, local_dir, remote_dir):
+    remote_dir = remote_dir.rstrip("/")
+    print(f"\nUploading from {local_dir} -> {remote_dir}...")
+    sftp = get_sftp_fn()
     create_remote_dir(sftp, remote_dir)
     
     uploaded_files = 0
+    failed_files = 0
     for root, dirs, files in os.walk(local_dir):
-        rel_path = os.path.relpath(root, local_dir)
-        if rel_path == ".":
-            remote_current_dir = remote_dir
-        else:
-            remote_current_dir = os.path.join(remote_dir, rel_path).replace("\\", "/")
+        rel_path = os.path.relpath(root, local_dir).replace("\\", "/")
+        remote_current_dir = remote_dir if rel_path == "." else f"{remote_dir}/{rel_path}"
 
-        try:
-            sftp.mkdir(remote_current_dir)
-        except IOError:
-            pass
+        sftp = get_sftp_fn()
+        create_remote_dir(sftp, remote_current_dir)
 
         for file in files:
             local_file_path = os.path.join(root, file)
-            remote_file_path = os.path.join(remote_current_dir, file).replace("\\", "/")
-            try:
-                sftp.put(local_file_path, remote_file_path)
+            remote_file_path = f"{remote_current_dir}/{file}"
+            print(f" -> Uploading {file} ...", end=" ", flush=True)
+            if upload_file_with_retry(get_sftp_fn, local_file_path, remote_file_path):
+                print("SUCCESS")
                 uploaded_files += 1
-            except Exception as ex:
-                print(f"  Failed: {file} -> {ex}")
-    print(f"Uploaded {uploaded_files} files.")
+            else:
+                print("FAILED")
+                failed_files += 1
+                
+    print(f"Finished: {uploaded_files} files uploaded, {failed_files} failed.")
 
 def main():
-    print("Connecting to remote server via SSH/SFTP...")
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    
-    try:
-        ssh.connect(hostname=HOSTNAME, port=PORT, username=USERNAME, password=PASSWORD, timeout=30, banner_timeout=60)
-        print("SSH Connection successful!")
-        sftp = ssh.open_sftp()
-        print("SFTP Session started!")
-    except Exception as e:
-        print(f"Connection failed: {e}")
-        sys.exit(1)
+    ssh_ref = [None]
+    sftp_ref = [None]
+
+    def get_sftp(force_reconnect=False):
+        if force_reconnect or sftp_ref[0] is None or (ssh_ref[0] and not ssh_ref[0].get_transport().is_active()):
+            if sftp_ref[0]:
+                try: sftp_ref[0].close()
+                except Exception: pass
+            if ssh_ref[0]:
+                try: ssh_ref[0].close()
+                except Exception: pass
+            ssh_ref[0], sftp_ref[0] = connect_ssh()
+        return sftp_ref[0]
+
+    get_sftp()
 
     local_root = os.getcwd()
-    
-    # 2. Upload React Admin Dashboard to REMOTE king-tv/admin
-    local_admin_dist = os.path.join(local_root, "admin", "dist")
+    ROOT_REMOTE_DIR = "/home/u841409365/domains/test-technoprint.online/public_html/king-tv"
     ADMIN_REMOTE_DIR = "/home/u841409365/domains/test-technoprint.online/public_html/king-tv/admin"
-    upload_dir_contents(sftp, local_admin_dist, ADMIN_REMOTE_DIR)
 
-    # Upload local .htaccess rules
+    # 1. Upload React Frontend dist to REMOTE king-tv root
+    local_frontend_dist = os.path.join(local_root, "frontend", "dist")
+    upload_dir_contents(get_sftp, local_frontend_dist, ROOT_REMOTE_DIR)
+
+    # 2. Upload React Admin Dashboard dist to REMOTE king-tv/admin
+    local_admin_dist = os.path.join(local_root, "admin", "dist")
+    upload_dir_contents(get_sftp, local_admin_dist, ADMIN_REMOTE_DIR)
+
+    # 3. Upload .htaccess
     try:
-        sftp.put(os.path.join(local_root, ".htaccess"), FRONTEND_REMOTE_DIR + "/.htaccess")
-        sftp.put(os.path.join(local_root, ".htaccess"), ADMIN_REMOTE_DIR + "/.htaccess")
-        print("Uploaded .htaccess to both subdomains.")
+        ht = os.path.join(local_root, ".htaccess")
+        if os.path.exists(ht):
+            get_sftp().put(ht, ROOT_REMOTE_DIR + "/.htaccess")
+            print("\nUploaded .htaccess successfully")
     except Exception as e:
-        print("Failed to upload .htaccess", e)
+        print("\nFailed to upload .htaccess:", e)
 
-    sftp.close()
-    ssh.close()
-    print("\nFull Deployment completed successfully!")
+    print("\n[SUCCESS] Deployment to Hostinger subdomain /public_html/king-tv finished successfully!")
 
 if __name__ == "__main__":
     main()

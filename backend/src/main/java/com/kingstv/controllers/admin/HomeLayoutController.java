@@ -19,10 +19,45 @@ public class HomeLayoutController {
 
     @Autowired private HomeLayoutConfigRepository layoutRepository;
 
+    @GetMapping("/public/home-layout")
+    public ResponseEntity<?> getPublicLayout() {
+        return ResponseEntity.ok(layoutRepository.findByLayoutTypeOrderByDisplayOrderAsc("WEB"));
+    }
+
     @GetMapping("/web")
     @RequiresPermission(Permission.HOME_LAYOUT_MANAGE)
     public ResponseEntity<?> getWebLayout() {
         return ResponseEntity.ok(layoutRepository.findByLayoutTypeOrderByDisplayOrderAsc("WEB"));
+    }
+
+    @PutMapping("/bulk-save")
+    @RequiresPermission(Permission.HOME_LAYOUT_MANAGE)
+    public ResponseEntity<?> bulkSaveLayout(@RequestBody List<Map<String, Object>> sections) {
+        List<HomeLayoutConfig> result = new ArrayList<>();
+        for (int i = 0; i < sections.size(); i++) {
+            Map<String, Object> req = sections.get(i);
+            HomeLayoutConfig section = null;
+            if (req.containsKey("id") && req.get("id") != null) {
+                try {
+                    Long id = ((Number) req.get("id")).longValue();
+                    section = layoutRepository.findById(id).orElse(null);
+                } catch (Exception e) {}
+            }
+            if (section == null) {
+                section = new HomeLayoutConfig();
+            }
+            if (req.containsKey("sectionKey")) section.setSectionKey((String) req.get("sectionKey"));
+            if (req.containsKey("sectionLabel")) section.setSectionLabel((String) req.get("sectionLabel"));
+            section.setDisplayOrder(i + 1);
+            if (req.containsKey("isVisible")) section.setIsVisible((Boolean) req.get("isVisible"));
+            if (req.containsKey("configJson")) {
+                Object cfg = req.get("configJson");
+                section.setConfigJson(cfg instanceof String ? (String) cfg : cfg.toString());
+            }
+            section.setLayoutType("WEB");
+            result.add(layoutRepository.save(section));
+        }
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/mobile")

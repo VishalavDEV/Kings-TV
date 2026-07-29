@@ -4,3 +4,8 @@ __pycache__/
 Thumbs.db
 scratch/
 .vercel/
+*.tar.gz
+node_modules/
+dist/
+target/
+backend/uploads/backups/

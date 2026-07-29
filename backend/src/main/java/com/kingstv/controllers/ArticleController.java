@@ -171,7 +171,7 @@ public class ArticleController {
     }
 
     @PostMapping
-    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN})
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN, Role.SECTION_EDITOR, Role.SUB_EDITOR, Role.MOBILE_JOURNALIST, Role.INSTITUTION_LOGIN})
     @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
     public ResponseEntity<?> createArticle(@RequestBody Article article, HttpServletRequest request) {
         if (article.getTitleTa() == null || article.getContentTa() == null) {
@@ -291,7 +291,7 @@ public class ArticleController {
     }
 
     @PostMapping("/saveUpdate")
-    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN})
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN, Role.SECTION_EDITOR, Role.SUB_EDITOR, Role.MOBILE_JOURNALIST, Role.INSTITUTION_LOGIN})
     @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
     public ResponseEntity<?> save(@RequestBody Article entity, HttpServletRequest request) {
         return createArticle(entity, request);
@@ -310,7 +310,7 @@ public class ArticleController {
         
         var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
         boolean isLimitedEditor = auth != null && auth.getAuthorities().stream().anyMatch(a -> 
-            a.getAuthority().equals("ROLE_MOBILE_JOURNALIST") || a.getAuthority().equals("ROLE_INSTITUTION_LOGIN"));
+            a.getAuthority().equals("ROLE_MOBILE_JOURNALIST") || a.getAuthority().equals("ROLE_INSTITUTION_LOGIN") || a.getAuthority().equals("ROLE_DISTRICT_ADMIN"));
             
         if (isLimitedEditor) {
             try {
@@ -342,6 +342,7 @@ public class ArticleController {
         article.setMetaTitle(entity.getMetaTitle());
         article.setMetaDescription(entity.getMetaDescription());
         article.setMetaKeywords(entity.getMetaKeywords());
+        article.setFocusKeywords(entity.getFocusKeywords());
         article.setSlug(entity.getSlug());
         article.setCanonicalUrl(entity.getCanonicalUrl());
         article.setFeaturedImage(entity.getFeaturedImage());
@@ -359,6 +360,14 @@ public class ArticleController {
             updated = articleRepository.save(updated);
         }
         return ResponseEntity.ok(updated);
+    }
+
+    @PutMapping("/{id}")
+    @RequiresPermission(anyOf = {Role.SUPER_ADMIN, Role.CHIEF_EDITOR, Role.DISTRICT_ADMIN, Role.SECTION_EDITOR, Role.SUB_EDITOR, Role.MOBILE_JOURNALIST, Role.INSTITUTION_LOGIN})
+    @CacheEvict(value = {"articles", "articles_all", "articles_web"}, allEntries = true)
+    public ResponseEntity<?> updateWithId(@PathVariable Long id, @RequestBody Article entity, HttpServletRequest request) {
+        entity.setId(id);
+        return update(entity, request);
     }
 
     @PatchMapping("/changeStatus")

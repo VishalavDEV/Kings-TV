@@ -5,10 +5,13 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: '/',
+  base: './',
   build: {
     rollupOptions: {
       output: {
+        entryFileNames: `assets/[name].${Date.now()}.js`,
+        chunkFileNames: `assets/[name].${Date.now()}.js`,
+        assetFileNames: `assets/[name].${Date.now()}[extname]`,
         manualChunks(id) {
           if (id.includes('node_modules')) {
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {

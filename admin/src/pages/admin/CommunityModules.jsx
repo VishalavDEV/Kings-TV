@@ -6,7 +6,7 @@ import {
   ChevronDown, ExternalLink, Eye, ToggleLeft, ToggleRight, X,
   Check, CheckCircle, AlertCircle, Filter, Shield, Activity,
   FileText, Calendar, MapPin, User, Phone, Mail, Globe, Lock,
-  Unlock, Settings, Flag, Clock, DollarSign
+  Unlock, Settings, Flag, Clock, DollarSign, ArrowLeft
 } from 'lucide-react';
 
 const MODULE_TABS = [
@@ -15,7 +15,6 @@ const MODULE_TABS = [
   { key: 'deals', label: 'Deals', icon: Tag, endpoint: '/deals', color: '#EF4444' },
   { key: 'rfq', label: 'RFQ', icon: FileQuestion, endpoint: '/rfq', color: '#06B6D4' },
   { key: 'classifieds', label: 'Classifieds', icon: ShoppingBag, endpoint: '/classifieds', color: '#F59E0B' },
-  { key: 'jobs', label: 'Jobs', icon: Briefcase, endpoint: '/jobs', color: '#10B981' },
   { key: 'obituaries', label: 'Obituaries', icon: Heart, endpoint: '/obituaries', color: '#8B5CF6' },
   { key: 'wishes', label: 'Wishes', icon: Gift, endpoint: '/wishes', color: '#EC4899' },
 ];
@@ -113,10 +112,7 @@ const CommunityModules = () => {
         const listingsRes = await api.get('/directory/getAll?size=100');
         setItems(listingsRes.data?.content || listingsRes.data || []);
         
-        if (activeSubTab === 'categories') {
-          const catRes = await api.get('/categories');
-          setCategories(catRes.data || []);
-        } else if (activeSubTab === 'reviews') {
+        if (activeSubTab === 'reviews') {
           const revRes = await api.get('/directory/admin/reviews');
           setReviews(revRes.data || []);
         }
@@ -670,12 +666,6 @@ const CommunityModules = () => {
             {activeTab === 'directory' && (
               <>
                 <button 
-                  onClick={() => setActiveSubTab('categories')} 
-                  style={{ background: 'none', border: 'none', borderBottom: activeSubTab === 'categories' ? `2px solid ${activeMod.color}` : 'none', color: activeSubTab === 'categories' ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: 600, paddingBottom: '0.5rem', cursor: 'pointer' }}
-                >
-                  Category Manager
-                </button>
-                <button 
                   onClick={() => setActiveSubTab('reviews')} 
                   style={{ background: 'none', border: 'none', borderBottom: activeSubTab === 'reviews' ? `2px solid ${activeMod.color}` : 'none', color: activeSubTab === 'reviews' ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: 600, paddingBottom: '0.5rem', cursor: 'pointer' }}
                 >
@@ -817,75 +807,6 @@ const CommunityModules = () => {
           </div>
         ) : (
           <div>
-            {/* -----------------------------------------------------
-                SUB-TAB: CATEGORIES (Directory Categories)
-                ----------------------------------------------------- */}
-            {activeTab === 'directory' && activeSubTab === 'categories' && (
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <h3>Business Categories ({categories.length})</h3>
-                  <button 
-                    onClick={() => {
-                      setEditingTemplate(null);
-                      setTemplateForm({ name: '', nameTa: '', slug: '', displayOrder: 0, icon: '' });
-                      setShowTemplateModal(true);
-                    }}
-                    className="btn btn-primary"
-                    style={{ background: activeMod.color, display: 'flex', alignItems: 'center', gap: '0.4rem', border: 'none' }}
-                  >
-                    <Plus size={16} /> Add Category
-                  </button>
-                </div>
-                <div className="table-container">
-                  <table className="custom-table" style={{ width: '100%' }}>
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Name (EN)</th>
-                        <th>Name (TA)</th>
-                        <th>Slug</th>
-                        <th>Order</th>
-                        <th>Icon</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {categories.map(cat => (
-                        <tr key={cat.id}>
-                          <td>#{cat.id}</td>
-                          <td>{cat.name}</td>
-                          <td>{cat.nameTa}</td>
-                          <td><code>{cat.slug}</code></td>
-                          <td>{cat.displayOrder}</td>
-                          <td>{cat.icon || '—'}</td>
-                          <td>
-                            <button 
-                              onClick={() => {
-                                setEditingTemplate(cat);
-                                setTemplateForm(cat);
-                                setShowTemplateModal(true);
-                              }}
-                              className="btn btn-secondary" 
-                              style={{ padding: '4px 8px', marginRight: '6px' }}
-                            >
-                              Edit
-                            </button>
-                            <button 
-                              onClick={() => handleDelete('/api/v1/categories', cat.id)} 
-                              className="btn btn-danger" 
-                              style={{ padding: '4px 8px', background: 'rgba(239,68,68,0.15)', border: '1px solid #ef4444', color: '#ef4444' }}
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
             {/* -----------------------------------------------------
                 SUB-TAB: REVIEWS (Directory Reviews)
                 ----------------------------------------------------- */}
@@ -1265,7 +1186,6 @@ const CommunityModules = () => {
                             <th>Category</th>
                             <th>Discount</th>
                             <th>Redemptions</th>
-                            <th>Status</th>
                             <th style={{ textAlign: 'right' }}>Actions</th>
                           </tr>
                         )}
@@ -1286,17 +1206,6 @@ const CommunityModules = () => {
                             <th>Price</th>
                             <th>Condition</th>
                             <th>Views</th>
-                            <th>Featured</th>
-                            <th style={{ textAlign: 'right' }}>Actions</th>
-                          </tr>
-                        )}
-                        {activeTab === 'jobs' && (
-                          <tr>
-                            <th>ID</th>
-                            <th>Job Title</th>
-                            <th>Location</th>
-                            <th>Category</th>
-                            <th>Work Mode</th>
                             <th style={{ textAlign: 'right' }}>Actions</th>
                           </tr>
                         )}
@@ -1411,11 +1320,6 @@ const CommunityModules = () => {
                                   <td>{item.category}</td>
                                   <td>{item.discountType === 'percentage' ? `${item.discountValue}%` : `₹${item.discountValue}`}</td>
                                   <td>{item.redemptionCount} / {item.usageLimit}</td>
-                                  <td>
-                                    <span className={`badge ${item.status === 'approved' ? 'badge-success' : 'badge-warning'}`}>
-                                      {item.status}
-                                    </span>
-                                  </td>
                                   <td style={{ textAlign: 'right' }}>
                                     <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
                                       {item.status === 'approved' && (
@@ -1488,19 +1392,6 @@ const CommunityModules = () => {
                                   <td><strong>₹{item.price}</strong></td>
                                   <td>{item.itemCondition || '—'}</td>
                                   <td>{item.viewsCount}</td>
-                                  <td>
-                                    {item.isFeatured ? (
-                                      <button 
-                                        onClick={() => handleRemoveFeaturedClassified(item.id)}
-                                        className="badge badge-success"
-                                        style={{ background: '#10b981', color: 'white', border: 'none', cursor: 'pointer' }}
-                                      >
-                                        Featured (Click Remove)
-                                      </button>
-                                    ) : (
-                                      <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>No</span>
-                                    )}
-                                  </td>
                                   <td style={{ textAlign: 'right' }}>
                                     <button 
                                       onClick={() => handleDelete('/api/classifieds', item.id)}
@@ -1508,32 +1399,6 @@ const CommunityModules = () => {
                                       style={{ padding: '4px 8px', background: 'rgba(239,68,68,0.15)', border: '1px solid #ef4444', color: '#ef4444' }}
                                     >
                                       Remove Listing
-                                    </button>
-                                  </td>
-                                </>
-                              )}
-
-                              {/* 6. JOBS ROWS */}
-                              {activeTab === 'jobs' && (
-                                <>
-                                  <td>#{item.id}</td>
-                                  <td>
-                                    <span style={{ fontWeight: 700 }}>{item.jobTitle}</span>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Category: {item.category}</div>
-                                  </td>
-                                  <td>{item.location}</td>
-                                  <td>{item.category}</td>
-                                  <td><span className="badge badge-warning">{item.workMode}</span></td>
-                                  <td style={{ textAlign: 'right' }}>
-                                    <button 
-                                      onClick={() => {
-                                        setSelectedItem(item);
-                                        loadJobApplications(item.id);
-                                      }}
-                                      className="btn btn-secondary" 
-                                      style={{ padding: '6px 12px' }}
-                                    >
-                                      Oversight Applications
                                     </button>
                                   </td>
                                 </>
@@ -1621,9 +1486,18 @@ const CommunityModules = () => {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
           <div className="glass-panel" style={{ background: '#111827', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', padding: '1rem 1.5rem' }}>
-              <h2 style={{ color: activeMod.color, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Building2 /> Review Business Directory Details
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <button 
+                  onClick={() => setSelectedItem(null)} 
+                  style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}
+                  title="Back"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <h2 style={{ color: activeMod.color, display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                  <Building2 /> Review Business Directory Details
+                </h2>
+              </div>
               <button onClick={() => setSelectedItem(null)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}><X size={20} /></button>
             </div>
             
@@ -1728,42 +1602,67 @@ const CommunityModules = () => {
       {/* B. NFC Requests Fulfillment Workflows Modal */}
       {activeTab === 'nfc' && selectedItem && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-          <div className="glass-panel" style={{ background: '#111827', width: '100%', maxWidth: '850px', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', padding: '1rem 1.5rem' }}>
-              <h2 style={{ color: activeMod.color, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Wifi /> NFC Fulfillment Dashboard
-              </h2>
-              <button onClick={() => setSelectedItem(null)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}><X size={20} /></button>
+          <div className="glass-panel" style={{ background: '#ffffff', color: '#000000', width: '100%', maxWidth: '850px', maxHeight: '90vh', overflowY: 'auto', border: '1px solid #d1d5db', borderRadius: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e5e7eb', padding: '1rem 1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <button 
+                  onClick={() => setSelectedItem(null)} 
+                  style={{ background: 'none', border: 'none', color: '#000000', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}
+                  title="Back"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <h2 style={{ color: activeMod.color, display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                  <Wifi /> NFC Fulfillment Dashboard
+                </h2>
+              </div>
+              <button onClick={() => setSelectedItem(null)} style={{ background: 'none', border: 'none', color: '#000000', cursor: 'pointer' }}><X size={20} /></button>
             </div>
             
             <div style={{ padding: '1.5rem' }}>
               {/* Business details */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <div style={{ background: '#f9fafb', padding: '1rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
                   <h4 style={{ color: activeMod.color, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Building2 size={16} /> Business Info</h4>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{selectedItem.businessName}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Category: {selectedItem.business?.category || '—'}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Phone: {selectedItem.business?.phoneNumber || '—'}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#000000' }}>{selectedItem.businessName}</div>
+                  <div style={{ fontSize: '0.85rem', color: '#4b5563' }}>Category: {selectedItem.business?.category || '—'}</div>
+                  <div style={{ fontSize: '0.85rem', color: '#4b5563' }}>Phone: {selectedItem.business?.phoneNumber || '—'}</div>
+                  <div style={{ fontSize: '0.85rem', color: '#4b5563', marginTop: '0.5rem' }}>
                     KYC Status: <span style={{ fontWeight: 600, color: '#10B981' }}>{selectedItem.business?.kycStatus || 'pending'}</span>
                   </div>
+                  <div style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>
+                    {selectedItem.business?.kycDocumentUrl ? (
+                      <a 
+                        href={selectedItem.business.kycDocumentUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        style={{ color: '#3B82F6', textDecoration: 'underline', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
+                      >
+                        <ExternalLink size={12} /> View KYC Documents
+                      </a>
+                    ) : (
+                      <span style={{ color: '#EF4444', fontStyle: 'italic' }}>
+                        KYC Documents: No document URL stored (gap)
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <div style={{ background: '#f9fafb', padding: '1rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
                   <h4 style={{ color: activeMod.color, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}><User size={16} /> NFC Profile Submission</h4>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Designation: <strong>Owner</strong></div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Email: {selectedItem.business?.email || '—'}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Website: {selectedItem.business?.website || '—'}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Selected Template: <strong>Default Premium Frame</strong></div>
+                  <div style={{ fontSize: '0.85rem', color: '#4b5563' }}>Designation: <strong>Owner</strong></div>
+                  <div style={{ fontSize: '0.85rem', color: '#4b5563' }}>Email: {selectedItem.business?.email || '—'}</div>
+                  <div style={{ fontSize: '0.85rem', color: '#4b5563' }}>Website: {selectedItem.business?.website || '—'}</div>
+                  <div style={{ fontSize: '0.85rem', color: '#4b5563' }}>Selected Template: <strong>Default Premium Frame</strong></div>
                 </div>
-                <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <div style={{ background: '#f9fafb', padding: '1rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
                   <h4 style={{ color: activeMod.color, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}><DollarSign size={16} /> Payment</h4>
-                  <div style={{ fontSize: '1rem', fontWeight: 700 }}>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, color: '#000000' }}>
                     Status: <span style={{ color: selectedItem.card?.paymentStatus === 'PAID' ? '#10B981' : '#EF4444' }}>{selectedItem.card?.paymentStatus || 'UNPAID'}</span>
                   </div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Amount: {selectedItem.card?.paymentAmount ? `₹${selectedItem.card.paymentAmount}` : '—'}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Method: {selectedItem.card?.paymentMethod || '—'}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Ref: {selectedItem.card?.paymentReference || '—'}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Paid At: {formatDate(selectedItem.card?.paidAt)}</div>
+                  <div style={{ fontSize: '0.85rem', color: '#4b5563' }}>Amount: {selectedItem.card?.paymentAmount ? `₹${selectedItem.card.paymentAmount}` : '—'}</div>
+                  <div style={{ fontSize: '0.85rem', color: '#4b5563' }}>Method: {selectedItem.card?.paymentMethod || '—'}</div>
+                  <div style={{ fontSize: '0.85rem', color: '#4b5563' }}>Ref: {selectedItem.card?.paymentReference || '—'}</div>
+                  <div style={{ fontSize: '0.85rem', color: '#4b5563' }}>Paid At: {formatDate(selectedItem.card?.paidAt)}</div>
                   <div style={{ marginTop: '0.5rem', display: 'flex', gap: '6px' }}>
                     <button className="btn btn-secondary" style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => handleEditPaymentInfo(selectedItem.card)}>
                       Edit Payment
@@ -1783,10 +1682,10 @@ const CommunityModules = () => {
                   <h4 style={{ color: '#14B8A6', fontSize: '0.95rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <Settings size={16} /> Encode NFC Tag Panel
                   </h4>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                  <p style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '0.5rem' }}>
                     Write this target URL to the physical NFC chip using an NFC encoder:
                   </p>
-                  <code style={{ background: 'var(--bg-secondary)', padding: '6px 12px', display: 'block', borderRadius: '4px', border: '1px solid var(--border-color)', color: '#14B8A6' }}>
+                  <code style={{ background: '#f3f4f6', padding: '6px 12px', display: 'block', borderRadius: '4px', border: '1px solid #e5e7eb', color: '#14B8A6' }}>
                     https://kings-tv.vercel.app/card/{selectedItem.card?.shortCode}
                   </code>
                 </div>
@@ -1794,41 +1693,41 @@ const CommunityModules = () => {
 
               {/* Sequenced state workflow tracker */}
               <div style={{ marginBottom: '1.5rem' }}>
-                <h4 style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Clock size={16} /> Order Status Timeline</h4>
-                <div style={{ display: 'flex', justifyContent: 'space-between', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
+                <h4 style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#000000' }}><Clock size={16} /> Order Status Timeline</h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', background: '#f9fafb', padding: '1rem', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '0.8rem' }}>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ color: selectedItem.card?.requestedAt ? '#10B981' : 'var(--text-muted)', fontWeight: 700 }}>Requested</div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{formatDate(selectedItem.card?.requestedAt)}</div>
+                    <div style={{ color: selectedItem.card?.requestedAt ? '#10B981' : '#9ca3af', fontWeight: 700 }}>Requested</div>
+                    <div style={{ fontSize: '0.7rem', color: '#9ca3af' }}>{formatDate(selectedItem.card?.requestedAt)}</div>
                   </div>
-                  <div style={{ color: 'var(--text-muted)' }}>➔</div>
+                  <div style={{ color: '#9ca3af' }}>➔</div>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ color: selectedItem.card?.processingAt ? '#10B981' : 'var(--text-muted)', fontWeight: 700 }}>Processing</div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{formatDate(selectedItem.card?.processingAt)}</div>
+                    <div style={{ color: selectedItem.card?.processingAt ? '#10B981' : '#9ca3af', fontWeight: 700 }}>Processing</div>
+                    <div style={{ fontSize: '0.7rem', color: '#9ca3af' }}>{formatDate(selectedItem.card?.processingAt)}</div>
                   </div>
-                  <div style={{ color: 'var(--text-muted)' }}>➔</div>
+                  <div style={{ color: '#9ca3af' }}>➔</div>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ color: selectedItem.card?.issuedAt ? '#3b82f6' : 'var(--text-muted)', fontWeight: 700 }}>Issued</div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{formatDate(selectedItem.card?.issuedAt)}</div>
+                    <div style={{ color: selectedItem.card?.issuedAt ? '#3b82f6' : '#9ca3af', fontWeight: 700 }}>Issued</div>
+                    <div style={{ fontSize: '0.7rem', color: '#9ca3af' }}>{formatDate(selectedItem.card?.issuedAt)}</div>
                   </div>
-                  <div style={{ color: 'var(--text-muted)' }}>➔</div>
+                  <div style={{ color: '#9ca3af' }}>➔</div>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ color: selectedItem.card?.deliveredAt ? '#10B981' : 'var(--text-muted)', fontWeight: 700 }}>Delivered</div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{formatDate(selectedItem.card?.deliveredAt)}</div>
+                    <div style={{ color: selectedItem.card?.deliveredAt ? '#10B981' : '#9ca3af', fontWeight: 700 }}>Delivered</div>
+                    <div style={{ fontSize: '0.7rem', color: '#9ca3af' }}>{formatDate(selectedItem.card?.deliveredAt)}</div>
                   </div>
                 </div>
               </div>
 
               {/* Audit Logs list */}
               <div style={{ marginBottom: '1.5rem' }}>
-                <h4 style={{ marginBottom: '0.5rem' }}>State Audit Log Records ({nfcLogs.length})</h4>
-                <div style={{ maxHeight: '150px', overflowY: 'auto', background: 'var(--bg-secondary)', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
+                <h4 style={{ marginBottom: '0.5rem', color: '#000000' }}>State Audit Log Records ({nfcLogs.length})</h4>
+                <div style={{ maxHeight: '150px', overflowY: 'auto', background: '#f9fafb', padding: '0.5rem', borderRadius: '6px', border: '1px solid #e5e7eb', fontSize: '0.8rem', color: '#000000' }}>
                   {nfcLogs.length === 0 ? (
-                    <div style={{ color: 'var(--text-muted)', padding: '0.5rem' }}>No audit transitions logged.</div>
+                    <div style={{ color: '#9ca3af', padding: '0.5rem' }}>No audit transitions logged.</div>
                   ) : (
                     nfcLogs.map(log => (
-                      <div key={log.id} style={{ borderBottom: '1px solid var(--border-color)', padding: '6px 0', display: 'flex', justifyContent: 'space-between' }}>
+                      <div key={log.id} style={{ borderBottom: '1px solid #e5e7eb', padding: '6px 0', display: 'flex', justifyContent: 'space-between' }}>
                         <span>Actor: <strong>{log.changedByEmail || 'system'}</strong> ({log.fromStatus} ➔ {log.toStatus} - {log.note})</span>
-                        <span style={{ color: 'var(--text-muted)' }}>{formatDate(log.changedAt)}</span>
+                        <span style={{ color: '#9ca3af' }}>{formatDate(log.changedAt)}</span>
                       </div>
                     ))
                   )}
@@ -1836,7 +1735,7 @@ const CommunityModules = () => {
               </div>
 
               {/* Action Fulfill workflow */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #e5e7eb', paddingTop: '1.25rem' }}>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   {selectedItem.card?.cardStatus !== 'blocked' ? (
                     <button 
@@ -1959,9 +1858,18 @@ const CommunityModules = () => {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
           <div className="glass-panel" style={{ background: '#111827', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', padding: '1rem 1.5rem' }}>
-              <h2 style={{ color: activeMod.color, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Briefcase /> Applications Oversight: {selectedItem.jobTitle}
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <button 
+                  onClick={() => setSelectedItem(null)} 
+                  style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}
+                  title="Back"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <h2 style={{ color: activeMod.color, display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                  <Briefcase /> Applications Oversight: {selectedItem.jobTitle}
+                </h2>
+              </div>
               <button onClick={() => setSelectedItem(null)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}><X size={20} /></button>
             </div>
             
@@ -2014,9 +1922,18 @@ const CommunityModules = () => {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
           <div className="glass-panel" style={{ background: '#111827', width: '100%', maxWidth: '750px', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', padding: '1rem 1.5rem' }}>
-              <h2 style={{ color: activeMod.color, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Heart /> Obituary Notice Approval Queue
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <button 
+                  onClick={() => setSelectedItem(null)} 
+                  style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}
+                  title="Back"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <h2 style={{ color: activeMod.color, display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                  <Heart /> Obituary Notice Approval Queue
+                </h2>
+              </div>
               <button onClick={() => setSelectedItem(null)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}><X size={20} /></button>
             </div>
             
@@ -2146,9 +2063,18 @@ const CommunityModules = () => {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
           <div className="glass-panel" style={{ background: '#111827', width: '100%', maxWidth: '650px', maxHeight: '85vh', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', padding: '1rem 1.5rem' }}>
-              <h2 style={{ color: activeMod.color, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Gift /> Wish Comment Moderation
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <button 
+                  onClick={() => setSelectedItem(null)} 
+                  style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}
+                  title="Back"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <h2 style={{ color: activeMod.color, display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                  <Gift /> Wish Comment Moderation
+                </h2>
+              </div>
               <button onClick={() => setSelectedItem(null)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}><X size={20} /></button>
             </div>
             
